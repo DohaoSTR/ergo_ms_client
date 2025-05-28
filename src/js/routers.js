@@ -99,6 +99,29 @@ const userRoutes = [
   },
 ]
 
+// Секция "Analyze"
+const analyzeRoutes = [
+  {
+    path: '/user/analyze',
+    name: 'Analyze',
+    component: () => import('@/pages/user/analyze/Analyze.vue'),
+    meta: {
+      requiresAuth: true
+    },
+    children: [
+      {
+        path: 'databaseanalyze',
+        name: 'DatabaseAnalyze',
+        component: () => import('@/pages/user/analyze/DatabaseAnalyze.vue'),
+        meta: {
+          requiresAuth: true
+        },
+      }
+    ]
+  },
+];
+
+
 // Настройки аккаунта
 const settingsRoutes = [
   {
@@ -322,7 +345,60 @@ const componentsRoutes = [
   },
 ]
 
-//
+// Маршрутизация страниц модуля учебной аналитики
+const learningAnalyticsRoutes = [
+  {
+    path: '/education_analytics',
+    name: 'EducationAnalyticModule',
+    component: () => import('@/pages/education_analytics_module/ParentLayout.vue'),
+    redirect: { name: 'MainPage' },
+    children: [
+      {
+        path: 'main',
+        name: 'MainPage',
+        component: () => import('@/pages/education_analytics_module/MainPage.vue'),
+        meta: { title: 'MainPage', requiresAuth: true },
+      },
+      {
+        path: 'learning_track',
+        name: 'LearningTrackPage',
+        component: () => import('@/pages/education_analytics_module/LearningTrack.vue'),
+        meta: { title: 'LearningTrackPage', requiresAuth: true },
+      },
+      {
+        path: 'reports',
+        name: 'ReportsPage',
+        component: () => import('@/pages/education_analytics_module/ReportsPage.vue'),
+        meta: { title: 'ReportsPage', requiresAuth: true },
+      },
+      {
+        path: 'stats',
+        name: 'StatsPage',
+        component: () => import('@/pages/education_analytics_module/StatsPage.vue'),
+        meta: { title: 'StatsPage', requiresAuth: true },
+      },
+      {
+        path: 'profile',
+        name: 'ProfilePage',
+        component: () => import('@/pages/education_analytics_module/ProfilePage.vue'),
+        meta: { title: 'ProfilePage', requiresAuth: true },
+      },
+      {
+        path: 'admin',
+        name: 'AdminPanelPage',
+        component: () => import('@/pages/education_analytics_module/AdminPanelPage.vue'),
+        meta: { title: 'AdminPanelPage', requiresAuth: true },
+      },
+      {
+        path: 'root',
+        name: 'SuperUserPage',
+        component: () => import('@/pages/education_analytics_module/SuperUserPanelPage.vue'),
+        meta: { title: 'SuperUserPage', requiresAuth: true },
+      },
+  ],
+  },
+]
+
 const startRoutes = [
   {
     path: '/start-page',
@@ -385,6 +461,52 @@ const startRoutes = [
     meta: {
       startRoute: true,
       requiresAuth: false,
+    },
+  },
+]
+
+const adminpanelRoutes = [
+  {
+    path: '/AdminPanel',
+    name: 'AdminPanel',
+    component: () => import('@/pages/AdminPanel/ParentLayout.vue'),
+    redirect: { name: 'CategoriesPanel' },
+    meta: { title: 'Админ-панель', requiresAuth: true },
+    children: [
+      {
+        path: 'CategoriesPanel',
+        name: 'CategoriesPanel',
+        component: () => import('@/pages/AdminPanel/Categories.vue'),
+        meta: { title: 'Панель категорий', requiresAuth: true },
+      },
+      {
+        path: 'GroupsPanel',
+        name: 'GroupsPanel',
+        component: () => import('@/pages/AdminPanel/Groups.vue'),
+        meta: { title: 'Панель групп', requiresAuth: true },
+      },
+      {
+        path: 'PermissionsPanel',
+        name: 'PermissionsPanel',
+        component: () => import('@/pages/AdminPanel/Permissions.vue'),
+        meta: { title: 'Панель прав', requiresAuth: true },
+      },
+      {
+        path: 'UsersPanel',
+        name: 'UsersPanel',
+        component: () => import('@/pages/AdminPanel/Users.vue'),
+        meta: { title: 'Панель пользователей', requiresAuth: true },
+      },
+    ],
+  },
+]
+const waterMarkvideoRoute = [
+  {
+    path: '/watermarked-video',
+    name: 'Watermarked-Video',
+    component: () => import('@/pages/WatermarkVideo/ParentLayout.vue'),
+    meta: {
+      requiresAuth: true,
     },
   },
 ]
@@ -458,11 +580,88 @@ const biRoutes = [
   },
 ]
 
+const shortcodeRoutes = [
+  {
+    path: '/shortcodes',
+    name: 'Shortcodes',
+    component: () => import('@/pages/shortcodes/ParentLayout.vue'),
+    meta: { title: 'Конструктор сайта', requiresAuth: true },
+    redirect: { name: 'MainShortcodePage' },
+    children: [
+      {
+        path: 'editor',
+        name: 'MainShortcodePage',
+        component: () => import('@/pages/shortcodes/editor/MainPage.vue'),
+        meta: {
+          title: 'Главная',
+          requiresAuth: true
+        },
+      },
+      {
+        path: 'editor',
+        name: 'ShortcodeEditor',
+        component: () => import('@/pages/shortcodes/editor/ShortcodeEditor.vue'),
+        meta: {
+          title: 'Редактор страниц',
+          requiresAuth: true
+        },
+      },
+      {
+        path: 'create-page',
+        name: 'CreatePage',
+        component: () => import('@/pages/shortcodes/editor/CreatePage.vue'),
+        meta: {
+          title: 'Создание страниц',
+          requiresAuth: true
+        },
+      },
+      {
+        path: 'create-template',
+        name: 'CreateTemplate',
+        component: () => import('@/pages/shortcodes/editor/CreateTemplate.vue'),
+        meta: {
+          title: 'Создание шаблонов',
+          requiresAuth: true
+        },
+      },
+      {
+        path: 'categories-page',
+        name: 'PageCategories',
+        component: () => import('@/pages/shortcodes/editor/PageCategories.vue'),
+        meta: {
+          title: 'Категории страниц',
+          requiresAuth: true
+        },
+      },
+      {
+        path: 'templates',
+        name: 'Templates',
+        component: () => import('@/pages/shortcodes/editor/TemplateManager.vue'),
+        meta: {
+          title: 'Компоненты',
+          requiresAuth: true
+        },
+      },
+      {
+        path: 'templates/:id?',
+        name: 'TemplateEditor',
+        component: import('@/pages/shortcodes/editor/TemplateEditor.vue'),
+        props: true,
+        meta: {
+          title: 'Редактор компонентов',
+          requiresAuth: true
+        },
+      }
+    ],
+  },
+]
+
 const routes = [
   ...startRoutes,
   ...mainRoutes,
   ...dashboardRoutes,
   ...userRoutes,
+  ...analyzeRoutes,
   ...settingsRoutes,
   ...emailRoutes,
   ...messengerRoutes,
@@ -475,7 +674,11 @@ const routes = [
   ...modalWindowsRoutes,
   ...inputsRoutes,
   ...componentsRoutes,
+  ...adminpanelRoutes,
+  ...waterMarkvideoRoute,
   ...biRoutes,
+  ...shortcodeRoutes,
+  ...learningAnalyticsRoutes,
 ]
 
 routes.forEach((route) => {

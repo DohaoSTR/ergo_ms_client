@@ -126,6 +126,7 @@ function emitNavigate(item) {
 .side-subtitle--active .nav-icon,
 .side-subtitle--active .side-subtitle__name {
   color: var(--bs-primary);
+  padding-left: 0.5rem;
 }
 
 .nav-btn {
@@ -172,7 +173,7 @@ function emitNavigate(item) {
 }
 
 .side-group__list.is-open {
-  max-height: 320px;
+  max-height: none;
   opacity: 1;
 }
 

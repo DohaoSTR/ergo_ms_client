@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { ChartNoAxesCombined, LayoutGrid, Link, UserRound, UsersRound } from 'lucide-vue-next'
+import { ChartNoAxesCombined, LayoutGrid, Link, UserRound, UsersRound, NotepadTextDashed } from 'lucide-vue-next'
 
 import MainInfo from '@/pages/user/CardMain.vue'
 import NavigationButtons from '@/components/NavigationButtons.vue'

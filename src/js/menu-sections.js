@@ -1,9 +1,13 @@
 import {
   AtSign,
+  Braces,
   Calendar,
+  ChartBarStacked,
   ChartSpline,
+  ChartCandlestick,
   CircleUserRound,
   Component,
+  Code2,
   Grid2x2,
   Map,
   MessagesSquare,
@@ -12,6 +16,10 @@ import {
   TextCursorInput,
   UserCog,
   Wallet,
+  KeySquare,
+  BookOpen,
+  NotepadTextDashed,
+  Video
 } from 'lucide-vue-next'
 
 // Аккаунт
@@ -25,13 +33,24 @@ export const UserMenuSection = {
     { path: 'Teams', name: 'Команды' },
     { path: 'Projects', name: 'Проекты' },
     { path: 'Connections', name: 'Связи' },
-    { path: 'Analytics', name: 'Статистика' },
   ],
 }
 
+// Аналитика
+export const AnalyzeMenuSection = {
+  id: 2,
+  icon: Code2,
+  routeName: 'Analyze',
+  title: 'Анализ',
+  list: [
+    { path: 'DatabaseAnalyze', name: 'Анализ Bitcoin' },
+  ],
+};
+
+
 // Настройки аккаунта
 export const SettingsMenuSection = {
-  id: 2,
+  id: 3,
   icon: UserCog,
   routeName: 'Settings',
   title: 'Настройки',
@@ -46,7 +65,7 @@ export const SettingsMenuSection = {
 
 // Электронная почта
 export const EmailMenuSection = {
-  id: 3,
+  id: 4,
   icon: AtSign,
   routeName: 'Email',
   title: 'Электронная почта',
@@ -54,7 +73,7 @@ export const EmailMenuSection = {
 
 // Мессенджер
 export const ChatMenuSection = {
-  id: 4,
+  id: 5,
   icon: MessagesSquare,
   routeName: 'Messenger',
   title: 'Мессенджер',
@@ -62,7 +81,7 @@ export const ChatMenuSection = {
 
 // Карты
 export const MapsMenuSection = {
-  id: 5,
+  id: 6,
   icon: Map,
   routeName: 'Maps',
   title: 'Карты',
@@ -70,7 +89,7 @@ export const MapsMenuSection = {
 
 // Ценовой план
 export const BillingMenuSection = {
-  id: 6,
+  id: 7,
   icon: Wallet,
   routeName: 'Billing',
   title: 'Ценовой план',
@@ -78,7 +97,7 @@ export const BillingMenuSection = {
 
 // Календарь
 export const CalendarMenuSection = {
-  id: 7,
+  id: 8,
   icon: Calendar,
   routeName: 'Calendar',
   title: 'Календарь',
@@ -86,7 +105,7 @@ export const CalendarMenuSection = {
 
 // Канбан-доска
 export const KanbanMenuSection = {
-  id: 8,
+  id: 9,
   icon: Grid2x2,
   routeName: 'Kanban',
   title: 'Канбан-доска',
@@ -94,7 +113,7 @@ export const KanbanMenuSection = {
 
 // Таблицы
 export const TablesMenuSection = {
-  id: 9,
+  id: 10,
   icon: Table2,
   routeName: 'Tables',
   title: 'Таблицы',
@@ -102,7 +121,7 @@ export const TablesMenuSection = {
 
 // Графики
 export const ChartsMenuSection = {
-  id: 10,
+  id: 11,
   icon: ChartSpline,
   routeName: 'Charts',
   title: 'Графики',
@@ -114,7 +133,7 @@ export const ChartsMenuSection = {
 
 // Модальные окна
 export const ModalWindowsMenuSection = {
-  id: 11,
+  id: 12,
   icon: PictureInPicture2,
   routeName: 'ModalWindows',
   title: 'Модальные окна',
@@ -122,7 +141,7 @@ export const ModalWindowsMenuSection = {
 
 // Модальные окна
 export const InputsMenuSection = {
-  id: 12,
+  id: 13,
   icon: TextCursorInput,
   routeName: 'Inputs',
   title: 'Формы ввода',
@@ -130,7 +149,7 @@ export const InputsMenuSection = {
 
 // Модальные окна
 export const ComponentsMenuSection = {
-  id: 13,
+  id: 14,
   icon: Component,
   routeName: 'Components',
   title: 'Остальные',
@@ -143,9 +162,30 @@ export const ComponentsMenuSection = {
   ],
 }
 
+// Админ-панель
+export const AdminPanelMenuSection = {
+  id: 15,
+  icon: KeySquare,
+  routeName: 'AdminPanel',
+  title: 'Админ-панель',
+  list: [
+    { path: 'CategoriesPanel', name: 'Настройка категорий' },
+    { path: 'GroupsPanel', name: 'Настройка групп' },
+    { path: 'PermissionsPanel', name: 'Настройка прав' },
+    { path: 'UsersPanel', name: 'Настройка пользователей' },
+  ],
+}
+
+export const WatermarkedVideoSection = {
+  id: 16,
+  icon: Video,
+  routeName: 'Watermarked-Video',
+  title: 'Видео с вотермаркой',
+}
+
 // BI секция
 export const BIMenuSection = {
-  id: 14,
+  id: 17,
   icon: ChartSpline,
   routeName: 'BI',
   title: 'BI',
@@ -165,5 +205,34 @@ export const BIMenuSection = {
       page: 'charts',
       isOffcanvas: true
     },
-  ]
+  ],
+}
+
+export const ShortcodesMenuSection = {
+  id: 18,
+  icon: Braces,
+  routeName: 'Shortcodes',
+  title: 'Редактор страниц',
+  list: [
+    { path: 'MainShortcodePage', name: 'Главная' },
+    { path: 'ShortcodeEditor', name: 'Редактор страниц' },
+    { path: 'Templates', name: 'Компоненты' },
+  ],
+}
+
+// Модуль учебной аналитики
+export const EducationAnalyticMenuSection = {
+  id: 19,
+  icon: ChartCandlestick,
+  routeName: 'EducationAnalyticModule',
+  title: 'Учебная аналитика',
+  list: [
+    { path: 'MainPage', name: "Общее" },
+    { path: 'StatsPage', name: "Статистика" },
+    { path: 'LearningTrackPage', name: "Траектория" },
+    { path: 'ReportsPage', name: "Отчёты" },
+    { path: 'ProfilePage', name: "Профиль" },
+    { path: 'AdminPanelPage', name: "Админ-панель" },
+    { path: 'SuperUserPage', name: "SAdmin  " },
+  ],
 }

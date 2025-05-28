@@ -5,6 +5,7 @@ defineProps({
   title: { type: String, required: true },
   showFooter: { type: Boolean, required: false, default: false },
 })
+const emit = defineEmits(['closemodal'])
 </script>
 
 <template>
@@ -27,6 +28,7 @@ defineProps({
             class="btn-close"
             data-bs-dismiss="modal"
             aria-label="Закрыть"
+            v-on:click="emit('closemodal')"
           ></button>
         </div>
         <div class="modal-body">

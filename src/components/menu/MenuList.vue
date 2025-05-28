@@ -2,10 +2,12 @@
 import { ref, watch } from 'vue'
 import { ChevronLeft, Cog, Minus } from 'lucide-vue-next'
 import {
+  AnalyzeMenuSection,
   ChatMenuSection,
   EmailMenuSection,
   SettingsMenuSection,
   UserMenuSection,
+
   MapsMenuSection,
   BillingMenuSection,
   CalendarMenuSection,
@@ -15,14 +17,19 @@ import {
   KanbanMenuSection,
   TablesMenuSection,
   ModalWindowsMenuSection,
+  AdminPanelMenuSection,
+  WatermarkedVideoSection,
   BIMenuSection,
+  ShortcodesMenuSection,
+  EducationAnalyticMenuSection,
 } from '@/js/menu-sections.js'
 
 import MenuGroup from '@/components/menu/MenuGroup.vue'
 import { useRoute } from 'vue-router'
 import { useRouter } from 'vue-router'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
-
+import { onMounted } from 'vue'
+import { CheckAccessToAdminPanel } from '@/js/GroupsPolitics.js'
 const props = defineProps({
   isVisible: Boolean,
   currentPage: String
@@ -37,6 +44,9 @@ watch(
   },
 )
 
+const emit = defineEmits(['left-padding', 'open-datasets', 'open-sidebar', 'reset-page'])
+
+// Состояние меню
 const isCollapsed = ref(false)
 const isHovering = ref(true)
 const toggleMenu = () => {
@@ -57,7 +67,7 @@ const openGroupId = ref(null)
 watch(
   () => route.matched,
   (newMatched) => {
-    for (let i of menuSections) {
+    for (let i of menuSections.value) {
       if (i.routeName === newMatched[0].name) {
         openGroupId.value = i.id
       }
@@ -69,8 +79,6 @@ watch(
 const toggleGroup = (id) => {
   openGroupId.value = openGroupId.value === id ? null : id
 }
-
-const emit = defineEmits(['left-padding', 'open-datasets', 'open-sidebar', 'reset-page'])
 
 function handleAction(action) {
   if (action === 'openDatasetSidebar') {
@@ -92,10 +100,13 @@ function resetCurrentPage() {
   emit('reset-page')  
 }
 
-const menuSections = [
+// Список секций меню
+const menuSections = ref([
   UserMenuSection,
+  AnalyzeMenuSection,
   SettingsMenuSection,
   BIMenuSection,
+  EducationAnalyticMenuSection,
   EmailMenuSection,
   ChatMenuSection,
   MapsMenuSection,
@@ -107,7 +118,10 @@ const menuSections = [
   KanbanMenuSection,
   TablesMenuSection,
   ModalWindowsMenuSection,
-]
+  AdminPanelMenuSection,
+  WatermarkedVideoSection,
+  ShortcodesMenuSection,
+])
 
 const separators = (index) => {
   switch (index) {

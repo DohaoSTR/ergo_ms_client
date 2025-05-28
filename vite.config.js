@@ -24,6 +24,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)), // Создание псевдонима '@' для пути './src'
+      'vue': 'vue/dist/vue.esm-bundler.js',
     },
   },
 

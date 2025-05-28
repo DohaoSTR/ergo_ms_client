@@ -1,10 +1,8 @@
-<script setup></script>
-
 <template>
   <div class="row row-gap-4">
-    <div class="col-12 col-md-6">
-      <div class="card">
-        <h4 class="mb-3">Значки по умолчанию</h4>
+    <div id="1" class="col-12 col-md-6">
+      <div  class="card">
+        <h4  class="mb-3" >Значки по умолчанию</h4>
         <div class="d-flex gap-2 flex-wrap">
           <span class="badge text-bg-primary">Primary</span>
           <span class="badge text-bg-secondary">Secondary</span>
@@ -187,5 +185,13 @@
     </div>
   </div>
 </template>
+<script setup>
+import { checkAccessToPage, CheckAccessToComponent } from '@/js/GroupsPolitics';
+import { onMounted } from 'vue';
+onMounted(async () => {
+  await checkAccessToPage();
+  await CheckAccessToComponent("http://localhost:8001/components/badges", 1);
+});
+</script>
 
 <style scoped lang="scss"></style>

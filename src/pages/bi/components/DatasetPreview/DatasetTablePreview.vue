@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, watch, computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import Vue3Datatable from '@bhplugin/vue3-datatable'
 
 const props = defineProps({
