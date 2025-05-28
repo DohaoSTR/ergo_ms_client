@@ -49,7 +49,7 @@ watch(
         id: key,
         type: 'tableNode',
         position: existing?.position || { x: 150, y: idx * 100 + 50 },
-        data: { label: tbl.name || key, primary: idx === 0 },
+        data: { label: tbl.display_name || tbl.name || tbl.original_filename || key, primary: idx === 0 },
         draggable: idx !== 0
       }
     })

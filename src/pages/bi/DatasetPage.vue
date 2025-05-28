@@ -21,24 +21,30 @@
 
     <div class="toolbar">
       <div class="tab-group">
-        <button class="tab-button" :class="{ active: activeTab === 'sources' }" @click="activeTab = 'sources'">Источники</button>
-        <button class="tab-button" :class="{ active: activeTab === 'fields' }" @click="activeTab = 'fields'">Поля</button>
-        <button class="tab-button" hidden :class="{ active: activeTab === 'params' }" @click="activeTab = 'params'">Параметры</button>
+        <button class="tab-button" :class="{ active: activeTab === 'sources' }"
+          @click="activeTab = 'sources'">Источники</button>
+        <button class="tab-button" :class="{ active: activeTab === 'fields' }"
+          @click="activeTab = 'fields'">Поля</button>
+        <button class="tab-button" hidden :class="{ active: activeTab === 'params' }"
+          @click="activeTab = 'params'">Параметры</button>
       </div>
       <div class="button-preview">
-        <button v-if="activeTab === 'fields'" class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="refreshFields">
+        <button v-if="activeTab === 'fields'" class="btn btn-outline-secondary" style="display: flex; gap: 5px;"
+          @click="refreshFields">
           <template v-if="isPreviewLoading">
             <Loader class="icon-loading" />
             Загрузка…
           </template>
           <template v-else>
-          <RefreshCw :size="18" />Обновить поля
+            <RefreshCw :size="18" />Обновить поля
           </template>
         </button>
-        <button class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="togglePreview" :disabled="isPreviewLoading">
-            <Eye :size="18" /> Предпросмотр
+        <button class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="togglePreview"
+          :disabled="isPreviewLoading">
+          <Eye :size="18" /> Предпросмотр
         </button>
-        <button v-if="activeTab === 'fields'" class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="addField">
+        <button v-if="activeTab === 'fields'" class="btn btn-outline-secondary" style="display: flex; gap: 5px;"
+          @click="addField">
           <Plus :size="18" />Добавить поле
         </button>
       </div>
@@ -48,7 +54,8 @@
       <div v-if="activeTab === 'sources'" class="sidebar-wrapper">
         <aside class="sidebar" :style="{ width: sidebarWidth + 'px' }" :class="{ 'rounded-bottom': !isPreviewVisible }">
           <div class="sidebar-resizer" @mousedown.prevent="startSidebarResize"></div>
-          <SourcesPage v-model:selectedConnection="selectedConnection" v-model:selectedTables="selectedTables" @update:selectedTables="onTablesChange" />
+          <SourcesPage v-model:selectedConnection="selectedConnection" v-model:selectedTables="selectedTables"
+            @update:selectedTables="onTablesChange" />
         </aside>
       </div>
     </transition>
@@ -61,8 +68,9 @@
         <component v-if="activeTab === 'fields' && selectedTables.length" :is="getTabComponent(activeTab)"
           v-model:fields="fields" :tables="selectedTables" :cols="previewCols" :rows="previewRows"
           :dataset-id="needsDataset(activeTab) && dataset.value ? dataset.value.id : null"
-          @remove-table="handleRemoveTable" @update:fields="fields = $event"/>
-        <div v-else class="text-muted p-4" style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center;">
+          @remove-table="handleRemoveTable" @update:fields="fields = $event" />
+        <div v-else class="text-muted p-4"
+          style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center;">
           Сначала выберите таблицу и создайте датасет,<br>чтобы редактировать {{ tabLabel(activeTab) }}.
         </div>
       </div>
@@ -74,7 +82,8 @@
         <footer class="footer-content" :style="{ height: footerHeight + 'px' }">
           <template v-if="isPreviewLoading"></template>
           <template v-else-if="previewRows && previewRows.length">
-            <DatasetTablePreview :cols="previewCols" :rows="previewRows" :loading="isPreviewLoading" :fields="fields" :limit="previewLimit" />
+            <DatasetTablePreview :cols="previewCols" :rows="previewRows" :loading="isPreviewLoading" :fields="fields"
+              :limit="previewLimit" />
           </template>
           <template v-else>
             <div class="preview-placeholder">
@@ -86,16 +95,17 @@
     </transition>
   </div>
   <transition name="fade">
-  <div v-if="showModal" class="modal-overlay">
-    <div class="modal-window">
-      <div class="modal-header">
-        <h5>Настройка поля</h5>
-        <button class="close-btn" @click="showModal = false">&times;</button>
+    <div v-if="showModal" class="modal-overlay">
+      <div class="modal-window">
+        <div class="modal-header">
+          <h5>Настройка поля</h5>
+          <button class="close-btn" @click="showModal = false">&times;</button>
+        </div>
+        <SourceSettings v-if="showModal" :field="selectedField" :tables="selectedTables" :cols="previewCols"
+          :rows="previewRows" @close="showModal = false" @save="onSourceSave" />
       </div>
-      <SourceSettings v-if="showModal" :field="selectedField" :tables="selectedTables" :cols="previewCols" :rows="previewRows" @close="showModal = false" @save="onSourceSave"/>
     </div>
-  </div>
-</transition>
+  </transition>
 </template>
 
 <script setup>
@@ -105,6 +115,7 @@ import { useRoute } from 'vue-router'
 
 import datasetService from '@/js/api/services/bi/datasetService'
 import { getAggregationOptions } from '@/pages/bi/components/DatasetPreview/js/DatasetPreviewFieldOptions.js'
+import { useAutoJoin } from '@/pages/bi/components/DatasetPreview/js/useAutoJoin.js'
 
 import SourceSettings from '@/pages/bi/components/DatasetPreview/SourceSettings.vue'
 import SourcesPage from '@/pages/bi/components/DatasetPreview/SourcesPage.vue'
@@ -195,9 +206,9 @@ async function loadFields() {
   // 1. Если есть datasetId — грузим с API
   if (dataset.value?.id) {
     const resp = await datasetService.listFields({ dataset: datasetId })
-  .then(response => {
-    fields.value = response.data
-  })
+      .then(response => {
+        fields.value = response.data
+      })
     if (resp && resp.data && resp.data.length > 0) {
       fields.value = normalizeFields(resp.data, selectedTables.value[0]?.name || 'НеизвестнаяТаблица');
       return;
@@ -273,7 +284,8 @@ onMounted(async () => {
       id: t.id,
       schema: t.connection_name,
       table: t.table_name,
-      name: t.table_name
+      name: t.table_name,
+      table_ref: t.table_ref,
     }))
     selectedRelations.value = data.tables.map(t => ({
       source: String(data.tables[0].id),
@@ -301,6 +313,16 @@ async function createDatasetFrom(tbl) {
   const { success, data, errors } = await datasetService.createDataset(payload)
   if (success) {
     dataset.value = data
+    if (data.tables && data.tables.length > 0) {
+      // Найди staging-таблицу
+      const mainTable = data.tables.find(t => t.table_name.startsWith('staging_')) || data.tables[0]
+      selectedTables.value = [{
+        id: mainTable.id,
+        table_ref: mainTable.table_name,          // staging-имя (для join/preview)
+        display_name: tbl.original_filename || tbl.name, // красивое имя для UI
+        file_id: tbl.id,                          // связь с FileUpload (если надо)
+      }]
+    }
     if (data?.is_temporary) localStorage.setItem('temp_dataset_id', data.id)
     await doPreview()
     await loadFields()
@@ -407,40 +429,62 @@ watch(
     // 1) создаём датасет на основе первой таблицы
     if (!dataset.value && newTables.length > 0) {
       if (!selectedConnection.value) return;
-      const tbl = newTables[0]
+      const tbl = newTables[0];
       const payload = {
         name: `${tbl.name || tbl.table}_${Date.now()}`,
         connection: selectedConnection.value.id,
         file_source: tbl.id,
         is_temporary: true
-      }
-      const { success, data, errors } = await datasetService.createDataset(payload)
+      };
+      const { success, data, errors } = await datasetService.createDataset(payload);
       if (!success) {
-        console.error('Ошибка создания датасета:', errors)
-        return
+        console.error('Ошибка создания датасета:', errors);
+        return;
       }
       if (data?.is_temporary) {
         localStorage.setItem('temp_dataset_id', data.id);
       }
-      dataset.value = data
-      await doPreview()
-      return
+      dataset.value = data;
+
+      // Перезаписываем selectedTables staging-таблицей!
+      if (data.tables && data.tables.length > 0) {
+        const mainTable = data.tables.find(t => t.table_name.startsWith('staging_')) || data.tables[0];
+        selectedTables.value = [{
+          id: mainTable.id,
+          table_ref: mainTable.table_name,
+          display_name: tbl.original_filename || tbl.name, // сохраняем реальное имя файла
+          // другие поля если надо
+        }];
+      }
+
+      await doPreview();
+      return;
     }
 
     // 2) джойн новой таблицы
     if (dataset.value && newTables.length > oldTables.length) {
-      const added = newTables.find(t => !oldTables.includes(t))
-      const { success: joinOk, errors: joinErr } = await datasetService.createTable({
+      const added = newTables.find(t => !oldTables.includes(t));
+      const { success: joinOk, data, errors: joinErr } = await datasetService.createTable({
         dataset: dataset.value.id,
         connection: dataset.value.connection,
-        table_name: added.name || added.table
-      })
-      if (!joinOk) console.warn('Авто-JOIN не сработал:', joinErr)
-      await refreshFields()
+        table_name: added.table_ref || added.staging_name || added.name,
+      });
+
+      if (joinOk && data.tables && data.tables.length > 0) {
+        // Перезаписываем selectedTables новым списком staging/temp-таблиц
+        selectedTables.value = data.tables.map(t => ({
+          id: t.id,
+          table_ref: t.table_name,
+          name: t.table_name,
+        }));
+      }
+
+      if (!joinOk) console.warn('Авто-JOIN не сработал:', joinErr);
+      await refreshFields();
     }
   },
   { immediate: false }
-)
+);
 
 async function doPreview() {
   if (!dataset.value?.id) {
@@ -459,10 +503,10 @@ async function doPreview() {
 const selectedField = ref(null)
 const showModal = ref(false)
 
-function addField() { 
+function addField() {
   selectedField.value = null
   showModal.value = true
- }
+}
 function handleRemoveTable(t) {
   const i = selectedTables.value.indexOf(t)
   if (i !== -1) selectedTables.value.splice(i, 1)
@@ -864,10 +908,13 @@ body {
   padding: 0;
 }
 
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity .3s;
 }
-.fade-enter-from, .fade-leave-to {
+
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 </style>
