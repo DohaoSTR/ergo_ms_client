@@ -91,7 +91,7 @@ function hideTooltip() {
 <style scoped lang="scss">
 .connection-list {
     list-style: none;
-    max-height: 400px;
+    max-height: 355px;
     overflow-y: auto;
     padding: 0;
     margin: 0;
