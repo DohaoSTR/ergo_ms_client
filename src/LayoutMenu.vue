@@ -101,7 +101,7 @@ function openSidebarFromMenu(pageName) {
       </h5>
       <button type="button" class="btn-close btn-close-white" @click="closeSidebar" aria-label="Закрыть" />
     </div>
-    <div class="offcanvas-body p-0">
+    <div class="offcanvas-body p-0" style="overflow-y: hidden;">
       <component
         :is="{
           datasets: DatasetListPage,
