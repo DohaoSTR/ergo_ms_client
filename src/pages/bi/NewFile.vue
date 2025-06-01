@@ -124,30 +124,22 @@ function openConnectionDialog() {
 
 async function createConnection(data) {
   showConnectionDialog.value = false
-
   try {
     const payload = {
       name: data.name,
       connector_type: data.connector_type,
       config: data.config
     }
-
     const connRes = await apiClient.post('/bi_analysis/bi_connections/', payload)
-
     if (!connRes.success || !connRes.data?.id) {
       console.error('Ошибка создания подключения:', connRes.errors || connRes)
       alert('Не удалось создать подключение')
       return
     }
-
     const newConnectionId = connRes.data.id
-
-    // Финализируем файлы, привязывая к новому подключению
+    console.log(tempUploadedFiles.value)
     await finalizeUploads(newConnectionId)
-
     alert('Подключение успешно создано и файлы загружены!')
-
-    // Переходим на страницу нового подключения
     router.push(`/bi/connections/${newConnectionId}/files/`)
 
   } catch (err) {
