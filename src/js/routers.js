@@ -573,9 +573,15 @@ const biRoutes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/bi/connections/new/dataset',
+    path: '/bi/dataset/new',
     name: 'NewDataset',
     component: () => import('@/pages/bi/DatasetPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/bi/chart/new',
+    name: 'NewChart',
+    component: () => import('@/pages/bi/ChartPage.vue'),
     meta: { requiresAuth: true },
   },
 ]

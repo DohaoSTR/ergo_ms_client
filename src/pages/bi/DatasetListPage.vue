@@ -21,7 +21,7 @@ const cols = [
 const router = useRouter()
 
 function goToNewDataset() {
-  router.push('/bi/connections/new/dataset')
+  router.push('/bi/dataset/new')
 }
 
 const fetchDatasets = async () => {
