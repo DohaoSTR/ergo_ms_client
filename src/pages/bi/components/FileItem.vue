@@ -43,8 +43,15 @@ const menuButton = ref(null)
 const menuDropdown = ref(null)
 
 const tooltipLabel = computed(() => {
-  const ext = props.file.file_type?.toLowerCase() || 'неизвестный'
-  return `Файл формата .${ext}`
+  let ext = props.file.file_type?.toLowerCase()
+  if (!ext && props.file.name) {
+    const m = props.file.name.match(/\.(\w+)$/)
+    if (m) ext = m[1].toLowerCase()
+  }
+  if (ext === 'csv' || ext === 'xlsx' || ext === 'xls' || ext === 'txt') {
+    return `Файл формата .${ext}`
+  }
+  return 'Файл неизвестного формата'
 })
 
 function onIconHover(event) {
@@ -55,7 +62,11 @@ function onIconLeave() {
 }
 
 const iconPath = computed(() => {
-  const ext = props.file.file_type?.toLowerCase()
+  let ext = props.file.file_type?.toLowerCase()
+  if (!ext && props.file.name) {
+    const m = props.file.name.match(/\.(\w+)$/)
+    if (m) ext = m[1].toLowerCase()
+  }
   switch (ext) {
     case 'csv': return new URL('@/assets/bi/icons/csv.svg', import.meta.url).href
     case 'xlsx':

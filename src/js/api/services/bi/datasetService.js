@@ -15,9 +15,19 @@ export default {
     return apiClient.get(BASE, params)
   },
   createDataset(payload) {
-    // POST /api/bi_analysis/bi_datasets/
     return apiClient.post(BASE, payload)
   },
+  joinTable({ datasetId, stagingName, leftColumn, rightColumn, joinType }) {
+  return apiClient.post(
+    `/bi_analysis/bi_datasets/${datasetId}/auto-join/`,
+    {
+      staging_name: stagingName,
+      left_column: leftColumn,
+      right_column: rightColumn,
+      join_type: joinType
+    }
+  );
+},
   getDataset(id) {
     // GET /api/bi_analysis/bi_datasets/{id}/
     return apiClient.get(`${BASE}${id}/`)
@@ -73,5 +83,36 @@ export default {
   deleteFile(id) {
     // DELETE /api/bi_analysis/bi_datasets/upload/{id}/
     return apiClient.delete(`${UPLOAD}${id}/`)
-  }
+  },
+  addTableToDataset(datasetId, fileId) {
+    return apiClient.post(`${BASE}${datasetId}/add-table/`, { file_id: fileId });
+  },
+
+  // ===== AUTO-JOIN API =====
+  getStagingTables(connectionId) {
+    // GET /bi_analysis/bi_datasets/connection/{connectionId}/tables/
+    return apiClient.get(`${BASE}connection/${connectionId}/tables/`)
+  },
+
+  createFromStaging(connectionId, tableName) {
+    // POST /bi_analysis/bi_datasets/create-from-table/
+    return apiClient.post(`${BASE}create-from-table/`, {
+      connection_id: connectionId,
+      table_name: tableName,
+    })
+  },
+
+  joinStagingTable(datasetId, tableName) {
+    // POST /bi_analysis/bi_datasets/join-table/
+    return apiClient.post(`${BASE}join-table/`, {
+      dataset_id: datasetId,
+      table_name: tableName,
+    })
+  },
+  createFromFile(connectionId, fileId) {
+    return apiClient.post('/bi_analysis/bi_datasets/create-from-table/', {
+        connection_id: connectionId,
+        file_id: fileId,
+    })
+},
 }

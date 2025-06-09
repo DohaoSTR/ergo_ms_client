@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useFileList } from '@/pages/bi/components/js/useFileList'
 import { useDbTablesList } from '@/pages/bi/components/js/useDbTablesList'
 import { Table } from 'lucide-vue-next'
@@ -30,7 +30,7 @@ import { Table } from 'lucide-vue-next'
 const props = defineProps({
   connectionId: Number,
   connectionType: String,
-  linkedTables: {
+  selectedTables: {
     type: Array,
     default: () => []
   }
@@ -65,17 +65,37 @@ const {
 )
 
 function handleDragStart(file, event) {
+  if (!event.dataTransfer) return; // игнорировать некорректные вызовы
   event.dataTransfer.setData('application/json', JSON.stringify(file))
 }
 
-function getTableKey(table) {
-  return `${table.schema || ''}::${table.table || ''}::${table.name || ''}`
+function isLinked(item) {
+  const result = props.selectedTables.some(tbl => {
+    if (item.file_id || tbl.file_id) {
+      const cmp = String(tbl.file_id) === String(item.id)
+      if (cmp) {
+        console.log('[isLinked] file_id совпал:', { tbl, item })
+      }
+      return cmp
+    }
+    if (item.table_name || tbl.table_name) {
+      const cmp = tbl.table_name === item.table_name
+      if (cmp) {
+        console.log('[isLinked] table_name совпал:', { tbl, item })
+      }
+      return cmp
+    }
+    return false
+  })
+  if (result) {
+    console.log('[isLinked] TRUE для:', item)
+  }
+  return result
 }
 
-function isLinked(file) {
-  const fileKey = getTableKey(file)
-  return props.linkedTables.some(t => getTableKey(t) === fileKey)
-}
+onMounted(() => {
+  console.log('ConnectionTables selectedTables:', props.selectedTables)
+})
 
 watch(() => props.connectionId, async (id) => {
   if (!id) return

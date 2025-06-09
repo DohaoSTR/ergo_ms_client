@@ -28,7 +28,7 @@
             <span v-else>
               <button class="source-btn" @click="onSourceClick(f)">
                 <template v-if="f.source">
-                  {{ tableLabel(f.source?.table) }}.{{ f.source?.column }}
+                  {{ getFieldSourceLabel(f) }}
                 </template>
                 <template v-else>
                   Нет источника
@@ -82,9 +82,9 @@ const emit = defineEmits(['edit-field', 'add-field', 'update:fields', 'removeTab
 const tableLabel = (tableKey) => {
   if (!tableKey) return 'Нет источника';
   const tbl = props.tables.find(t => String(t.id) === String(tableKey));
-  if (tbl) return tbl.name || tbl.table || tbl.id;
+  if (tbl) return tbl.display_name || tbl.name || tbl.table || tbl.id;
   const byName = props.tables.find(t => t.name === tableKey || t.table === tableKey);
-  if (byName) return byName.name || byName.table;
+  if (byName) return byName.display_name || byName.name || byName.table;
   if (typeof tableKey === 'string' && tableKey.startsWith('expr')) return 'Вычисляемое поле';
   return tableKey;
 };
@@ -114,6 +114,17 @@ function onSourceSave(newSource) {
     emit('update:fields', updatedFields)
   }
   showModal.value = false
+}
+
+function getFieldSourceLabel(field) {
+  const tbl = props.tables.find(
+    t => String(t.id) === String(field.source_table)
+  )
+  if (tbl) return `${tbl.display_name || tbl.name || tbl.table}.${field.name}`;
+  if (field.source && field.source.table) {
+    return `${field.source.table}.${field.source.column || field.name}`;
+  }
+  return field.name;
 }
 </script>
 

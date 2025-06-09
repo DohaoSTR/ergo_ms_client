@@ -26,7 +26,8 @@ const fetchConnections = async () => {
       connector_type_display: item.connector_type_display || item.connector_type || '—',
       created_at: item.created_at,
       config: item.config,
-      owner: item.owner
+      owner: item.owner,
+      type: 'connection'
     }))
   } else {
     console.error('Ошибка: ответ от API не является массивом', response)
@@ -70,6 +71,11 @@ const goToCreateConnection = async () => {
   await router.push('/bi/connections/new')
 }
 
+function handleDeleteRow(row) {
+  const idx = connections.value.findIndex(u => u.id === row.id)
+  if (idx !== -1) connections.value.splice(idx, 1)
+}
+
 onMounted(fetchConnections)
 </script>
 
@@ -87,7 +93,7 @@ onMounted(fetchConnections)
         <button type="button" class="btn btn-primary" style="width: 12.5rem;" @click="goToCreateConnection">Создать подключение</button>
       </div>
       <div style="margin-top: 1rem;">
-        <SimpleTableDataSet :cols="cols" :users="transformedData" :isDatasetSidebarOpen="isDatasetSidebarOpen" />
+        <SimpleTableDataSet :cols="cols" :users="transformedData" :isDatasetSidebarOpen="isDatasetSidebarOpen" :currentPage="'connections'" @delete-row="handleDeleteRow"/>
       </div>
     </div>
   </div>

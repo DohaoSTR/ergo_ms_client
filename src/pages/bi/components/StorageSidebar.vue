@@ -21,11 +21,7 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
 </script>
 
 <template>
-  <div
-    class="storage-sidebar"
-    :class="{ show: isDatasetSidebarOpen }"
-    :style="{ visibility: isDatasetSidebarOpen ? 'visible' : 'hidden' }"
-  >
+  <div class="storage-sidebar" :class="{ show: isDatasetSidebarOpen }" :style="{ visibility: isDatasetSidebarOpen ? 'visible' : 'hidden' }">
     <div class="header d-flex justify-content-between align-items-center p-3">
       <h5 class="m-0">{{ title }}</h5>
       <button class="btn-close btn-close-white" @click="isDatasetSidebarOpen = false" />
@@ -68,17 +64,30 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
 .storage-sidebar {
   position: fixed;
   top: 0;
-  left: 260px; // смещение от левого сайдбара
+  left: 260px;
   width: 768px;
   height: 100vh;
   background-color: #18181a;
   z-index: 1050;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-  transform: translateX(-100%); // изначально спрятана за левым краем
+  transform: translateX(-100%);
   transition: transform 0.3s ease-in-out;
 
   &.show {
-    transform: translateX(0); // появляется, двигаясь вправо
+    transform: translateX(0);
   }
+
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  flex: 0 0 auto;
+}
+
+.body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
 }
 </style>

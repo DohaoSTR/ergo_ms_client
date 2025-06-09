@@ -1,30 +1,19 @@
-/**
- * Алгоритм авто-join: перебирает таблицы, ищет совпадающие поля (например, одинаковые имена колонок),
- * и возвращает массив связей: [{ source, target, sourceField, targetField, joinType }]
- */
-export function autoJoinTables(tables) {
-  if (!Array.isArray(tables) || tables.length < 2) return []
+export function getColumnType(table, columnName) {
+  if (!table || !table.columns_info) return null;
+  const idx = (table.columns_info.columns || []).indexOf(columnName);
+  if (idx === -1) return null;
+  return (table.columns_info.types || [])[idx] || null;
+}
 
-  const joins = []
-  const main = tables[0]
-
-  // пример: auto-join по совпадающим колонкам
-  for (let i = 1; i < tables.length; i++) {
-    const tableA = main
-    const tableB = tables[i]
-
-    // Допустим, у каждой таблицы есть поле columns: ['id', 'name', ...]
-    const common = tableA.columns.filter(col => tableB.columns.includes(col))
-    if (common.length) {
-      joins.push({
-        source: tableA.id,
-        target: tableB.id,
-        sourceField: common[0],
-        targetField: common[0],
-        joinType: 'inner'
-      })
+// Проверить, совместимы ли связи между двумя таблицами
+export function checkJoinCompatibility(mainTable, linkedTable, relations) {
+  // relations: [{ left: "ИмяКолонки1", right: "ИмяКолонки2" }, ...]
+  for (const rel of relations) {
+    const typeA = getColumnType(mainTable, rel.left);
+    const typeB = getColumnType(linkedTable, rel.right);
+    if (!typeA || !typeB || typeA !== typeB) {
+      return false;
     }
-    // Если нет совпадающих колонок, можно создать "пустой join" или оставить без связи
   }
-  return joins
+  return true;
 }

@@ -1,8 +1,9 @@
 <template>
-  <div class="layout" :style="{
-  gridTemplateColumns: activeTab === 'sources' ? '250px 1fr' : '1fr',
-  '--footer-height': isPreviewVisible ? footerHeight + 'px' : '0px'
-}">
+  <div class="layout" :class="{ 'with-sidebar': activeTab === 'sources', 'resizing-sidebar': isSidebarResizing }"
+    :style="{
+      gridTemplateColumns: activeTab === 'sources' ? sidebarWidth + 'px 1fr' : '0px 1fr',
+      '--footer-height': isPreviewVisible ? footerHeight + 'px' : '0px'
+    }">
     <header class="file_area_header">
       <div class="file_area_header_label">
         <nav aria-label="breadcrumb">
@@ -20,34 +21,57 @@
 
     <div class="toolbar">
       <div class="tab-group">
-        <button class="tab-button" :class="{ active: activeTab === 'sources' }" @click="activeTab = 'sources'">Источники</button>
-        <button class="tab-button" :class="{ active: activeTab === 'fields' }" @click="activeTab = 'fields'">Поля</button>
-        <button class="tab-button" hidden :class="{ active: activeTab === 'params' }" @click="activeTab = 'params'">Параметры</button>
+        <button class="tab-button" :class="{ active: activeTab === 'sources' }"
+          @click="activeTab = 'sources'">Источники</button>
+        <button class="tab-button" :class="{ active: activeTab === 'fields' }"
+          @click="activeTab = 'fields'">Поля</button>
+        <button class="tab-button" hidden :class="{ active: activeTab === 'params' }"
+          @click="activeTab = 'params'">Параметры</button>
       </div>
       <div class="button-preview">
-        <button v-if="activeTab === 'fields'" class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="refreshFields">
-          <template v-if="isPreviewLoading"><Loader class="icon-loading" />Загрузка…</template>
-          <template v-else><RefreshCw :size="18" />Обновить поля</template>
+        <button v-if="activeTab === 'fields'" class="btn btn-outline-secondary" style="display: flex; gap: 5px;"
+          @click="refreshFields">
+          <template v-if="isPreviewLoading">
+            <Loader class="icon-loading" />
+            Загрузка…
+          </template>
+          <template v-else>
+            <RefreshCw :size="18" />Обновить поля
+          </template>
         </button>
-        <button class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="togglePreview" :disabled="isPreviewLoading"><Eye :size="18" />Предпросмотр</button>
-        <button v-if="activeTab === 'fields'" class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="addField"><Plus :size="18" />Добавить поле</button>
+        <button class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="togglePreview"
+          :disabled="isPreviewLoading">
+          <Eye :size="18" /> Предпросмотр
+        </button>
+        <button v-if="activeTab === 'fields'" class="btn btn-outline-secondary" style="display: flex; gap: 5px;"
+          @click="addField">
+          <Plus :size="18" />Добавить поле
+        </button>
       </div>
     </div>
 
+    <transition name="slide">
+      <div v-if="activeTab === 'sources'" class="sidebar-wrapper">
+        <aside class="sidebar" :style="{ width: sidebarWidth + 'px' }" :class="{ 'rounded-bottom': !isPreviewVisible }">
+          <div class="sidebar-resizer" @mousedown.prevent="startSidebarResize"></div>
+          <SourcesPage v-model:selectedConnection="selectedConnection" v-model:selectedTables="selectedTables"
+            @update:selectedTables="onTablesChange" />
+        </aside>
+      </div>
+    </transition>
+
     <main class="file_area" :class="{ 'rounded-bottom': !isPreviewVisible }">
       <div v-if="activeTab === 'sources'" class="flow-wrapper">
-        <DatasetCreating v-model:selectedConnection="selectedConnection" 
-        v-model:mainTable="mainTable" :relations="relations" :all-tables="allTablesOfConnection" 
-        @editRelation="onEditRelation" @removeRelation="removeRelation"
-        @openTableLinkModal="openTableLinkModal" @tablesLoaded="handleTablesLoaded"/>
+        <SourcesPageLinks v-model:selectedTables="selectedTables" v-model:relations="selectedRelations" @drop-table="handleDropTable" />
       </div>
       <div v-else>
         <component v-if="activeTab === 'fields' && selectedTables.length" :is="getTabComponent(activeTab)"
           v-model:fields="fields" :tables="selectedTables" :cols="previewCols" :rows="previewRows"
           :dataset-id="needsDataset(activeTab) && dataset.value ? dataset.value.id : null"
           @remove-table="handleRemoveTable" @update:fields="fields = $event" />
-        <div v-else class="text-muted p-4" style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center;">
-          Сначала выберите таблицу из подключения и создайте датасет,<br>чтобы редактировать {{ tabLabel(activeTab) }}.
+        <div v-else class="text-muted p-4"
+          style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center;">
+          Сначала выберите таблицу и создайте датасет,<br>чтобы редактировать {{ tabLabel(activeTab) }}.
         </div>
       </div>
     </main>
@@ -58,11 +82,12 @@
         <footer class="footer-content" :style="{ height: footerHeight + 'px' }">
           <template v-if="isPreviewLoading"></template>
           <template v-else-if="previewRows && previewRows.length">
-            <DatasetTablePreview :cols="previewCols" :rows="previewRows" :loading="isPreviewLoading" :fields="fields" :limit="previewLimit" />
+            <DatasetTablePreview :cols="previewCols" :rows="previewRows" :loading="isPreviewLoading" :fields="fields"
+              :limit="previewLimit" />
           </template>
           <template v-else>
             <div class="preview-placeholder">
-              Чтобы увидеть предпросмотр выберите подключение и таблицу, которая ляжет в основу датасета
+              Выберите подключение и перетяните на основное поле таблицы, чтобы увидеть превью
             </div>
           </template>
         </footer>
@@ -71,59 +96,36 @@
   </div>
   <transition name="fade">
     <div v-if="showModal" class="modal-overlay">
-      <div class="modal-window modal-window-fields">
+      <div class="modal-window">
         <div class="modal-header">
           <h5>Настройка поля</h5>
           <button class="close-btn" @click="showModal = false">&times;</button>
         </div>
-        <SourceSettings v-if="showModal" :field="selectedField" :tables="selectedTables" :cols="previewCols" :rows="previewRows" @close="showModal = false" @save="onSourceSave" />
+        <SourceSettings v-if="showModal" :field="selectedField" :tables="selectedTables" :cols="previewCols"
+          :rows="previewRows" @close="showModal = false" @save="onSourceSave" />
       </div>
     </div>
   </transition>
-
-  <transition name="fade">
-  <div v-if="showTableLinkModal" class="modal-overlay">
-    <div class="modal-window table-link-modal">
-      <TableLinkModal
-  :all-tables="allTablesOfConnection"
-  :linked-table-ids="computedLinkedTableIds"
-  :main-table="mainTable"
-  :edit-relation="editingRelation"
-  :dataset-id="currentDatasetId"
-  @close="showTableLinkModal = false"
-  @apply="handleRelationApply"
-/>
-    </div>
-  </div>
-</transition>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, } from 'vue'
 import { RefreshCw, Plus, Eye, Loader } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
 import datasetService from '@/js/api/services/bi/datasetService'
 import { getAggregationOptions } from '@/pages/bi/components/DatasetPreview/js/DatasetPreviewFieldOptions.js'
+import { useAutoJoin } from '@/pages/bi/components/DatasetPreview/js/useAutoJoin.js'
 
-import TableLinkModal from '@/pages/bi/components/DatasetPreview/TableLinkModal.vue'
 import SourceSettings from '@/pages/bi/components/DatasetPreview/SourceSettings.vue'
-import DatasetCreating from '@/pages/bi/components/DatasetPreview/DatasetCreating.vue'
+import SourcesPage from '@/pages/bi/components/DatasetPreview/SourcesPage.vue'
+import SourcesPageLinks from '@/pages/bi/components/DatasetPreview/SourcesPageLinks.vue'
 import FieldsPage from '@/pages/bi/components/DatasetPreview/FieldsPage.vue'
 import ParamsPage from '@/pages/bi/components/DatasetPreview/ParamsPage.vue'
 import DatasetTablePreview from '@/pages/bi/components/DatasetPreview/DatasetTablePreview.vue'
 
 const isPreviewLoading = ref(false)
 const isLoading = ref(false)
-
-const selectedConnection = ref(null)
-const mainTable = ref(null)
-const showTableLinkModal = ref(false)
-
-const editingRelation = ref(null)
-const editingRelationIndex = ref(null)
-
-const allTablesOfConnection = ref([])
 
 // Параметр из урла (если есть)
 const route = useRoute()
@@ -135,9 +137,11 @@ const isPreviewVisible = ref(true)
 
 const dataset = ref({})
 const fields = ref([])
-const relations = ref([])
 
 const isSyncFromBackend = ref(false)
+
+// Источник
+const selectedConnection = ref(null)
 
 // Доп.список таблиц (SourcesPageLinks)
 const selectedTables = ref([])
@@ -148,7 +152,13 @@ const previewCols = ref([])
 const previewRows = ref([])
 const previewLimit = ref(10)
 
-const currentDatasetId = computed(() => dataset.value?.id)
+// ==== Сайдбар ресайз ====
+const sidebarWidth = ref(260)
+const sidebarMin = 150
+const sidebarMax = 400
+let isSidebarResizing = false
+let sidebarStartX = 0
+let sidebarStartWidth = 0
 
 const emit = defineEmits([
   'update:selectedConnection',
@@ -162,72 +172,6 @@ const props = defineProps({
   }
 })
 
-function handleTablesLoaded(tables) {
-  allTablesOfConnection.value = tables
-}
-
-const usedRightTableIds = computed(() =>
-  (relations.value || []).map(r => r.rightTableId)
-)
-
-const computedLinkedTableIds = computed(() => {
-  if (editingRelation.value?.rightTableId) {
-    return usedRightTableIds.value.filter(
-      id => String(id) !== String(editingRelation.value.rightTableId)
-    )
-  }
-  return usedRightTableIds.value
-})
-
-async function handleRelationApply(relation) {
-  // ... сохраняешь связь (JOIN)
-  const ok = await safeUpdateDataset(datasetService.getDataset(dataset.value.id));
-  if (!ok) return;
-  console.log('dataset.value после JOIN:', dataset.value)
-  console.log('DATASET: ', JSON.stringify(dataset.value, null, 2));
-  console.log('TABLES: ', dataset.value.tables);
-  relations.value = getRelationsFromDataset(dataset.value)
-  console.log('[AFTER JOIN] dataset:', dataset.value);
-  await loadPreview();
-}
-
-function onEditRelation(rel, idx) {
-  // НЕ просто копия {...rel}, а полный клон без реактивности:
-  editingRelation.value = JSON.parse(JSON.stringify(rel))
-  editingRelationIndex.value = idx
-  showTableLinkModal.value = true
-}
-
-function getRelationsFromDataset(data) {
-  if (!data || !data.tables) return []
-  const mainTable = data.tables[0]
-  return data.tables
-    .filter(t => t.joined_on)
-    .map(t => ({
-      leftTableId: mainTable.id,
-      rightTableId: t.id,
-      joinType: t.joined_on?.type,
-      leftColumn: t.joined_on?.left_column,
-      rightColumn: t.joined_on?.right_column,
-      rightTableName: t.display_name || t.table_name, // если понадобится
-    }))
-}
-
-function openTableLinkModal() {
-  console.log('openTableLinkModal', dataset.value?.id, dataset.value);
-  if (!dataset.value?.id) {
-    alert('Создайте датасет прежде, чем добавлять связи!');
-    return;
-  }
-  editingRelation.value = null
-  editingRelationIndex.value = null
-  showTableLinkModal.value = true
-}
-
-function removeRelation(idx) {
-  relations.value.splice(idx, 1)
-}
-
 function needsDataset(tab) {
   return tab === 'fields' || tab === 'params'
 }
@@ -237,7 +181,6 @@ function tabLabel(tab) {
 
 async function loadPreview() {
   if (!dataset.value || !dataset.value.id) return;
-  console.log('[PREVIEW_DEBUG] datasetId:', dataset.value.id, 'table_ref:', dataset.value.table_ref);
   isPreviewLoading.value = true;
   try {
     const { success, data } = await datasetService.preview(dataset.value.id, { limit: previewLimit.value });
@@ -277,33 +220,23 @@ async function loadFields() {
 
   // 2. Если есть cols и rows (т.е. предпросмотр)
   if (previewCols.value.length && previewRows.value.length) {
-  fields.value = previewCols.value.map((col, idx) => {
-    // --- определяем источник поля ---
-    let tableName = 'НеизвестнаяТаблица';
-    let columnName = col;
-    if (col.includes('__')) {
-      [tableName, columnName] = col.split('__', 2);
-    }
-
-    // ищем id таблицы по имени
-    let tableObj = (selectedTables.value || []).find(t => t.name === tableName || t.display_name === tableName);
-    let tableId = tableObj?.id;
-
-    const columnValues = previewRows.value.map(row => row[idx]);
-    const colType = detectColumnType(columnValues);
-    const aggOptions = getAggregationOptions(colType);
-    return {
-      id: 'new_' + idx,
-      name: columnName,
-      source: { table: tableName, column: columnName },
-      source_table: tableId,
-      type: colType,
-      aggregation: aggOptions[0]?.value || 'none',
-      description: ''
-    }
-  });
-  return;
-}
+    const tableName = selectedTables.value[0]?.name || 'НеизвестнаяТаблица';
+    fields.value = previewCols.value.map((col, idx) => {
+      const columnValues = previewRows.value.map(row => row[idx]);
+      const colType = detectColumnType(columnValues);
+      const aggOptions = getAggregationOptions(colType);
+      return {
+        id: 'new_' + idx,
+        name: col,
+        source: { table: tableName, column: col },
+        source_table: selectedTables.value[0]?.id,
+        type: colType,
+        aggregation: aggOptions[0]?.value || 'none',
+        description: ''
+      }
+    });
+    return;
+  }
 
   // 3. Если только cols (нет rows)
   if (previewCols.value.length) {
@@ -343,15 +276,10 @@ function normalizeFields(fields, fallbackTable = 'НеизвестнаяТабл
   });
 }
 
-watch(relations, (v) => { console.log('[relations] changed:', v) })
-
 onMounted(async () => {
   if (datasetId) {
     const { data } = await datasetService.getDataset(datasetId)
     dataset.value = data
-    console.log('DATASET: ', JSON.stringify(dataset.value, null, 2));
-    console.log('TABLES: ', dataset.value.tables);
-    relations.value = getRelationsFromDataset(data)
     selectedTables.value = data.tables.map(t => ({
       id: t.id,
       schema: t.connection_name,
@@ -379,40 +307,26 @@ async function createDatasetFrom(tbl) {
     file_source: tbl.id,
     is_temporary: true
   }
-  const ok = await safeUpdateDataset(datasetService.createDataset(payload));
-  if (!ok) return; // Дальше не идём, если ошибка
-
-  // Всё остальное как раньше
-  const data = dataset.value;
-  if (data.tables && data.tables.length > 0) {
-    const mainTable = data.tables.find(t => t.table_name.startsWith('temp_')) ||
-      data.tables.find(t => t.table_name.startsWith('staging_')) ||
-      data.tables[0];
-    selectedTables.value = [{
-      id: mainTable.id,
-      table_ref: mainTable.table_name,
-      display_name: tbl.display_name || tbl.name || tbl.table_name,
-      file_id: tbl.id,
-    }]
-  }
-  if (data?.is_temporary) localStorage.setItem('temp_dataset_id', data.id)
-  await doPreview()
-  await loadFields()
-}
-
-async function safeUpdateDataset(promise) {
-  const { success, data, error } = await promise;
-  if (success && data && data.id) {
-    dataset.value = data;
-    relations.value = getRelationsFromDataset(data)
-    return true;
+  console.log(payload)
+  const { success, data, errors } = await datasetService.createDataset(payload)
+  if (success) {
+    dataset.value = data
+    if (data.tables && data.tables.length > 0) {
+      const mainTable = data.tables.find(t => t.table_name.startsWith('staging_')) || data.tables[0]
+      selectedTables.value = [{
+        id: mainTable.id,
+        table_ref: mainTable.table_name,
+        display_name: tbl.display_name || tbl.name || tbl.table_name,
+        file_id: tbl.id,
+      }]
+    }
+    if (data?.is_temporary) localStorage.setItem('temp_dataset_id', data.id)
+    await doPreview()
+    await loadFields()
   } else {
-    // Не затирай dataset! Выводи ошибку.
-    if (error) console.error(error);
-    return false;
+    console.error(errors)
   }
 }
-
 
 async function refreshFields() {
   if (!dataset.value || !dataset.value.id) return;
@@ -433,6 +347,29 @@ async function refreshFields() {
     }
   }
   await loadPreview();
+}
+
+function startSidebarResize(e) {
+  isSidebarResizing = true
+  sidebarStartX = e.clientX
+  sidebarStartWidth = sidebarWidth.value
+  window.addEventListener('mousemove', resizeSidebar)
+  window.addEventListener('mouseup', stopSidebarResize)
+}
+
+function resizeSidebar(e) {
+  if (!isSidebarResizing) return
+  const delta = e.clientX - sidebarStartX
+  sidebarWidth.value = Math.min(
+    sidebarMax,
+    Math.max(sidebarMin, sidebarStartWidth + delta)
+  )
+}
+
+function stopSidebarResize() {
+  isSidebarResizing = false
+  window.removeEventListener('mousemove', resizeSidebar)
+  window.removeEventListener('mouseup', stopSidebarResize)
 }
 
 // ==== Футер ресайз ====
@@ -468,6 +405,7 @@ function stopFooterResize() {
 
 // чтобы при уходе со страницы не оставить слушателей
 onBeforeUnmount(() => {
+  stopSidebarResize()
   stopFooterResize()
 })
 
@@ -482,16 +420,70 @@ function togglePreview() {
   }
 }
 
-watch(mainTable, async (newTable, oldTable) => {
-  if (newTable && newTable !== oldTable) {
-    // Если датасет еще не создан — создай
-    if (!dataset.value?.id) {
-      await createDatasetFrom(newTable)
-    }
-    // После этого — загрузи предпросмотр
-    await loadPreview()
+async function syncTablesFromBackend() {
+  if (!dataset.value.id) return;
+  isSyncFromBackend.value = true;
+  const resp = await datasetService.getDataset(dataset.value.id);
+  if (resp && resp.data && resp.data.tables) {
+    selectedTables.value = resp.data.tables.map(t => ({
+      ...t,
+      display_name: t.display_name || t.name || t.table_name,
+      file_id: t.file_id,
+    }));
   }
-})
+  isSyncFromBackend.value = false;
+}
+
+watch(
+  () => selectedTables.value.slice(),
+  async (newTables, oldTables) => {
+    if (isSyncFromBackend.value) return
+
+    // Первый drop — создаем датасет
+    if (!dataset.value && newTables.length === 1) {
+      return;
+    }
+
+    // Auto-join для следующих таблиц
+    if (dataset.value && newTables.length > oldTables.length && newTables.length > 1) {
+      const added = newTables.find(
+        t => !oldTables.some(o =>
+          (o.id ?? o.table_ref ?? o.staging_name) === (t.id ?? t.table_ref ?? t.staging_name)
+        )
+      );
+      console.log('ADDED FOR JOIN:', added);
+
+      // Используй added только тут
+      if (!added) return;
+
+      if (!added.table_ref && !added.staging_name && !added.table_name) {
+        await syncTablesFromBackend();
+        alert('Ошибка: не найден staging-имя для join. selectedTables сброшен по данным backend.');
+        return;
+      }
+
+      const stagingName = added.table_ref || added.staging_name || added.table_name;
+      if (!stagingName || stagingName.endsWith('.xlsx') || stagingName.endsWith('.csv')) {
+        await syncTablesFromBackend();
+        alert('Ошибка: не найдено staging-имя для join (ожидается table_ref)');
+        return;
+      }
+
+      try {
+        await datasetService.joinTable({ datasetId: dataset.value.id, stagingName });
+        await syncTablesFromBackend();
+        await loadPreview();
+        await loadFields();
+      } catch (e) {
+        await syncTablesFromBackend();
+        alert('Ошибка авто-JOIN (сеть или сервер)');
+      }
+    }
+  },
+  { immediate: false }
+)
+
+
 
 async function doPreview() {
   if (!dataset.value?.id) {
@@ -514,12 +506,10 @@ function addField() {
   selectedField.value = null
   showModal.value = true
 }
-
 function handleRemoveTable(t) {
   const i = selectedTables.value.indexOf(t)
   if (i !== -1) selectedTables.value.splice(i, 1)
 }
-
 function getTabComponent(tab) {
   const cmp = { fields: FieldsPage, params: ParamsPage }[tab] || null
   return cmp
@@ -530,15 +520,46 @@ function onSourceSave(newField) {
   showModal.value = false
 }
 
-watch(dataset, (val) => {
-  console.log('Dataset changed:', val)
-})
-
-onMounted(() => {
-  if (mainTable.value && dataset.value?.id) {
-    loadPreview()
+onMounted(async () => {
+  const tempDatasetId = localStorage.getItem('temp_dataset_id')
+  if (tempDatasetId) {
+    try {
+      await datasetService.deleteDataset(tempDatasetId)
+    } catch (e) {
+    }
+    localStorage.removeItem('temp_dataset_id')
   }
 })
+
+async function handleDropTable(table) {
+  if (isLoading.value) return;
+  isLoading.value = true;
+  try {
+    if (!dataset.value.id) {
+      // Первый дроп — создаём датасет, sync только с backend
+      const newDatasetResp = await datasetService.createDataset({
+        name: table.original_filename || table.name || 'Новый датасет',
+        file_source: table.id,
+        connection: table.connection,
+      });
+      const newDataset = newDatasetResp.data || newDatasetResp;
+      dataset.value = newDataset;
+      await syncTablesFromBackend();
+      await loadPreview();
+      await loadFields();
+      return;
+    } else {
+      // Второй и последующие дропы — вызываем addTableToDataset
+      const resp = await datasetService.addTableToDataset(dataset.value.id, table.id);
+      // Можно сделать проверку, если что-то вернулось с ошибкой
+      await syncTablesFromBackend();
+      await loadPreview();
+      await loadFields();
+    }
+  } finally {
+    isLoading.value = false;
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -610,16 +631,25 @@ body {
   grid-template-areas:
     "header header"
     "toolbar toolbar"
-    "field field"
+    "sidebar chat"
     "footer footer";
   height: 90vh;
   transition: grid-template-columns 0.4s ease;
+}
+
+.layout.with-sidebar {
+  --sidebar-width: 260px;
+}
+
+.layout.resizing-sidebar {
+  transition: none;
 }
 
 .header,
 .file_area_header {
   position: relative;
   grid-area: header;
+  background-color: #313338;
   display: flex;
   align-items: center;
   padding: 0 1rem;
@@ -638,6 +668,7 @@ body {
 
 .toolbar {
   grid-area: toolbar;
+  background-color: #313338;
   display: flex;
   align-items: center;
   padding: 0 1rem;
@@ -678,8 +709,50 @@ body {
   background: rgba(229, 57, 53, 0.2);
 }
 
+.sidebar-wrapper {
+  display: flex;
+  grid-area: sidebar;
+  height: 100%;
+}
+
+.sidebar {
+  position: relative;
+  min-width: 260px;
+  background-color: #1e1f22;
+  border-right: 1px solid #4e5058;
+  overflow: hidden;
+  cursor: default;
+}
+
+.sidebar.rounded-bottom {
+  border-bottom-left-radius: 12px !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.sidebar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 1;
+}
+
+.sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 10;
+}
+
 .file_area {
-  grid-area: field;
+  grid-area: chat;
+  background-color: #313338;
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -831,9 +904,12 @@ body {
 
 .modal-window {
   background: #2a2a2a;
+  width: min(1200px, 95vw);
+  height: min(750px, 90vh);
   border-radius: 12px;
   padding: 1.5rem;
   position: relative;
+  overflow-y: hidden;
   transform: translateX(140px);
 }
 
@@ -869,23 +945,5 @@ body {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-}
-
-.table-link-modal {
-  width: 624px;
-  min-height: 310px;
-  background: #232323;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px #000b;
-  padding: 0;
-  position: relative;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-window-field{
-  width: min(1200px, 95vw);
-  height: min(750px, 90vh);
 }
 </style>
