@@ -7,7 +7,6 @@ import {
   EmailMenuSection,
   SettingsMenuSection,
   UserMenuSection,
-
   MapsMenuSection,
   BillingMenuSection,
   CalendarMenuSection,
@@ -22,6 +21,7 @@ import {
   BIMenuSection,
   ShortcodesMenuSection,
   EducationAnalyticMenuSection,
+  ExpertSystemSection,
 } from '@/js/menu-sections.js'
 
 import MenuGroup from '@/components/menu/MenuGroup.vue'
@@ -121,6 +121,7 @@ const menuSections = ref([
   AdminPanelMenuSection,
   WatermarkedVideoSection,
   ShortcodesMenuSection,
+  ExpertSystemSection,
 ])
 
 const separators = (index) => {

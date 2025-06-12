@@ -147,7 +147,6 @@ export const InputsMenuSection = {
   title: 'Формы ввода',
 }
 
-// Модальные окна
 export const ComponentsMenuSection = {
   id: 14,
   icon: Component,
@@ -234,5 +233,25 @@ export const EducationAnalyticMenuSection = {
     { path: 'ProfilePage', name: "Профиль" },
     { path: 'AdminPanelPage', name: "Админ-панель" },
     { path: 'SuperUserPage', name: "SAdmin  " },
+  ],
+}
+
+// Модуль экспертной системы
+export const ExpertSystemSection = {
+  id: 20,
+  icon: ChartBarStacked,
+  routeName: 'ExpertSystem',
+  title: 'Экспертная система вакансий',
+  list: [
+    { path: 'Skills', name: 'Навыки' },
+    { path: 'Profile', name: 'Профиль' },
+    { path: 'Groups', name: 'Группы' },
+    { path: 'Vacancies', name: 'Вакансии' },
+    { path: 'Proforientation', name: 'Профориентация' },
+    { path: 'Profession', name: 'Менеджер профессий' },
+    { path: 'OrientationTest', name: 'Менеджер тестов' },
+    { path: 'AllTests', name: 'Управление тестами для навыков' },
+    { path: 'StudentCourses', name: 'Рекомендованные курсы' },
+    { path: 'StudentsList', name: 'Студенты' }
   ],
 }
