@@ -1,12 +1,12 @@
 <script setup>
 import { computed } from 'vue'
-import { isDatasetSidebarOpen } from '@/js/bi/useSidebarStore'
 import DatasetListPage from '@/pages/bi/DatasetListPage.vue'
 import ConnectionListPage from '@/pages/bi/ConnectionListPage.vue'
 import ChartListPage from '@/pages/bi/ChartListPage.vue'
 
-const props = defineProps({
-  currentPage: String
+defineProps({
+  isDatasetSidebarOpen: Boolean,
+  currentPage:          String
 })
 
 const emit = defineEmits(['close'])
@@ -21,15 +21,30 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
 </script>
 
 <template>
-  <div class="storage-sidebar" :class="{ show: isDatasetSidebarOpen }" :style="{ visibility: isDatasetSidebarOpen ? 'visible' : 'hidden' }">
-    <div class="header d-flex justify-content-between align-items-center p-3">
-      <h5 class="m-0">{{ title }}</h5>
-      <button class="btn-close" @click="isDatasetSidebarOpen = false" />
+  <div
+    class="offcanvas offcanvas-start"
+    :class="{ show: isDatasetSidebarOpen }"
+    :style="{ visibility: isDatasetSidebarOpen ? 'visible' : 'hidden', width: '768px', left: '260px' }"
+    tabindex="-1"
+  >
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title">
+        {{ currentPage === 'datasets' ? 'Датасеты'
+            : currentPage === 'connections' ? 'Подключения'
+            : currentPage === 'charts' ? 'Чарты'
+            : 'Раздел' }}
+      </h5>
+      <button type="button" class="btn-close" @click="$emit('close')" aria-label="Закрыть" />
     </div>
-    <div class="body p-3">
-      <DatasetListPage v-if="currentPage === 'datasets'" />
-      <ConnectionListPage v-else-if="currentPage === 'connections'" />
-      <ChartListPage v-else-if="currentPage === 'charts'" />
+
+    <div class="offcanvas-body p-0" style="overflow-y: hidden;">
+      <component
+        :is="{
+          datasets:    DatasetListPage,
+          connections: ConnectionListPage,
+          charts:      ChartListPage
+        }[ currentPage ]"
+      />
     </div>
   </div>
 </template>

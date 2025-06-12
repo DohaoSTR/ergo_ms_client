@@ -1,14 +1,12 @@
 <script setup>
 import { ref } from 'vue'
 import { Plug, Database, BarChart3 } from 'lucide-vue-next'
-import { isDatasetSidebarOpen } from '@/js/bi/useSidebarStore'
+import { isDatasetSidebarOpen, currentSidebarPage } from '@/js/bi/useSidebarStore'
 import CardSidebarBody from '@/pages/bi/components/CardSidebarBody.vue'
 import StorageSidebar from '@/pages/bi/components/StorageSidebar.vue'
 
-const currentSidebarPage = ref('datasets')
-
 const openSidebar = (page) => {
-  currentSidebarPage.value = page
+  currentSidebarPage.value   = page
   isDatasetSidebarOpen.value = true
 }
 </script>
@@ -65,8 +63,6 @@ const openSidebar = (page) => {
       </div>
     </div>
   </div>
-
-  <StorageSidebar :isDatasetSidebarOpen="isDatasetSidebarOpen" :currentPage="currentSidebarPage" @close="isDatasetSidebarOpen = false"/>
 </template>
 
 <style scoped lang="scss">
