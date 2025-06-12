@@ -87,7 +87,7 @@ watch(limitInput, val => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #888;
+  color: var(--color-secondary-text);
   font-size: 1.1rem;
   font-style: italic;
 }
@@ -102,12 +102,11 @@ watch(limitInput, val => {
   z-index: 10;
 }
 
-/* сам спиннер */
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
+  border: 4px solid var(--color-border);
+  border-top-color: var(--color-border);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -116,7 +115,6 @@ watch(limitInput, val => {
   to { transform: rotate(360deg); }
 }
 
-/* подправим контейнер чтобы позиционировался относительно */
 .preview-main {
   position: relative;
   height: 100%;
@@ -172,10 +170,10 @@ input {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #1e1e1e;
-  border-top: 1px solid #444;
+  background-color: var(--color-primary-background);
+  border-top: 1px solid var(--color-border);
   font-size: 14px;
-  color: #ccc;
+  color: var(--color-secondary-text);
 }
 
 :deep(.bh-pagination) {
@@ -188,21 +186,21 @@ input {
 
 :deep(.bh-page-item) {
   padding: 4px 10px;
-  background: #2a2a2a;
-  color: #ccc;
-  border: 1px solid #555;
+  background: var(--color-primary-background);
+  color: var(--color-secondary-text);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 :deep(.bh-page-item:hover) {
-  background: #444;
+  background: var(--color-hover-background);
 }
 
 :deep(.bh-page-active) {
   background: #007bff;
-  color: white;
+  color: var(--color-primary-text);
   border-color: #007bff;
 }
 

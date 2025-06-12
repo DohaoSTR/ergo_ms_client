@@ -99,7 +99,7 @@ function openSidebarFromMenu(pageName) {
                 : 'Раздел'
         }}
       </h5>
-      <button type="button" class="btn-close btn-close-white" @click="closeSidebar" aria-label="Закрыть" />
+      <button type="button" class="btn-close btn-close" @click="closeSidebar" aria-label="Закрыть" />
     </div>
     <div class="offcanvas-body p-0" style="overflow-y: hidden;">
       <component

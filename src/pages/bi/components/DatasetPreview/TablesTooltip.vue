@@ -84,7 +84,7 @@ watch(() => props.connectionId, async (id) => {
 }
 .section-title {
   font-weight: bold;
-  color: #e0e0e0;
+  color: var(--color-primary-text);
   margin-bottom: 10px;
 }
 .table-list {
@@ -109,20 +109,20 @@ watch(() => props.connectionId, async (id) => {
   cursor: pointer;
   &:hover,
   &.linked {
-    background-color: rgba(255, 255, 255, 0.07);
+    background-color: var(--color-hover-background);
   }
 }
 .table-item.linked {
-  background-color: rgba(0, 160, 255, 0.07);
+  background-color: var(--color-hover-background);
 }
 .icon {
   width: 16px;
   height: 16px;
-  color: #d0322d;
+  color: var(--color-accent);
 }
 .table-name {
   font-size: 14px;
-  color: #ddd;
+  color: var(--color-primary-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -131,7 +131,7 @@ watch(() => props.connectionId, async (id) => {
   padding: 12px;
   text-align: center;
   font-size: 14px;
-  color: #777;
+  color: var(--color-primary-text);
 }
 .loading {
   pointer-events: none;
@@ -139,7 +139,7 @@ watch(() => props.connectionId, async (id) => {
 }
 .skeleton-icon,
 .skeleton-text {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--color-secondary-text);
   border-radius: 4px;
   animation: shimmer 1.3s infinite ease-in-out;
 }
@@ -161,6 +161,6 @@ watch(() => props.connectionId, async (id) => {
 
 .table-item.selected {
   border: 1.5px solid #198754;
-  background-color: rgba(255, 255, 255, 0.07);
+  background-color: var(--color-hover-background);
 }
 </style>

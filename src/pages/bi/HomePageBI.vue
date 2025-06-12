@@ -15,8 +15,7 @@ const openSidebar = (page) => {
 
 <template>
   <div class="homepage-bi space-y-12" style="margin-left: 5rem; margin-right: 5rem;">
-    <h1 class="text-uppercase text-light m-0"
-        style="font-family: 'Segoe UI', 'Inter', sans-serif; font-size: 43px; font-weight: 700;">
+    <h1 class="text-uppercase m-0" style="font-family: 'Segoe UI', 'Inter', sans-serif; font-size: 43px; font-weight: 700; color: var(--color-primary-text);">
       ERGO MS BI
     </h1>
 
@@ -39,7 +38,7 @@ const openSidebar = (page) => {
     <div style="margin-top: 30px; display: flex; gap: 20px; justify-content: center;">
       <div class="card-section">
         <CardSidebarBody
-          :icon="Plug"
+          :icon="Database"
           title="Датасеты"
           targetPage="datasets"
           description="Создавайте и управляйте моделями данных с вычисляемыми полями, фильтрами и структурой для анализа."
@@ -48,7 +47,7 @@ const openSidebar = (page) => {
       </div>
       <div class="card-section">
         <CardSidebarBody
-          :icon="Database"
+          :icon="Plug"
           title="Подключения"
           targetPage="connections"
           description="Добавляйте внешние источники данных, настраивайте синхронизацию и объединяйте данные из разных систем."
@@ -67,11 +66,7 @@ const openSidebar = (page) => {
     </div>
   </div>
 
-  <StorageSidebar
-    :isDatasetSidebarOpen="isDatasetSidebarOpen"
-    :currentPage="currentSidebarPage"
-    @close="isDatasetSidebarOpen = false"
-  />
+  <StorageSidebar :isDatasetSidebarOpen="isDatasetSidebarOpen" :currentPage="currentSidebarPage" @close="isDatasetSidebarOpen = false"/>
 </template>
 
 <style scoped lang="scss">
@@ -88,8 +83,8 @@ const openSidebar = (page) => {
 }
 
 .banner-content {
-  color: white;
   padding-left: 30px;
+  color: #f2f2f2;
   max-width: 560px;
 }
 
@@ -97,7 +92,7 @@ const openSidebar = (page) => {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  background-color: #18181a;
+  background-color: var(--color-primary-background);
   border-radius: 15px;
   width: 260px;
   height: 300px;

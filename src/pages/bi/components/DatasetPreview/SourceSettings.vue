@@ -146,9 +146,9 @@ function apply() {
 
 .settings-footer {
   position: relative;
-  background: #2a2a2a;
+  background: var(--color-primary-background);
   overflow: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--color-border);
 }
 
 .settings-footer::before {
@@ -165,7 +165,7 @@ function apply() {
 .tab-group {
   display: inline-flex;
   align-items: center;
-  border: 1px solid #e53935;
+  border: 1px solid var(--color-accent);
   border-radius: 6px;
   overflow: hidden;
   height: 2rem;
@@ -173,7 +173,7 @@ function apply() {
 
 .tab-button {
   background: transparent;
-  color: #e53935;
+  color: var(--color-accent);
   border: none;
   padding: 0 1rem;
   font-size: 0.85rem;
@@ -186,7 +186,7 @@ function apply() {
 }
 
 .tab-button.active {
-  background: #e53935;
+  background: var(--color-accent);
   color: #fff;
 }
 
@@ -195,14 +195,14 @@ function apply() {
 }
 
 .settings-top input.form-control {
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: 5px !important;
   max-width: 300px;
 }
 
 .cancel-btn {
-  color: rgba(255, 255, 255, 0.7);
-  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--color-secondary-text);
+  border-color: var(--color-border);
   background: transparent;
   transition: background-color .2s ease, color .2s ease;
 }
@@ -210,6 +210,6 @@ function apply() {
 .cancel-btn:hover,
 .cancel-btn:focus {
   color: #fff;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--color-hover-background);
 }
 </style>

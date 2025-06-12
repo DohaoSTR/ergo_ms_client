@@ -79,7 +79,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.6);
+      background: var(--color-primary-background);
       z-index: 9999;
       display: flex;
       justify-content: center;
@@ -87,8 +87,8 @@
     }
   
     .modal-window {
-      background: #1e1f22;
-      color: white;
+      background: var(--color-primary-background);
+      color: var(--color-primary-text);
       padding: 24px;
       border-radius: 12px;
       width: 480px;
@@ -107,7 +107,7 @@
       background: none;
       border: none;
       font-size: 1.5rem;
-      color: #aaa;
+      color: var(--color-secondary-text);
       cursor: pointer;
     }
   
@@ -128,15 +128,15 @@
   
     .btn-cancel {
       background: transparent;
-      color: #ccc;
-      border: 1px solid #555;
+      color: var(--color-secondary-text);
+      border: 1px solid var(--color-border);
       padding: 6px 12px;
       border-radius: 6px;
     }
   
     .btn-confirm {
-      background: #ef4444;
-      color: white;
+      background: var(--color-accent);
+      color: var(--color-primary-text);
       border: none;
       padding: 6px 12px;
       border-radius: 6px;

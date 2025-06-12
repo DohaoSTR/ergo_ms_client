@@ -121,7 +121,7 @@ watch(() => props.connectionId, async (id) => {
 
 .section-title {
     font-weight: bold;
-    color: #e0e0e0;
+    color: var(--color-secondary-text);
     margin-bottom: 10px;
 }
 
@@ -151,27 +151,27 @@ watch(() => props.connectionId, async (id) => {
 
   &:hover,
   :deep(.linked) {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--color-hover-background);
   }
 }
 
 .table-item.linked {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-background);
 }
 
 .icon {
     width: 16px;
     height: 16px;
-    color: #aaa;
+    color: var(--color-secondary-text);
 
     &.red {
-        color: #e53935;
+        color: var(--color-accent);
     }
 }
 
 .table-name {
     font-size: 14px;
-    color: #ddd;
+    color: var(--color-primary-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -181,7 +181,7 @@ watch(() => props.connectionId, async (id) => {
     padding: 12px;
     text-align: center;
     font-size: 14px;
-    color: #777;
+    color: var(--color-primary-text);
 }
 
 .loading {
@@ -191,7 +191,7 @@ watch(() => props.connectionId, async (id) => {
 
 .skeleton-icon,
 .skeleton-text {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: var(--color-primary-background);
     border-radius: 4px;
     animation: shimmer 1.3s infinite ease-in-out;
 }

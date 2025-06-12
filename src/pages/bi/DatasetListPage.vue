@@ -71,7 +71,7 @@ const transformedData = computed(() => {
 </script>
 
 <template>
-  <div class="fixed top-0 right-0 w-full sm:w-[540px] h-full bg-zinc-900 text-white z-50 shadow-xl border-l border-zinc-700 flex flex-col" style="padding-left: 1rem; padding-right: 1rem; overflow-y: hidden;">
+  <div class="fixed top-0 right-0 w-full sm:w-[540px] h-full bg-zinc-900 z-50 shadow-xl border-l border-zinc-700 flex flex-col" style="padding-left: 1rem; padding-right: 1rem; overflow-y: hidden;">
     <div class="space-y-4 flex-1 overflow-auto">
       <div class="flex gap-3" style="display: flex; flex-wrap: nowrap; margin-top: 1rem;">
         <input class="form-control" placeholder="Введите для поиска..." style="width: 25rem;" v-model="search" />

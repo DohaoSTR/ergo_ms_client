@@ -24,7 +24,7 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
   <div class="storage-sidebar" :class="{ show: isDatasetSidebarOpen }" :style="{ visibility: isDatasetSidebarOpen ? 'visible' : 'hidden' }">
     <div class="header d-flex justify-content-between align-items-center p-3">
       <h5 class="m-0">{{ title }}</h5>
-      <button class="btn-close btn-close-white" @click="isDatasetSidebarOpen = false" />
+      <button class="btn-close" @click="isDatasetSidebarOpen = false" />
     </div>
     <div class="body p-3">
       <DatasetListPage v-if="currentPage === 'datasets'" />
@@ -48,7 +48,7 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
 }
 
 .banner-content {
-  color: white;
+  color: var(--color-primary-background);
   padding-left: 30px;
   max-width: 560px;
 }
@@ -57,7 +57,7 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
   padding: 20px;
   display: flex;
   flex-direction: column;
-  background-color: #18181a;
+  background-color: var(--color-primary-background);
   border-radius: 15px;
 }
 
@@ -67,7 +67,7 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
   left: 260px;
   width: 768px;
   height: 100vh;
-  background-color: #18181a;
+  background-color: var(--color-primary-background);
   z-index: 1050;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
   transform: translateX(-100%);

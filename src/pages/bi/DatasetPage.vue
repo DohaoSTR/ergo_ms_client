@@ -5,16 +5,13 @@
 }">
     <header class="file_area_header">
       <div class="file_area_header_label">
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="#">BI</a></li>
-            <li class="breadcrumb-item"><a href="#">Датасеты</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Новый датасет</li>
-          </ol>
-        </nav>
+        <Database/>
+        <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+            <h4 class="header-label" style="margin-bottom: 3px;">Новый датасет</h4>
+        </div>
       </div>
       <div class="file_area_header_buttons">
-        <button type="button" class="btn btn-secondary">Создать чарт</button>
+        <button type="button" class="btn btn-primary">Создать датасет</button>
       </div>
     </header>
 
@@ -25,12 +22,12 @@
         <button class="tab-button" hidden :class="{ active: activeTab === 'params' }" @click="activeTab = 'params'">Параметры</button>
       </div>
       <div class="button-preview">
-        <button v-if="activeTab === 'fields'" class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="refreshFields">
+        <button v-if="activeTab === 'fields'" class="btn btn-secondary" style="display: flex; gap: 5px;" @click="refreshFields">
           <template v-if="isPreviewLoading"><Loader class="icon-loading" />Загрузка…</template>
           <template v-else><RefreshCw :size="18" />Обновить поля</template>
         </button>
-        <button class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="togglePreview" :disabled="isPreviewLoading"><Eye :size="18" />Предпросмотр</button>
-        <button v-if="activeTab === 'fields'" class="btn btn-outline-secondary" style="display: flex; gap: 5px;" @click="addField"><Plus :size="18" />Добавить поле</button>
+        <button class="btn btn-secondary" style="display: flex; gap: 5px;" @click="togglePreview" :disabled="isPreviewLoading"><Eye :size="18" />Предпросмотр</button>
+        <button v-if="activeTab === 'fields'" class="btn btn-secondary" style="display: flex; gap: 5px;" @click="addField" hidden><Plus :size="18" />Добавить поле</button>
       </div>
     </div>
 
@@ -100,7 +97,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
-import { RefreshCw, Plus, Eye, Loader } from 'lucide-vue-next'
+import { RefreshCw, Plus, Eye, Loader, Database } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
 import datasetService from '@/js/api/services/bi/datasetService'
@@ -559,7 +556,7 @@ onMounted(() => {
   animation: rotate 1s linear infinite;
   width: 40px;
   height: 40px;
-  stroke: #e53935;
+  stroke: var(--color-accent);
   fill: none;
   stroke-width: 4;
 }
@@ -576,8 +573,8 @@ onMounted(() => {
 
 .tooltip {
   position: absolute;
-  background: #2e2f35;
-  color: #fff;
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 0.85rem;
@@ -599,13 +596,20 @@ html,
 body {
   height: 100%;
   font-family: sans-serif;
-  color: #fff;
+  color: var(--color-primary-text);
+}
+
+.file_area_header_label{
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  align-items: center;
 }
 
 .layout {
   display: grid;
   grid-template-rows: 56px 50px 1fr var(--footer-height, 200px);
-  border: 1px solid #4e5058;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   grid-template-areas:
     "header header"
@@ -620,6 +624,7 @@ body {
 .file_area_header {
   position: relative;
   grid-area: header;
+  background-color: var(--color-header-background);
   display: flex;
   align-items: center;
   padding: 0 1rem;
@@ -627,7 +632,7 @@ body {
   height: 61px;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-  border-bottom: 1px solid #4e5058;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .file_area_header_buttons {
@@ -639,17 +644,18 @@ body {
 .toolbar {
   grid-area: toolbar;
   display: flex;
+  background-color: var(--color-header-background);
   align-items: center;
   padding: 0 1rem;
   margin-top: 5px;
   gap: 1rem;
-  border-bottom: 1px solid #4e5058;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .tab-group {
   display: inline-flex;
   align-items: center;
-  border: 1px solid #e53935;
+  border: 1px solid var(--color-accent);
   border-radius: 6px;
   overflow: hidden;
   height: 2rem;
@@ -657,7 +663,7 @@ body {
 
 .tab-button {
   background: transparent;
-  color: #e53935;
+  color: var(--color-accent);
   border: none;
   padding: 0 1rem;
   font-size: 0.85rem;
@@ -670,8 +676,8 @@ body {
 }
 
 .tab-button.active {
-  background: #e53935;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-primary-text);
 }
 
 .tab-button:not(.active):hover {
@@ -699,12 +705,11 @@ body {
 
 .footer {
   grid-area: footer;
-  background-color: #2c2e33;
   padding: 10px;
   text-align: center;
-  color: #aaa;
+  color: var(--color-secondary-text);
   font-size: 0.9rem;
-  border-top: 1px solid #4e5058;
+  border-top: 1px solid var(--color-border);
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
   min-height: 100px;
@@ -744,8 +749,8 @@ body {
   position: relative;
   padding: 0.75rem 0 0.75rem 0.75rem;
   padding-bottom: 6px !important;
-  background-color: #2c2e33;
-  border-top: 1px solid #4e5058;
+  background-color: var(--color-hover-background);
+  border-top: 1px solid var(--color-border);
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
   overflow: hidden;
@@ -757,8 +762,8 @@ body {
   gap: 10px;
 }
 
-.btn-secondary,
-.btn-outline-secondary {
+.btn-primary,
+.btn-secondary {
   width: 10rem;
   height: 2rem;
   border-radius: 6px;
@@ -767,55 +772,12 @@ body {
   justify-content: center;
 }
 
-.btn-outline-secondary {
-  color: white;
-}
-
-.btn-success {
-  width: 13rem;
-  height: 2rem;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.breadcrumb {
-  display: flex;
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  font-size: 0.95rem;
-  color: #b0b0b0;
-}
-
-.breadcrumb-item {
-  display: flex;
-  align-items: center;
-  color: #b0b0b0;
-}
-
-.breadcrumb-item.active {
-  color: var(--bs-primary);
-}
-
-.breadcrumb-item a {
-  color: #e0e0e0;
-  text-decoration: none;
-}
-
-.breadcrumb-item a:hover {
-  color: var(--bs-primary);
-}
-
 .preview-placeholder {
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #888;
+  color: var(--color-secondary-text);
   font-style: italic;
 }
 
@@ -830,7 +792,7 @@ body {
 }
 
 .modal-window {
-  background: #2a2a2a;
+  background: var(--color-primary-background);
   border-radius: 12px;
   padding: 1.5rem;
   position: relative;
@@ -842,13 +804,13 @@ body {
   align-items: center;
   justify-content: space-between;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h5 {
   margin: 0;
   font-size: 1.25rem;
-  color: #fff;
+  color: var(--color-primary-text);
 }
 
 .close-btn {
@@ -857,7 +819,7 @@ body {
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
-  color: #fff;
+  color: var(--color-secondary-text);
   padding: 0;
 }
 
@@ -874,7 +836,7 @@ body {
 .table-link-modal {
   width: 624px;
   min-height: 310px;
-  background: #232323;
+  background: var(--color-primary-background);
   border-radius: 12px;
   box-shadow: 0 8px 32px #000b;
   padding: 0;

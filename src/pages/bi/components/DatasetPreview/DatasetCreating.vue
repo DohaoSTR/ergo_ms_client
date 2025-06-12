@@ -54,7 +54,7 @@
 
         <div v-if="showTooltip || showTableTooltip" class="tooltip-panel" :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }" ref="tooltipRef">
             <ConnectionsTooltip v-if="showTooltip" @select="handleSelect" />
-            <TableListTooltip v-if="showTableTooltip" :connection-id="selectedConnection.id" :connection-type="selectedConnection.connector_type" :selected-table="mainTable" @select="handleTableSelect" @tablesLoaded="(tables) => $emit('tablesLoaded', tables)"/>
+            <TableTooltip v-if="showTableTooltip" :connection-id="selectedConnection.id" :connection-type="selectedConnection.connector_type" :selected-table="mainTable" @select="handleTableSelect" @tablesLoaded="(tables) => $emit('tablesLoaded', tables)"/>
         </div>
 
     </div>
@@ -68,7 +68,7 @@ import PostgresIcon from '@/assets/bi/icons/postgres.svg'
 import MssqlIcon from '@/assets/bi/icons/mssql.svg'
 import FileIcon from '@/assets/bi/icons/folder_windows_style.svg'
 import ConnectionsTooltip from '@/pages/bi/components/DatasetPreview/ConnectionsTooltip.vue'
-import TableListTooltip from '@/pages/bi/components/DatasetPreview/TablesTooltip.vue'
+import TableTooltip from '@/pages/bi/components/DatasetPreview/TablesTooltip.vue'
 
 import JoinInnerIcon from '@/pages/bi/components/icons/JoinInnerIcon.vue'
 import JoinLeftIcon from '@/pages/bi/components/icons/JoinLeftIcon.vue'
@@ -217,12 +217,12 @@ onBeforeUnmount(() => {
     left: 385px;
     width: 416px;
     height: 436px;
-    background-color: #2b2b2b;
+    background-color: var(--color-primary-background);
     border-radius: 8px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
     z-index: 100;
     padding: 1rem;
-    color: white;
+    color: var(--color-primary-text);
 }
 
 .connections-list {
@@ -239,7 +239,7 @@ onBeforeUnmount(() => {
     transition: background 0.2s;
 
     &:hover {
-        background-color: #3a3a3a;
+        background-color: var(--color-hover-background);
     }
 }
 
@@ -252,7 +252,7 @@ onBeforeUnmount(() => {
 .icon {
     width: 22px;
     height: 22px;
-    color: #d0322d;
+    color: var(--color-accent);
 }
 
 .connection-actions {
@@ -278,7 +278,7 @@ onBeforeUnmount(() => {
 .action-btn {
     background: transparent;
     border: none;
-    color: #bbb;
+    color: var(--color-secondary-text);
     cursor: pointer;
     padding: 4px;
     border-radius: 6px;
@@ -290,7 +290,7 @@ onBeforeUnmount(() => {
 
 .menu-dropdown {
     position: fixed;
-    background-color: #2a2a2a;
+    background-color: var(--color-primary-background);
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
     padding: 8px 0;
@@ -301,17 +301,17 @@ onBeforeUnmount(() => {
 
 .menu-item {
     padding: 8px 16px;
-    color: #eee;
+    color: var(--color-primary-text);
     cursor: pointer;
     transition: background 0.2s;
 }
 
 .menu-item:hover {
-    background-color: #444;
+    background-color: var(--color-hover-background);
 }
 
 .menu-item.danger {
-    color: #f87171;
+    color: var(--color-accent);
 }
 
 .button-card-connection {
@@ -325,7 +325,7 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #232323;
+    background: var(--color-primary-background);
     border: 1.5px solid #198754;
     border-radius: 10px;
     min-height: 46px;
@@ -335,13 +335,13 @@ onBeforeUnmount(() => {
     transition: border 0.15s;
 
     &:hover {
-        background: #2b2b2b;
+        background: var(--color-hover-background);
     }
 
     .connection-name {
         font-weight: 600;
         font-size: 16px;
-        color: #fff;
+        color: var(--color-primary-text);
     }
 }
 
@@ -381,10 +381,10 @@ onBeforeUnmount(() => {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #bbb;
+  color: var(--color-secondary-text);
   transition: color .18s;
   &:hover {
-    color: #d0322d;
+    color: var(--color-accent);
   }
 }
 </style>

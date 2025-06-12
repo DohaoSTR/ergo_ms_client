@@ -98,7 +98,6 @@ const linkedTable = computed(() => {
   return props.allTables.find(t => t.id === selectedRightTableId.value)
 })
 
-// Колонки для селектов
 const mainTableColumns = ref([])
 const linkedTableColumns = ref([])
 
@@ -141,16 +140,15 @@ async function onApply() {
 
   const linkedTable = props.allTables.find(t => t.id === selectedTableId.value);
 
-  // Проверка совместимости
   const ok = checkJoinCompatibility(props.mainTable, linkedTable, lines);
   if (!ok) {
     alert('Ошибка: типы выбранных столбцов не совпадают!');
     return;
   }
-  // --- ВАЖНО: всегда одинаковые поля ---
+
   emit('apply', {
     leftTableId: props.mainTable.id,
-    rightTableId: selectedTableId.value,      // <-- КЛЮЧЕВОЕ ПОЛЕ
+    rightTableId: selectedTableId.value,
     joinType: joinType.value,
     lines: lines
   });
@@ -161,9 +159,7 @@ function getTableColumns(table) {
   if (!table || !table.columns_info) return []
   const cols = table.columns_info.columns
   if (Array.isArray(cols)) {
-    // Если это массив строк
     if (typeof cols[0] === "string") return cols
-    // Если это массив объектов
     if (typeof cols[0] === "object" && cols[0]?.name) return cols.map(c => c.name)
   }
   return []
@@ -249,7 +245,6 @@ watch(
   () => props.editRelation,
   (edit) => {
     if (edit && edit.rightTableId) {
-      // ВСЕГДА DataSetTable.id, не FileUpload.id!
       selectedTableId.value = Number(edit.rightTableId)
     } else {
       selectedTableId.value = null;
@@ -281,7 +276,7 @@ console.log('linkedTableColumns:', linkedTableColumns.value)
 
 .header-button {
   border: none;
-  background: #232323;
+  background: var(--color-primary-background);
   border-radius: 50%;
   width: 36px;
   height: 36px;
@@ -294,7 +289,7 @@ console.log('linkedTableColumns:', linkedTableColumns.value)
 }
 
 .header-button:hover {
-  background: #343a40;
+  background: var(--color-hover-background);
 }
 
 .body {
@@ -353,13 +348,13 @@ console.log('linkedTableColumns:', linkedTableColumns.value)
 }
 
 .btn-remove .icon-button svg {
-  color: #767677;
+  color: var(--color-secondary-text);
   transition: color 0.15s;
 }
 
 .btn-remove:hover .icon-button svg,
 .btn-remove:focus-visible .icon-button svg {
-  color: #d0322d;
+  color: var(--color-accent);
 }
 
 .body-line-button {

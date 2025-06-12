@@ -4,8 +4,9 @@
             <div class="header-label-icon">
                 <ChartPie/>
                 <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
-                    <h4 class="header-label" style="margin-bottom: 2px;">Новая диаграмма</h4>
+                    <h4 class="header-label" style="margin-bottom: 3px;">Новая диаграмма</h4>
                 </div>
+                <button class="btn btn-sm fw-bold btn-chart-action" style="padding: 0; margin: 0; display: flex;" hidden><Ellipsis size="20"/></button>
             </div>
             <div class="header-label-buttons">
                 <button class="btn btn-sm fw-bold" :class="{active: isFullScreen}" style="display: flex; gap: 5px; justify-content: center; align-items: center;" @click="toggleFullScreen">
@@ -36,14 +37,14 @@
                     </select>
                 </div>
             </div>
-            <div class="measure sectors border-elements elements-color">
-                <h5 class="m-0 me-2">Измерения</h5>
+            <div class="indicators sectors border-elements elements-color">
+                <h5 class="m-0 me-2">Показатели</h5>
                 <div class="sectors-body">
                     <div class="alert alert-info" role="alert" style="height: 100%; text-align: center; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 10px;"><CircleAlert :size="40" class="me-1" />Прежде чем увидеть содержимое, добавьте датасет</div>
                 </div>
             </div>
-            <div class="indicators sectors border-elements elements-color">
-                <h5 class="m-0 me-2">Показатели</h5>
+            <div class="measure sectors border-elements elements-color">
+                <h5 class="m-0 me-2">Измерения</h5>
                 <div class="sectors-body">
                     <div class="alert alert-info" role="alert" style="height: 100%; text-align: center; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 10px;"><CircleAlert :size="40" class="me-1" />Прежде чем увидеть содержимое, добавьте датасет</div>
                 </div>
@@ -130,7 +131,7 @@
 </template>
 
 <script setup>
-import { ChartPie, Maximize, MoveDown, MoveRight, PaintBucket, ArrowDownWideNarrow, Type, Plus, CircleAlert } from 'lucide-vue-next';
+import { ChartPie, Maximize, MoveDown, MoveRight, PaintBucket, ArrowDownWideNarrow, Type, Plus, CircleAlert, Ellipsis } from 'lucide-vue-next';
 import { ref, nextTick } from 'vue'
 
 const isFullScreen = ref(false)

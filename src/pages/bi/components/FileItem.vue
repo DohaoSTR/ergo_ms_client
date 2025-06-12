@@ -125,10 +125,10 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   position: relative;
 }
 .file-item:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-background);
 }
 .file-item.active {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--color-hover-background);
 }
 
 .file-content {
@@ -157,11 +157,12 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--color-primary-text);
 }
 
 .file-subtext {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-secondary-text);
   margin-top: 2px;
 }
 
@@ -179,13 +180,17 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   cursor: pointer;
 }
 .file-menu:hover {
-  background-color: rgba(255, 255, 255, 0.07);
+  background-color: var(--color-hover-background);
 }
 
 .menu-icon {
   width: 18px;
   height: 18px;
-  color: #b5bac1;
+  color: var(--color-secondary-text);
+}
+
+.menu-icon:hover{
+  color: var(--color-primary-text);
 }
 
 .relative {
@@ -196,8 +201,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   position: absolute;
   top: 28px;
   right: 0;
-  background-color: #2e2f35;
-  border: 1px solid #4e5058;
+  background-color: var(--color-primary-background);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   z-index: 10;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
@@ -214,9 +219,9 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   line-height: 1.2;
 }
 .menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-background);
 }
 .menu-item.danger {
-  color: #f87171;
+  color: var(--color-accent);
 }
 </style>

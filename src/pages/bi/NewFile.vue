@@ -42,7 +42,7 @@
         <h4>Новое подключение</h4>
       </div>
       <div class="file_area_header_buttons">
-        <button type="button" class="btn btn-outline-success" @click="openConnectionDialog" :disabled="!tempUploadedFiles.length">Создать подключение</button>
+        <button type="button" class="btn btn-primary" @click="openConnectionDialog" :disabled="!tempUploadedFiles.length">Создать подключение</button>
       </div>
     </header>
     <main class="file_area">
@@ -158,8 +158,8 @@ async function createConnection(data) {
 
 .tooltip {
   position: absolute;
-  background: #2e2f35;
-  color: #fff;
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 0.85rem;
@@ -187,7 +187,7 @@ body {
 .layout {
   display: grid;
   border-radius: 12px;
-  border: 1px solid #4c4b51;
+  border: 1px solid var(--color-border);
   grid-template-columns: 260px 1fr;
   grid-template-rows: 56px 1fr;
   grid-template-areas:
@@ -202,19 +202,20 @@ body {
   background-color: transparent;
   padding: 1rem;
   border-top-left-radius: 12px;
+  background-color: var(--color-primary-background);
 }
 
 .file_area_header {
   position: relative;
   grid-area: header;
-  background-color: #313338;
+  background-color: var(--color-primary-background);
   display: flex;
   gap: 20px;
   height: 61px;
   align-items: center;
   padding: 0 1rem;
   border-top-right-radius: 12px;
-  border-bottom: 1px solid #4e5058;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .file_area_header_buttons{
@@ -226,7 +227,7 @@ body {
 
 .file_area {
   grid-area: chat;
-  background-color: #313338;
+  background-color: var(--color-primary-background);
   padding: 1rem;
   overflow-y: auto;
 }
@@ -253,7 +254,11 @@ body {
 .icon {
   width: 18px;
   height: 18px;
-  color: #fff;
+  color: var(--color-primary-text);
+}
+
+.icon:hover{
+  color: var(--color-secondary-text);
 }
 
 .icon_name {
@@ -271,13 +276,14 @@ body {
 
 .title {
   font-weight: bolder;
+  color: var(--color-primary-text);
 }
 
 .name {
   font-size: 1.2rem;
   margin-inline: -1rem;
   padding-inline: 1rem;
-  border-bottom: 1px solid #4e5058;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .name_container {
@@ -291,7 +297,7 @@ body {
   list-style: none;
   line-height: 1.8;
   font-size: 0.95rem;
-  color: #b5bac1;
+  color: var(--color-secondary-text);
   padding-top: 5px;
 }
 
@@ -308,7 +314,7 @@ body {
   left: 0;
   right: 0;
   height: 1px;
-  background-color: #4e5058;
+  background-color: var(--color-border);
 }
 
 .btn-outline-danger {
@@ -326,7 +332,7 @@ body {
   font-weight: bold;
 }
 
-.btn-success {
+.btn-primary {
   width: 13rem;
   height: 2rem;
   border-radius: 6px;
@@ -334,15 +340,6 @@ body {
   align-items: center;
   justify-content: center;
   color: white;
-}
-
-.btn-outline-success {
-  width: 13rem;
-  height: 2rem;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .btn-outline-secondary {

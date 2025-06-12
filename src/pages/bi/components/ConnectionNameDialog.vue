@@ -8,8 +8,8 @@
 
       <input v-model="localName" class="form-control my-3" placeholder="Введите название" @keyup.enter="submit" />
       <div class="modal-footer">
-        <button class="btn-cancel" @click="cancel">Отмена</button>
-        <button class="btn-confirm" @click="submit" :disabled="!localName">
+        <button class="btn btn-secondary" @click="cancel">Отмена</button>
+        <button class="btn btn-primary" @click="submit" :disabled="!localName">
           Сохранить
         </button>
       </div>
@@ -92,8 +92,8 @@ function cancel() {
 }
 
 .modal-window {
-  background: #1e1f22;
-  color: white;
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
   padding: 24px;
   border-radius: 12px;
   width: 480px;
@@ -112,7 +112,7 @@ function cancel() {
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #aaa;
+  color: var(--color-secondary-text);
   cursor: pointer;
 }
 
@@ -123,23 +123,7 @@ function cancel() {
   margin-top: 1rem;
 }
 
-.btn-cancel {
-  background: transparent;
-  color: #ccc;
-  border: 1px solid #555;
-  padding: 6px 12px;
-  border-radius: 6px;
-}
-
-.btn-confirm {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-}
-
-.btn-confirm:disabled {
+.btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

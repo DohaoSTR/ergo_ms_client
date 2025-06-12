@@ -107,7 +107,7 @@ function hideTooltip() {
     transition: background 0.2s ease;
 
     &:hover {
-        background-color: #3a3a3d;
+        background-color: var(--color-hover-background);
     }
 }
 
@@ -118,13 +118,13 @@ function hideTooltip() {
 }
 
 .connection-name {
-    color: #eee;
+    color: var(--color-primary-text);
     font-size: 14px;
 }
 
 .connection-date {
     font-size: 13px;
-    color: #aaa;
+    color: var(--color-secondary-text);
 }
 
 .icon {
@@ -135,7 +135,7 @@ function hideTooltip() {
 .no-data {
     padding: 12px;
     text-align: center;
-    color: #777;
+    color: var(--color-primary-text);
 }
 
 .loading-placeholder {
@@ -146,14 +146,14 @@ function hideTooltip() {
 .skeleton-icon {
     width: 18px;
     height: 18px;
-    background-color: #444;
+    background-color: var(--color-secondary-text);
     border-radius: 4px;
 }
 
 .skeleton-text {
     width: 100px;
     height: 14px;
-    background-color: #444;
+    background-color: var(--color-secondary-text);
     border-radius: 4px;
     margin-left: 8px;
 }
@@ -161,7 +161,7 @@ function hideTooltip() {
 .skeleton-date {
     width: 60px;
     height: 12px;
-    background-color: #444;
+    background-color: var(--color-secondary-text);
     border-radius: 4px;
 }
 
@@ -180,8 +180,8 @@ function hideTooltip() {
 .tooltip-fixed {
   position: fixed;
   transform: translateX(-50%);
-  background-color: #2a2a2a;
-  color: #fff;
+  background-color: var(--color-primary-background);
+  color: var(--color-primary-text);
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 12px;

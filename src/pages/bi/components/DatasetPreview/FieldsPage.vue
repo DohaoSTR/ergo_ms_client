@@ -17,7 +17,7 @@
           <td>{{ idx + 1 }}</td>
           <td>
             <input v-model="f.name" @input="updateField(idx, 'name', f.name)"
-              class="form-control form-control-sm text-white" placeholder="Имя…" />
+              class="form-control form-control-sm" placeholder="Имя…" />
           </td>
           <td>
             <span v-if="f.expression">
@@ -41,7 +41,7 @@
             <AggSelect v-model="f.aggregation" :options="getAggregationOptions(f.type)" :aggregationColorMap="aggregationColorMap" />
           </td>
           <td>
-            <input v-model="f.description" class="form-control form-control-sm text-white" placeholder="Описание…" />
+            <input v-model="f.description" class="form-control form-control-sm" placeholder="Описание…" />
           </td>
           <td>
             <button class="btn btn-sm btn-outline-danger rounded" @click="removeField(idx)">Удалить</button>
@@ -139,11 +139,11 @@ function getFieldSourceLabel(field) {
 }
 
 :deep(.table thead th) {
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 0.5px solid var(--color-border);
 }
 
 :deep(.table-hover tbody tr:hover) {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-background);
 }
 
 :deep(input.form-control),
@@ -160,7 +160,7 @@ function getFieldSourceLabel(field) {
 :deep(select.form-select:hover),
 :deep(input.form-control:focus),
 :deep(select.form-select:focus) {
-  background-color: rgba(255, 255, 255, 0.15) !important;
+  background-color: var(--color-hover-background) !important;
   border-radius: 12px !important;
   outline: none !important;
   box-shadow: none !important;
@@ -191,7 +191,7 @@ function getFieldSourceLabel(field) {
 
 .source-btn:hover,
 .source-btn:focus {
-  background-color: rgba(255, 255, 255, 0.15) !important;
+  background-color: var(--color-hover-background) !important;
   border-radius: 12px !important;
   outline: none !important;
 }

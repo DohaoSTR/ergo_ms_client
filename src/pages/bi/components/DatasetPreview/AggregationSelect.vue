@@ -57,21 +57,21 @@ watch(show, v => {
   text-align: center;
   line-height: 1.25;
   margin: 0;
-  background: #26404a;
-  color: #fff;
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
   transition: background 0.15s, color 0.15s;
 }
 .agg-chip:hover {
   filter: brightness(1.12);
 }
 
-.agg-primary   { background: #26404a; }
-.agg-info      { background: #1e4050; }
-.agg-success   { background: #18382c; }
-.agg-warning   { background: #544514; color: #fff;}
-.agg-secondary { background: #23233a; }
-.agg-danger    { background: #3b1c1c; }
-.agg-dark      { background: #1a1c20; color: #ccc;}
+.agg-primary   { background: #26404a; color: var(--color-hover-background);}
+.agg-info      { background: #1e4050; color: var(--color-hover-background);}
+.agg-success   { background: #18382c; color: var(--color-hover-background);}
+.agg-warning   { background: #544514; color: var(--color-hover-background);}
+.agg-secondary { background: #23233a; color: var(--color-hover-background);}
+.agg-danger    { background: #3b1c1c; color: var(--color-hover-background);}
+.agg-dark      { background: #1a1c20; color: var(--color-hover-background);}
 
 .agg-chip {
   padding: 0.4em 1.3em;
@@ -87,7 +87,7 @@ watch(show, v => {
   position: absolute;
   z-index: 20;
   min-width: 100%;
-  background: #23252a;
+  background: var(--color-primary-background);
   box-shadow: 0 2px 14px #0007;
   border-radius: 10px;
   padding: 0.4em 0;

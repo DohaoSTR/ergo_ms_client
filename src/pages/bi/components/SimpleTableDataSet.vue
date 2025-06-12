@@ -397,7 +397,7 @@ async function copyLink(row) {
   overflow-y: auto;
   max-height: calc(100vh - 115px - 2rem);
   font-size: 14px;
-  color: #ccc;
+  color: var(--color-primary-text);
 }
 
 .custom-table {
@@ -408,7 +408,7 @@ async function copyLink(row) {
 
 .transparent-header th {
   background-color: transparent;
-  color: #fff;
+  color: var(--color-secondary-text);
   font-weight: bold;
 }
 
@@ -420,7 +420,7 @@ async function copyLink(row) {
 }
 
 .table-row:hover {
-  background-color: #333;
+  background-color: var(--color-hover-background);
   cursor: pointer;
 }
 
@@ -436,7 +436,7 @@ async function copyLink(row) {
   height: 24px;
   margin-right: 5px;
   vertical-align: middle;
-  color: #dc3545;
+  color: var(--color-accent);
 }
 
 .tooltip-wrapper {
@@ -448,8 +448,8 @@ async function copyLink(row) {
 .tooltip-fixed {
   position: fixed;
   transform: translateX(-50%);
-  background-color: #2a2a2a;
-  color: #fff;
+  background-color: var(--color-primary-background);
+  color: var(--color-primary-text);
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 12px;
@@ -502,8 +502,8 @@ async function copyLink(row) {
 }
 
 .action-btn:hover {
-  background-color: #444;
-  color: #fff;
+  background-color: var(--color-background);
+  color: var(--color-primary-text);
 }
 
 .action-btn.star.active {
@@ -517,7 +517,7 @@ async function copyLink(row) {
 
 .menu-dropdown {
   position: fixed;
-  background-color: #2a2a2a;
+  background-color: var(--color-primary-background);
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
   padding: 8px 0;
@@ -530,7 +530,7 @@ async function copyLink(row) {
   align-items: center;
   gap: 5px;
   padding: 8px 16px;
-  color: #eee;
+  color: var(--color-primary-text);
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -540,7 +540,7 @@ async function copyLink(row) {
 }
 
 .menu-item:hover {
-  background-color: #444;
+  background-color: var(--color-hover-background);
 }
 
 .menu-item.danger {
@@ -620,8 +620,8 @@ async function copyLink(row) {
   bottom: 44px;
   left: 50%;
   transform: translateX(-50%);
-  background: #262634;
-  color: #fff;
+  background: var(--color-primary-background);
+  color: var(--color-primary-text);
   font-size: 1rem;
   padding: 1.1rem 2rem;
   border-radius: 12px;
