@@ -1,13 +1,13 @@
 <template>
   <div class="layout" :style="{
-  gridTemplateColumns: activeTab === 'sources' ? '250px 1fr' : '1fr',
-  '--footer-height': isPreviewVisible ? footerHeight + 'px' : '0px'
-}">
+    gridTemplateColumns: activeTab === 'sources' ? '250px 1fr' : '1fr',
+    '--footer-height': isPreviewVisible ? footerHeight + 'px' : '0px'
+  }">
     <header class="file_area_header">
       <div class="file_area_header_label">
-        <Database/>
+        <Database />
         <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
-            <h4 class="header-label" style="margin-bottom: 3px;">Новый датасет</h4>
+          <h4 class="header-label" style="margin-bottom: 3px;">Новый датасет</h4>
         </div>
       </div>
       <div class="file_area_header_buttons">
@@ -17,33 +17,48 @@
 
     <div class="toolbar">
       <div class="tab-group">
-        <button class="tab-button" :class="{ active: activeTab === 'sources' }" @click="activeTab = 'sources'">Источники</button>
-        <button class="tab-button" :class="{ active: activeTab === 'fields' }" @click="activeTab = 'fields'">Поля</button>
-        <button class="tab-button" hidden :class="{ active: activeTab === 'params' }" @click="activeTab = 'params'">Параметры</button>
+        <button class="tab-button" :class="{ active: activeTab === 'sources' }"
+          @click="activeTab = 'sources'">Источники</button>
+        <button class="tab-button" :class="{ active: activeTab === 'fields' }"
+          @click="activeTab = 'fields'">Поля</button>
+        <button class="tab-button" hidden :class="{ active: activeTab === 'params' }"
+          @click="activeTab = 'params'">Параметры</button>
       </div>
       <div class="button-preview">
-        <button v-if="activeTab === 'fields'" class="btn btn-secondary" style="display: flex; gap: 5px;" @click="refreshFields">
-          <template v-if="isPreviewLoading"><Loader class="icon-loading" />Загрузка…</template>
-          <template v-else><RefreshCw :size="18" />Обновить поля</template>
+        <button v-if="activeTab === 'fields'" class="btn btn-secondary" style="display: flex; gap: 5px;"
+          @click="refreshFields">
+          <template v-if="isPreviewLoading">
+            <Loader class="icon-loading" />Загрузка…
+          </template>
+          <template v-else>
+            <RefreshCw :size="18" />Обновить поля
+          </template>
         </button>
-        <button class="btn btn-secondary" style="display: flex; gap: 5px;" @click="togglePreview" :disabled="isPreviewLoading"><Eye :size="18" />Предпросмотр</button>
-        <button v-if="activeTab === 'fields'" class="btn btn-secondary" style="display: flex; gap: 5px;" @click="addField" hidden><Plus :size="18" />Добавить поле</button>
+        <button class="btn btn-secondary" style="display: flex; gap: 5px;" @click="togglePreview"
+          :disabled="isPreviewLoading">
+          <Eye :size="18" />Предпросмотр
+        </button>
+        <button v-if="activeTab === 'fields'" class="btn btn-secondary" style="display: flex; gap: 5px;"
+          @click="addField" hidden>
+          <Plus :size="18" />Добавить поле
+        </button>
       </div>
     </div>
 
     <main class="file_area" :class="{ 'rounded-bottom': !isPreviewVisible }">
       <div v-if="activeTab === 'sources'" class="flow-wrapper">
-        <DatasetCreating v-model:selectedConnection="selectedConnection" 
-        v-model:mainTable="mainTable" :relations="relations" :all-tables="allTablesOfConnection" 
-        @editRelation="onEditRelation" @removeRelation="removeRelationById"
-        @openTableLinkModal="openTableLinkModal" @tablesLoaded="handleTablesLoaded"/>
+        <DatasetCreating v-model:selectedConnection="selectedConnection" v-model:mainTable="mainTable"
+          :relations="relations" :all-tables="allTablesOfConnection" @editRelation="onEditRelation"
+          @removeRelation="removeRelationById" @openTableLinkModal="openTableLinkModal"
+          @tablesLoaded="handleTablesLoaded" />
       </div>
       <div v-else>
         <component v-if="activeTab === 'fields' && selectedTables.length" :is="getTabComponent(activeTab)"
           v-model:fields="fields" :tables="selectedTables" :cols="previewCols" :rows="previewRows"
           :dataset-id="needsDataset(activeTab) && dataset.value ? dataset.value.id : null"
           @remove-table="handleRemoveTable" @update:fields="fields = $event" />
-        <div v-else class="text-muted p-4" style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center;">
+        <div v-else class="text-muted p-4"
+          style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center;">
           Сначала выберите таблицу из подключения и создайте датасет,<br>чтобы редактировать {{ tabLabel(activeTab) }}.
         </div>
       </div>
@@ -55,7 +70,8 @@
         <footer class="footer-content" :style="{ height: footerHeight + 'px' }">
           <template v-if="isPreviewLoading"></template>
           <template v-else-if="previewRows && previewRows.length">
-            <DatasetTablePreview :cols="previewCols" :rows="previewRows" :loading="isPreviewLoading" :fields="fields" :limit="previewLimit" />
+            <DatasetTablePreview :cols="previewCols" :rows="previewRows" :loading="isPreviewLoading" :fields="fields"
+              :limit="previewLimit" />
           </template>
           <template v-else>
             <div class="preview-placeholder">
@@ -73,26 +89,21 @@
           <h5>Настройка поля</h5>
           <button class="close-btn" @click="showModal = false">&times;</button>
         </div>
-        <SourceSettings v-if="showModal" :field="selectedField" :tables="selectedTables" :cols="previewCols" :rows="previewRows" @close="showModal = false" @save="onSourceSave" />
+        <SourceSettings v-if="showModal" :field="selectedField" :tables="selectedTables" :cols="previewCols"
+          :rows="previewRows" @close="showModal = false" @save="onSourceSave" />
       </div>
     </div>
   </transition>
 
   <transition name="fade">
-  <div v-if="showTableLinkModal" class="modal-overlay">
-    <div class="modal-window table-link-modal">
-      <TableLinkModal
-  :all-tables="allTablesOfConnection"
-  :linked-table-ids="computedLinkedTableIds"
-  :main-table="mainTable"
-  :edit-relation="editingRelation"
-  :dataset-id="currentDatasetId"
-  @close="showTableLinkModal = false"
-  @apply="handleRelationApply"
-/>
+    <div v-if="showTableLinkModal" class="modal-overlay">
+      <div class="modal-window table-link-modal">
+        <TableLinkModal :all-tables="allTablesOfConnection" :linked-table-ids="computedLinkedTableIds"
+          :main-table="mainTable" :edit-relation="editingRelation" :dataset-id="currentDatasetId"
+          @close="showTableLinkModal = false" @apply="handleRelationApply" />
+      </div>
     </div>
-  </div>
-</transition>
+  </transition>
 </template>
 
 <script setup>
@@ -122,6 +133,7 @@ const editingRelation = ref(null)
 const editingRelationIndex = ref(null)
 
 const allTablesOfConnection = ref([])
+const columnToTableMap = ref({})
 
 // Параметр из урла (если есть)
 const route = useRoute()
@@ -169,33 +181,40 @@ function buildAllTables(files = fileUploadsCache.value) {
   /* === 1. Все DataSetTable-ы из датасета ========================== */
   const dsTables = (dataset.value?.tables || []).map(t => ({
     ...t,
-    id:          Number(t.id),                // id именно DataSetTable
-    file_id:     t.file_upload_id,            // поможет склеить с FileUpload
+    id: Number(t.id),                // id именно DataSetTable
+    file_id: t.file_upload_id,            // поможет склеить с FileUpload
     display_name: t.display_name || t.table_name,
     columns_info: t.columns_info || null
   }))
 
   /* === 2. Формируем единый массив без дублей ====================== */
-  const merged = []
-
-  ;(files || []).forEach(f => {
+  const merged = [];
+  (files || []).forEach(f => {
     /* temp-таблица уже создана? */
-    const ds = dsTables.find(dt => dt.file_id === f.id)
+    const ds = dsTables.find(dt =>
+      dt.file_id === f.id ||                       // старое условие
+      dt.display_name === f.original_filename ||   // temp уже переименована
+      dt.table_name === f.table_name             // редкий случай
+    )
 
     if (ds) {
-      /* если у temp-таблицы нет columns_info — скопируем из FileUpload */
-      if (!ds.columns_info && f.columns_info)
+      if (!ds.columns_info && f.columns_info)      // копируем список колонок
         ds.columns_info = f.columns_info
+
+      /* красивое имя: берем original_filename */
+      if (!ds.display_name ||
+        /^temp_[a-f0-9]{32}/.test(ds.display_name))
+        ds.display_name = f.original_filename
       merged.push(ds)
     } else {
       /* файл ещё не добавлен в датасет */
       merged.push({
         ...f,
-        id:          -f.id,                    // отрицательный id
-        file_id:     f.id,
+        id: -f.id,                    // отрицательный id
+        file_id: f.id,
         display_name: f.original_filename,
         columns_info: f.columns_info || null,
-        isMain:      false
+        isMain: false
       })
     }
   })
@@ -208,20 +227,74 @@ function buildAllTables(files = fileUploadsCache.value) {
   allTablesOfConnection.value = merged
 }
 
+function mapTable(t) {
+  const isMain = !t.joined_on || t.joined_on === null
+
+  /* 1. Удаляем только тех, у кого  ➜ temp_*   И   НЕТ columns_info   И   не main */
+  if (!isMain &&
+    /^temp_[a-f0-9]{32}/.test(t.table_name) &&
+    !t.columns_info &&
+    (t.file_upload_id == null && t.file_id == null)) {
+    return            // undefined → filter(Boolean) уберёт
+  }
+  /* 2. Если это ГЛАВНАЯ и у неё всё ещё нет схемы либо нормального имени —
+        берём их из выбранного mainTable или из FileUpload-кеша */
+  if (isMain) {
+    const backupMain = mainTable?.value             // выбранный файл
+                      || fileUploadsCache.value.find(
+                          f => f.id === t.file_upload_id
+                        )
+
+    /* columns_info */
+    if (!t.columns_info && backupMain?.columns_info) {
+      t.columns_info = backupMain.columns_info
+    }
+
+    /* красивое имя */
+    if (
+      (!t.display_name || /^temp_[a-f0-9]{32}/.test(t.display_name)) &&
+      backupMain?.original_filename
+    ) {
+      t.display_name = backupMain.original_filename
+    }
+  }
+  if (isMain && !t.columns_info) {
+    const backup = fileUploadsCache.value.find(
+      f => f.original_filename === t.display_name || f.id === t.file_upload_id
+    )
+    if (backup?.columns_info) t.columns_info = backup.columns_info
+  }
+  /* ищем исходный файл */
+  let backup = null
+  if (t.file_upload_id != null) {
+    backup = fileUploadsCache.value.find(f => f.id === t.file_upload_id)
+  }
+  if (!backup && t.display_name?.endsWith('.xlsx')) {
+    backup = fileUploadsCache.value.find(
+      f => f.original_filename === t.display_name
+    )
+  }
+
+  return {
+    id: t.id,
+    table_ref: t.table_name,
+    display_name: t.display_name || t.table_name,
+    columns_info: t.columns_info || backup?.columns_info || null
+  }
+}
+
 async function safeUpdateDataset(promise) {
   try {
-    /* 1. Дожидаемся промиса */
-    const resp = await promise           // может быть AxiosResponse или «чистый» объект
+    const resp = await promise
 
-    /* 2. Нормализуем к { success, dataset, error } */
-    const p = resp && resp.data ? resp.data : resp          // axios → data, fetch → сам resp
+    const p = resp && resp.data ? resp.data : resp
 
     let ok, ds
     if (p && typeof p === 'object') {
-      if ('success' in p) {                 // формат { success, dataset }
+      if ('success' in p) {
         ok = p.success
-        ds = p.dataset ?? p.data            // иногда вместо dataset кладут data
-      } else if ('id' in p) {               // пришёл сам датасет
+        ds = p.dataset ?? p.data
+      } else if ('id' in p) {
         ok = true
         ds = p
       }
@@ -232,11 +305,12 @@ async function safeUpdateDataset(promise) {
       return false
     }
 
-    /* 3. Сохраняем в реактивные стейты */
-    dataset.value   = ds
+    dataset.value = ds
     relations.value = getRelationsFromDataset(ds)
 
-    buildAllTables()       // освежаем список таблиц/селектов
+    selectedTables.value = ds.tables.map(mapTable).filter(Boolean)
+
+    buildAllTables()
     return true
   } catch (err) {
     console.error(err)
@@ -294,12 +368,12 @@ function getRelationsFromDataset(data) {
 function openTableLinkModal() {
   const id = dataset.value && dataset.value.id
   if (!id || isNaN(Number(id))) {
-  alert('Создайте датасет…')
-       return
-   }
-   buildAllTables()
-   editingRelation.value  = null
-   showTableLinkModal.value = true
+    alert('Создайте датасет…')
+    return
+  }
+  buildAllTables()
+  editingRelation.value = null
+  showTableLinkModal.value = true
 }
 
 async function removeRelationById(rightTableId) {
@@ -364,33 +438,53 @@ async function loadFields() {
 
   // 2. Если есть cols и rows (т.е. предпросмотр)
   if (previewCols.value.length && previewRows.value.length) {
-  fields.value = previewCols.value.map((col, idx) => {
-    // --- определяем источник поля ---
-    let tableName = 'НеизвестнаяТаблица';
-    let columnName = col;
-    if (col.includes('__')) {
-      [tableName, columnName] = col.split('__', 2);
-    }
+    // --- строим карту: имя_колонки → таблица ---------------------------
+    console.group('[DEBUG] selectedTables с columns_info');
+    console.table((selectedTables.value || []).map(t => ({
+      id: t.id,
+      name: t.display_name || t.table_name,
+      hasColumnsInfo: !!t.columns_info,
+      cols: t.columns_info?.columns?.length || 0
+    })));
+    console.groupEnd();
+    const col2Table = {};
+    (selectedTables.value || []).forEach(t => {
+      const cols = t.columns_info?.columns || []
+      cols.forEach(c => {          // если несколько таблиц содержат одно
+        if (!col2Table[c]) col2Table[c] = t   // имя – берём первую
+      })
+    })
+    columnToTableMap.value = col2Table
+    const liveMain = selectedTables.value.find(
+      t => t && !/^temp_[a-f0-9]{32}/.test(t.display_name)
+    ) || selectedTables.value[0]         // первая всегда главная
+    previewCols.value.forEach(c => {
+      if (!col2Table[c] && liveMain) col2Table[c] = liveMain
+    })
+    fields.value = previewCols.value.map((col, idx) => {
+      // --- определяем источник поля ---
+      const tableObj = col2Table[col]           // <— ищем в карте
+      const tableName = tableObj
+        ? (tableObj.display_name || tableObj.name || tableObj.table_name)
+        : 'НеизвестнаяТаблица'
+      const columnName = col
+      let tableId = tableObj?.id;
 
-    // ищем id таблицы по имени
-    let tableObj = (selectedTables.value || []).find(t => t.name === tableName || t.display_name === tableName);
-    let tableId = tableObj?.id;
-
-    const columnValues = previewRows.value.map(row => row[idx]);
-    const colType = detectColumnType(columnValues);
-    const aggOptions = getAggregationOptions(colType);
-    return {
-      id: 'new_' + idx,
-      name: columnName,
-      source: { table: tableName, column: columnName },
-      source_table: tableId,
-      type: colType,
-      aggregation: aggOptions[0]?.value || 'none',
-      description: ''
-    }
-  });
-  return;
-}
+      const columnValues = previewRows.value.map(row => row[idx]);
+      const colType = detectColumnType(columnValues);
+      const aggOptions = getAggregationOptions(colType);
+      return {
+        id: 'new_' + idx,
+        name: columnName,
+        source: { table: tableName, column: columnName },
+        source_table: tableId,
+        type: colType,
+        aggregation: aggOptions[0]?.value || 'none',
+        description: ''
+      }
+    });
+    return;
+  }
 
   // 3. Если только cols (нет rows)
   if (previewCols.value.length) {
@@ -410,9 +504,9 @@ async function loadFields() {
 
 function normalizeFields(fields, fallbackTable = 'НеизвестнаяТаблица') {
   return fields.map((f, idx) => {
-    let tableObj = Array.isArray(selectedTables?.value)
-      ? selectedTables.value.find(t => String(t.id) === String(f.source_table))
-      : null;
+    let tableObj =
+      selectedTables.value?.find(t => String(t.id) === String(f.source_table))
+      || columnToTableMap.value[f.name]
     let tableName = tableObj?.display_name || tableObj?.name || tableObj?.table || fallbackTable;
     let source = {
       table: tableName,
@@ -430,8 +524,6 @@ function normalizeFields(fields, fallbackTable = 'НеизвестнаяТабл
   });
 }
 
-watch(relations, (v) => { console.log('[relations] changed:', v) })
-
 watch(
   () => dataset.value?.tables?.length,
   () => buildAllTables()
@@ -441,17 +533,8 @@ onMounted(async () => {
   if (datasetId) {
     const { data } = await datasetService.getDataset(datasetId)
     dataset.value = data
-    console.log('DATASET: ', JSON.stringify(dataset.value, null, 2));
-    console.log('TABLES: ', dataset.value.tables);
     relations.value = getRelationsFromDataset(data)
-    selectedTables.value = data.tables.map(t => ({
-      id: t.id,
-      schema: t.connection_name,
-      table: t.table_name,
-      name: t.table_name,
-      table_ref: t.table_ref,
-      display_name: t.display_name,
-    }))
+    selectedTables.value = data.tables.map(mapTable).filter(Boolean)
     selectedRelations.value = data.tables.map(t => ({
       source: String(data.tables[0].id),
       target: String(t.id),
@@ -461,10 +544,6 @@ onMounted(async () => {
   }
 })
 
-async function onTablesChange(newTables) {
-  selectedTables.value = newTables
-}
-
 async function createDatasetFrom(tbl) {
   const payload = {
     name: `${tbl.name || tbl.table}_${Date.now()}`,
@@ -472,25 +551,48 @@ async function createDatasetFrom(tbl) {
     file_source: tbl.id,
     is_temporary: true
   }
-  const ok = await safeUpdateDataset(datasetService.createDataset(payload));
-  if (!ok) return; // Дальше не идём, если ошибка
 
-  // Всё остальное как раньше
-  const data = dataset.value;
-  if (data.tables && data.tables.length > 0) {
-    const mainTable = data.tables.find(t => t.table_name.startsWith('temp_')) ||
-      data.tables.find(t => t.table_name.startsWith('staging_')) ||
-      data.tables[0];
-    selectedTables.value = [{
-      id: mainTable.id,
-      table_ref: mainTable.table_name,
-      display_name: tbl.display_name || tbl.name || tbl.table_name,
-      file_id: tbl.id,
-    }]
+  /* 1. получаем ответ от сервиса */
+  const resp = await datasetService.createDataset(payload)
+
+  /* 2. нормализуем */
+  let ok = false
+  let dataset = null
+
+  if (resp?.success) {                   // оба формата содержат success
+    if (resp.dataset) {
+      ok = true
+      dataset = resp.dataset             // формат №2
+    } else if (resp.data) {
+      ok = true
+      dataset = resp.data                // формат №1
+    }
   }
-  if (data?.is_temporary) localStorage.setItem('temp_dataset_id', data.id)
-  await doPreview()
-  await loadFields()
+
+  if (!ok || !dataset?.id) {
+    console.error('[CREATE] unexpected response', resp)
+    return
+  }
+
+  /* 3. копируем columns_info из файла во вновь-созданную таблицу */
+  const target =
+    dataset.tables.find(t => t.file_upload_id === tbl.id) || dataset.tables[0]
+
+  if (target && !target.columns_info && tbl.columns_info) {
+    target.columns_info = tbl.columns_info
+  }
+
+  const pretty = tbl.original_filename || tbl.name
+  if (pretty && (!target.display_name || target.display_name.startsWith('temp_'))) {
+    target.display_name = pretty
+  }
+
+  /* 4. передаём объект дальше как promise-like */
+  const ok2 = await safeUpdateDataset(Promise.resolve(dataset))
+  if (!ok2) return
+
+  selectedTables.value = dataset.tables.map(mapTable).filter(Boolean)
+  await loadPreview()
 }
 
 async function refreshFields() {
@@ -681,7 +783,7 @@ body {
   color: var(--color-primary-text);
 }
 
-.file_area_header_label{
+.file_area_header_label {
   display: flex;
   justify-content: center;
   gap: 15px;
@@ -928,7 +1030,7 @@ body {
   flex-direction: column;
 }
 
-.modal-window-field{
+.modal-window-field {
   width: min(1200px, 95vw);
   height: min(750px, 90vh);
 }
