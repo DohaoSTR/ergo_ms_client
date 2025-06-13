@@ -150,7 +150,7 @@ const menuSections = ref([
 const separators = (index) => {
   switch (index) {
     case 1:
-      return 'Шаблоны'
+      return 'Модули'
   }
 }
 </script>
