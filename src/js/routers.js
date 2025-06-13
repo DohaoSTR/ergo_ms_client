@@ -117,8 +117,8 @@ const analyzeRoutes = [
     },
     children: [
       {
-        path: 'databaseanalyze',
-        name: 'DatabaseAnalyze',
+        path: 'assets-analyse',
+        name: 'AssetsAnalyse',
         component: () => import('@/pages/user/analyze/DatabaseAnalyze.vue'),
         meta: {
           requiresAuth: true

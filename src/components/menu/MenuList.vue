@@ -2,20 +2,14 @@
 import { onMounted, ref, watch } from 'vue'
 import { ChevronLeft, Cog, Minus } from 'lucide-vue-next'
 import {
-  AnalyzeMenuSection,
+  AssetsAnalyseMenuSection,
   ChatMenuSection,
   EmailMenuSection,
   SettingsMenuSection,
   UserMenuSection,
   MapsMenuSection,
-  BillingMenuSection,
   CalendarMenuSection,
-  ChartsMenuSection,
-  ComponentsMenuSection,
-  InputsMenuSection,
   KanbanMenuSection,
-  TablesMenuSection,
-  ModalWindowsMenuSection,
   AdminPanelMenuSection,
   WatermarkedVideoSection,
   BIMenuSection,
@@ -144,19 +138,13 @@ const menuSections = ref([
   EmailMenuSection,
   ChatMenuSection,
   MapsMenuSection,
-  BillingMenuSection,
   CalendarMenuSection,
-  ChartsMenuSection,
-  ComponentsMenuSection,
-  InputsMenuSection,
   KanbanMenuSection,
-  TablesMenuSection,
-  ModalWindowsMenuSection,
   AdminPanelMenuSection,
   WatermarkedVideoSection,
   ShortcodesMenuSection,
   ExpertSystemSection,
-  AnalyzeMenuSection,
+  AssetsAnalyseMenuSection,
 ])
 
 const separators = (index) => {
