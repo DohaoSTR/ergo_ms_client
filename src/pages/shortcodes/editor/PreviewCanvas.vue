@@ -20,7 +20,7 @@
 import { ScanEye } from 'lucide-vue-next'
 import RecursiveRenderer from './RecursiveRenderer.vue'
 
-const props = defineProps({
+defineProps({
   components: {
     type: Array,
     required: true,

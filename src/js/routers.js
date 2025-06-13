@@ -599,7 +599,7 @@ const shortcodeRoutes = [
     name: 'Shortcodes',
     component: () => import('@/pages/shortcodes/ParentLayout.vue'),
     meta: { title: 'Конструктор сайта', requiresAuth: true },
-    redirect: { name: 'MainShortcodePage' },
+    redirect: { name: 'ShortcodeEditor' },
     children: [
       {
         path: 'editor',
@@ -611,7 +611,7 @@ const shortcodeRoutes = [
         },
       },
       {
-        path: 'editor',
+        path: 'shortcode-editor',
         name: 'ShortcodeEditor',
         component: () => import('@/pages/shortcodes/editor/ShortcodeEditor.vue'),
         meta: {

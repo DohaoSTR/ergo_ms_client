@@ -33,7 +33,19 @@ export const shortcodesService = {
     return apiClient.post(endpoints.shortcodes.instances, data)
   },
 
+  getInstances(params = {}) {
+    return apiClient.get(endpoints.shortcodes.instances, params)
+  },
+
   createPage(data) {
     return apiClient.post(endpoints.shortcodes.pages, data)
   },
+
+  bulkCreateInstances(data) {
+    return apiClient.post(endpoints.shortcodes.instances + 'bulk_create/', data)
+  },
+
+  getInstancesTree(params) {
+    return apiClient.get(endpoints.shortcodes.instancesTree, params)
+  }
 }

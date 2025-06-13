@@ -1,101 +1,136 @@
 <template>
-  <div class="container py-4">
-    <div class="d-flex align-items-center mb-4">
-      <h2 class="me-3">Редактор шаблона страницы</h2>
-      <span class="badge bg-secondary">Только шаблон</span>
+  <div class="template-editor min-vh-100 d-flex align-items-center justify-content-center">
+    <div class="card shadow p-5 w-100">
+      <div class="d-flex align-items-center mb-4">
+        <h2 class="mb-0 me-3">Создание страницы</h2>
+        <span class="badge bg-secondary">Страница</span>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-12">
+          <label class="form-label fw-bold">Название страницы</label>
+          <input
+            v-model="meta.title"
+            type="text"
+            class="form-control form-control-lg"
+            placeholder="Введите название страницы"
+            autofocus
+          />
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-bold">URL страницы (slug)</label>
+          <input
+            v-model="meta.slug"
+            type="text"
+            class="form-control"
+            placeholder="url-stranicy"
+            @input="onSlugInput"
+          />
+          <div class="form-text">
+            Автоматически генерируется по названию, если не менять вручную.
+          </div>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-bold">Шаблон страницы</label>
+          <select v-model="meta.baseTemplateId" class="form-select form-select-lg">
+            <option :value="null">— Без шаблона —</option>
+            <option v-for="tpl in pageTemplates" :key="tpl.id" :value="tpl.id">
+              {{ tpl.title }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-start mt-4">
+        <button class="btn btn-lg btn-success text-light px-2" @click="savePage">
+          Создать страницу
+        </button>
+      </div>
     </div>
-    <div class="row g-3 mb-4">
-      <div class="col-md-6">
-        <label class="form-label">Название шаблона</label>
-        <input
-          v-model="meta.title"
-          type="text"
-          class="form-control"
-          placeholder="Введите название"
-        />
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Категория</label>
-        <select v-model="meta.categoryId" class="form-select">
-          <option :value="null" disabled>— Выберите категорию —</option>
-          <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-            {{ cat.name }}
-          </option>
-        </select>
-      </div>
-      <div class="col-12">
-        <label class="form-label">Описание</label>
-        <textarea
-          v-model="meta.description"
-          class="form-control"
-          rows="2"
-          placeholder="Краткое описание шаблона"
-        ></textarea>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Базовый шаблон</label>
-        <select v-model="meta.baseTemplateId" class="form-select">
-          <option :value="null">— Без базового —</option>
-          <option v-for="tpl in pageTemplates" :key="tpl.id" :value="tpl.id">
-            {{ tpl.title }}
-          </option>
-        </select>
-      </div>
-    </div>
-    <button class="btn btn-success mt-3" @click="saveTemplate">Сохранить шаблон</button>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { shortcodesService } from '@/js/api/services/shortcodes'
+import { slugify as translitSlugify } from 'transliteration'
 
-const templates = ref([])
-const categories = ref([])
 const pageTemplates = ref([])
-const tree = ref([])
 
-// метаданные шаблона
 const meta = ref({
   title: '',
-  description: '',
-  categoryId: null,
+  slug: '',
   baseTemplateId: null,
 })
 
+const slugEdited = ref(false)
+
+// Делаем slug
+function makeSlug(text) {
+  return translitSlugify(text, { lowercase: true, separator: '-' })
+}
+
+watch(
+  () => meta.value.title,
+  (newTitle) => {
+    if (!slugEdited.value) {
+      meta.value.slug = makeSlug(newTitle)
+    }
+  }
+)
+
+watch(
+  () => meta.value.slug,
+  (newSlug) => {
+    if (newSlug === '') {
+      slugEdited.value = false
+      meta.value.slug = makeSlug(meta.value.title)
+    }
+  }
+)
+
+function onSlugInput() {
+  slugEdited.value = true
+}
+
 onMounted(async () => {
-  const tplRes = await shortcodesService.getTemplates()
-  if (tplRes.success) templates.value = tplRes.data
-
-  const catRes = await shortcodesService.getCategories()
-  if (catRes.success) categories.value = catRes.data
-
   const ptRes = await shortcodesService.getPageTemplates()
   if (ptRes.success) pageTemplates.value = ptRes.data
 })
 
-const saveTemplate = async () => {
+const savePage = async () => {
   const payload = {
     title: meta.value.title,
-    description: meta.value.description,
-    category: meta.value.categoryId,
+    slug: meta.value.slug,
     base_template: meta.value.baseTemplateId,
-    tree: tree.value,
   }
 
   try {
-    await shortcodesService.createTemplate(payload)
-    alert('Шаблон успешно сохранён!')
+    await shortcodesService.createPage(payload)
+    alert('Страница успешно создана!')
   } catch (e) {
     console.error(e)
-    alert('Ошибка при сохранении шаблона.')
+    alert('Ошибка при создании страницы.')
   }
 }
 </script>
 
 <style scoped>
+.card {
+  border-radius: 1.5rem;
+  border: none;
+}
 .badge {
   font-size: 0.8rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+.form-label {
+  color: #495057;
+}
+.btn-success {
+  font-weight: 500;
+  font-size: 1.12rem;
+  border-radius: 0.5rem;
 }
 </style>

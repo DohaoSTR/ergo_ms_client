@@ -3,7 +3,7 @@
     <!-- Название и текст -->
     <div class="mb-4">
       <label class="form-label fw-bold">Название</label>
-      <input v-model="component.name" type="text" class="form-control" />
+      <input v-model="component.template_name" type="text" class="form-control" />
     </div>
     <div class="mb-4">
       <label class="form-label fw-bold">Текст</label>
@@ -61,7 +61,7 @@
                   @click="
                     toggleClass(
                       'bg-' + color,
-                      bgColors.map((c) => 'bg-' + c),
+                      bgColors.map((c) => 'bg-' + c)
                     )
                   "
                 >
@@ -83,7 +83,7 @@
                   @click="
                     toggleClass(
                       'text-' + color,
-                      textColors.map((c) => 'text-' + c),
+                      textColors.map((c) => 'text-' + c)
                     )
                   "
                 >
@@ -207,6 +207,75 @@
           </div>
         </div>
       </div>
+
+      <!-- Спец. настройки для кнопки -->
+      <div
+        v-if="component.component_type && component.component_type.toLowerCase() === 'button'"
+        class="accordion-item"
+      >
+        <h2 class="accordion-header" id="headingButtonSettings">
+          <button
+            class="accordion-button bg-light"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapseButtonSettings"
+            aria-expanded="true"
+            aria-controls="collapseButtonSettings"
+          >
+            🖱 Действие кнопки
+          </button>
+        </h2>
+        <div
+          id="collapseButtonSettings"
+          class="accordion-collapse collapse show"
+          aria-labelledby="headingButtonSettings"
+        >
+          <div class="accordion-body">
+            <!-- Вариант Bootstrap -->
+            <div class="mb-3">
+              <label class="form-label">Вариант оформления</label>
+              <select v-model="component.extra_data.variant" class="form-select">
+                <option v-for="color in bgColors" :key="color" :value="color">
+                  {{ color }}
+                </option>
+              </select>
+            </div>
+            <!-- Тип кнопки -->
+            <div class="mb-3">
+              <label class="form-label">HTML-тип кнопки</label>
+              <select v-model="component.extra_data.button_type" class="form-select">
+                <option value="button">Обычная</option>
+                <option value="submit">Submit</option>
+                <option value="reset">Reset</option>
+              </select>
+            </div>
+            <!-- Действие при клике -->
+            <div class="mb-3">
+              <label class="form-label">Действие при клике</label>
+              <select v-model="component.extra_data.action" class="form-select">
+                <option value="">Нет</option>
+                <option value="goToUrl">Перейти по ссылке</option>
+                <option value="emitEvent">Emit событие (пример)</option>
+              </select>
+            </div>
+            <!-- Ввод адреса, если выбран goToUrl -->
+            <div v-if="component.extra_data.action === 'goToUrl'" class="mb-3">
+              <label class="form-label">Адрес перехода (href)</label>
+              <input
+                v-model="component.extra_data.href"
+                type="url"
+                class="form-control"
+                placeholder="https://example.com"
+              />
+              <label class="form-label mt-2">Target</label>
+              <select v-model="component.extra_data.target" class="form-select">
+                <option value="_blank">В новом окне</option>
+                <option value="_self">В этом окне</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Предпросмотр классов -->
@@ -217,6 +286,14 @@
     <button type="button" class="btn btn-outline-danger w-100 mt-2" @click="resetSettings">
       🔄 Сбросить настройки
     </button>
+
+    <!-- Debug: Все поля компонента -->
+    <div class="alert alert-info mt-4">
+      <h6>Текущий объект компонента</h6>
+      <pre style="font-size: 13px; background: #f9f9fa; max-height: 350px; overflow: auto">
+        {{ JSON.stringify(component, null, 2) }}
+      </pre>
+    </div>
   </div>
 </template>
 
@@ -258,7 +335,7 @@ watch(
       spacingValues[prefix] = extractSpacing(prefix, list)
     })
   },
-  { immediate: true },
+  { immediate: true }
 )
 
 function hasClass(cls) {
