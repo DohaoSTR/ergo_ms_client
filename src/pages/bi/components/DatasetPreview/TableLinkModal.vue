@@ -22,7 +22,7 @@
           <option value="full">FULL JOIN</option>
         </select>
       </div>
-      <div v-for="(line, idx) in relationLines" :key="idx" class="body-line">
+      <div v-for="(line, idx) in relationLines" v-if="relationLines.length" :key="idx" class="body-line">
         <select v-model="line.left" class="form-select" style="max-width:220px;">
           <option v-for="col in mainTableColumns" :key="col" :value="col">{{ col }}</option>
         </select>
@@ -66,7 +66,7 @@ import { checkJoinCompatibility } from '@/pages/bi/components/DatasetPreview/js/
 import datasetService from '@/js/api/services/bi/datasetService'
 
 const joinType = ref('inner')
-const relationLines  = ref([{ left: null, right: null }])
+const relationLines  = ref([])
 const isJoinLoading = ref(false)
 const joinError = ref(null)
 
@@ -263,9 +263,9 @@ watch(
    () => props.editRelation,
    (rel) => {
      if (!rel) {                       // режим «create»
-       joinType.value      = 'inner'
-       relationLines.value = [{ left: null, right: null }]
-       return
+      joinType.value      = 'inner'
+      relationLines.value = []        // пусто, пока пользователь не нажмёт кнопку
+      return
      }
      selectedTableId.value = Number(rel.rightTableId)
      joinType.value = (rel.joinType || 'INNER JOIN')

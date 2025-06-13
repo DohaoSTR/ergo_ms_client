@@ -98,14 +98,36 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:selectedConnection', 'update:mainTable', 'openTableLinkModal', 'tablesLoaded', 'editRelation'])
 
-const usedRightTableIds = computed(() =>
-  (props.relations.value || []).map(r => r.rightTableId)
-)
+/* 1.  temp-id всех уже подключённых таблиц (строками)  */
+const usedTableIds = computed(() => {
+  const set = new Set(props.relations.map(r => Number(r.rightTableId)))
+  if (props.mainTable) set.add(Number(props.mainTable.id))   // сама главная
+  return set                           // { 128, 130, 1369 … }
+})
+
+/* 2.  id исходного файла главной таблицы                */
+const mainFileId = props.mainTable?.file_id ?? null
 
 const availableTablesForRelation = computed(() => {
-  return (props.allTables || []).filter(
-    t => t.id !== props.mainTable?.id && !usedRightTableIds.value.includes(t.id)
-  )
+  if (!props.mainTable) return []
+
+  return props.allTables.filter(t => {
+    const idNum = Number(t.id)
+    /* а) сама главная или её клон */
+    if (t.isMain || idNum === props.mainTable.id) return false
+
+    /* б) отрицательный «сырой» двойник главной */
+    if (mainFileId !== null && idNum === -mainFileId) return false
+
+    /* в) таблица того же файла, что уже использован */
+    if (mainFileId !== null && t.file_id === mainFileId) return false
+
+    /* г) FileUpload – «отрицательный дубликат» существующей temp-таблицы */
+    if (idNum < 0 && usedTableIds.value.has(Math.abs(idNum))) return false
+
+    /* д) temp-таблица уже в связях */
+    return !usedTableIds.value.has(idNum)
+  })
 })
 
 function openTooltip(event) {
@@ -183,6 +205,7 @@ function onClickOutside(event) {
 
 function onEditRelation(rel, idx) {
   emit('editRelation', rel, idx)
+  console.log('free tables:', availableTablesForRelation.value)
 }
 
 onMounted(() => {
