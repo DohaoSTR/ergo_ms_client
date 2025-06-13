@@ -112,6 +112,7 @@ import DatasetTablePreview from '@/pages/bi/components/DatasetPreview/DatasetTab
 
 const isPreviewLoading = ref(false)
 const isLoading = ref(false)
+const fileUploadsCache = ref([])
 
 const selectedConnection = ref(null)
 const mainTable = ref(null)
@@ -159,8 +160,65 @@ const props = defineProps({
   }
 })
 
-function handleTablesLoaded(tables) {
-  allTablesOfConnection.value = tables
+function handleTablesLoaded(files) {
+  fileUploadsCache.value = files          // сохраняем
+  buildAllTables(files)
+}
+
+function buildAllTables(files = fileUploadsCache.value) {
+  /* === 1. Все DataSetTable-ы из датасета ========================== */
+  const dsTables = (dataset.value?.tables || []).map(t => ({
+    ...t,
+    id:          Number(t.id),                // id именно DataSetTable
+    file_id:     t.file_upload_id,            // поможет склеить с FileUpload
+    display_name: t.display_name || t.table_name,
+    columns_info: t.columns_info || null,
+    isMain: !t.joined_on          // главная таблица
+  }))
+
+  /* === 2. Формируем единый массив без дублей ====================== */
+  const merged = []
+
+  ;(files || []).forEach(f => {
+    /* temp-таблица уже создана? */
+    const ds = dsTables.find(dt => dt.file_id === f.id)
+
+    if (ds) {
+      /* если у temp-таблицы нет columns_info — скопируем из FileUpload */
+      if (!ds.columns_info && f.columns_info)
+        ds.columns_info = f.columns_info
+      merged.push(ds)
+    } else {
+      /* файл ещё не добавлен в датасет */
+      merged.push({
+        ...f,
+        id:          -f.id,                    // отрицательный id
+        file_id:     f.id,
+        display_name: f.original_filename,
+        columns_info: f.columns_info || null,
+        isMain:      false
+      })
+    }
+  })
+
+  /* === 3. temp-таблицы, у которых нет исходного файла ============= */
+  dsTables.forEach(dt => {
+    if (!merged.some(m => m.id === dt.id)) merged.push(dt)
+  })
+
+  allTablesOfConnection.value = merged
+}
+
+async function safeUpdateDataset(promise) {
+  const { success, data, error } = await promise
+  if (!success || !data?.id) { if (error) console.error(error); return false }
+
+  dataset.value = data
+  relations.value = getRelationsFromDataset(data)
+
+  // ── НОВОЕ ──
+  buildAllTables()          // подтягиваем новые temp_-таблицы
+  return true
 }
 
 const usedRightTableIds = computed(() =>
@@ -211,13 +269,9 @@ function getRelationsFromDataset(data) {
 }
 
 function openTableLinkModal() {
-  console.log('openTableLinkModal', dataset.value?.id, dataset.value);
-  if (!dataset.value?.id) {
-    alert('Создайте датасет прежде, чем добавлять связи!');
-    return;
-  }
+  if (!dataset.value?.id) { alert('Создайте датасет…'); return }
+  buildAllTables()          // гарантируем актуальный список
   editingRelation.value = null
-  editingRelationIndex.value = null
   showTableLinkModal.value = true
 }
 
@@ -342,6 +396,11 @@ function normalizeFields(fields, fallbackTable = 'НеизвестнаяТабл
 
 watch(relations, (v) => { console.log('[relations] changed:', v) })
 
+watch(
+  () => dataset.value?.tables?.length,
+  () => buildAllTables()
+)
+
 onMounted(async () => {
   if (datasetId) {
     const { data } = await datasetService.getDataset(datasetId)
@@ -362,6 +421,7 @@ onMounted(async () => {
       target: String(t.id),
       joinType: t.joined_on.type
     }))
+    buildAllTables()
   }
 })
 
@@ -396,20 +456,6 @@ async function createDatasetFrom(tbl) {
   await doPreview()
   await loadFields()
 }
-
-async function safeUpdateDataset(promise) {
-  const { success, data, error } = await promise;
-  if (success && data && data.id) {
-    dataset.value = data;
-    relations.value = getRelationsFromDataset(data)
-    return true;
-  } else {
-    // Не затирай dataset! Выводи ошибку.
-    if (error) console.error(error);
-    return false;
-  }
-}
-
 
 async function refreshFields() {
   if (!dataset.value || !dataset.value.id) return;

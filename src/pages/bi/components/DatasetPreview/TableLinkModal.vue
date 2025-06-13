@@ -66,6 +66,7 @@ import { checkJoinCompatibility } from '@/pages/bi/components/DatasetPreview/js/
 import datasetService from '@/js/api/services/bi/datasetService'
 
 const joinType = ref('inner')
+const relationLines  = ref([{ left: null, right: null }])
 const isJoinLoading = ref(false)
 const joinError = ref(null)
 
@@ -85,29 +86,47 @@ const props = defineProps({
   datasetId: [String, Number],
 })
 
+const mainFileId = props.mainTable.file_id || props.mainTable.id
+
 const canApply = computed(() =>
   relationLines.value.length > 0 &&
   relationLines.value.every(line => line.left && line.right)
 )
 
-const selectedTableId = ref(null)
-const isEditMode = ref(false);
-
-const selectedRightTableId = ref(props.editRelation?.rightTableId || null)
-const linkedTable = computed(() => {
-  return props.allTables.find(t => t.id === selectedRightTableId.value)
-})
+const isEditMode      = computed(() => !!props.editRelation)
+const selectedTableId = ref(isEditMode.value
+  ? Number(props.editRelation.rightTableId)
+  : null)
+  
+const linkedTable = computed(() =>
+  props.allTables.find(t => t.id === selectedTableId.value)
+)
 
 const mainTableColumns = ref([])
 const linkedTableColumns = ref([])
 
+mainTableColumns.value = getTableColumns(props.mainTable)
+
 const availableTables = computed(() => {
-  return props.allTables.filter(
-    t =>
-      t.id !== props.mainTable.id &&
-      !props.linkedTableIds.includes(t.id) &&
-      t.id !== selectedRightTableId.value
-  )
+  const base = props.allTables.filter(t => {
+    /* 1. никогда не показываем «левую» таблицу  */
+    if (t.id === props.mainTable.id) return false
+    if (t.isMain)                    return false
+      if (t.file_id === mainFileId)                 return false   // тот же файл
+      if (t.id === -mainFileId)                     return false   // temp-id главной
+
+    /* 2. уже присоединена – скрываем   */
+    if (props.linkedTableIds.includes(t.id)) return false
+
+    return true
+  })
+
+  /* в режиме edit добавляем редактируемую, если её отфильтровали */
+  if (props.editRelation) {
+    const cur = props.allTables.find(t => t.id === props.editRelation.rightTableId)
+    if (cur && !base.some(x => x.id === cur.id)) base.unshift(cur)
+  }
+  return base
 })
 
 function getTableName(table) {
@@ -117,8 +136,6 @@ function getTableName(table) {
   if (file.original_filename) name += ` [${file.original_filename}]`
   return name
 }
-
-const relationLines = ref([])
 
 function removeRelationLine(idx) {
   relationLines.value.splice(idx, 1)
@@ -156,13 +173,14 @@ async function onApply() {
 }
 
 function getTableColumns(table) {
-  if (!table || !table.columns_info) return []
-  const cols = table.columns_info.columns
-  if (Array.isArray(cols)) {
-    if (typeof cols[0] === "string") return cols
-    if (typeof cols[0] === "object" && cols[0]?.name) return cols.map(c => c.name)
+  /* если columns_info нет, пытаемся найти «родительский» FileUpload */
+  if (!table) return []
+  if (!table?.columns_info && table?.file_id) {
+    const backup = props.allTables.find(f => f.id === -table.file_id)
+    if (backup?.columns_info) table.columns_info = backup.columns_info
   }
-  return []
+
+  return table.columns_info?.columns || []
 }
 
 async function handleAutoJoinAndApply() {
@@ -242,15 +260,22 @@ watch(linkedTable, (tbl) => {
 }, { immediate: true })
 
 watch(
-  () => props.editRelation,
-  (edit) => {
-    if (edit && edit.rightTableId) {
-      selectedTableId.value = Number(edit.rightTableId)
-    } else {
-      selectedTableId.value = null;
-    }
-  },
-  { immediate: true }
+   () => props.editRelation,
+   (rel) => {
+     if (!rel) {                       // режим «create»
+       joinType.value      = 'inner'
+       relationLines.value = [{ left: null, right: null }]
+       return
+     }
+     selectedTableId.value = Number(rel.rightTableId)
+     joinType.value = (rel.joinType || 'INNER JOIN')
+                     .split(' ')[0]        // "INNER", "LEFT", …
+                     .toLowerCase()        // → inner | left | …
+     relationLines.value   = rel.lines?.length
+       ? rel.lines.map(l => ({ left: l.left,  right: l.right }))
+       : [{ left: rel.leftColumn, right: rel.rightColumn }]
+   },
+   { immediate: true }
 )
 
 console.log('mainTable:', props.mainTable)

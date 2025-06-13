@@ -118,8 +118,8 @@ import { getAggregationOptions } from '@/pages/bi/components/DatasetPreview/js/D
 import { useAutoJoin } from '@/pages/bi/components/DatasetPreview/js/useAutoJoin.js'
 
 import SourceSettings from '@/pages/bi/components/DatasetPreview/SourceSettings.vue'
-import SourcesPage from '@/pages/bi/components/DatasetPreview/SourcesPage.vue'
-import SourcesPageLinks from '@/pages/bi/components/DatasetPreview/SourcesPageLinks.vue'
+import SourcesPage from '@/pages/bi/components/DatasetPreview/legacy/SourcesPage.vue'
+import SourcesPageLinks from '@/pages/bi/components/DatasetPreview/legacy/SourcesPageLinks.vue'
 import FieldsPage from '@/pages/bi/components/DatasetPreview/FieldsPage.vue'
 import ParamsPage from '@/pages/bi/components/DatasetPreview/ParamsPage.vue'
 import DatasetTablePreview from '@/pages/bi/components/DatasetPreview/DatasetTablePreview.vue'
