@@ -1,21 +1,37 @@
+<!--
+  КОМПОНЕНТ СПИСКА БОКОВОГО МЕНЮ
+  
+  Основной компонент для отображения и управления боковым меню приложения.
+  Обрабатывает всю логику взаимодействия с меню, включая навигацию,
+  состояния секций и интеграцию с системой прав доступа.
+  
+  Основные возможности:
+  - Отображение секций меню из menu-sections.js
+  - Сворачивание/разворачивание меню с анимацией
+  - Hover-эффекты для свернутого состояния
+  - Автоматическое определение активной секции по текущему маршруту
+  - Интеграция с системой прав доступа (GroupsPolitics)
+  - Поддержка специальных действий (offcanvas для BI модуля)
+  - Адаптивность и поддержка скрытия на мобильных устройствах
+  
+  Системы прав:
+  - CheckAccessToAdminPanel: проверка доступа к админ-панели
+  - GetClosedPagesForUser: получение списка закрытых для пользователя страниц
+  - Динамическое скрытие недоступных секций и пунктов меню
+  
+  События:
+  - left-padding: изменение отступа основного контента
+  - open-sidebar: открытие боковой панели для BI модуля
+  - reset-page: сброс текущей страницы
+-->
+
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { ChevronLeft, Cog, Minus } from 'lucide-vue-next'
 import {
-  AssetsAnalyseMenuSection,
-  ChatMenuSection,
-  EmailMenuSection,
-  SettingsMenuSection,
-  UserMenuSection,
-  MapsMenuSection,
-  CalendarMenuSection,
-  KanbanMenuSection,
+  allMenuSections,
+  getSeparator,
   AdminPanelMenuSection,
-  WatermarkedVideoSection,
-  BIMenuSection,
-  ShortcodesMenuSection,
-  EducationAnalyticMenuSection,
-  ExpertSystemSection,
 } from '@/js/menu-sections.js'
 
 import MenuGroup from '@/components/menu/MenuGroup.vue'
@@ -129,29 +145,11 @@ function resetCurrentPage() {
   emit('reset-page')  
 }
 
-// Список секций меню
-const menuSections = ref([
-  UserMenuSection,
-  SettingsMenuSection,
-  BIMenuSection,
-  EducationAnalyticMenuSection,
-  EmailMenuSection,
-  ChatMenuSection,
-  MapsMenuSection,
-  CalendarMenuSection,
-  KanbanMenuSection,
-  AdminPanelMenuSection,
-  WatermarkedVideoSection,
-  ShortcodesMenuSection,
-  ExpertSystemSection,
-  AssetsAnalyseMenuSection,
-])
+// Список секций меню загружается из JSON конфигурации
+const menuSections = ref([...allMenuSections])
 
 const separators = (index) => {
-  switch (index) {
-    case 1:
-      return 'Модули'
-  }
+  return getSeparator(index)
 }
 </script>
 

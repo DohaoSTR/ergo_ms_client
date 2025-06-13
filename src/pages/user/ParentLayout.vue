@@ -10,7 +10,6 @@ const navigationButtons = ref([
   { icon: UsersRound, title: 'Команды', link: 'Teams' },
   { icon: LayoutGrid, title: 'Проекты', link: 'Projects' },
   { icon: Link, title: 'Связи', link: 'Connections' },
-  { icon: ChartNoAxesCombined, title: 'Статистика', link: 'Analytics' },
 ])
 </script>
 

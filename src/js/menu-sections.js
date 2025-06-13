@@ -1,197 +1,124 @@
-import {
-  AtSign,
-  Braces,
-  Calendar,
-  ChartBarStacked,
-  ChartSpline,
-  ChartCandlestick,
-  CircleUserRound,
-  Component,
-  Code2,
-  Grid2x2,
-  Map,
-  MessagesSquare,
-  PictureInPicture2,
-  Table2,
-  TextCursorInput,
-  UserCog,
-  Wallet,
-  KeySquare,
-  BookOpen,
-  NotepadTextDashed,
-  Video
-} from 'lucide-vue-next'
+/**
+ * КОНФИГУРАЦИЯ СЕКЦИЙ БОКОВОГО МЕНЮ (JSON-BASED)
+ * 
+ * Данный файл загружает конфигурацию меню из JSON файла и преобразует
+ * строковые имена иконок в Vue компоненты. Это обеспечивает гибкую
+ * систему управления меню через конфигурационные файлы.
+ * 
+ * Архитектура:
+ * - menu-config.json: содержит всю структуру меню в JSON формате
+ * - icons-mapping.js: маппинг строковых имен на компоненты иконок
+ * - menu-sections.js: загрузка и преобразование конфигурации
+ * 
+ * Функциональность:
+ * - Загрузка конфигурации меню из JSON файла
+ * - Преобразование строковых имен иконок в Vue компоненты
+ * - Поддержка сепараторов между секциями меню
+ * - Валидация и обработка ошибок загрузки
+ * 
+ * Используется компонентами MenuList.vue и MenuGroup.vue для динамического
+ * построения структуры бокового меню с поддержкой навигации и группировки.
+ */
 
-// Аккаунт
-export const UserMenuSection = {
-  id: 1,
-  icon: CircleUserRound,
-  routeName: 'User',
-  title: 'Аккаунт',
-  list: [
-    { path: 'Account', name: 'Профиль' },
-    { path: 'Teams', name: 'Команды' },
-    { path: 'Projects', name: 'Проекты' },
-    { path: 'Connections', name: 'Связи' },
-  ],
+import { getIcon } from '@/config/icons-mapping.js'
+import menuConfig from '@/config/menu-config.json'
+
+/**
+ * Преобразует секцию меню из JSON формата в объект с Vue компонентами
+ * @param {Object} section - секция меню из JSON конфигурации
+ * @returns {Object} - секция с подставленными компонентами иконок
+ */
+function transformMenuSection(section) {
+  return {
+    ...section,
+    icon: getIcon(section.icon)
+  }
 }
 
-
-// Настройки аккаунта
-export const SettingsMenuSection = {
-  id: 2,
-  icon: UserCog,
-  routeName: 'Settings',
-  title: 'Настройки',
-  list: [
-    { path: 'AccountSettings', name: 'Аккаунт' },
-    { path: 'SecuritySettings', name: 'Безопасность' },
-    { path: 'NotificationSettings', name: 'Уведомления' },
-    { path: 'ConnectionSettings', name: 'Связи' },
-    { path: 'Roles', name: 'Ролевые настройки' },
-  ],
+/**
+ * Загружает и преобразует все секции меню из JSON конфигурации
+ * @returns {Array} - массив секций меню с компонентами иконок
+ */
+function loadMenuSections() {
+  try {
+    return menuConfig.menuSections.map(transformMenuSection)
+  } catch (error) {
+    console.error('Ошибка загрузки конфигурации меню:', error)
+    return []
+  }
 }
 
-// Электронная почта
-export const EmailMenuSection = {
-  id: 3,
-  icon: AtSign,
-  routeName: 'Email',
-  title: 'Электронная почта',
+/**
+ * Получает конфигурацию сепараторов меню
+ * @returns {Object} - объект с настройками сепараторов
+ */
+function loadMenuSeparators() {
+  try {
+    return menuConfig.separators || {}
+  } catch (error) {
+    console.error('Ошибка загрузки сепараторов меню:', error)
+    return {}
+  }
 }
 
-// Мессенджер
-export const ChatMenuSection = {
-  id: 4,
-  icon: MessagesSquare,
-  routeName: 'Messenger',
-  title: 'Мессенджер',
+// Экспортируемые секции меню с преобразованными иконками
+const sections = loadMenuSections()
+const separators = loadMenuSeparators()
+
+// Динамическое создание экспортов секций на основе JSON конфигурации
+const sectionExports = {}
+
+// Создаем карту имен экспортов для обратной совместимости
+const exportNameMap = {
+  1: 'UserMenuSection',
+  2: 'SettingsMenuSection', 
+  3: 'EmailMenuSection',
+  4: 'ChatMenuSection',
+  5: 'MapsMenuSection',
+  6: 'CalendarMenuSection',
+  7: 'KanbanMenuSection',
+  8: 'AdminPanelMenuSection',
+  9: 'WatermarkedVideoSection',
+  10: 'BIMenuSection',
+  11: 'ShortcodesMenuSection',
+  12: 'EducationAnalyticMenuSection',
+  13: 'ExpertSystemSection',
+  14: 'AssetsAnalyseMenuSection'
 }
 
-// Карты
-export const MapsMenuSection = {
-  id: 5,
-  icon: Map,
-  routeName: 'Maps',
-  title: 'Карты',
-}
+// Динамически создаем экспорты
+sections.forEach(section => {
+  const exportName = exportNameMap[section.id]
+  if (exportName) {
+    sectionExports[exportName] = section
+  }
+})
 
-// Календарь
-export const CalendarMenuSection = {
-  id: 6,
-  icon: Calendar,
-  routeName: 'Calendar',
-  title: 'Календарь',
-}
+// Экспорт отдельных секций для обратной совместимости
+export const UserMenuSection = sectionExports.UserMenuSection
+export const SettingsMenuSection = sectionExports.SettingsMenuSection
+export const EmailMenuSection = sectionExports.EmailMenuSection
+export const ChatMenuSection = sectionExports.ChatMenuSection
+export const MapsMenuSection = sectionExports.MapsMenuSection
+export const CalendarMenuSection = sectionExports.CalendarMenuSection
+export const KanbanMenuSection = sectionExports.KanbanMenuSection
+export const AdminPanelMenuSection = sectionExports.AdminPanelMenuSection
+export const WatermarkedVideoSection = sectionExports.WatermarkedVideoSection
+export const BIMenuSection = sectionExports.BIMenuSection
+export const ShortcodesMenuSection = sectionExports.ShortcodesMenuSection
+export const EducationAnalyticMenuSection = sectionExports.EducationAnalyticMenuSection
+export const ExpertSystemSection = sectionExports.ExpertSystemSection
+export const AssetsAnalyseMenuSection = sectionExports.AssetsAnalyseMenuSection
 
-// Канбан-доска
-export const KanbanMenuSection = {
-  id: 7,
-  icon: Grid2x2,
-  routeName: 'Kanban',
-  title: 'Канбан-доска',
-}
+// Экспорт всех секций и сепараторов
+export const allMenuSections = sections
+export const menuSeparators = separators
 
-// Админ-панель
-export const AdminPanelMenuSection = {
-  id: 8,
-  icon: KeySquare,
-  routeName: 'AdminPanel',
-  title: 'Админ-панель',
-  list: [
-    { path: 'CategoriesPanel', name: 'Настройка категорий' },
-    { path: 'GroupsPanel', name: 'Настройка групп' },
-    { path: 'PermissionsPanel', name: 'Настройка прав' },
-    { path: 'UsersPanel', name: 'Настройка пользователей' },
-    { path: 'LiminationPanel', name:'Настройка ограничений'}
-  ],
+/**
+ * Функция получения сепаратора по индексу (для обратной совместимости)
+ * @param {number} index - индекс секции
+ * @returns {string|undefined} - название сепаратора
+ */
+export const getSeparator = (index) => {
+  return separators[index.toString()]
 }
-
-export const WatermarkedVideoSection = {
-  id: 9,
-  icon: Video,
-  routeName: 'Watermarked-Video',
-  title: 'Видео с вотермаркой',
-}
-
-// BI секция
-export const BIMenuSection = {
-  id: 10,
-  icon: ChartSpline,
-  routeName: 'BI',
-  title: 'BI',
-  list: [
-    {
-      name: 'Датасеты',
-      page: 'datasets',
-      isOffcanvas: true
-    },
-    {
-      name: 'Подключения',
-      page: 'connections',
-      isOffcanvas: true
-    },
-    {
-      name: 'Чарты',
-      page: 'charts',
-      isOffcanvas: true
-    },
-  ],
-}
-
-export const ShortcodesMenuSection = {
-  id: 11,
-  icon: Braces,
-  routeName: 'Shortcodes',
-  title: 'Редактор страниц',
-  list: [
-    { path: 'MainShortcodePage', name: 'Главная' },
-    { path: 'ShortcodeEditor', name: 'Редактор страниц' },
-    { path: 'Templates', name: 'Компоненты' },
-  ],
-}
-
-// Модуль учебной аналитики
-export const EducationAnalyticMenuSection = {
-  id: 12,
-  icon: ChartCandlestick,
-  routeName: 'EducationAnalyticModule',
-  title: 'Учебная аналитика',
-  list: [
-    { path: 'MainPage', name: "Общее" },
-    { path: 'StatsPage', name: "Статистика" },
-    { path: 'LearningTrackPage', name: "Траектория" },
-    { path: 'ReportsPage', name: "Отчёты" },
-    { path: 'ProfilePage', name: "Профиль" },
-    { path: 'AdminPanelPage', name: "Админ-панель" },
-    { path: 'SuperUserPage', name: "SAdmin  " },
-  ],
-}
-
-// Модуль экспертной системы
-export const ExpertSystemSection = {
-  id: 13,
-  icon: ChartBarStacked,
-  routeName: 'ExpertSystem',
-  title: 'Анализ вакансий',
-  list: [
-    { path: 'Skills', name: 'Навыки' },
-    { path: 'Profile', name: 'Профиль' },
-    { path: 'Groups', name: 'Группы' },
-    { path: 'Vacancies', name: 'Вакансии' },
-    { path: 'Proforientation', name: 'Профориентация' },
-    { path: 'Profession', name: 'Менеджер профессий' },
-    { path: 'OrientationTest', name: 'Менеджер тестов' },
-    { path: 'AllTests', name: 'Управление тестами для навыков' },
-    { path: 'StudentCourses', name: 'Рекомендованные курсы' },
-    { path: 'StudentsList', name: 'Студенты' }
-  ],
-}
-
-// Аналитика
-export const AssetsAnalyseMenuSection = {
-  id: 14,
-  icon: Code2,
-  routeName: 'AssetsAnalyse',
-  title: 'Анализ курсов активов',
-};

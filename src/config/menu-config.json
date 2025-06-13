@@ -1,0 +1,640 @@
+{
+  "menuSections": [
+    {
+      "id": 1,
+      "icon": "CircleUserRound",
+      "routeName": "User",
+      "title": "Аккаунт",
+      "route": {
+        "path": "/user",
+        "component": "@/pages/user/ParentLayout.vue",
+        "redirect": "Account",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        { 
+          "path": "Account", 
+          "name": "Профиль",
+          "route": {
+            "path": "account",
+            "component": "@/pages/user/account/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Teams", 
+          "name": "Команды",
+          "route": {
+            "path": "teams",
+            "component": "@/pages/user/teams/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Projects", 
+          "name": "Проекты",
+          "route": {
+            "path": "projects",
+            "component": "@/pages/user/projects/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Connections", 
+          "name": "Связи",
+          "route": {
+            "path": "connections",
+            "component": "@/pages/user/connections/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "icon": "UserCog",
+      "routeName": "Settings",
+      "title": "Настройки",
+      "route": {
+        "path": "/settings",
+        "component": "@/pages/settings/ParentLayout.vue",
+        "redirect": "AccountSettings",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        { 
+          "path": "AccountSettings", 
+          "name": "Аккаунт",
+          "route": {
+            "path": "account",
+            "component": "@/pages/settings/account/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "SecuritySettings", 
+          "name": "Безопасность",
+          "route": {
+            "path": "security",
+            "component": "@/pages/settings/security/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "NotificationSettings", 
+          "name": "Уведомления",
+          "route": {
+            "path": "notifications",
+            "component": "@/pages/settings/notifications/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "ConnectionSettings", 
+          "name": "Связи",
+          "route": {
+            "path": "connections",
+            "component": "@/pages/settings/connections/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Roles", 
+          "name": "Ролевые настройки",
+          "route": {
+            "path": "roles",
+            "component": "@/pages/roles/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "icon": "AtSign",
+      "routeName": "Email",
+      "title": "Электронная почта",
+      "route": {
+        "path": "/email",
+        "component": "@/pages/email/ParentLayout.vue",
+        "meta": {
+          "requiresAuth": true
+        }
+      }
+    },
+    {
+      "id": 4,
+      "icon": "MessagesSquare",
+      "routeName": "Messenger",
+      "title": "Мессенджер",
+      "route": {
+        "path": "/messenger",
+        "component": "@/pages/messenger/ParentLayout.vue",
+        "meta": {
+          "requiresAuth": true
+        }
+      }
+    },
+    {
+      "id": 5,
+      "icon": "Map",
+      "routeName": "Maps",
+      "title": "Карты",
+      "route": {
+        "path": "/maps",
+        "component": "@/pages/maps/ParentLayout.vue",
+        "meta": {
+          "title": "Карты",
+          "requiresAuth": true
+        }
+      }
+    },
+    {
+      "id": 6,
+      "icon": "Calendar",
+      "routeName": "Calendar",
+      "title": "Календарь",
+      "route": {
+        "path": "/calendar",
+        "component": "@/pages/calendar/ParentLayout.vue",
+        "meta": {
+          "title": "Календарь",
+          "requiresAuth": true
+        }
+      }
+    },
+    {
+      "id": 7,
+      "icon": "Grid2x2",
+      "routeName": "Kanban",
+      "title": "Канбан-доска",
+      "route": {
+        "path": "/kanban",
+        "component": "@/pages/kanban/ParentLayout.vue",
+        "meta": {
+          "title": "Канбан-доска",
+          "requiresAuth": true
+        }
+      }
+    },
+    {
+      "id": 8,
+      "icon": "KeySquare",
+      "routeName": "AdminPanel",
+      "title": "Админ-панель",
+      "route": {
+        "path": "/AdminPanel",
+        "component": "@/pages/AdminPanel/ParentLayout.vue",
+        "redirect": "GroupsPanel",
+        "meta": {
+          "title": "Админ-панель",
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        { 
+          "path": "CategoriesPanel", 
+          "name": "Настройка категорий",
+          "route": {
+            "path": "CategoriesPanel",
+            "component": "@/pages/AdminPanel/Categories.vue",
+            "meta": {
+              "title": "Панель категорий",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "GroupsPanel", 
+          "name": "Настройка групп",
+          "route": {
+            "path": "GroupsPanel",
+            "component": "@/pages/AdminPanel/Groups.vue",
+            "meta": {
+              "title": "Панель групп",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "PermissionsPanel", 
+          "name": "Настройка прав",
+          "route": {
+            "path": "PermissionsPanel",
+            "component": "@/pages/AdminPanel/Permissions.vue",
+            "meta": {
+              "title": "Панель прав",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "UsersPanel", 
+          "name": "Настройка пользователей",
+          "route": {
+            "path": "UsersPanel",
+            "component": "@/pages/AdminPanel/Users.vue",
+            "meta": {
+              "title": "Панель пользователей",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "LiminationPanel", 
+          "name": "Настройка ограничений",
+          "route": {
+            "path": "LiminationsPanel",
+            "component": "@/pages/AdminPanel/limitationSettings.vue",
+            "meta": {
+              "title": "Панель Ограничений",
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "icon": "Video",
+      "routeName": "Watermarked-Video",
+      "title": "Видео с вотермаркой",
+      "route": {
+        "path": "/watermarked-video",
+        "component": "@/pages/WatermarkVideo/ParentLayout.vue",
+        "meta": {
+          "requiresAuth": true
+        }
+      }
+    },
+    {
+      "id": 10,
+      "icon": "ChartSpline",
+      "routeName": "BI",
+      "title": "BI",
+      "route": {
+        "path": "/bi",
+        "component": "@/pages/bi/HomePageBI.vue",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        {
+          "name": "Датасеты",
+          "page": "datasets",
+          "isOffcanvas": true
+        },
+        {
+          "name": "Подключения",
+          "page": "connections",
+          "isOffcanvas": true
+        },
+        {
+          "name": "Чарты",
+          "page": "charts",
+          "isOffcanvas": true
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "icon": "Braces",
+      "routeName": "Shortcodes",
+      "title": "Редактор страниц",
+      "route": {
+        "path": "/shortcodes",
+        "component": "@/pages/shortcodes/ParentLayout.vue",
+        "redirect": "MainShortcodePage",
+        "meta": {
+          "title": "Конструктор сайта",
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        { 
+          "path": "MainShortcodePage", 
+          "name": "Главная",
+          "route": {
+            "path": "editor",
+            "component": "@/pages/shortcodes/editor/MainPage.vue",
+            "meta": {
+              "title": "Главная",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "ShortcodeEditor", 
+          "name": "Редактор страниц",
+          "route": {
+            "path": "editor",
+            "component": "@/pages/shortcodes/editor/ShortcodeEditor.vue",
+            "meta": {
+              "title": "Редактор страниц",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Templates", 
+          "name": "Компоненты",
+          "route": {
+            "path": "templates",
+            "component": "@/pages/shortcodes/editor/TemplateManager.vue",
+            "meta": {
+              "title": "Компоненты",
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "icon": "ChartCandlestick",
+      "routeName": "EducationAnalyticModule",
+      "title": "Учебная аналитика",
+      "route": {
+        "path": "/education_analytics",
+        "component": "@/pages/education_analytics_module/ParentLayout.vue",
+        "redirect": "MainPage",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        { 
+          "path": "MainPage", 
+          "name": "Общее",
+          "route": {
+            "path": "main",
+            "component": "@/pages/education_analytics_module/MainPage.vue",
+            "meta": {
+              "title": "MainPage",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "StatsPage", 
+          "name": "Статистика",
+          "route": {
+            "path": "stats",
+            "component": "@/pages/education_analytics_module/StatsPage.vue",
+            "meta": {
+              "title": "StatsPage",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "LearningTrackPage", 
+          "name": "Траектория",
+          "route": {
+            "path": "learning_track",
+            "component": "@/pages/education_analytics_module/LearningTrack.vue",
+            "meta": {
+              "title": "LearningTrackPage",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "ReportsPage", 
+          "name": "Отчёты",
+          "route": {
+            "path": "reports",
+            "component": "@/pages/education_analytics_module/ReportsPage.vue",
+            "meta": {
+              "title": "ReportsPage",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "ProfilePage", 
+          "name": "Профиль",
+          "route": {
+            "path": "profile",
+            "component": "@/pages/education_analytics_module/ProfilePage.vue",
+            "meta": {
+              "title": "ProfilePage",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "AdminPanelPage", 
+          "name": "Админ-панель",
+          "route": {
+            "path": "admin",
+            "component": "@/pages/education_analytics_module/AdminPanelPage.vue",
+            "meta": {
+              "title": "AdminPanelPage",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "SuperUserPage", 
+          "name": "SAdmin",
+          "route": {
+            "path": "root",
+            "component": "@/pages/education_analytics_module/SuperUserPanelPage.vue",
+            "meta": {
+              "title": "SuperUserPage",
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "icon": "ChartBarStacked",
+      "routeName": "ExpertSystem",
+      "title": "Анализ вакансий",
+      "route": {
+        "path": "/expert-system",
+        "component": "@/pages/expert-system/ParentLayout.vue",
+        "redirect": "ChoiceRole",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        { 
+          "path": "ChoiceRole", 
+          "name": "Выбор роли",
+          "route": {
+            "path": "choice-role",
+            "component": "@/pages/expert-system/ChoiceRole.vue",
+            "meta": {
+              "title": "Выбор роли",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Skills", 
+          "name": "Навыки",
+          "route": {
+            "path": "skills",
+            "component": "@/pages/expert-system/SkillManager.vue",
+            "meta": {
+              "title": "Навыки",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Profile", 
+          "name": "Профиль",
+          "route": {
+            "path": "account",
+            "component": "@/pages/expert-system/ProfileDashboard.vue",
+            "meta": {
+              "title": "Профиль",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Groups", 
+          "name": "Группы",
+          "route": {
+            "path": "group-manager",
+            "component": "@/pages/expert-system/GroupManager.vue",
+            "meta": {
+              "title": "Группы обучения",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Vacancies", 
+          "name": "Вакансии",
+          "route": {
+            "path": "vacancies",
+            "component": "@/pages/expert-system/StudentVacancies.vue",
+            "meta": {
+              "title": "Вакансии",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Proforientation", 
+          "name": "Профориентация",
+          "route": {
+            "path": "proforientation",
+            "component": "@/pages/expert-system/ProforientationTest.vue",
+            "meta": {
+              "title": "Профориентация",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "Profession", 
+          "name": "Менеджер профессий",
+          "route": {
+            "path": "profession-manager",
+            "component": "@/pages/expert-system/ProfessionManager.vue",
+            "meta": {
+              "title": "Менеджер профессий",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "OrientationTest", 
+          "name": "Менеджер тестов",
+          "route": {
+            "path": "orientation-test",
+            "component": "@/pages/expert-system/OrientationTestManager.vue",
+            "meta": {
+              "title": "Менеджер ориентационных тестов",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "AllTests", 
+          "name": "Управление тестами для навыков",
+          "route": {
+            "path": "all-tests",
+            "component": "@/pages/expert-system/Tests/AllTestsPage.vue",
+            "meta": {
+              "title": "Тесты",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "StudentCourses", 
+          "name": "Рекомендованные курсы",
+          "route": {
+            "path": "/student-courses",
+            "component": "@/pages/expert-system/StudentCourses.vue",
+            "meta": {
+              "title": "Рекомендованные курсы",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "StudentsList", 
+          "name": "Студенты",
+          "route": {
+            "path": "/students",
+            "component": "@/pages/expert-system/StudentList.vue",
+            "meta": {
+              "title": "Поиск студентов",
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "icon": "Code2",
+      "routeName": "AssetsAnalyse",
+      "title": "Анализ курсов активов",
+      "route": {
+        "path": "/user/analyze/assets-analyse",
+        "component": "@/pages/user/analyze/DatabaseAnalyze.vue",
+        "meta": {
+          "requiresAuth": true
+        }
+      }
+    }
+  ],
+  "separators": {
+    "1": "Модули"
+  }
+} 
