@@ -1,0 +1,93 @@
+{
+  "coreRoutes": [
+    {
+      "path": "/",
+      "redirect": { "name": "Account" },
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/:pathMatch(.*)*",
+      "name": "NotFound",
+      "component": "@/pages/NotFound.vue",
+      "meta": {
+        "title": "Страница не найдена",
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/logout",
+      "name": "logout",
+      "component": "@/components/header/Logout.vue",
+      "meta": {
+        "title": "-"
+      }
+    }
+  ],
+  "authRoutes": [
+    {
+      "path": "/start-page",
+      "name": "StartPage",
+      "component": "@/pages/auth/StartPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/login",
+      "name": "Login",
+      "component": "@/pages/auth/LoginPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/register",
+      "name": "Register",
+      "component": "@/pages/auth/RegisterPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/verify-email",
+      "name": "VerifyEmail",
+      "component": "@/pages/auth/VerifyEmailPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/forgot-password",
+      "name": "ForgotPassword",
+      "component": "@/pages/auth/ForgotPasswordPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/reset-password",
+      "name": "ResetPassword",
+      "component": "@/pages/auth/ResetPasswordPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/two-steps",
+      "name": "TwoSteps",
+      "component": "@/pages/auth/TwoStepsPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    }
+  ]
+} 

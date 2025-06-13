@@ -2,8 +2,13 @@
  * ГЕНЕРАТОР МАРШРУТОВ ИЗ JSON КОНФИГУРАЦИИ
  * 
  * Данный модуль автоматически генерирует конфигурацию маршрутов Vue Router
- * на основе JSON конфигурации меню. Это обеспечивает единый источник истины
- * для структуры приложения и устраняет дублирование кода.
+ * на основе JSON конфигураций меню и основных маршрутов. Это обеспечивает 
+ * единый источник истины для структуры приложения и устраняет дублирование кода.
+ * 
+ * Архитектура:
+ * - menu-config.json: содержит структуру меню и основных маршрутов
+ * - core-routes-config.json: содержит служебные маршруты (auth, 404, etc.)
+ * - routes-generator.js: преобразует JSON в объекты Vue Router
  * 
  * Функциональность:
  * - Преобразование JSON структуры в массив маршрутов Vue Router
@@ -11,11 +16,14 @@
  * - Автоматическое создание ленивой загрузки компонентов
  * - Сохранение метаданных маршрутов (title, requiresAuth и др.)
  * - Обработка redirect для родительских маршрутов
+ * - Генерация служебных маршрутов из JSON конфигурации
+ * - Разделение на основные маршруты и маршруты аутентификации
  * - Валидация и обработка ошибок
  * 
  * Использование:
- * import { generateRoutesFromConfig } from '@/config/routes-generator.js'
- * const routes = generateRoutesFromConfig()
+ * import { generateRoutesFromConfig, generateCoreRoutes } from '@/config/routes-generator.js'
+ * const menuRoutes = generateRoutesFromConfig()
+ * const coreRoutes = generateCoreRoutes()
  */
 
 import menuConfig from '@/config/menu-config.json'
@@ -116,103 +124,115 @@ export function generateRoutesFromConfig() {
   }
 }
 
+import coreRoutesConfig from '@/config/core-routes-config.json'
+
 /**
- * Генерирует дополнительные служебные маршруты (основные и auth)
+ * Преобразует строковый путь компонента в динамический импорт
+ * @param {string} componentPath - путь к компоненту (например: "@/pages/NotFound.vue")
+ * @returns {Function} - функция динамического импорта
+ */
+function transformComponentPath(componentPath) {
+  // Убираем префикс @/ и добавляем ./ для relative import (аналогично createLazyImport)
+  const relativePath = componentPath.replace('@/', '../')
+  return () => import(/* webpackChunkName: "[request]" */ relativePath)
+}
+
+/**
+ * Преобразует маршрут из JSON формата в объект Vue Router
+ * @param {Object} route - маршрут из JSON конфигурации
+ * @returns {Object} - маршрут с компонентом как функцией динамического импорта
+ */
+function transformRoute(route) {
+  const transformedRoute = { ...route }
+  
+  // Преобразуем строковый путь компонента в динамический импорт
+  if (route.component && typeof route.component === 'string') {
+    transformedRoute.component = transformComponentPath(route.component)
+  }
+  
+  return transformedRoute
+}
+
+/**
+ * Загружает и преобразует основные маршруты из JSON конфигурации
+ * @returns {Array} - массив основных маршрутов
+ */
+function loadCoreRoutes() {
+  try {
+    return coreRoutesConfig.coreRoutes.map(transformRoute)
+  } catch (error) {
+    console.error('Ошибка загрузки основных маршрутов:', error)
+    return []
+  }
+}
+
+/**
+ * Загружает и преобразует маршруты аутентификации из JSON конфигурации
+ * @returns {Array} - массив маршрутов аутентификации
+ */
+function loadAuthRoutes() {
+  try {
+    return coreRoutesConfig.authRoutes.map(transformRoute)
+  } catch (error) {
+    console.error('Ошибка загрузки маршрутов аутентификации:', error)
+    return []
+  }
+}
+
+/**
+ * Генерирует дополнительные служебные маршруты (основные и auth) из JSON конфигурации
  * @returns {Array} - массив служебных маршрутов
  */
 export function generateCoreRoutes() {
-  return [
-    // Основные маршруты
-    {
-      path: '/',
-      redirect: { name: 'Account' },
-      meta: {
-        requiresAuth: true,
-      },
-    },
-    {
-      path: '/:pathMatch(.*)*',
-      name: 'NotFound',
-      component: () => import('@/pages/NotFound.vue'),
-      meta: {
-        title: 'Страница не найдена',
-        requiresAuth: true,
-      },
-    },
-    {
-      path: '/logout',
-      name: 'logout',
-      component: () => import('@/components/header/Logout.vue'),
-      meta: {
-        title: '-',
-      }
-    },
+  const coreRoutes = loadCoreRoutes()
+  const authRoutes = loadAuthRoutes()
+  
+  return [...coreRoutes, ...authRoutes]
+}
 
-    // Маршруты аутентификации
-    {
-      path: '/start-page',
-      name: 'StartPage',
-      component: () => import('@/pages/auth/StartPage.vue'),
-      meta: {
-        startRoute: true,
-        requiresAuth: false,
-      },
-    },
-    {
-      path: '/login',
-      name: 'Login',
-      component: () => import('@/pages/auth/LoginPage.vue'),
-      meta: {
-        startRoute: true,
-        requiresAuth: false,
-      },
-    },
-    {
-      path: '/register',
-      name: 'Register',
-      component: () => import('@/pages/auth/RegisterPage.vue'),
-      meta: {
-        startRoute: true,
-        requiresAuth: false,
-      },
-    },
-    {
-      path: '/verify-email',
-      name: 'VerifyEmail',
-      component: () => import('@/pages/auth/VerifyEmailPage.vue'),
-      meta: {
-        startRoute: true,
-        requiresAuth: false,
-      },
-    },
-    {
-      path: '/forgot-password',
-      name: 'ForgotPassword',
-      component: () => import('@/pages/auth/ForgotPasswordPage.vue'),
-      meta: {
-        startRoute: true,
-        requiresAuth: false,
-      },
-    },
-    {
-      path: '/reset-password',
-      name: 'ResetPassword',
-      component: () => import('@/pages/auth/ResetPasswordPage.vue'),
-      meta: {
-        startRoute: true,
-        requiresAuth: false,
-      },
-    },
-    {
-      path: '/two-steps',
-      name: 'TwoSteps',
-      component: () => import('@/pages/auth/TwoStepsPage.vue'),
-      meta: {
-        startRoute: true,
-        requiresAuth: false,
-      },
-    }
-  ]
+/**
+ * Получает только основные маршруты (без auth)
+ * @returns {Array} - массив основных маршрутов
+ */
+export function getCoreRoutes() {
+  return loadCoreRoutes()
+}
+
+/**
+ * Получает только маршруты аутентификации
+ * @returns {Array} - массив маршрутов аутентификации
+ */
+export function getAuthRoutes() {
+  return loadAuthRoutes()
+}
+
+/**
+ * Получает маршрут по имени из конфигурации
+ * @param {string} routeName - имя маршрута
+ * @returns {Object|undefined} - найденный маршрут
+ */
+export function getCoreRouteByName(routeName) {
+  const allRoutes = generateCoreRoutes()
+  return allRoutes.find(route => route.name === routeName)
+}
+
+/**
+ * Получает все имена маршрутов из конфигурации
+ * @returns {Array<string>} - массив имен маршрутов
+ */
+export function getAllCoreRouteNames() {
+  const allRoutes = generateCoreRoutes()
+  return allRoutes.map(route => route.name).filter(Boolean)
+}
+
+/**
+ * Проверяет, является ли маршрут маршрутом аутентификации
+ * @param {string} routeName - имя маршрута
+ * @returns {boolean} - является ли маршрут auth маршрутом
+ */
+export function isAuthRoute(routeName) {
+  const authRoutes = loadAuthRoutes()
+  return authRoutes.some(route => route.name === routeName)
 }
 
 /**

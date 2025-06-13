@@ -15,6 +15,7 @@
  * - Преобразование строковых имен иконок в Vue компоненты
  * - Поддержка сепараторов между секциями меню
  * - Валидация и обработка ошибок загрузки
+ * - Динамическое создание именованных экспортов на основе routeName
  * 
  * Используется компонентами MenuList.vue и MenuGroup.vue для динамического
  * построения структуры бокового меню с поддержкой навигации и группировки.
@@ -61,58 +62,73 @@ function loadMenuSeparators() {
   }
 }
 
+/**
+ * Генерирует имя экспорта на основе routeName секции
+ * @param {string} routeName - имя маршрута из конфигурации
+ * @returns {string} - имя для экспорта
+ */
+function generateExportName(routeName) {
+  // Преобразуем routeName в формат экспорта (например: "User" -> "UserMenuSection")
+  return `${routeName}MenuSection`
+}
+
 // Экспортируемые секции меню с преобразованными иконками
 const sections = loadMenuSections()
 const separators = loadMenuSeparators()
 
-// Динамическое создание экспортов секций на основе JSON конфигурации
-const sectionExports = {}
+// Создаем объект с автоматически генерируемыми экспортами секций
+const menuSections = {}
 
-// Создаем карту имен экспортов для обратной совместимости
-const exportNameMap = {
-  1: 'UserMenuSection',
-  2: 'SettingsMenuSection', 
-  3: 'EmailMenuSection',
-  4: 'ChatMenuSection',
-  5: 'MapsMenuSection',
-  6: 'CalendarMenuSection',
-  7: 'KanbanMenuSection',
-  8: 'AdminPanelMenuSection',
-  9: 'WatermarkedVideoSection',
-  10: 'BIMenuSection',
-  11: 'ShortcodesMenuSection',
-  12: 'EducationAnalyticMenuSection',
-  13: 'ExpertSystemSection',
-  14: 'AssetsAnalyseMenuSection'
-}
-
-// Динамически создаем экспорты
+// Автоматически создаем экспорты на основе routeName из конфигурации
 sections.forEach(section => {
-  const exportName = exportNameMap[section.id]
-  if (exportName) {
-    sectionExports[exportName] = section
+  if (section.routeName) {
+    const exportName = generateExportName(section.routeName)
+    menuSections[exportName] = section
   }
 })
 
-// Экспорт отдельных секций для обратной совместимости
-export const UserMenuSection = sectionExports.UserMenuSection
-export const SettingsMenuSection = sectionExports.SettingsMenuSection
-export const EmailMenuSection = sectionExports.EmailMenuSection
-export const ChatMenuSection = sectionExports.ChatMenuSection
-export const MapsMenuSection = sectionExports.MapsMenuSection
-export const CalendarMenuSection = sectionExports.CalendarMenuSection
-export const KanbanMenuSection = sectionExports.KanbanMenuSection
-export const AdminPanelMenuSection = sectionExports.AdminPanelMenuSection
-export const WatermarkedVideoSection = sectionExports.WatermarkedVideoSection
-export const BIMenuSection = sectionExports.BIMenuSection
-export const ShortcodesMenuSection = sectionExports.ShortcodesMenuSection
-export const EducationAnalyticMenuSection = sectionExports.EducationAnalyticMenuSection
-export const ExpertSystemSection = sectionExports.ExpertSystemSection
-export const AssetsAnalyseMenuSection = sectionExports.AssetsAnalyseMenuSection
-
-// Экспорт всех секций и сепараторов
+// Основные экспорты
 export const allMenuSections = sections
 export const menuSeparators = separators
+
+// Объект со всеми секциями меню, доступными по именам экспортов
+export { menuSections }
+
+// Динамические именованные экспорты для обратной совместимости
+// НЕ ЗАБЫТЬ СДЕЛАТЬ АВТОГЕНЕРАЦИЮ ЭКСПОРТОВ
+export const UserMenuSection = menuSections.UserMenuSection
+export const SettingsMenuSection = menuSections.SettingsMenuSection
+export const EmailMenuSection = menuSections.EmailMenuSection
+export const MessengerMenuSection = menuSections.MessengerMenuSection
+export const MapsMenuSection = menuSections.MapsMenuSection
+export const CalendarMenuSection = menuSections.CalendarMenuSection
+export const KanbanMenuSection = menuSections.KanbanMenuSection
+export const AdminPanelMenuSection = menuSections.AdminPanelMenuSection
+export const WatermarkedVideoMenuSection = menuSections.WatermarkedVideoMenuSection
+export const BIMenuSection = menuSections.BIMenuSection
+export const ShortcodesMenuSection = menuSections.ShortcodesMenuSection
+export const EducationAnalyticModuleMenuSection = menuSections.EducationAnalyticModuleMenuSection
+export const ExpertSystemMenuSection = menuSections.ExpertSystemMenuSection
+export const AssetsAnalyseMenuSection = menuSections.AssetsAnalyseMenuSection
+
+/**
+ * Функция получения секции по имени экспорта
+ * @param {string} exportName - имя экспорта (например: "UserMenuSection")
+ * @returns {Object|undefined} - секция меню
+ */
+export const getMenuSection = (exportName) => {
+  return menuSections[exportName]
+}
+
+/**
+ * Функция для получения секции по routeName с автоматической генерацией имени экспорта
+ * @param {string} routeName - имя маршрута из конфигурации
+ * @returns {Object|undefined} - секция меню
+ */
+export const getMenuSectionByRoute = (routeName) => {
+  const exportName = generateExportName(routeName)
+  return menuSections[exportName]
+}
 
 /**
  * Функция получения сепаратора по индексу (для обратной совместимости)
@@ -121,4 +137,38 @@ export const menuSeparators = separators
  */
 export const getSeparator = (index) => {
   return separators[index.toString()]
+}
+
+/**
+ * Функция получения секции по routeName
+ * @param {string} routeName - имя маршрута
+ * @returns {Object|undefined} - секция меню
+ */
+export const getSectionByRouteName = (routeName) => {
+  return sections.find(section => section.routeName === routeName)
+}
+
+/**
+ * Функция получения всех доступных имен экспортов
+ * @returns {Array<string>} - массив имен экспортов
+ */
+export const getAvailableExports = () => {
+  return Object.keys(menuSections)
+}
+
+/**
+ * Функция для проверки существования секции по имени экспорта
+ * @param {string} exportName - имя экспорта
+ * @returns {boolean} - существует ли секция
+ */
+export const hasMenuSection = (exportName) => {
+  return exportName in menuSections
+}
+
+/**
+ * Функция получения всех routeName из конфигурации
+ * @returns {Array<string>} - массив всех routeName
+ */
+export const getAllRouteNames = () => {
+  return sections.map(section => section.routeName).filter(Boolean)
 }

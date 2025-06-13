@@ -43,7 +43,7 @@ const submitForm = async () => {
     const authResult = await authorization(form.login, form.password)
 
     if (authResult.success === true) {
-      router.push({ name: 'Dashboard' })
+      router.push({ name: 'Account' })
     } else {
       const { loginError, passwordError, passwordConfirmError } = validateAuthorizationMethod(
         authResult.errors,
