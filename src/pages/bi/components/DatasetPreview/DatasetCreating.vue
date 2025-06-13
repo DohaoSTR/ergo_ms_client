@@ -34,14 +34,12 @@
                     <div>Связи:</div>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <div class="relation-list" v-if="relations && relations.length">
-                            <div v-for="(rel, idx) in relations" :key="idx" class="selected-connection relation-item" @click="onEditRelation(rel, idx)">
+                            <div v-for="rel in relations" :key="rel.rightTableId" class="selected-connection relation-item" @click="onEditRelation(rel)">
                                 <div style="display: flex; gap: 10px; align-items: center; justify-content: center;">
                                     <component :is="getJoinIcon(rel.joinType)" class="join-icon icon" style="width: 28px; height: 28px;" />
                                     <span class="linked-table-name">{{ rel.rightTableName || getTableNameById(rel.rightTableId) }}</span>
                                 </div>
-                                <button type="button" class="btn btn-link btn-sm relation-remove-btn" @click.stop="emit('removeRelation', idx)" title="Удалить связь" style="margin-left: 16px; padding: 2px 8px; font-size: 18px; display: flex; align-items: center; justify-content: center;">
-                                    <X :size="22"/>
-                                </button>
+                                <button type="button" class="btn btn-link btn-sm relation-remove-btn" @click.stop="emit('removeRelation', rel.rightTableId)" title="Удалить связь"><X :size="22"/></button>
                             </div>
                         </div>
                         <button type="button" v-if="availableTablesForRelation.length" class="btn btn-primary button-card-connection" ref="buttonRef" @click="emit('openTableLinkModal')">
@@ -96,7 +94,7 @@ const props = defineProps({
   },
   relations: { type: Array, default: () => [] }
 })
-const emit = defineEmits(['update:selectedConnection', 'update:mainTable', 'openTableLinkModal', 'tablesLoaded', 'editRelation'])
+const emit = defineEmits(['update:selectedConnection', 'update:mainTable', 'openTableLinkModal', 'tablesLoaded', 'editRelation', 'removeRelation'])
 
 /* 1.  temp-id всех уже подключённых таблиц (строками)  */
 const usedTableIds = computed(() => {
@@ -114,7 +112,7 @@ const availableTablesForRelation = computed(() => {
   return props.allTables.filter(t => {
     const idNum = Number(t.id)
     /* а) сама главная или её клон */
-    if (t.isMain || idNum === props.mainTable.id) return false
+    if (idNum === props.mainTable.id) return false
 
     /* б) отрицательный «сырой» двойник главной */
     if (mainFileId !== null && idNum === -mainFileId) return false
@@ -124,6 +122,9 @@ const availableTablesForRelation = computed(() => {
 
     /* г) FileUpload – «отрицательный дубликат» существующей temp-таблицы */
     if (idNum < 0 && usedTableIds.value.has(Math.abs(idNum))) return false
+
+    /* 4. служебные temp-таблицы без исходного файла */
+    if (t.file_upload_id == null && t.file_id == null) return false
 
     /* д) temp-таблица уже в связях */
     return !usedTableIds.value.has(idNum)
@@ -151,10 +152,6 @@ function handleSelect(connection) {
 async function handleTableSelect(table) {
   emit('update:mainTable', table)
   showTableTooltip.value = false
-}
-
-function findDataSetTableByFileUploadId(fileUploadId) {
-  return props.allTables.find(t => t.file_upload?.id === Number(fileUploadId))
 }
 
 function getTableNameById(tableId) {

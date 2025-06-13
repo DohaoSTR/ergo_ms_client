@@ -118,6 +118,8 @@ const availableTables = computed(() => {
     /* 2. уже присоединена – скрываем   */
     if (props.linkedTableIds.includes(t.id)) return false
 
+    if (t.file_upload_id == null && t.file_id == null) return false
+
     return true
   })
 

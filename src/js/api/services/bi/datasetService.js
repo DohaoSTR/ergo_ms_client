@@ -84,6 +84,14 @@ export default {
     // DELETE /api/bi_analysis/bi_datasets/upload/{id}/
     return apiClient.delete(`${UPLOAD}${id}/`)
   },
+  removeRelation({ datasetId, rightTableId }) {
+  /* apiClient уже добавляет префикс /api/ */
+  return apiClient.post(
+    `bi_analysis/bi_datasets/${datasetId}/remove-relation/`,
+    { right_table_id: rightTableId }
+  )
+},
+
   addTableToDataset(datasetId, fileId) {
     return apiClient.post(`${BASE}${datasetId}/add-table/`, { file_id: fileId });
   },

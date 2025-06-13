@@ -35,7 +35,7 @@
       <div v-if="activeTab === 'sources'" class="flow-wrapper">
         <DatasetCreating v-model:selectedConnection="selectedConnection" 
         v-model:mainTable="mainTable" :relations="relations" :all-tables="allTablesOfConnection" 
-        @editRelation="onEditRelation" @removeRelation="removeRelation"
+        @editRelation="onEditRelation" @removeRelation="removeRelationById"
         @openTableLinkModal="openTableLinkModal" @tablesLoaded="handleTablesLoaded"/>
       </div>
       <div v-else>
@@ -172,8 +172,7 @@ function buildAllTables(files = fileUploadsCache.value) {
     id:          Number(t.id),                // id именно DataSetTable
     file_id:     t.file_upload_id,            // поможет склеить с FileUpload
     display_name: t.display_name || t.table_name,
-    columns_info: t.columns_info || null,
-    isMain: !t.joined_on          // главная таблица
+    columns_info: t.columns_info || null
   }))
 
   /* === 2. Формируем единый массив без дублей ====================== */
@@ -210,15 +209,39 @@ function buildAllTables(files = fileUploadsCache.value) {
 }
 
 async function safeUpdateDataset(promise) {
-  const { success, data, error } = await promise
-  if (!success || !data?.id) { if (error) console.error(error); return false }
+  try {
+    /* 1. Дожидаемся промиса */
+    const resp = await promise           // может быть AxiosResponse или «чистый» объект
 
-  dataset.value = data
-  relations.value = getRelationsFromDataset(data)
+    /* 2. Нормализуем к { success, dataset, error } */
+    const p = resp && resp.data ? resp.data : resp          // axios → data, fetch → сам resp
 
-  // ── НОВОЕ ──
-  buildAllTables()          // подтягиваем новые temp_-таблицы
-  return true
+    let ok, ds
+    if (p && typeof p === 'object') {
+      if ('success' in p) {                 // формат { success, dataset }
+        ok = p.success
+        ds = p.dataset ?? p.data            // иногда вместо dataset кладут data
+      } else if ('id' in p) {               // пришёл сам датасет
+        ok = true
+        ds = p
+      }
+    }
+
+    if (!ok || !ds?.id) {
+      if (p?.error) console.error(p.error)
+      return false
+    }
+
+    /* 3. Сохраняем в реактивные стейты */
+    dataset.value   = ds
+    relations.value = getRelationsFromDataset(ds)
+
+    buildAllTables()       // освежаем список таблиц/селектов
+    return true
+  } catch (err) {
+    console.error(err)
+    return false
+  }
 }
 
 const usedRightTableIds = computed(() =>
@@ -255,7 +278,7 @@ function onEditRelation(rel, idx) {
 
 function getRelationsFromDataset(data) {
   if (!data || !data.tables) return []
-  const mainTable = data.tables[0]
+  const mainTable = data.tables.find(t => !t.joined_on) || data.tables[0]
   return data.tables
     .filter(t => t.joined_on)
     .map(t => ({
@@ -269,14 +292,27 @@ function getRelationsFromDataset(data) {
 }
 
 function openTableLinkModal() {
-  if (!dataset.value?.id) { alert('Создайте датасет…'); return }
-  buildAllTables()          // гарантируем актуальный список
-  editingRelation.value = null
-  showTableLinkModal.value = true
+  const id = dataset.value && dataset.value.id
+  if (!id || isNaN(Number(id))) {
+  alert('Создайте датасет…')
+       return
+   }
+   buildAllTables()
+   editingRelation.value  = null
+   showTableLinkModal.value = true
 }
 
-function removeRelation(idx) {
-  relations.value.splice(idx, 1)
+async function removeRelationById(rightTableId) {
+  if (!dataset.value?.id) return
+
+  const ok = await safeUpdateDataset(
+    datasetService.removeRelation({ datasetId: dataset.value.id, rightTableId })
+  )
+  if (ok) {
+    /* safeUpdateDataset уже обновил dataset.value и relations */
+    await loadPreview()
+    buildAllTables()                      // чтобы обновился селект
+  }
 }
 
 function needsDataset(tab) {
