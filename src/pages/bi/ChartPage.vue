@@ -20,87 +20,95 @@
                 <button class="btn btn-sm btn-primary" disabled>Сохранить</button>
             </div>
         </div>
-        <div class="body-sectors" v-if="!isFullScreen">
-            <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 30px; width: 100%;">
-                <div class="datasets sectors border-elements elements-color" style="height: 50%;">
-                    <h5 class="m-0 me-2">Датасет</h5>
-                    <button ref="buttonRef" v-if="!selectedDataset" class="btn btn-sm fw-bold"
-                        @click="openDatasetTooltip"
-                        style="display: flex; gap: 5px; justify-content: center; align-items: center; width: 100%;">
-                        <Plus size="16" />Выбрать датасет
-                    </button>
-                    <button ref="buttonRef" v-else class="btn btn-sm fw-bold" @click="openDatasetTooltip"
-                        style="display: flex; gap: 5px; align-items: center; width: 100%; border: 1.5px solid #198754;">
-                        <Database size="16" />{{ selectedDataset.name }}
-                    </button>
-                </div>
-                <div class="diagramtype sectors border-elements elements-color" style="height: 50%;">
-                    <h5 class="m-0 me-2">Тип диаграммы</h5>
-                    <select class="form-select form-select-sm" id="smallSelect" :disabled="!selectedDataset"
-                        v-model="selectedChartType">
-                        <option v-if="!selectedChartType" disabled hidden value="">Выберите тип диаграммы</option>
-                        <option value="1">Линейная диаграмма</option>
-                        <option value="2">Столбчатая диаграмма</option>
-                        <option value="3">Круговая диаграмма</option>
-                        <option value="4">Кольцевая диаграмма</option>
-                        <option value="5">Точечная диаграмма</option>
-                        <option value="6">Радарная диаграмма</option>
-                        <option value="7">Тепловая карта</option>
-                    </select>
+        <div :class="['body-grid', { 'no-fields': !selectedChartType, fullscreen:  isFullScreen }]">
+            <!-- 1 -->
+            <div class="datasets  sectors border-elements elements-color">
+                <h5 class="m-0 me-2">Датасет</h5>
+                <button ref="buttonRef" v-if="!selectedDataset" class="btn btn-sm fw-bold" @click="openDatasetTooltip"
+                    style="display: flex; gap: 5px; justify-content: center; align-items: center; width: 100%;">
+                    <Plus size="16" />Выбрать датасет
+                </button>
+                <button ref="buttonRef" v-else class="btn btn-sm fw-bold" @click="openDatasetTooltip"
+                    style="display: flex; gap: 5px; align-items: center; width: 100%; border: 1.5px solid #198754;">
+                    <Database size="16" />{{ selectedDataset.name }}
+                </button>
+            </div>
+            <!-- 2 -->
+            <div class="diagramtype sectors border-elements elements-color">
+                <h5 class="m-0 me-2">Тип диаграммы</h5>
+                <select class="form-select form-select-sm" id="smallSelect" :disabled="!selectedDataset"
+                    v-model="selectedChartType">
+                    <option v-if="!selectedChartType" disabled hidden value="">Выберите тип диаграммы</option>
+                    <option value="1">Линейная диаграмма</option>
+                    <option value="2">Столбчатая диаграмма</option>
+                    <option value="3">Круговая диаграмма</option>
+                    <option value="4">Кольцевая диаграмма</option>
+                    <option value="5">Точечная диаграмма</option>
+                    <option value="6">Радарная диаграмма</option>
+                    <option value="7">Тепловая карта</option>
+                </select>
+            </div>
+            <!-- 3 (раньше это был .body-settings) -->
+            <div class="fields sectors body-settings border-elements elements-color"
+                v-if="!isFullScreen && selectedChartType">
+                <div v-for="setting in settingTypes" :key="setting.key" class="setting">
+                    <div class="setting-header">
+                        <div class="setting-header-left">
+                            <component :is="setting.icon" size="18" />
+                            <h6 class="m-0 me-1">{{ setting.label }}</h6>
+                        </div>
+                        <div class="setting-header-right">
+                            <button class="btn btn-sm fw-bold" style="padding: 0; margin: 0; display: flex;"
+                                @click="openFieldsModal($event, setting.key)">
+                                <Plus size="16" />
+                            </button>
+                        </div>
+                    </div>
+                    <div v-for="f in selectedFields[setting.key]" :key="f.id" class="selected-field">
+                        <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+                            <span class="field-icon" :class="f.source"
+                                :style="{ color: f.source === 'indicator' ? 'var(--color-accent)' : '#7496bb' }">
+                                <component :is="typeIcon[f.type] || Type" size="16" />
+                            </span>
+                            {{ f.name }}
+                        </div>
+                        <button class="remove-btn" @click="removeField(f, setting.key)" title="Удалить">
+                            <X size="18" />
+                        </button>
+                    </div>
                 </div>
             </div>
+            <!-- 4 -->
             <div class="indicators sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Показатели</h5>
                 <div class="sectors-body">
                     <DatasetIndicators :dataset="selectedDataset" :fields="indicators" />
                 </div>
             </div>
+            <!-- 5 -->
             <div class="measures sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Измерения</h5>
                 <div class="sectors-body">
                     <DatasetMeasures :dataset="selectedDataset" />
                 </div>
+
             </div>
-            <div class="settings sectors border-elements elements-color">
+            <!-- 6 -->
+            <div class="parameters settings sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Параметры</h5>
                 <div class="sectors-body">
                     <DatasetSettings :dataset="selectedDataset" />
                 </div>
             </div>
-        </div>
-        <div class="body-settings border-elements elements-color" style="min-height: 5rem;"
-            v-if="!isFullScreen && selectedChartType">
-            <div v-for="setting in settingTypes" :key="setting.key" class="setting">
-                <div class="setting-header">
-                    <div class="setting-header-left">
-                        <component :is="setting.icon" size="18" />
-                        <h6 class="m-0 me-1">{{ setting.label }}</h6>
-                    </div>
-                    <div class="setting-header-right">
-                        <button class="btn btn-sm fw-bold" style="padding: 0; margin: 0; display: flex;"
-                            @click="openFieldsModal($event, setting.key)">
-                            <Plus size="16" />
-                        </button>
-                    </div>
-                </div>
-                <div v-for="f in selectedFields[setting.key]" :key="f.id" class="selected-field">
-                    <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
-                        <span class="field-icon" :class="f.source"
-                            :style="{ color: f.source === 'indicator' ? 'var(--color-accent)' : '#7496bb' }">
-                            <component :is="typeIcon[f.type] || Type" size="16" />
-                        </span>
-                        {{ f.name }}
-                    </div>
-                    <button class="remove-btn" @click="removeField(f, setting.key)" title="Удалить">
-                        <X size="18" />
-                    </button>
-                </div>
+
+            <!-- 7 -->
+            <div class="body-chart border-elements elements-color" :class="{ fullscreen: isFullScreen }">
+                <ChartArea :dataset="datasetRows" :chart-type="selectedChartType" :fields="selectedFields" />
             </div>
         </div>
-        <div class="body-chart border-elements elements-color" :class="{ fullscreen: isFullScreen }">
-            <ChartArea :dataset="datasetRows" :chart-type="selectedChartType" :fields="selectedFields"/>
-        </div>
     </div>
+
+
     <transition name="fade-slide" appear>
         <div v-if="isDatasetTooltipVisible" class="tooltip-panel"
             :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px', position: 'fixed', zIndex: 1000 }"
@@ -113,7 +121,7 @@
         <div v-if="isFieldsModalVisible" class="tooltip-panel-fields"
             :style="{ left: fieldsModalPosition.x + 'px', top: fieldsModalPosition.y + 'px', position: 'fixed', zIndex: 1000 }"
             ref="fieldsModalRef">
-            <ChartFields :fields="indicators" :selected="selectedForModal" @select="handleFieldSelect"/>
+            <ChartFields :fields="indicators" :selected="selectedForModal" @select="handleFieldSelect" />
         </div>
     </transition>
 </template>
@@ -217,12 +225,12 @@ function closeDatasetTooltip() {
 }
 
 async function handleSelectDataset(ds) {
-  selectedDataset.value = ds
-  closeDatasetTooltip()
-  if (ds?.id) {
-    const { data } = await chartService.getRows(ds.id)
-    datasetRows.value = data 
-  }
+    selectedDataset.value = ds
+    closeDatasetTooltip()
+    if (ds?.id) {
+        const { data } = await chartService.getRows(ds.id)
+        datasetRows.value = data
+    }
 }
 
 function onClickOutside(event) {
@@ -254,30 +262,30 @@ function removeField(field, type) {
 }
 
 watch(
-  () => selectedDataset.value?.id,
-  async id => {
-    selectedChartType.value = ''
-    selectedFields.value = {
-      y: [], x: [], color: [], sort: [], labels: [], filters: []
-    }
-    datasetRows.value = []
-    indicators.value  = []
+    () => selectedDataset.value?.id,
+    async id => {
+        selectedChartType.value = ''
+        selectedFields.value = {
+            y: [], x: [], color: [], sort: [], labels: [], filters: []
+        }
+        datasetRows.value = []
+        indicators.value = []
 
-    if (id) {
-      const [{ data: cols }, { data: rows }] = await Promise.all([
-        chartService.getColumns(id),
-        chartService.getRows(id)
-      ])
+        if (id) {
+            const [{ data: cols }, { data: rows }] = await Promise.all([
+                chartService.getColumns(id),
+                chartService.getRows(id)
+            ])
 
-      indicators.value = (cols.columns || []).map((c, i) => ({
-        id:    'col_' + i,
-        name:  c.name || c,
-        type:  c.type || 'string',
-        source:'indicator'
-      }))
-      datasetRows.value = rows
+            indicators.value = (cols.columns || []).map((c, i) => ({
+                id: 'col_' + i,
+                name: c.name || c,
+                type: c.type || 'string',
+                source: 'indicator'
+            }))
+            datasetRows.value = rows
+        }
     }
-  }
 )
 
 onMounted(() => {
@@ -295,6 +303,74 @@ onBeforeUnmount(() => {
     min-height: 100vh;
     gap: 30px;
     margin-bottom: 20px;
+}
+
+.body-grid {
+  display: grid;
+  grid-template-columns: 17.5rem repeat(3, 1fr);
+  grid-template-rows: 6rem 6rem auto;
+  grid-template-areas:
+    "datasets   indicators measures parameters"
+    "diagramtype indicators measures parameters"
+    "fields     chart      chart    chart";
+  gap: 30px;
+}
+
+.body-grid.fullscreen {
+  grid-template-areas:
+      "chart chart chart chart"
+      "chart chart chart chart"
+      "chart chart chart chart";
+
+  .body-chart {
+    grid-column: 1 / -1;
+    grid-row:    1 / -1;
+  }
+
+  .datasets,
+  .diagramtype,
+  .fields,
+  .indicators,
+  .measures,
+  .parameters {
+    display: none;
+  }
+}
+
+.body-grid .body-chart {
+  grid-column: 2 / 5;
+}
+
+.body-grid.no-fields .body-chart {
+  grid-column: 1 / -1;
+}
+
+.datasets {
+    grid-area: datasets;
+}
+
+.diagramtype {
+    grid-area: diagramtype;
+}
+
+.fields {
+    grid-area: fields;
+}
+
+.indicators {
+    grid-area: indicators;
+}
+
+.measures {
+    grid-area: measures;
+}
+
+.parameters {
+    grid-area: parameters;
+}
+
+.body-chart {
+    grid-area: chart;
 }
 
 .body-header {
@@ -315,14 +391,6 @@ onBeforeUnmount(() => {
 .header-label-buttons {
     display: flex;
     gap: 15px;
-}
-
-.body-sectors {
-    display: flex;
-    gap: 35px;
-    height: 15rem;
-    justify-content: space-between;
-    flex-shrink: 0;
 }
 
 .sectors {
@@ -348,11 +416,13 @@ onBeforeUnmount(() => {
 
 .body-settings {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
     gap: 20px;
     padding: 15px;
     min-height: 5rem;
     flex-shrink: 0;
+    width: 17.5rem;
 }
 
 .setting {
@@ -391,7 +461,7 @@ onBeforeUnmount(() => {
 
 .body-chart {
     flex: 1 1 0%;
-    min-height: 120px;
+    min-height: 360px;
     width: 100%;
     padding: 10px;
     display: flex;
