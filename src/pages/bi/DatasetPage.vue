@@ -11,8 +11,8 @@
         </div>
       </div>
       <div class="file_area_header_buttons">
-        <button v-if="isNewPage" class="btn btn-primary" :disabled="!canCreateDataset || saving" @click="openNameDialog">Создать датасет</button>
-        <button v-else-if="isDraft" class="btn btn-success" :disabled="saving" @click="openNameDialog">Сохранить датасет</button>
+        <button v-if="isNewPage" class="btn btn-primary" :disabled="!canCreateDataset || saving" @click="showDatasetDialog=true">Создать датасет</button>
+        <button v-else-if="isDraft" class="btn btn-success" disabled>Сохранить датасет</button>
       </div>
     </header>
 
@@ -195,13 +195,14 @@ async function saveDataset(finalName) {
   saving.value = true
   try {
     const payload = { name: finalName, is_temporary: false }
+    const putOk = await safeUpdateDataset(datasetService.updateDataset(dataset.value.id, payload))
+    if (putOk) {
+      await safeUpdateDataset(
+       datasetService.getDataset(dataset.value.id)
+     )
 
-    const ok = await safeUpdateDataset(
-      datasetService.updateDataset(dataset.value.id, payload)
-    )
-    if (ok) {
-      router.replace({ name:'DatasetPage', params:{ id: dataset.value.id } })
-    }
+     router.replace({ name:'DatasetPage', params:{ id: dataset.value.id } })
+   }
   } finally { saving.value = false }
 }
 
@@ -385,13 +386,14 @@ async function safeUpdateDataset(promise) {
     }
 
     dataset.value = ds
-    await hydrateFromDataset(ds)
-
     if (Array.isArray(ds.tables) && ds.tables.length) {
+      /* объект полный → наполняем всё локально */
+      await hydrateFromDataset(ds)
       selectedTables.value = ds.tables.map(mapTable).filter(Boolean)
       buildAllTables()
     } else {
-      await loadDataset(ds.id)
+      /* ответ укороченный → дотягиваем полный датасет   */
+      await loadDataset(ds.id)          // внутри loadDataset вызывается
     }
     return true
   } catch (err) {

@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router'
 import SimpleTableDataSet from '@/pages/bi/components/SimpleTableDataSet.vue'
 
 const connections = ref([])
+const loading = ref(false)
 const search = ref('')
 const sort = ref('new')
 
@@ -17,6 +18,7 @@ const cols = [
 ]
 
 const fetchConnections = async () => {
+  loading.value = true
   const response = await apiClient.get(endpoints.bi.ConnectionsList)
 
   if (Array.isArray(response.data)) {
@@ -32,6 +34,7 @@ const fetchConnections = async () => {
   } else {
     console.error('Ошибка: ответ от API не является массивом', response)
   }
+  loading.value = false
 }
 
 watch(isDatasetSidebarOpen, (newVal) => {
@@ -93,8 +96,26 @@ onMounted(fetchConnections)
         <button type="button" class="btn btn-primary" style="width: 12.5rem;" @click="goToCreateConnection">Создать подключение</button>
       </div>
       <div style="margin-top: 1rem;">
+        <div v-if="loading" class="loader-center">
+          <span class="loader"></span>
+        </div>
         <SimpleTableDataSet :cols="cols" :users="transformedData" :isDatasetSidebarOpen="isDatasetSidebarOpen" :currentPage="'connections'" @delete-row="handleDeleteRow"/>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped lang="scss">
+  .loader-center {
+  min-height: 240px;
+  display: flex; align-items: center; justify-content: center;
+}
+.loader {
+  border: 4px solid var(--color-border);
+  border-top: 4px solid var(--color-accent);
+  border-radius: 50%;
+  width: 42px; height: 42px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+</style>

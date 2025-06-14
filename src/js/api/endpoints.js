@@ -88,7 +88,7 @@ export const endpoints = {
         deleteTestResultBySkill: 'expert_system/delete-test-result-by-skill',
     },
     bi: {
-        DatasetsList: 'bi_analysis/bi_datasets/',
+        DatasetsList: '/bi_analysis/bi_datasets/',
         ConnectionsList: 'bi_analysis/bi_connections/',
         CheckConnection: 'bi_analysis/bi_connections/check-connection/',
         ChartsList: 'bi_analysis/bi_charts/',

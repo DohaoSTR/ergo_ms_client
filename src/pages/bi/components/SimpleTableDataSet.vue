@@ -5,7 +5,7 @@
         <tr><th v-for="col in props.cols" :key="col.key">{{ col.label }}</th></tr>
       </thead>
       <tbody>
-        <tr v-for="row in props.users" :key="row.id" class="table-row" @mouseenter="hoveredRow = row.id" @mouseleave="hoveredRow = null" @click="goToConnection(row)">
+        <tr v-for="row in props.users" :key="row.id" class="table-row" @mouseenter="hoveredRow = row.id" @mouseleave="hoveredRow = null" @click="handleRowClick(row)">
           <td v-for="col in props.cols" :key="col.key" :style="{ position: 'relative', overflow: 'hidden' }" :class="{ 'td-actions': col.key === 'actions' }">
             <!-- Название -->
             <template v-if="col.key === 'name'">
@@ -139,6 +139,15 @@ let fadeRaf = null
 
 const router = useRouter()
 
+function handleRowClick(row) {
+  // Если отображаем датасеты (currentPage === 'datasets'), переходи на страницу датасета
+  if (props.currentPage === 'datasets') {
+    goToDataset(row)
+  } else if (props.currentPage === 'connections') {
+    goToConnection(row)
+  }
+}
+
 function goToConnection(row) {
   if (!row || !row.id) return
 
@@ -150,6 +159,11 @@ function goToConnection(row) {
   } else {
     router.push(`/bi/connections/${row.id}/`)
   }
+}
+
+function goToDataset(row) {
+  if (!row || !row.id) return
+  router.push(`/bi/dataset/${row.id}/`)
 }
 
 // localStorage избранное

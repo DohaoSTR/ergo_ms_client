@@ -45,6 +45,10 @@ export default {
     )
   },
 
+  patchDataset (id, payload) {
+    return apiClient.patch(`bi_analysis/bi_datasets/${id}/`, payload)
+  },
+
   renameColumns(datasetId, renames) {
     // PATCH /api/bi_analysis/bi_datasets/{id}/rename_columns/
     return apiClient.patch(`${BASE}${datasetId}/rename_columns/`, { renames });
