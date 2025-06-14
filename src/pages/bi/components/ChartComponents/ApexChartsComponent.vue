@@ -1,135 +1,118 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
 
 const props = defineProps({
-  type: String,    // 'line', 'bar', 'pie', 'donut', 'scatter', 'radar', 'heatmap'
-  fields: Object,  // { x: [fieldObj], y: [fieldObj, ...], ... }
-  dataset: {
-    type: Array,
-    default: () => []
-  }
+  type   : String,
+  fields : Object,
+  dataset: { type: Array, default: () => [] }
 })
 
-const chartHeight = ref(400) // стартовое значение
-
-const containerRef = ref(null)
-
-function setChartHeight() {
-  if (containerRef.value) {
-    chartHeight.value = containerRef.value.offsetHeight
-  }
-}
-
-onMounted(() => {
-  setChartHeight()
-  window.addEventListener('resize', setChartHeight)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', setChartHeight)
-})
-
-// Палитра
-const palette = [
-  '#41B883', '#00D8FF', '#DD1B16', '#f4b942', '#e35bcb', '#9288f8', '#f88d51', '#34a853', '#ea4335'
+const basePalette = [
+  '#41B883', '#00D8FF', '#DD1B16', '#f4b942', '#e35bcb',
+  '#9288f8', '#f88d51', '#34a853', '#ea4335'
 ]
 
-// Вспомогательная функция — массив значений для поля
-function getColumn(field) {
-  if (!field) return []
-  return props.dataset.map(row => row[field.name])
+function getColumn (field) {
+  return field ? props.dataset.map(r => r[field.name]) : []
 }
 
-const xField   = computed(() => props.fields?.x?.[0])
-const yFields  = computed(() => props.fields?.y || [])
+const chartHeight   = ref(400)
+const containerRef  = ref(null)
+const xField        = computed(() => props.fields?.x?.[0])
+const yFields       = computed(() => props.fields?.y || [])
+const colorField    = computed(() => props.fields?.color?.[0] || null)
+const labelsEnabled = computed(() => (props.fields?.labels?.length ?? 0) > 0)
+
+onMounted(() => {
+  resize();
+  window.addEventListener('resize', resize)
+})
+onBeforeUnmount(() => window.removeEventListener('resize', resize))
+function resize () {
+  if (containerRef.value) chartHeight.value = containerRef.value.offsetHeight
+}
+
+const colorScale = computed(() => {
+  if (!colorField.value) return {}
+  const uniq = [...new Set(props.dataset.map(r => r[colorField.value.name]))]
+  return Object.fromEntries(
+    uniq.map((val, i) => [val, basePalette[i % basePalette.length]])
+  )
+})
+const seriesColors = computed(() => {
+  if (!colorField.value) return basePalette
+  return Object.values(colorScale.value)
+})
 
 const series = computed(() => {
-  // PIE/DOUGHNUT
-  if ((props.type === 'pie' || props.type === 'donut') && xField.value && yFields.value.length) {
+  if (!xField.value || !yFields.value.length) return []
+
+  if (['pie', 'donut'].includes(props.type)) {
     const y = yFields.value[0]
     return getColumn(y).map(Number)
   }
-  // BAR / LINE / AREA / RADAR
-  if (['bar', 'line', 'area', 'radar'].includes(props.type) && xField.value && yFields.value.length) {
-    return yFields.value.map((y, i) => ({
+
+  if (['bar', 'line', 'area', 'radar'].includes(props.type)) {
+    return yFields.value.map(y => ({
       name: y.name,
-      data: getColumn(y).map(Number)
+      data: getColumn(y).map(Number),
+      color: colorField.value ? undefined : undefined
     }))
   }
-  // SCATTER
-  if (props.type === 'scatter' && xField.value && yFields.value.length === 1) {
+
+  if (props.type === 'scatter' && yFields.value.length === 1) {
     const y = yFields.value[0]
-    return [
-      {
-        name: y.name,
-        data: props.dataset.map(row => [
-          Number(row[xField.value.name]),
-          Number(row[y.name])
-        ])
-      }
-    ]
+    return [{
+      name: y.name,
+      data: props.dataset.map(r => ({
+        x: +r[xField.value.name],
+        y: +r[y.name],
+        fillColor: colorField.value ? colorScale.value[r[colorField.value.name]] : basePalette[0]
+      }))
+    }]
   }
-  // HEATMAP и прочее
+
+  if (props.type === 'heatmap' && yFields.value.length === 1) {
+    const y = yFields.value[0]
+    return [{
+      name: y.name,
+      data: props.dataset.map(r => ({
+        x: r[xField.value.name],
+        y: +r[y.name]
+      }))
+    }]
+  }
+
   return []
 })
 
 const chartOptions = computed(() => {
-  // PIE/DOUGHNUT
-  if ((props.type === 'pie' || props.type === 'donut') && xField.value) {
-    return {
-      chart: { type: props.type },
-      labels: getColumn(xField.value),
-      colors: palette,
-      legend: { position: 'bottom' }
-    }
+  const opts = {
+    chart: { type: props.type || 'bar', id: 'apex-chart', animations: { easing: 'easeinout' } },
+    legend: { position: 'bottom' },
+    dataLabels: { enabled: labelsEnabled.value },
+    colors: seriesColors.value
   }
-  // BAR / LINE / AREA / RADAR
-  if (['bar', 'line', 'area', 'radar'].includes(props.type) && xField.value) {
-    return {
-      chart: { type: props.type },
-      xaxis: { categories: getColumn(xField.value) },
-      colors: palette,
-      legend: { position: 'bottom' }
-    }
+
+  if (xField.value) {
+    opts.xaxis = { categories: getColumn(xField.value) }
   }
-  // SCATTER
-  if (props.type === 'scatter' && xField.value) {
-    return {
-      chart: { type: 'scatter' },
-      colors: palette,
-      legend: { position: 'bottom' }
-    }
-  }
-  // HEATMAP
-  if (props.type === 'heatmap') {
-    return {
-      chart: { type: 'heatmap' },
-      colors: palette,
-      legend: { position: 'bottom' }
-    }
-  }
-  // fallback
-  return {
-    chart: { type: props.type || 'bar' },
-    legend: { position: 'bottom' }
-  }
+  opts.tooltip = { theme: 'light' }
+  return opts
 })
-console.log('Apex type:', props.type)
-console.log('Apex series:', series.value)
-console.log('Apex options:', chartOptions.value)
 </script>
 
 <template>
   <div ref="containerRef" style="height: 100%; width: 100%;">
-<VueApexCharts
-  v-if="props.type && series && series.length"
-  :type="props.type"
-  height="100%"
-  width="100%"
-  :options="chartOptions"
-  :series="series"
-/>
+    <vue-apex-charts
+      v-if="props.type && series.length"
+      :type="props.type"
+      height="100%"
+      width="100%"
+      :options="chartOptions"
+      :series="series"
+    />
   </div>
 </template>
 

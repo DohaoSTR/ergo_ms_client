@@ -11,6 +11,8 @@ const props = defineProps({
 
 const selectedEngine = ref('chartjs')
 
+const colorField = computed(() => props.fields.color[0] || null)
+
 const chartTypeMap = {
   "1": "line",
   "2": "bar",
@@ -23,7 +25,6 @@ const chartTypeMap = {
 
 const chartKind = computed(() => chartTypeMap[props.type] || "bar")
 
-// Список поддерживаемых типов для каждой библиотеки (можно расширить)
 const supportedByApex = ['line', 'bar', 'pie', 'donut', 'area', 'scatter', 'radar', 'heatmap']
 const supportedByChartJs = ['line', 'bar', 'pie', 'doughnut', 'scatter', 'radar']
 
@@ -46,11 +47,13 @@ const isTypeSupported = computed(() =>
       <ChartJsComponent v-if="selectedEngine === 'chartjs' && isTypeSupported"
         :type="chartKind"
         :fields="fields"
+        :color-field="colorField"
         :dataset="dataset"
       />
       <ApexChartsComponent v-else-if="selectedEngine === 'apex' && isTypeSupported"
         :type="chartKind"
         :fields="fields"
+        :color-field="colorField"
         :dataset="dataset"
       />
       <div v-else class="alert alert-warning mt-4">
