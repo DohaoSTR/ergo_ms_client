@@ -253,19 +253,32 @@ function removeField(field, type) {
     selectedFields.value[type] = selectedFields.value[type].filter(f => f.id !== field.id)
 }
 
-watch(() => selectedDataset.value?.id, async id => {
-    if (id) {
-        const { data } = await chartService.getColumns(id)
-        indicators.value = (data.columns || []).map((c, i) => ({
-            id: 'col_' + i,
-            name: c.name || c,
-            type: c.type || 'string',
-            source: 'indicator'
-        }))
-    } else {
-        indicators.value = []
+watch(
+  () => selectedDataset.value?.id,
+  async id => {
+    selectedChartType.value = ''
+    selectedFields.value = {
+      y: [], x: [], color: [], sort: [], labels: [], filters: []
     }
-})
+    datasetRows.value = []
+    indicators.value  = []
+
+    if (id) {
+      const [{ data: cols }, { data: rows }] = await Promise.all([
+        chartService.getColumns(id),
+        chartService.getRows(id)
+      ])
+
+      indicators.value = (cols.columns || []).map((c, i) => ({
+        id:    'col_' + i,
+        name:  c.name || c,
+        type:  c.type || 'string',
+        source:'indicator'
+      }))
+      datasetRows.value = rows
+    }
+  }
+)
 
 onMounted(() => {
     document.addEventListener('mousedown', onClickOutside)
