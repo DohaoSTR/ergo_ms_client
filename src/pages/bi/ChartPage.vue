@@ -36,8 +36,9 @@
                 </div>
                 <div class="diagramtype sectors border-elements elements-color" style="height: 50%;">
                     <h5 class="m-0 me-2">Тип диаграммы</h5>
-                    <select class="form-select form-select-sm" id="smallSelect" :disabled="!selectedDataset">
-                        <option selected>Откройте это меню выбора</option>
+                    <select class="form-select form-select-sm" id="smallSelect" :disabled="!selectedDataset"
+                        v-model="selectedChartType">
+                        <option v-if="!selectedChartType" disabled hidden value="">Выберите тип диаграммы</option>
                         <option value="1">Линейная диаграмма</option>
                         <option value="2">Столбчатая диаграмма</option>
                         <option value="3">Круговая диаграмма</option>
@@ -51,7 +52,7 @@
             <div class="indicators sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Показатели</h5>
                 <div class="sectors-body">
-                    <DatasetIndicators :dataset="selectedDataset" />
+                    <DatasetIndicators :dataset="selectedDataset" :fields="indicators" />
                 </div>
             </div>
             <div class="measures sectors border-elements elements-color">
@@ -67,83 +68,32 @@
                 </div>
             </div>
         </div>
-        <div class="body-settings border-elements elements-color" style="height: 5rem;" v-if="!isFullScreen">
-            <div class="setting">
+        <div class="body-settings border-elements elements-color" style="min-height: 5rem;"
+            v-if="!isFullScreen && selectedChartType">
+            <div v-for="setting in settingTypes" :key="setting.key" class="setting">
                 <div class="setting-header">
                     <div class="setting-header-left">
-                        <MoveDown size="18" />
-                        <h6 class="m-0 me-1">Y</h6>
+                        <component :is="setting.icon" size="18" />
+                        <h6 class="m-0 me-1">{{ setting.label }}</h6>
                     </div>
                     <div class="setting-header-right">
-                        <button class="btn btn-sm fw-bold" style="padding: 0; margin: 0; display: flex;">
+                        <button class="btn btn-sm fw-bold" style="padding: 0; margin: 0; display: flex;"
+                            @click="openFieldsModal($event, setting.key)">
                             <Plus size="16" />
                         </button>
                     </div>
                 </div>
-            </div>
-            <div class="setting">
-                <div class="setting-header">
-                    <div class="setting-header-left">
-                        <MoveRight size="18" />
-                        <h6 class="m-0 me-1">X</h6>
+                <div v-for="f in selectedFields[setting.key]" :key="f.id" class="selected-field">
+                    <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+                        <span class="field-icon" :class="f.source"
+                            :style="{ color: f.source === 'indicator' ? 'var(--color-accent)' : '#7496bb' }">
+                            <component :is="typeIcon[f.type] || Type" size="16" />
+                        </span>
+                        {{ f.name }}
                     </div>
-                    <div class="setting-header-right">
-                        <button class="btn btn-sm fw-bold" style="padding: 0; margin: 0; display: flex;">
-                            <Plus size="16" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="setting">
-                <div class="setting-header">
-                    <div class="setting-header-left">
-                        <PaintBucket size="18" />
-                        <h6 class="m-0 me-1">Цвета</h6>
-                    </div>
-                    <div class="setting-header-right">
-                        <button class="btn btn-sm fw-bold" style="padding: 0; margin: 0; display: flex;">
-                            <Plus size="16" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="setting">
-                <div class="setting-header">
-                    <div class="setting-header-left">
-                        <ArrowDownWideNarrow size="18" />
-                        <h6 class="m-0 me-1" style="padding-top: 0.6px; padding-bottom: 0.6px;">Сортировка</h6>
-                    </div>
-                    <div class="setting-header-right">
-                        <button class="btn btn-sm fw-bold" style="padding: 0; margin: 0; display: flex;">
-                            <Plus size="16" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="setting">
-                <div class="setting-header">
-                    <div class="setting-header-left">
-                        <Type size="18" />
-                        <h6 class="m-0 me-1">Подписи</h6>
-                    </div>
-                    <div class="setting-header-right">
-                        <button class="btn btn-sm fw-bold" style="padding: 0; margin: 0; display: flex;">
-                            <Plus size="16" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="setting">
-                <div class="setting-header">
-                    <div class="setting-header-left">
-                        <Filter size="18" />
-                        <h6 class="m-0 me-1">Фильтры</h6>
-                    </div>
-                    <div class="setting-header-right">
-                        <button class="btn btn-sm fw-bold" style="padding: 0; margin: 0; display: flex;">
-                            <Plus size="16" />
-                        </button>
-                    </div>
+                    <button class="remove-btn" @click="removeField(f, setting.key)" title="Удалить">
+                        <X size="18" />
+                    </button>
                 </div>
             </div>
         </div>
@@ -158,53 +108,97 @@
         <div v-if="isDatasetTooltipVisible" class="tooltip-panel"
             :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px', position: 'fixed', zIndex: 1000 }"
             ref="tooltipRef">
-            <DatasetTooltip v-if="isDatasetTooltipVisible" :selectedDataset="selectedDataset" @select="handleSelectDataset" ref="tooltipRef"/>
+            <DatasetTooltip v-if="isDatasetTooltipVisible" :selectedDataset="selectedDataset"
+                @select="handleSelectDataset" ref="tooltipRef" />
+        </div>
+    </transition>
+    <transition name="fade-slide" appear>
+        <div v-if="isFieldsModalVisible" class="tooltip-panel-fields"
+            :style="{ left: fieldsModalPosition.x + 'px', top: fieldsModalPosition.y + 'px', position: 'fixed', zIndex: 1000 }"
+            ref="fieldsModalRef">
+            <ChartFields :fields="indicators" :selected="selectedForModal" @select="handleFieldSelect"/>
         </div>
     </transition>
 </template>
 
 <script setup>
-import { ChartPie, Maximize, MoveDown, MoveRight, PaintBucket, ArrowDownWideNarrow, Type, Plus, CircleAlert, Ellipsis, Filter, Database } from 'lucide-vue-next';
-import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ChartPie, Maximize, MoveDown, MoveRight, PaintBucket, ArrowDownWideNarrow, Type, Plus, CircleAlert, Ellipsis, Filter, Database, Hash, Calendar, CheckCircle, X } from 'lucide-vue-next'
+import { ref, nextTick, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 
 import DatasetTooltip from '@/pages/bi/components/ChartComponents/DatasetsTooltip.vue'
 import DatasetIndicators from '@/pages/bi/components/ChartComponents/DatasetIndicators.vue'
 import DatasetMeasures from '@/pages/bi/components/ChartComponents/DatasetMeasures.vue'
 import DatasetSettings from '@/pages/bi/components/ChartComponents/DatasetSettings.vue'
+import ChartFields from '@/pages/bi/components/ChartComponents/ChartFields.vue'
+
+import chartService from '@/js/api/services/bi/chartService.js'
 
 const isFullScreen = ref(false)
-const headerRef = ref(null)
-const headerHeight = ref(0)
 
 const isDatasetTooltipVisible = ref(false)
 const tooltipPosition = ref({ x: 0, y: 0 })
 const tooltipRef = ref(null)
 const buttonRef = ref(null)
+
+const isFieldsModalVisible = ref(false)
+const fieldsModalPosition = ref({ x: 0, y: 0 })
+const fieldsModalRef = ref(null)
+
 const selectedDataset = ref(null)
+const selectedChartType = ref('')
+
+const indicators = ref([])
+const currentSetting = ref('')
+
+const selectedFields = ref({
+    y: [],
+    x: [],
+    color: [],
+    sort: [],
+    labels: [],
+    filters: []
+})
+
+const settingTypes = [
+    { key: 'y', label: 'Y', icon: MoveDown },
+    { key: 'x', label: 'X', icon: MoveRight },
+    { key: 'color', label: 'Цвета', icon: PaintBucket },
+    { key: 'sort', label: 'Сортировка', icon: ArrowDownWideNarrow },
+    { key: 'labels', label: 'Подписи', icon: Type },
+    { key: 'filters', label: 'Фильтры', icon: Filter }
+]
+
+const typeIcon = {
+    string: Type,
+    number: Hash,
+    date: Calendar,
+    boolean: CheckCircle
+}
+
+const selectedForModal = computed(() => selectedFields.value[currentSetting.value] || [])
 
 function toggleFullScreen() {
-    if (!isFullScreen.value) {
-        nextTick(() => {
-            headerHeight.value = headerRef.value ? headerRef.value.offsetHeight : 0
-            isFullScreen.value = true
-        })
-    } else {
-        isFullScreen.value = false
+    isFullScreen.value = !isFullScreen.value
+}
+
+function openFieldsModal(event, settingKey) {
+    const rect = event.currentTarget.getBoundingClientRect()
+    fieldsModalPosition.value = {
+        x: rect.left,
+        y: rect.bottom + 6,
     }
+    isFieldsModalVisible.value = true
+    currentSetting.value = settingKey
 }
 
 function openDatasetTooltip(event) {
-    // event — MouseEvent от кнопки
     const rect = buttonRef.value.getBoundingClientRect()
-    // Немного ниже и чуть правее кнопки
     tooltipPosition.value = {
         x: rect.left,
         y: rect.bottom + 6
     }
     isDatasetTooltipVisible.value = true
-    nextTick(() => {
-        // auto-focus или что-то ещё
-    })
+    nextTick(() => { })
 }
 
 function closeDatasetTooltip() {
@@ -212,20 +206,51 @@ function closeDatasetTooltip() {
 }
 
 function handleSelectDataset(ds) {
-  selectedDataset.value = ds
-  closeDatasetTooltip()
+    selectedDataset.value = ds
+    closeDatasetTooltip()
 }
 
 function onClickOutside(event) {
-    const tooltipEl = tooltipRef.value
-    const buttonEl = buttonRef.value
+    const datasetModalEl = tooltipRef.value
+    const fieldsModalEl = fieldsModalRef.value
     if (
-        tooltipEl && !tooltipEl.contains(event.target) &&
-        buttonEl && !buttonEl.contains(event.target)
+        isDatasetTooltipVisible.value &&
+        datasetModalEl && !datasetModalEl.contains(event.target)
     ) {
-        closeDatasetTooltip()
+        isDatasetTooltipVisible.value = false
+    }
+    if (
+        isFieldsModalVisible.value &&
+        fieldsModalEl && !fieldsModalEl.contains(event.target)
+    ) {
+        isFieldsModalVisible.value = false
     }
 }
+
+function handleFieldSelect(field) {
+    const key = currentSetting.value
+    if (!selectedFields.value[key].some(f => f.id === field.id))
+        selectedFields.value[key].push(field)
+    isFieldsModalVisible.value = false
+}
+
+function removeField(field, type) {
+    selectedFields.value[type] = selectedFields.value[type].filter(f => f.id !== field.id)
+}
+
+watch(() => selectedDataset.value?.id, async id => {
+    if (id) {
+        const { data } = await chartService.getColumns(id)
+        indicators.value = (data.columns || []).map((c, i) => ({
+            id: 'col_' + i,
+            name: c.name || c,
+            type: c.type || 'string',
+            source: 'indicator'
+        }))
+    } else {
+        indicators.value = []
+    }
+})
 
 onMounted(() => {
     document.addEventListener('mousedown', onClickOutside)
@@ -298,7 +323,7 @@ onBeforeUnmount(() => {
     justify-content: space-between;
     gap: 20px;
     padding: 15px;
-    height: 5rem;
+    min-height: 5rem;
     flex-shrink: 0;
 }
 
@@ -307,6 +332,8 @@ onBeforeUnmount(() => {
     width: 100%;
     border-radius: 8px;
     padding: 10px;
+    display: flex;
+    flex-direction: column;
 }
 
 .setting-header {
@@ -365,5 +392,56 @@ onBeforeUnmount(() => {
     padding: 1rem;
     overflow: hidden;
     color: var(--color-primary-text);
+}
+
+.tooltip-panel-fields {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    width: 216px;
+    max-height: 300px;
+    background-color: var(--color-primary-background);
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+    z-index: 100;
+    padding: 1rem;
+    overflow: hidden;
+    color: var(--color-primary-text);
+}
+
+.selected-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--color-primary-background);
+    border-radius: 6px;
+    padding: 4px 10px 4px 6px;
+    font-size: 14px;
+    margin-top: 7px;
+    color: var(--color-primary-text, #222);
+    transition: background 0.2s;
+}
+
+.selected-field:hover {
+    background: var(--color-hover-background);
+}
+
+.selected-field .remove-btn {
+    margin-left: 8px;
+    color: var(--color-secondary-text);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 2px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.selected-field .remove-btn:hover {
+    color: var(--color-accent);
+}
+
+.field-icon.indicator {
+    color: var(--color-accent);
 }
 </style>
