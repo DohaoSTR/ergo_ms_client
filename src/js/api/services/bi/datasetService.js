@@ -45,7 +45,6 @@ export default {
     )
   },
 
-  // ===== Rename columns (fields) =====
   renameColumns(datasetId, renames) {
     // PATCH /api/bi_analysis/bi_datasets/{id}/rename_columns/
     return apiClient.patch(`${BASE}${datasetId}/rename_columns/`, { renames });
@@ -85,7 +84,6 @@ export default {
     return apiClient.delete(`${UPLOAD}${id}/`)
   },
   removeRelation({ datasetId, rightTableId }) {
-  /* apiClient уже добавляет префикс /api/ */
   return apiClient.post(
     `bi_analysis/bi_datasets/${datasetId}/remove-relation/`,
     { right_table_id: rightTableId }
@@ -94,6 +92,10 @@ export default {
 
   addTableToDataset(datasetId, fileId) {
     return apiClient.post(`${BASE}${datasetId}/add-table/`, { file_id: fileId });
+  },
+
+  updateDataset (id, payload) {
+    return apiClient.patch(`bi_analysis/bi_datasets/${id}/`, payload)
   },
 
   // ===== AUTO-JOIN API =====

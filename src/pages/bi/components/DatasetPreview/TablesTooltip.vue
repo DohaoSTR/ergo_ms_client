@@ -44,8 +44,13 @@ const { loadUserFiles } = useFileList(
 )
 
 function isSelected(table) {
-  // Безопасно сравнивать id
-  return props.selectedTable && table.id === props.selectedTable.id
+  if (!props.selectedTable) return false
+
+  const curFileId =
+    props.selectedTable.file_upload_id
+    ?? props.selectedTable.id
+
+  return String(table.id) === String(curFileId)
 }
 
 // Фильтрация по поиску

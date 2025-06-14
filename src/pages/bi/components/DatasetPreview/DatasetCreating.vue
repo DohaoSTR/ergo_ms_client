@@ -51,7 +51,7 @@
         </transition>
 
         <div v-if="showTooltip || showTableTooltip" class="tooltip-panel" :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }" ref="tooltipRef">
-            <ConnectionsTooltip v-if="showTooltip" @select="handleSelect" />
+            <ConnectionsTooltip v-if="showTooltip" :selected-connection="props.selectedConnection" @select="handleSelect" />
             <TableTooltip v-if="showTableTooltip" :connection-id="selectedConnection.id" :connection-type="selectedConnection.connector_type" :selected-table="mainTable" @select="handleTableSelect" @tablesLoaded="(tables) => $emit('tablesLoaded', tables)"/>
         </div>
 

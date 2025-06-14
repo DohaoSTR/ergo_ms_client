@@ -9,7 +9,7 @@
                 </div>
                 <div class="skeleton-date"></div>
             </li>
-            <li v-for="item in filteredUsers" :key="item.id" class="connection-item" v-show="!isLoading" @click="emit('select', item)">
+            <li v-for="item in filteredUsers" :key="item.id" class="connection-item" :class="{ selected: isSelected(item) }" v-show="!isLoading" @click="emit('select', item)">
                 <div class="connection-left">
                     <img :src="getIconComponent(item)?.src" class="icon" @mouseenter="onIconHover($event, getIconComponent(item)?.tooltip)" @mouseleave="hideTooltip"/>
                     <span class="connection-name">{{ item.name }}</span>
@@ -35,6 +35,14 @@ import FileIcon from '@/assets/bi/icons/folder_windows_style.svg'
 import { apiClient } from '@/js/api/manager.js'
 
 const emit = defineEmits(['select'])
+
+const props = defineProps({
+  selectedConnection: Object
+})
+
+function isSelected (row) {
+    return props.selectedConnection && String(row.id) === String(props.selectedConnection.id)
+}
 
 const users = ref([])
 const filter = ref('')
@@ -109,6 +117,11 @@ function hideTooltip() {
     &:hover {
         background-color: var(--color-hover-background);
     }
+}
+
+.connection-item.selected {
+  background-color: var(--color-hover-background);
+  border: 1.5px solid #198754;
 }
 
 .connection-left {

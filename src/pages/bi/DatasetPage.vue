@@ -7,11 +7,12 @@
       <div class="file_area_header_label">
         <Database />
         <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
-          <h4 class="header-label" style="margin-bottom: 3px;">Новый датасет</h4>
+          <h4 class="header-label" style="margin-bottom:3px;">{{ headerName }}</h4>
         </div>
       </div>
       <div class="file_area_header_buttons">
-        <button type="button" class="btn btn-primary">Создать датасет</button>
+        <button v-if="isNewPage" class="btn btn-primary" :disabled="!canCreateDataset || saving" @click="openNameDialog">Создать датасет</button>
+        <button v-else-if="isDraft" class="btn btn-success" :disabled="saving" @click="openNameDialog">Сохранить датасет</button>
       </div>
     </header>
 
@@ -104,16 +105,24 @@
       </div>
     </div>
   </transition>
+
+  <transition name="fade">
+    <div v-if="showDatasetDialog" class="modal-overlay">
+      <DatasetNameDialog v-model:visible="showDatasetDialog" :modelValue="dataset.value?.name" @saved="saveDataset"/>
+    </div>
+  </transition>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { RefreshCw, Plus, Eye, Loader, Database } from 'lucide-vue-next'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
-import datasetService from '@/js/api/services/bi/datasetService'
+import datasetService     from '@/js/api/services/bi/datasetService'
+import connectionService  from '@/js/api/services/bi/connectionService'
 import { getAggregationOptions } from '@/pages/bi/components/DatasetPreview/js/DatasetPreviewFieldOptions.js'
 
+import DatasetNameDialog from '@/pages/bi/components/DatasetNameDialog.vue'
 import TableLinkModal from '@/pages/bi/components/DatasetPreview/TableLinkModal.vue'
 import SourceSettings from '@/pages/bi/components/DatasetPreview/SourceSettings.vue'
 import DatasetCreating from '@/pages/bi/components/DatasetPreview/DatasetCreating.vue'
@@ -122,7 +131,6 @@ import ParamsPage from '@/pages/bi/components/DatasetPreview/ParamsPage.vue'
 import DatasetTablePreview from '@/pages/bi/components/DatasetPreview/DatasetTablePreview.vue'
 
 const isPreviewLoading = ref(false)
-const isLoading = ref(false)
 const fileUploadsCache = ref([])
 
 const selectedConnection = ref(null)
@@ -135,25 +143,23 @@ const editingRelationIndex = ref(null)
 const allTablesOfConnection = ref([])
 const columnToTableMap = ref({})
 
-// Параметр из урла (если есть)
 const route = useRoute()
-const datasetId = route.params.id
+const router = useRouter()
+const datasetId     = computed(() => route.params.id)
+const isNewPage     = computed(() => !datasetId.value)
 
-// Состояния
 const activeTab = ref('sources')
 const isPreviewVisible = ref(true)
 
 const dataset = ref({})
 const fields = ref([])
 const relations = ref([])
+const saving = ref(false)
+const showDatasetDialog = ref(false)
 
-const isSyncFromBackend = ref(false)
-
-// Доп.список таблиц (SourcesPageLinks)
 const selectedTables = ref([])
 const selectedRelations = ref([])
 
-// Preview state
 const previewCols = ref([])
 const previewRows = ref([])
 const previewLimit = ref(10)
@@ -172,89 +178,145 @@ const props = defineProps({
   }
 })
 
-function handleTablesLoaded(files) {
-  fileUploadsCache.value = files          // сохраняем
-  buildAllTables(files)
+const headerName = computed(() =>
+  dataset.value?.name || 'Новый датасет'
+)
+
+const isDraft       = computed(() =>
+  !isNewPage.value && dataset.value?.is_temporary
+)
+
+const canCreateDataset = computed(() =>
+  isNewPage.value && !!mainTable.value?.id
+)
+
+async function saveDataset(finalName) {
+  if (!dataset.value?.id) return
+  saving.value = true
+  try {
+    const payload = { name: finalName, is_temporary: false }
+
+    const ok = await safeUpdateDataset(
+      datasetService.updateDataset(dataset.value.id, payload)
+    )
+    if (ok) {
+      router.replace({ name:'DatasetPage', params:{ id: dataset.value.id } })
+    }
+  } finally { saving.value = false }
 }
 
-function buildAllTables(files = fileUploadsCache.value) {
-  /* === 1. Все DataSetTable-ы из датасета ========================== */
+function handleTablesLoaded (files) {
+  fileUploadsCache.value = files
+  buildAllTables(files)
+
+  /* ── если главная таблица всё ещё temp_… — заменяем название ── */
+  if (
+    mainTable.value &&
+    /^temp_[a-f0-9]{32}/.test(mainTable.value.display_name || '')
+  ) {
+   const match = files.find(
+     f => mainTable.value.file_id                // temp-таблица знает file_id
+          ? f.id === mainTable.value.file_id
+          : f.columns_info &&                    // fallback: раньше не было file_id
+            mainTable.value.columns_info &&
+            JSON.stringify(f.columns_info.columns) ===
+            JSON.stringify(mainTable.value.columns_info.columns)
+   )
+
+    if (match) {
+      mainTable.value.display_name = match.original_filename
+      mainTable.value.name         = match.original_filename
+      /* columns_info тоже можно дописать, если ещё пусто */
+      if (!mainTable.value.columns_info && match.columns_info) {
+        mainTable.value.columns_info = match.columns_info
+      }
+    }
+  }
+}
+
+function buildAllTables (files = fileUploadsCache.value) {
   const dsTables = (dataset.value?.tables || []).map(t => ({
     ...t,
-    id: Number(t.id),                // id именно DataSetTable
-    file_id: t.file_upload_id,            // поможет склеить с FileUpload
-    display_name: t.display_name || t.table_name,
-    columns_info: t.columns_info || null
+    id: Number(t.id),
+    file_id: t.file_upload_id,
+    display_name: t.display_name || t.file_upload_name || t.table_name,
+    name:         t.display_name || t.file_upload_name || t.table_name,
+    columns_info: t.columns_info || null,
+    file_upload_name: t.file_upload_name || null,
+    isMain: !t.joined_on
   }))
 
-  /* === 2. Формируем единый массив без дублей ====================== */
-  const merged = [];
-  (files || []).forEach(f => {
-    /* temp-таблица уже создана? */
+  const merged = []
+
+  ;(files || []).forEach(f => {
     const ds = dsTables.find(dt =>
-      dt.file_id === f.id ||                       // старое условие
-      dt.display_name === f.original_filename ||   // temp уже переименована
-      dt.table_name === f.table_name             // редкий случай
+      dt.file_id === f.id ||
+      dt.display_name    === f.original_filename ||
+      dt.file_upload_name === f.original_filename ||
+      dt.table_name      === f.table_name ||
+      ( dt.columns_info && f.columns_info &&
+        JSON.stringify(dt.columns_info.columns) ===
+        JSON.stringify(f.columns_info.columns) )
     )
 
+    /* ── 1. исходный файл уже представлен temp-таблицей ── */
     if (ds) {
-      if (!ds.columns_info && f.columns_info)      // копируем список колонок
-        ds.columns_info = f.columns_info
+      /* дописываем схему, если не была сохранена */
+      if (!ds.columns_info && f.columns_info) ds.columns_info = f.columns_info
 
-      /* красивое имя: берем original_filename */
-      if (!ds.display_name ||
-        /^temp_[a-f0-9]{32}/.test(ds.display_name))
-        ds.display_name = f.original_filename
+      /* заменяем temp_… на оригинальное имя */
+      if (/^temp_[a-f0-9]{32}/.test(ds.display_name)) {
+        const pretty = ds.file_upload_name || f.original_filename
+        ds.display_name = pretty
+        ds.name         = pretty
+      }
+
       merged.push(ds)
-    } else {
-      /* файл ещё не добавлен в датасет */
-      merged.push({
-        ...f,
-        id: -f.id,                    // отрицательный id
-        file_id: f.id,
-        display_name: f.original_filename,
-        columns_info: f.columns_info || null,
-        isMain: false
-      })
+      return
     }
+
+    /* ── 2. файла нет в dataset → «сырой» FileUpload ── */
+    merged.push({
+      ...f,
+      id: -f.id,
+      file_id: f.id,
+      order: 1,
+      display_name: f.original_filename,
+      name:         f.original_filename,
+      columns_info: f.columns_info || null,
+      isMain: false
+    })
   })
 
-  /* === 3. temp-таблицы, у которых нет исходного файла ============= */
+  /* temp-таблицы, которые не связаны с файлами (sql-view и т. д.) */
   dsTables.forEach(dt => {
     if (!merged.some(m => m.id === dt.id)) merged.push(dt)
   })
 
   allTablesOfConnection.value = merged
+
+  /* ссылка на актуальную главную таблицу */
+  const actualMain = merged.find(t => t.isMain)
+  if (actualMain) mainTable.value = actualMain
 }
 
 function mapTable(t) {
-  const isMain = !t.joined_on || t.joined_on === null
-
-  /* 1. Удаляем только тех, у кого  ➜ temp_*   И   НЕТ columns_info   И   не main */
-  if (!isMain &&
+  const isMain = t.order === 0
+  if (!isMain && 
     /^temp_[a-f0-9]{32}/.test(t.table_name) &&
     !t.columns_info &&
     (t.file_upload_id == null && t.file_id == null)) {
-    return            // undefined → filter(Boolean) уберёт
+    return
   }
-  /* 2. Если это ГЛАВНАЯ и у неё всё ещё нет схемы либо нормального имени —
-        берём их из выбранного mainTable или из FileUpload-кеша */
   if (isMain) {
-    const backupMain = mainTable?.value             // выбранный файл
-                      || fileUploadsCache.value.find(
-                          f => f.id === t.file_upload_id
-                        )
+    const backupMain = mainTable?.value || fileUploadsCache.value.find(f => f.id === t.file_upload_id)
 
-    /* columns_info */
     if (!t.columns_info && backupMain?.columns_info) {
       t.columns_info = backupMain.columns_info
     }
 
-    /* красивое имя */
-    if (
-      (!t.display_name || /^temp_[a-f0-9]{32}/.test(t.display_name)) &&
-      backupMain?.original_filename
-    ) {
+    if ((!t.display_name || /^temp_[a-f0-9]{32}/.test(t.display_name)) && backupMain?.original_filename) 
+    {
       t.display_name = backupMain.original_filename
     }
   }
@@ -264,8 +326,7 @@ function mapTable(t) {
     )
     if (backup?.columns_info) t.columns_info = backup.columns_info
   }
-  /* ищем исходный файл */
-  let backup = null
+    let backup = null
   if (t.file_upload_id != null) {
     backup = fileUploadsCache.value.find(f => f.id === t.file_upload_id)
   }
@@ -275,11 +336,28 @@ function mapTable(t) {
     )
   }
 
+  /* ── ключевая логика ── */
+  const looksTemp = /^temp_[a-f0-9]{32}/.test(t.display_name || '')
+  const prettyName =
+     /* 1. temp_… + в объекте уже есть file_upload_name */
+     (looksTemp && t.file_upload_name)
+       ? t.file_upload_name
+     /* 2. temp_… + нашли backup-файл → original_filename */
+      : looksTemp && backup?.original_filename
+          ? backup.original_filename
+      /* 3. все остальные случаи */
+          : t.display_name
+         || backup?.original_filename
+         || t.name
+         || t.table_name
+
   return {
-    id: t.id,
-    table_ref: t.table_name,
-    display_name: t.display_name || t.table_name,
-    columns_info: t.columns_info || backup?.columns_info || null
+    id:           t.id,
+    table_ref:    t.table_name,
+    display_name: prettyName,   // ← уже человеческое
+    name:         prettyName,   // ← то же самое для DatasetCreating
+    columns_info: t.columns_info || backup?.columns_info || null,
+    isMain:       isMain
   }
 }
 
@@ -287,35 +365,59 @@ async function safeUpdateDataset(promise) {
   try {
     const resp = await promise
 
-    const p = resp && resp.data ? resp.data : resp
+    const payload = resp && resp.data ? resp.data : resp
 
-    let ok, ds
-    if (p && typeof p === 'object') {
-      if ('success' in p) {
-        ok = p.success
-        ds = p.dataset ?? p.data
-      } else if ('id' in p) {
+    let ok = false
+    let ds = null
+    if (payload && typeof payload === 'object') {
+      if ('success' in payload) {
+        ok = payload.success
+        ds = payload.dataset ?? payload.data
+      } else if ('id' in payload) {
         ok = true
-        ds = p
+        ds = payload
       }
     }
 
     if (!ok || !ds?.id) {
-      if (p?.error) console.error(p.error)
+      if (payload?.error) console.error(payload.error)
       return false
     }
 
     dataset.value = ds
-    relations.value = getRelationsFromDataset(ds)
+    await hydrateFromDataset(ds)
 
-    selectedTables.value = ds.tables.map(mapTable).filter(Boolean)
-
-    buildAllTables()
+    if (Array.isArray(ds.tables) && ds.tables.length) {
+      selectedTables.value = ds.tables.map(mapTable).filter(Boolean)
+      buildAllTables()
+    } else {
+      await loadDataset(ds.id)
+    }
     return true
   } catch (err) {
     console.error(err)
     return false
   }
+}
+
+async function hydrateFromDataset(ds) {
+  const main = ds.tables.find(t => !t.joined_on) || ds.tables[0]
+  if (main) mainTable.value = mapTable(main)
+
+  const connId = main?.connection || ds.selectedConnection
+if (connId) {
+  try {
+    const conn = await connectionService.get(connId)
+    selectedConnection.value = conn
+  } catch (e) {
+    console.warn('Не удалось получить подключение', e)
+    selectedConnection.value = { id: connId, name: `Connection #${connId}` }
+  }
+} else {
+  selectedConnection.value = null
+}
+
+  relations.value = getRelationsFromDataset(ds)
 }
 
 const usedRightTableIds = computed(() =>
@@ -332,19 +434,13 @@ const computedLinkedTableIds = computed(() => {
 })
 
 async function handleRelationApply(relation) {
-  // ... сохраняешь связь (JOIN)
   const ok = await safeUpdateDataset(datasetService.getDataset(dataset.value.id));
   if (!ok) return;
-  console.log('dataset.value после JOIN:', dataset.value)
-  console.log('DATASET: ', JSON.stringify(dataset.value, null, 2));
-  console.log('TABLES: ', dataset.value.tables);
   relations.value = getRelationsFromDataset(dataset.value)
-  console.log('[AFTER JOIN] dataset:', dataset.value);
   await loadPreview();
 }
 
 function onEditRelation(rel, idx) {
-  // НЕ просто копия {...rel}, а полный клон без реактивности:
   editingRelation.value = JSON.parse(JSON.stringify(rel))
   editingRelationIndex.value = idx
   showTableLinkModal.value = true
@@ -361,7 +457,7 @@ function getRelationsFromDataset(data) {
       joinType: t.joined_on?.type,
       leftColumn: t.joined_on?.left_column,
       rightColumn: t.joined_on?.right_column,
-      rightTableName: t.display_name || t.table_name, // если понадобится
+      rightTableName: t.display_name || t.table_name,
     }))
 }
 
@@ -383,9 +479,8 @@ async function removeRelationById(rightTableId) {
     datasetService.removeRelation({ datasetId: dataset.value.id, rightTableId })
   )
   if (ok) {
-    /* safeUpdateDataset уже обновил dataset.value и relations */
     await loadPreview()
-    buildAllTables()                      // чтобы обновился селект
+    buildAllTables()
   }
 }
 
@@ -398,7 +493,6 @@ function tabLabel(tab) {
 
 async function loadPreview() {
   if (!dataset.value || !dataset.value.id) return;
-  console.log('[PREVIEW_DEBUG] datasetId:', dataset.value.id, 'table_ref:', dataset.value.table_ref);
   isPreviewLoading.value = true;
   try {
     const { success, data } = await datasetService.preview(dataset.value.id, { limit: previewLimit.value });
@@ -424,7 +518,6 @@ function detectColumnType(values) {
 }
 
 async function loadFields() {
-  // 1. Если есть datasetId — грузим с API
   if (dataset.value?.id) {
     const resp = await datasetService.listFields({ dataset: dataset.value.id })
       .then(response => {
@@ -436,34 +529,21 @@ async function loadFields() {
     }
   }
 
-  // 2. Если есть cols и rows (т.е. предпросмотр)
   if (previewCols.value.length && previewRows.value.length) {
-    // --- строим карту: имя_колонки → таблица ---------------------------
-    console.group('[DEBUG] selectedTables с columns_info');
-    console.table((selectedTables.value || []).map(t => ({
-      id: t.id,
-      name: t.display_name || t.table_name,
-      hasColumnsInfo: !!t.columns_info,
-      cols: t.columns_info?.columns?.length || 0
-    })));
-    console.groupEnd();
     const col2Table = {};
     (selectedTables.value || []).forEach(t => {
       const cols = t.columns_info?.columns || []
-      cols.forEach(c => {          // если несколько таблиц содержат одно
-        if (!col2Table[c]) col2Table[c] = t   // имя – берём первую
+      cols.forEach(c => {
+        if (!col2Table[c]) col2Table[c] = t
       })
     })
     columnToTableMap.value = col2Table
-    const liveMain = selectedTables.value.find(
-      t => t && !/^temp_[a-f0-9]{32}/.test(t.display_name)
-    ) || selectedTables.value[0]         // первая всегда главная
+    const mainObj = selectedTables.value.find(t => t?.order === 0)
     previewCols.value.forEach(c => {
-      if (!col2Table[c] && liveMain) col2Table[c] = liveMain
+      if (!col2Table[c] && mainObj) col2Table[c] = mainObj
     })
     fields.value = previewCols.value.map((col, idx) => {
-      // --- определяем источник поля ---
-      const tableObj = col2Table[col]           // <— ищем в карте
+      const tableObj = col2Table[col]
       const tableName = tableObj
         ? (tableObj.display_name || tableObj.name || tableObj.table_name)
         : 'НеизвестнаяТаблица'
@@ -486,7 +566,6 @@ async function loadFields() {
     return;
   }
 
-  // 3. Если только cols (нет rows)
   if (previewCols.value.length) {
     fields.value = previewCols.value.map((col, idx) => ({
       id: 'new_' + idx,
@@ -529,43 +608,47 @@ watch(
   () => buildAllTables()
 )
 
+watch(datasetId, async (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    await loadDataset(newId)      // см. функцию ниже
+  }
+})
+
+async function loadDataset(id) {
+  const { data } = await datasetService.getDataset(id)
+  dataset.value   = data
+  selectedTables.value = data.tables.map(mapTable).filter(Boolean)
+  buildAllTables()
+  await hydrateFromDataset(data)
+  await loadPreview()
+}
+
 onMounted(async () => {
-  if (datasetId) {
-    const { data } = await datasetService.getDataset(datasetId)
-    dataset.value = data
-    relations.value = getRelationsFromDataset(data)
-    selectedTables.value = data.tables.map(mapTable).filter(Boolean)
-    selectedRelations.value = data.tables.map(t => ({
-      source: String(data.tables[0].id),
-      target: String(t.id),
-      joinType: t.joined_on.type
-    }))
-    buildAllTables()
+  if (datasetId.value) {
+    await loadDataset(datasetId.value)
   }
 })
 
 async function createDatasetFrom(tbl) {
   const payload = {
-    name: `${tbl.name || tbl.table}_${Date.now()}`,
+    name: 'Новый датасет',
     connection: selectedConnection.value.id,
     file_source: tbl.id,
     is_temporary: true
   }
 
-  /* 1. получаем ответ от сервиса */
   const resp = await datasetService.createDataset(payload)
 
-  /* 2. нормализуем */
   let ok = false
   let dataset = null
 
-  if (resp?.success) {                   // оба формата содержат success
+  if (resp?.success) {
     if (resp.dataset) {
       ok = true
-      dataset = resp.dataset             // формат №2
+      dataset = resp.dataset
     } else if (resp.data) {
       ok = true
-      dataset = resp.data                // формат №1
+      dataset = resp.data
     }
   }
 
@@ -574,7 +657,6 @@ async function createDatasetFrom(tbl) {
     return
   }
 
-  /* 3. копируем columns_info из файла во вновь-созданную таблицу */
   const target =
     dataset.tables.find(t => t.file_upload_id === tbl.id) || dataset.tables[0]
 
@@ -585,13 +667,13 @@ async function createDatasetFrom(tbl) {
   const pretty = tbl.original_filename || tbl.name
   if (pretty && (!target.display_name || target.display_name.startsWith('temp_'))) {
     target.display_name = pretty
+    target.name         = pretty
   }
 
-  /* 4. передаём объект дальше как promise-like */
   const ok2 = await safeUpdateDataset(Promise.resolve(dataset))
   if (!ok2) return
 
-  selectedTables.value = dataset.tables.map(mapTable).filter(Boolean)
+  await hydrateFromDataset(dataset)
   await loadPreview()
 }
 
@@ -710,10 +792,6 @@ function onSourceSave(newField) {
   fields.value = [...fields.value, newField]
   showModal.value = false
 }
-
-watch(dataset, (val) => {
-  console.log('Dataset changed:', val)
-})
 
 onMounted(() => {
   if (mainTable.value && dataset.value?.id) {
@@ -861,7 +939,7 @@ body {
 
 .tab-button.active {
   background: var(--color-accent);
-  color: var(--color-primary-text);
+  color: white;
 }
 
 .tab-button:not(.active):hover {
@@ -946,6 +1024,7 @@ body {
   gap: 10px;
 }
 
+.btn-success,
 .btn-primary,
 .btn-secondary {
   width: 10rem;
