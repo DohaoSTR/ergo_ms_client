@@ -98,10 +98,7 @@
             </div>
         </div>
         <div class="body-chart border-elements elements-color" :class="{ fullscreen: isFullScreen }">
-            <div class="alert alert-info" role="alert"
-                style="height: 100%; text-align: center; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 10px;">
-                <CircleAlert :size="40" class="me-1" />Прежде чем увидеть содержимое, добавьте датасет
-            </div>
+            <ChartArea :dataset="datasetRows" :chart-type="selectedChartType" :fields="selectedFields"/>
         </div>
     </div>
     <transition name="fade-slide" appear>
@@ -130,6 +127,7 @@ import DatasetIndicators from '@/pages/bi/components/ChartComponents/DatasetIndi
 import DatasetMeasures from '@/pages/bi/components/ChartComponents/DatasetMeasures.vue'
 import DatasetSettings from '@/pages/bi/components/ChartComponents/DatasetSettings.vue'
 import ChartFields from '@/pages/bi/components/ChartComponents/ChartFields.vue'
+import ChartArea from '@/pages/bi/components/ChartComponents/ChartArea.vue'
 
 import chartService from '@/js/api/services/bi/chartService.js'
 
@@ -150,6 +148,8 @@ const selectedChartType = ref('')
 const indicators = ref([])
 const currentSetting = ref('')
 
+const datasetRows = ref([])
+
 const selectedFields = ref({
     y: [],
     x: [],
@@ -157,6 +157,17 @@ const selectedFields = ref({
     sort: [],
     labels: [],
     filters: []
+})
+
+watch(selectedChartType, () => {
+    selectedFields.value = {
+        y: [],
+        x: [],
+        color: [],
+        sort: [],
+        labels: [],
+        filters: []
+    }
 })
 
 const settingTypes = [
@@ -205,9 +216,13 @@ function closeDatasetTooltip() {
     isDatasetTooltipVisible.value = false
 }
 
-function handleSelectDataset(ds) {
-    selectedDataset.value = ds
-    closeDatasetTooltip()
+async function handleSelectDataset(ds) {
+  selectedDataset.value = ds
+  closeDatasetTooltip()
+  if (ds?.id) {
+    const { data } = await chartService.getRows(ds.id)
+    datasetRows.value = data 
+  }
 }
 
 function onClickOutside(event) {
@@ -363,7 +378,8 @@ onBeforeUnmount(() => {
 
 .body-chart {
     flex: 1 1 0%;
-    min-height: 32rem;
+    min-height: 120px;
+    width: 100%;
     padding: 10px;
     display: flex;
     justify-content: center;

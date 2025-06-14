@@ -93,6 +93,7 @@ export const endpoints = {
         CheckConnection: 'bi_analysis/bi_connections/check-connection/',
         ChartsList: 'bi_analysis/bi_charts/',
         ChartsColumns: id => `bi_analysis/bi_charts/${id}/columns/`,
+        ChartsRows:    id => `bi_analysis/bi_charts/${id}/rows/`,
         Upload: 'bi_analysis/bi_datasets/upload/',
         UploadedFiles: 'bi_analysis/bi_datasets/user-files/',
     },
