@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import LayoutMenu from '@/LayoutMenu.vue'
 import LayoutStart from '@/LayoutStart.vue'
+import LayoutPublic from '@/LayoutPublic.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,7 +15,12 @@ router.isReady().then(() => {
 })
 
 const currentLayout = computed(() => {
-  return route.meta.startRoute === true ? LayoutStart : LayoutMenu
+  if (route.meta && route.meta.startRoute === true) {
+    return LayoutStart
+  }
+  // если явно meta.public === true, то LayoutPublic,
+  // иначе по умолчанию LayoutMenu
+  return route.meta && route.meta.public === true ? LayoutPublic : LayoutMenu
 })
 </script>
 
