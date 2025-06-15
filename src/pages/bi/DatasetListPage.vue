@@ -14,7 +14,6 @@ const loading = ref(false)
 
 const cols = [
   { key: 'name', label: 'Название' },
-  { key: 'owner_username', label: 'Автор' },
   { key: 'created_at', label: 'Дата', format: val => new Date(val).toLocaleDateString() },
   { key: 'actions', label: '' }
 ]
