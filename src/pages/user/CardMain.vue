@@ -1,6 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Briefcase, Calendar, MapPin } from 'lucide-vue-next'
+import { apiClient } from '@/js/api/manager'
+import { endpoints } from '@/js/api/endpoints'
 
 const userInfo = ref({
   image: '/src/assets/avatars/avatar-1.png',
@@ -9,7 +11,23 @@ const userInfo = ref({
   location: 'Москва',
   registration: 'Апрель 2021',
 })
+
+async function fetchAvatar() {
+  try {
+    const resp = await apiClient.get(endpoints.userAvatars.list)
+    if (resp.data.length && resp.data[0].image) {
+      userInfo.value.image = resp.data[0].image
+    } else {
+      userInfo.value.image = '/src/assets/avatars/avatar-1.png'
+    }
+  } catch {
+    userInfo.value.image = '/src/assets/avatars/avatar-1.png'
+  }
+}
+
+onMounted(fetchAvatar)
 </script>
+
 
 <template>
   <div class="profile__cover col-12">
@@ -57,7 +75,6 @@ const userInfo = ref({
 </template>
 
 <style scoped lang="scss">
-// Обложка профиля
 .profile__cover img {
   width: 100%;
   height: 200px;
@@ -71,7 +88,6 @@ const userInfo = ref({
   }
 }
 
-// Основная информация профиля
 .basic {
   position: relative;
   min-height: 150px;
@@ -99,7 +115,6 @@ const userInfo = ref({
   }
 }
 
-// Аватарка пользователя
 .basic__avatar {
   width: 180px;
   height: 180px;
@@ -120,7 +135,6 @@ const userInfo = ref({
   }
 }
 
-// Информация о пользователе
 .basic__user {
   margin-top: 85px;
 
