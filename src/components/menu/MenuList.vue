@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { ChevronLeft, Cog, Minus } from 'lucide-vue-next'
 import {
+  AnalyzeMenuSection,
   ChatMenuSection,
   EmailMenuSection,
   SettingsMenuSection,
@@ -20,6 +21,7 @@ import {
   BIMenuSection,
   ShortcodesMenuSection,
   EducationAnalyticMenuSection,
+  ExpertSystemSection,
 } from '@/js/menu-sections.js'
 
 import MenuGroup from '@/components/menu/MenuGroup.vue'
@@ -40,6 +42,9 @@ watch(
     }
   },
 )
+
+
+const emit = defineEmits(['left-padding', 'open-datasets', 'open-sidebar', 'reset-page'])
 
 // Состояние меню
 const isCollapsed = ref(false)
@@ -110,8 +115,6 @@ const toggleGroup = (id) => {
   openGroupId.value = openGroupId.value === id ? null : id
 }
 
-const emit = defineEmits(['left-padding', 'open-datasets', 'open-sidebar', 'reset-page'])
-
 function handleAction(action) {
   if (action === 'openDatasetSidebar') {
     emit('open-datasets')
@@ -152,11 +155,13 @@ const menuSections = ref([
   AdminPanelMenuSection,
   WatermarkedVideoSection,
   ShortcodesMenuSection,
+  ExpertSystemSection,
+  AnalyzeMenuSection,
 ])
 
 const separators = (index) => {
   switch (index) {
-    case 2:
+    case 1:
       return 'Шаблоны'
   }
 }
@@ -198,7 +203,7 @@ const separators = (index) => {
           @navigate="handleNavigate"
           @reset-page="resetCurrentPage"
         />
-        <div v-if="[2].includes(index)" class="side-menu__divider side-divider py-3">
+        <div v-if="[1].includes(index)" class="side-menu__divider side-divider py-3">
           <div class="side-divider__icon"><Minus :size="20" /></div>
           <div class="side-divider__name text-smooth-animation" :class="{ hidden: !isHovering }">
             {{ separators(index) }}

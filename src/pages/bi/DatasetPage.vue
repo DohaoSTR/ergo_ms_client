@@ -99,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, defineEmits, watch, defineProps } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, } from 'vue'
 import { RefreshCw, Plus, Eye, Loader } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 

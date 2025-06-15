@@ -7,6 +7,7 @@ import {
   ChartCandlestick,
   CircleUserRound,
   Component,
+  Code2,
   Grid2x2,
   Map,
   MessagesSquare,
@@ -32,9 +33,9 @@ export const UserMenuSection = {
     { path: 'Teams', name: 'Команды' },
     { path: 'Projects', name: 'Проекты' },
     { path: 'Connections', name: 'Связи' },
-    { path: 'Analytics', name: 'Статистика' },
   ],
 }
+
 
 // Настройки аккаунта
 export const SettingsMenuSection = {
@@ -66,7 +67,6 @@ export const ChatMenuSection = {
   routeName: 'Messenger',
   title: 'Мессенджер',
 }
-
 
 // Карты
 export const MapsMenuSection = {
@@ -136,7 +136,6 @@ export const InputsMenuSection = {
   title: 'Формы ввода',
 }
 
-// Модальные окна
 export const ComponentsMenuSection = {
   id: 13,
   icon: Component,
@@ -226,3 +225,34 @@ export const EducationAnalyticMenuSection = {
     { path: 'SuperUserPage', name: "SAdmin  " },
   ],
 }
+
+// Модуль экспертной системы
+export const ExpertSystemSection = {
+  id: 19,
+  icon: ChartBarStacked,
+  routeName: 'ExpertSystem',
+  title: 'Экспертная система вакансий',
+  list: [
+    { path: 'Skills', name: 'Навыки' },
+    { path: 'Profile', name: 'Профиль' },
+    { path: 'Groups', name: 'Группы' },
+    { path: 'Vacancies', name: 'Вакансии' },
+    { path: 'Proforientation', name: 'Профориентация' },
+    { path: 'Profession', name: 'Менеджер профессий' },
+    { path: 'OrientationTest', name: 'Менеджер тестов' },
+    { path: 'AllTests', name: 'Управление тестами для навыков' },
+    { path: 'StudentCourses', name: 'Рекомендованные курсы' },
+    { path: 'StudentsList', name: 'Студенты' }
+  ],
+}
+
+// Аналитика
+export const AnalyzeMenuSection = {
+  id: 20,
+  icon: Code2,
+  routeName: 'Analyze',
+  title: 'Анализ',
+  list: [
+    { path: 'DatabaseAnalyze', name: 'Анализ Bitcoin' },
+  ],
+};

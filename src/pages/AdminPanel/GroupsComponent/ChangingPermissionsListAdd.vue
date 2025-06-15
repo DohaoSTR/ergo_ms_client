@@ -42,7 +42,7 @@
   </template>
   
   <script setup>
-  import { ref, watch, defineExpose } from 'vue'
+  import { ref, watch, } from 'vue'
   import { GetPermissionsByCategory, AddGroupsPermissions} from '@/js/GroupsPolitics'
   
   const list2 = ref([])

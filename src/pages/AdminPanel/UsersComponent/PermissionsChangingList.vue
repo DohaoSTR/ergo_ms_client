@@ -38,7 +38,7 @@
   </template>
   
   <script setup>
-  import { ref, onMounted, watch, defineExpose } from 'vue';
+  import { ref, onMounted, watch, } from 'vue';
   import { GetUserPermissions, AddUserPermission, RemoveUserPermissions } from '@/js/GroupsPolitics';
   const list2 = ref([])
   const list1 = ref([])
