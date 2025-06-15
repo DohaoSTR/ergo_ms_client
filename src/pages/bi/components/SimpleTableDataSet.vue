@@ -2,23 +2,38 @@
   <div class="scrollable-table">
     <table class="custom-table">
       <thead class="transparent-header">
-        <tr><th v-for="col in props.cols" :key="col.key">{{ col.label }}</th></tr>
+        <tr>
+          <th v-for="col in props.cols" :key="col.key">{{ col.label }}</th>
+        </tr>
       </thead>
       <tbody>
-        <tr v-for="row in props.users" :key="row.id" class="table-row" @mouseenter="hoveredRow = row.id" @mouseleave="hoveredRow = null" @click="handleRowClick(row)">
-          <td v-for="col in props.cols" :key="col.key" :style="{ position: 'relative', overflow: 'hidden' }" :class="{ 'td-actions': col.key === 'actions' }">
+        <tr v-for="row in props.users" :key="row.id" class="table-row" @mouseenter="hoveredRow = row.id"
+          @mouseleave="hoveredRow = null" @click="handleRowClick(row)">
+          <td v-for="col in props.cols" :key="col.key" :style="{ position: 'relative', overflow: 'hidden' }"
+            :class="{ 'td-actions': col.key === 'actions' }">
             <!-- Название -->
             <template v-if="col.key === 'name'">
               <template v-if="getIconComponent(row)">
-                <img :src="getIconComponent(row).src" class="icon" @mouseenter="onIconHover($event, getIconComponent(row).tooltip)" @mouseleave="hideTooltip" />
+                <component
+                  v-if="typeof getIconComponent(row).src === 'object' || typeof getIconComponent(row).src === 'function'"
+                  :is="getIconComponent(row).src" class="icon"
+                  @mouseenter="onIconHover($event, getIconComponent(row).tooltip)" @mouseleave="hideTooltip" />
+                <img v-else :src="getIconComponent(row).src" class="icon"
+                  @mouseenter="onIconHover($event, getIconComponent(row).tooltip)" @mouseleave="hideTooltip" />
               </template>
-              <template v-else><Table class="icon" /></template>
+              <template v-else>
+                <Table class="icon" />
+              </template>
+              <template v-else>
+                <Table class="icon" />
+              </template>
               <span class="dataset-name">{{ getValue(row, col.key) ?? '—' }}</span>
             </template>
 
             <!-- Дата -->
             <template v-else-if="col.key === 'created_at'">
-              <span class="tooltip-wrapper" @mouseenter="onIconHover($event, formatTooltipDate(getValue(row, col.key)))" @mouseleave="hideTooltip">
+              <span class="tooltip-wrapper" @mouseenter="onIconHover($event, formatTooltipDate(getValue(row, col.key)))"
+                @mouseleave="hideTooltip">
                 {{ new Date(getValue(row, col.key)).toLocaleDateString() }}
               </span>
             </template>
@@ -27,7 +42,8 @@
             <template v-else-if="col.key === 'actions'">
               <div class="actions-cell" :class="{ visible: hoveredRow === row.id || isFavorite(row.id) }">
                 <div class="actions-inner">
-                  <button class="action-btn star" :class="{ active: isFavorite(row.id) }" @click.stop="toggleFavorite(row.id)" title="Избранное">
+                  <button class="action-btn star" :class="{ active: isFavorite(row.id) }"
+                    @click.stop="toggleFavorite(row.id)" title="Избранное">
                     <Star class="icon-inline" />
                   </button>
                   <button class="action-btn more" @click="onMoreClick($event, row.id)" title="Еще">
@@ -38,7 +54,8 @@
             </template>
 
             <template v-else>
-              {{ typeof col.format === 'function' ? col.format(getValue(row, col.key)) : getValue(row, col.key) ?? '—' }}
+              {{ typeof col.format === 'function' ? col.format(getValue(row, col.key)) : getValue(row, col.key) ?? '—'
+              }}
             </template>
           </td>
         </tr>
@@ -54,54 +71,65 @@
 
     <!-- Меню "Еще" -->
     <div v-if="showMenu" class="menu-dropdown" :style="menuPosition" @mouseleave="closeMenu">
-      <div class="menu-item" @click="openRename(getRowById(menuRowId))"><CaseSensitive :size="18" :stroke-width="2" />Переименовать</div>
-      <hr><div class="menu-item" @click="copyLink(getRowById(menuRowId))"><Link :size="18" :stroke-width="2" />Копировать ссылку</div>
-      <hr><div class="menu-item danger" @click="askDelete(getRowById(menuRowId))"><Trash2 :size="18" :stroke-width="2" />Удалить</div>
+      <div class="menu-item" @click="openRename(getRowById(menuRowId))">
+        <CaseSensitive :size="18" :stroke-width="2" />Переименовать
+      </div>
+      <hr>
+      <div class="menu-item" @click="copyLink(getRowById(menuRowId))">
+        <Link :size="18" :stroke-width="2" />Копировать ссылку
+      </div>
+      <hr>
+      <div class="menu-item danger" @click="askDelete(getRowById(menuRowId))">
+        <Trash2 :size="18" :stroke-width="2" />Удалить
+      </div>
     </div>
 
   </div>
   <!-- Модальное окно удаления -->
-<transition name="fade-modal">
-  <div v-if="showDeleteDialog" class="modal-overlay" @click.self="cancelDelete">
-    <div class="modal-dialog">
-      <div class="modal-title">Вы действительно хотите удалить
-        <span class="item-name">"{{ rowToDelete?.name || rowToDelete?.original_filename || 'элемент' }}"</span>
-        <span style="font-weight: normal">({{ getTypeName(rowToDelete) }})</span>?
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-danger" @click="confirmDelete" :disabled="isDeleteLocked">{{ isDeleteLocked ? `Да (${deleteCountdown})` : 'Да' }}</button>
-        <button class="btn btn-outline-secondary" @click="cancelDelete">Нет</button>
-      </div>
-    </div>
-  </div>
-</transition>
-
-<!-- Модальное окно переименования -->
-<transition name="fade-modal">
-  <div v-if="showRenameDialog" class="modal-overlay" @click.self="cancelRename">
-    <div class="modal-dialog">
-      <div class="modal-title">Укажите новое название элементу</div>
-      <input id="rename-input" class="form-control" v-model="renameValue" :disabled="renameLoading" maxlength="128" @keyup.enter="doRename" style="margin-bottom: 1rem; width: 100%; font-size: 1.05rem;" autocomplete="off"/>
-      <div v-if="renameError" style="color: #f87171; margin-bottom: 1rem;">{{ renameError }}</div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" @click="doRename" :disabled="renameLoading || !renameValue.trim()">Сохранить</button>
-        <button class="btn btn-secondary" @click="cancelRename" :disabled="renameLoading">Отмена</button>
+  <transition name="fade-modal">
+    <div v-if="showDeleteDialog" class="modal-overlay" @click.self="cancelDelete">
+      <div class="modal-dialog">
+        <div class="modal-title">Вы действительно хотите удалить
+          <span class="item-name">"{{ rowToDelete?.name || rowToDelete?.original_filename || 'элемент' }}"</span>
+          <span style="font-weight: normal">({{ getTypeName(rowToDelete) }})</span>?
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-danger" @click="confirmDelete" :disabled="isDeleteLocked">{{ isDeleteLocked ? `Да
+            (${deleteCountdown})` : 'Да' }}</button>
+          <button class="btn btn-outline-secondary" @click="cancelDelete">Нет</button>
+        </div>
       </div>
     </div>
-  </div>
-</transition>
+  </transition>
 
-<!-- Модальное окно копирования ссылки в буфер обмена -->
-<transition name="fade-modal">
-  <div v-if="showCopySuccess" class="copy-success-toast" :style="{ opacity: copyOpacity }">
-    Ссылка успешно скопирована в буфер обмена
-  </div>
-</transition>
+  <!-- Модальное окно переименования -->
+  <transition name="fade-modal">
+    <div v-if="showRenameDialog" class="modal-overlay" @click.self="cancelRename">
+      <div class="modal-dialog">
+        <div class="modal-title">Укажите новое название элементу</div>
+        <input id="rename-input" class="form-control" v-model="renameValue" :disabled="renameLoading" maxlength="128"
+          @keyup.enter="doRename" style="margin-bottom: 1rem; width: 100%; font-size: 1.05rem;" autocomplete="off" />
+        <div v-if="renameError" style="color: #f87171; margin-bottom: 1rem;">{{ renameError }}</div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" @click="doRename"
+            :disabled="renameLoading || !renameValue.trim()">Сохранить</button>
+          <button class="btn btn-secondary" @click="cancelRename" :disabled="renameLoading">Отмена</button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- Модальное окно копирования ссылки в буфер обмена -->
+  <transition name="fade-modal">
+    <div v-if="showCopySuccess" class="copy-success-toast" :style="{ opacity: copyOpacity }">
+      Ссылка успешно скопирована в буфер обмена
+    </div>
+  </transition>
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { Table, Star, MoreHorizontal, Trash2, CaseSensitive, Link } from 'lucide-vue-next'
+import { Table, Star, MoreHorizontal, Trash2, CaseSensitive, Link, ChartPie, Database } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { apiClient } from '@/js/api/manager.js'
 import ClickHouseIcon from '@/assets/bi/icons/clickhouse.svg'
@@ -140,11 +168,12 @@ let fadeRaf = null
 const router = useRouter()
 
 function handleRowClick(row) {
-  // Если отображаем датасеты (currentPage === 'datasets'), переходи на страницу датасета
   if (props.currentPage === 'datasets') {
     goToDataset(row)
   } else if (props.currentPage === 'connections') {
     goToConnection(row)
+  } else if (props.currentPage === 'charts') {
+    goToChart(row)
   }
 }
 
@@ -164,6 +193,11 @@ function goToConnection(row) {
 function goToDataset(row) {
   if (!row || !row.id) return
   router.push(`/bi/dataset/${row.id}/`)
+}
+
+function goToChart(row) {
+  if (!row || !row.id) return
+  router.push(`/bi/chart/${row.id}/`)
 }
 
 // localStorage избранное
@@ -222,6 +256,14 @@ function hideTooltip() {
 function getIconComponent(row) {
   const type = (row.connector_type_display || row.connector_type || '').toLowerCase().trim()
 
+  if (props.currentPage === 'charts') {
+    return { src: ChartPie, tooltip: 'Чарт' }
+  }
+  if (props.currentPage === 'datasets') {
+    return { src: Database, tooltip: 'Датасет' }
+  }
+
+  // Остальные типы
   if (type.includes('clickhouse')) return { src: ClickHouseIcon, tooltip: 'ClickHouse' }
   if (type.includes('postgres')) return { src: PostgresIcon, tooltip: 'PostgreSQL' }
   if (type.includes('sql server') || type.includes('mssql')) return { src: MssqlIcon, tooltip: 'Microsoft SQL Server' }
@@ -264,7 +306,7 @@ function getTypeName(row) {
 
 function getDeleteEndpoint(row) {
   if (row.type === 'connection') return `/bi_analysis/bi_connections/${row.id}/`
-  if (row.type === 'chart') return `/bi_analysis/bi_charts/${row.id}/`
+  if (row.type === 'chart') return `/bi_analysis/bi_chart/${row.id}/`
   return `/bi_analysis/bi_datasets/${row.id}/`
 }
 
@@ -373,7 +415,7 @@ function openRename(row) {
 function getCopyLink(row) {
   if (props.currentPage === 'connections') return `${window.location.origin}/bi/connections/${row.id}/`
   if (props.currentPage === 'datasets') return `${window.location.origin}/bi/datasets/${row.id}/`
-  if (props.currentPage === 'charts') return `${window.location.origin}/bi/charts/${row.id}/`
+  if (props.currentPage === 'charts') return `${window.location.origin}/bi/chart/${row.id}/`
   return window.location.href
 }
 
@@ -623,9 +665,9 @@ async function copyLink(row) {
   border: none;
   border-radius: 6px;
   font-size: 1rem;
-  transition: 
-    background 0.2s, 
-    color 0.2s, 
+  transition:
+    background 0.2s,
+    color 0.2s,
     box-shadow 0.15s;
 }
 

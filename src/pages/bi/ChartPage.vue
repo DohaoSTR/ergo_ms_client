@@ -4,7 +4,7 @@
             <div class="header-label-icon">
                 <ChartPie />
                 <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
-                    <h4 class="header-label" style="margin-bottom: 3px;">Новая диаграмма</h4>
+                    <h4 class="header-label" style="margin-bottom: 3px;">{{ chartName }}</h4>
                 </div>
                 <button class="btn btn-sm fw-bold btn-chart-action" style="padding: 0; margin: 0; display: flex;"
                     hidden>
@@ -17,35 +17,32 @@
                     @click="toggleFullScreen">
                     <Maximize />На весь экран
                 </button>
-                <button class="btn btn-sm btn-primary" disabled>Сохранить</button>
+                <button class="btn btn-sm btn-primary" :disabled="!chartRequiredFieldsFilled || !isChartDirty" @click="isSaveModalVisible = true">{{ isEditMode ? 'Сохранить изменения' : 'Создать чарт' }}</button>
             </div>
         </div>
         <div :class="['body-grid', { 'no-fields': !selectedChartType, fullscreen:  isFullScreen }]">
-            <!-- 1 -->
-            <div class="datasets  sectors border-elements elements-color">
+            <div class="datasets sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Датасет</h5>
                 <button ref="buttonRef" v-if="!selectedDataset" class="btn btn-sm fw-bold" @click="openDatasetTooltip"
                     style="display: flex; gap: 5px; justify-content: center; align-items: center; width: 100%;">
                     <Plus size="16" />Выбрать датасет
                 </button>
-                <button ref="buttonRef" v-else class="btn btn-sm fw-bold" @click="openDatasetTooltip"
+                <button ref="buttonRef" v-else class="btn btn-sm fw-bold dataset-selected" @click="openDatasetTooltip"
                     style="display: flex; gap: 5px; align-items: center; width: 100%; border: 1.5px solid #198754;">
-                    <Database size="16" />{{ selectedDataset.name }}
+                    <Database size="16" />{{ selectedDataset?.name || 'Без имени' }}
                 </button>
             </div>
-            <!-- 2 -->
             <div class="diagramtype sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Тип диаграммы</h5>
-                <select class="form-select form-select-sm" id="smallSelect" :disabled="!selectedDataset"
-                    v-model="selectedChartType">
-                    <option v-if="!selectedChartType" disabled hidden value="">Выберите тип диаграммы</option>
-                    <option value="1">Линейная диаграмма</option>
-                    <option value="2">Столбчатая диаграмма</option>
-                    <option value="3">Круговая диаграмма</option>
-                    <option value="4">Кольцевая диаграмма</option>
-                    <option value="5">Точечная диаграмма</option>
-                    <option value="6">Радарная диаграмма</option>
-                    <option value="7">Тепловая карта</option>
+                <select class="form-select form-select-sm" id="smallSelect" style="cursor: pointer;" :disabled="!selectedDataset" v-model="selectedChartType">
+                    <option value="" disabled hidden>Выберите тип диаграммы</option>
+                    <option value="line">Линейная диаграмма</option>
+                    <option value="bar">Столбчатая диаграмма</option>
+                    <option value="pie">Круговая диаграмма</option>
+                    <option value="doughnut">Кольцевая диаграмма</option>
+                    <option value="scatter">Точечная диаграмма</option>
+                    <option value="radar">Радарная диаграмма</option>
+                    <option value="heatmap">Тепловая карта</option>
                 </select>
             </div>
             <div class="fields sectors body-settings border-elements elements-color"
@@ -96,7 +93,7 @@
                 </div>
             </div>
             <div class="body-chart border-elements elements-color" :class="{ fullscreen: isFullScreen }">
-                <ChartArea :dataset="datasetRows" :chart-type="chartTypeKey" :fields="selectedFields" :settings="settingTypes" />
+                <ChartArea :dataset="datasetRows" :chart-type="selectedChartType" :fields="selectedFields" :key="selectedChartType" :settings="settingTypes" @engineChange="selectedEngine = $event"/>
             </div>
         </div>
     </div>
@@ -117,6 +114,7 @@
             <ChartFields :fields="indicators" :selected="selectedForModal" :allowed-types="currentAllowedTypes" @select="handleFieldSelect" />
         </div>
     </transition>
+    <ChartNameDialog v-if="isSaveModalVisible" :visible="isSaveModalVisible" v-model="chartName" @update:visible="isSaveModalVisible = $event" @saved="onChartNameSaved"/>
 </template>
 
 <script setup>
@@ -129,7 +127,9 @@ import DatasetMeasures from '@/pages/bi/components/ChartComponents/DatasetMeasur
 import DatasetSettings from '@/pages/bi/components/ChartComponents/DatasetSettings.vue'
 import ChartFields from '@/pages/bi/components/ChartComponents/ChartFields.vue'
 import ChartArea from '@/pages/bi/components/ChartComponents/ChartArea.vue'
+import ChartNameDialog from '@/pages/bi/components/ChartNameDialog.vue'
 
+import { useRouter, useRoute } from 'vue-router'
 import { chartSettingsConfig } from '@/js/api/services/bi/chartSettingsConfig.js'
 import chartService from '@/js/api/services/bi/chartService.js'
 
@@ -145,7 +145,7 @@ const fieldsModalPosition = ref({ x: 0, y: 0 })
 const fieldsModalRef = ref(null)
 
 const selectedDataset = ref(null)
-const selectedChartType = ref(null)
+const selectedChartType = ref('')
 
 const indicators = ref([])
 const currentSetting = ref('')
@@ -153,36 +153,129 @@ const currentSetting = ref('')
 const datasetRows = ref([])
 
 const currentAllowedTypes = ref(null)
+const selectedEngine = ref('chartjs')
+const originalChart = ref({})
 
-const chartTypeMap = {
-  1: 'line', // Линейная диаграмма
-  2: 'bar', // Столбчатая диаграмма
-  3: 'pie', // Круговая диаграмма
-  4: 'donut', // Кольцевая диаграмма
-  5: 'scatter', // Точечная диаграмма
-  6: 'radar', // Радарная диаграмма
-  7: 'heatmap' // Тепловая карта
-}
-
-const chartTypeKey = computed(() => chartTypeMap[selectedChartType.value])
+const router = useRouter()
+const route = useRoute()
+const chartId = computed(() => route.params.id)
+const loading = ref(false)
+const isSaveModalVisible = ref(false)
+const isEditMode = computed(() => !!route.params.id)
+const chartData = ref({})
+const chartName = ref('Новая диаграмма')
 
 const settingTypes = computed(() =>
-  chartSettingsConfig[chartTypeKey.value] || []
+  chartSettingsConfig[selectedChartType.value] || []
 )
 
 const selectedFields = ref({})
 
-watch(selectedChartType, () => {
-  const settings = chartSettingsConfig[chartTypeKey.value] || []
-  selectedFields.value = {}
-  for (const s of settings) selectedFields.value[s.key] = []
-})
+watch(chartData, d => { chartName.value = d?.name || 'Новая диаграмма' }, { immediate:true })
 
 const typeIcon = {
     string: Type,
     number: Hash,
     date: Calendar,
     boolean: CheckCircle
+}
+
+const chartRequiredFieldsFilled = computed(() => {
+  if (!selectedDataset.value) {
+    return false
+  }
+  if (!selectedChartType.value) {
+    return false
+  }
+
+  const required = []
+  if (selectedChartType.value === 'line' || selectedChartType.value === 'bar') required.push('x', 'y')
+  if (selectedChartType.value === 'pie' || selectedChartType.value === 'donut') required.push('category', 'indicators')
+  if (selectedChartType.value === 'scatter') required.push('x', 'y')
+  if (selectedChartType.value === 'radar') required.push('category', 'indicators')
+  if (selectedChartType.value === 'heatmap') required.push('x', 'y', 'value')
+
+  for (const key of required) {
+    if (!selectedFields.value[key] || !selectedFields.value[key].length) {
+      return false
+    }
+  }
+
+  if (!selectedEngine.value) {
+    return false
+  }
+
+  return true
+})
+
+async function onChartNameSaved({ name, description }) {
+  chartName.value = name
+   const payload = {
+   name,
+   description,
+   dataset: selectedDataset.value.id,
+   chart_type: selectedChartType.value,
+   engine: selectedEngine.value,
+   params : selectedFields.value,
+   options: {}
+ }
+  try {
+    if (isEditMode.value) {
+      // Редактирование
+      const { data: updated } = await chartService.updateChart(chartId.value, payload)
+      chartData.value = updated
+      // Можно показать уведомление
+    } else {
+      // Создание
+      const { data } = await chartService.createChart(payload)
+      // Переход на страницу созданного чарта
+      if (data && data.id) {
+        router.push({ name: 'ChartPage', params: { id: data.id } })
+      }
+    }
+  } catch (err) {
+    // обработка ошибок
+  }
+  isSaveModalVisible.value = false
+}
+
+async function fetchChartIfEditing() {
+  if (!chartId.value) return
+  loading.value = true
+  try {
+    const { data } = await chartService.getChart(chartId.value)
+    chartData.value = data
+    let dsObj
+    if (typeof data.dataset === 'object' && data.dataset !== null) {
+      dsObj = data.dataset
+    } else if (data.dataset) {
+      const { data: ds } = await chartService.getDataset(data.dataset)
+      dsObj = ds
+    }
+    selectedDataset.value = dsObj
+
+    // Установить тип, движок, параметры чарта
+    selectedChartType.value = String(data.chart_type ?? '')
+    console.log('selectedChartType', selectedChartType.value)
+    selectedEngine.value = data.engine ?? ''
+    selectedFields.value = { ...(data.params ?? {}) }
+
+    // Догрузить строки датасета
+    if (dsObj?.id) {
+      const { data: rows } = await chartService.getRows(dsObj.id)
+      datasetRows.value = rows
+    }
+    // Сохраняем оригинал для сравнения
+    originalChart.value = {
+      name: data.name,
+      datasetId: typeof data.dataset === 'object' && data.dataset !== null ? data.dataset.id : data.dataset,
+      chart_type: data.chart_type,
+      engine: data.engine,
+      params: JSON.parse(JSON.stringify(data.params ?? {})), // глубокая копия!
+    }
+  } finally {
+    loading.value = false
+  }
 }
 
 const selectedForModal = computed(() => selectedFields.value[currentSetting.value] || [])
@@ -248,8 +341,12 @@ function onClickOutside(event) {
 
 function handleFieldSelect(field) {
     const key = currentSetting.value
-    if (!selectedFields.value[key].some(f => f.id === field.id))
+    if (!Array.isArray(selectedFields.value[key])) {
+        selectedFields.value[key] = []
+    }
+    if (!selectedFields.value[key].some(f => f.id === field.id)) {
         selectedFields.value[key].push(field)
+    }
     isFieldsModalVisible.value = false
 }
 
@@ -260,9 +357,12 @@ function removeField(field, type) {
 watch(
     () => selectedDataset.value?.id,
     async id => {
-        selectedChartType.value = ''
-        selectedFields.value = {
-            y: [], x: [], color: [], sort: [], labels: [], filters: []
+        // Не сбрасываем тип, если в режиме редактирования
+        if (!isEditMode.value) {
+            selectedChartType.value = ''
+            selectedFields.value = {
+                y: [], x: [], color: [], sort: [], labels: [], filters: []
+            }
         }
         datasetRows.value = []
         indicators.value = []
@@ -272,7 +372,6 @@ watch(
                 chartService.getColumns(id),
                 chartService.getRows(id)
             ])
-
             indicators.value = (cols.columns || []).map((c, i) => ({
                 id: 'col_' + i,
                 name: c.name || c,
@@ -284,9 +383,25 @@ watch(
     }
 )
 
+const isChartDirty = computed(() => {
+  if (!isEditMode.value) return true
+
+  if (chartName.value !== (originalChart.value.name ?? '')) return true
+  if ((selectedDataset.value?.id || null) !== (originalChart.value.datasetId || null)) return true
+  if (selectedChartType.value !== (originalChart.value.chart_type ?? '')) return true
+  if (selectedEngine.value !== (originalChart.value.engine ?? '')) return true
+
+  if (JSON.stringify(selectedFields.value) !== JSON.stringify(originalChart.value.params || {})) return true
+
+  return false
+})
+
 onMounted(() => {
     document.addEventListener('mousedown', onClickOutside)
 })
+
+onMounted(fetchChartIfEditing)
+
 onBeforeUnmount(() => {
     document.removeEventListener('mousedown', onClickOutside)
 })
@@ -399,6 +514,10 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+}
+
+.dataset-selected:hover{
+    background-color: var(--color-hover-background);
 }
 
 .diagramtype,

@@ -1,12 +1,24 @@
 <template>
-  <div v-if="visible" class="modal-overlay">
+  <div v-show="visible" class="modal-overlay">
     <div class="modal-window">
       <div class="modal-header">
-        <h5 class="modal-title">{{ modelValue ? 'Редактирование чарта' : 'Создание чарта' }}</h5>
+        <h5 class="modal-title">Название графика</h5>
         <button class="close-btn" @click="cancel">×</button>
       </div>
-      <input v-model="localName" class="form-control my-3" placeholder="Введите название"/>
-      <textarea v-model="localDescription" class="form-control my-2" placeholder="Описание (необязательно)"/>
+
+      <input
+        v-model="localName"
+        class="form-control my-3"
+        placeholder="Введите название графика"
+        @keyup.enter="submit"
+      />
+      <textarea
+        v-model="localDesc"
+        class="form-control"
+        rows="2"
+        placeholder="Описание (необязательно)"
+        style="margin-bottom: 10px;"
+      />
       <div class="modal-footer">
         <button class="btn btn-secondary" @click="cancel">Отмена</button>
         <button class="btn btn-primary" @click="submit" :disabled="!localName">
@@ -20,22 +32,34 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-const props = defineProps({ visible: Boolean, modelValue: String, description: String })
-const emit = defineEmits(['update:visible', 'saved'])
+
+const props = defineProps({
+  visible: Boolean,
+  modelValue: String,
+  desc: String
+})
+const emit = defineEmits(['update:visible', 'saved', 'update:modelValue'])
 
 const localName = ref(props.modelValue || '')
-const localDescription = ref(props.description || '')
+const localDesc = ref(props.desc || '')
 const error = ref('')
 
-watch(() => props.modelValue, newVal => { localName.value = newVal || '' })
-watch(() => props.description, newVal => { localDescription.value = newVal || '' })
+watch(() => props.modelValue, (newVal) => {
+  localName.value = newVal || ''
+})
+watch(() => props.desc, (newVal) => {
+  localDesc.value = newVal || ''
+})
 
 function submit() {
   if (!localName.value) return
-  emit('saved', { name: localName.value, description: localDescription.value })
+  error.value = ''
+  emit('saved', { name: localName.value, description: localDesc.value })
   emit('update:visible', false)
 }
-function cancel() { emit('update:visible', false) }
+function cancel() {
+  emit('update:visible', false)
+}
 </script>
 
 <style scoped lang="scss">

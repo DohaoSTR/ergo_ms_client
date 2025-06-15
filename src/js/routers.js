@@ -585,6 +585,12 @@ const biRoutes = [
     component: () => import('@/pages/bi/ChartPage.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/bi/chart/:id',
+    name: 'ChartPage',
+    component: () => import('@/pages/bi/ChartPage.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const shortcodeRoutes = [
