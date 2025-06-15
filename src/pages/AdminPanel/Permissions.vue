@@ -14,11 +14,14 @@ onMounted(async () => {
       if(acsst == 'PageAccession') {
         acsst = 'Доступ к Странице'
       }
-      else if(acsst == 'ComponentAccession') {
-        acsst = 'Доступ к Компоненту'
+      else if(acsst == 'ComponentAccessionToReadAndWrite'| acsst == 'ComponentAccessionToRead') {
+        acsst = 'Доступ к Компоненту на чтение и запись'
       }
-      else if(acsst == 'AdminPanelAccession') {
-        acsst = 'Доступ к Панели администратора'
+      else if(acsst == 'ComponentAccessionToRead') {
+        acsst = 'Доступ к Компоненту на чтение'
+      }
+      else {
+        acsst = 'Доступ к панели администратора'
       }
       rows.value.push({
         id: i.id,
@@ -29,7 +32,6 @@ onMounted(async () => {
         component_id: i.component_id
       })
     }
-    console.log(permissions)
   } catch (error) {
     console.error('Error fetching group categories:', error)
   }
@@ -49,11 +51,14 @@ const updatePermissions = async () => {
       if(acsst == 'PageAccession') {
         acsst = 'Доступ к Странице'
       }
-      else if(acsst == 'ComponentAccession') {
-        acsst = 'Доступ к Компоненту'
+      else if( acsst == 'ComponentAccessionToRead') {
+        acsst = 'Доступ к Компоненту на чтение'
       }
-      else if(acsst == 'AdminPanelAccession') {
-        acsst = 'Доступ к Панели администратора'
+      else if(acsst == 'ComponentAccessionToReadAndWrite') {
+        acsst = 'Доступ к компоненту на чтение и запись'
+      }
+      else {
+        acsst = 'Доступ к панели администратора'
       }
       value.push({
         id: i.id,

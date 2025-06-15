@@ -39,6 +39,15 @@ export const endpoints = {
         removeGroupsPermissions: 'cms/remove_groups_permissions/',
         getPermissionsByCategory: 'cms/get_permissions_by_category/',
         getUserName: 'cms/get_user_name/',
+        getpages:'cms/get-cms-pages',
+        putpages:'cms/put-cms-pages',
+        getClosedPages: 'cms/get-closed-pages/',
+        getClosedPagesForUser: 'cms/get-closed-pages-for-user/',
+        
+        addPageComponent: 'cms/add-page-component/',
+        removePageComponent: 'cms/remove-page-component/',
+        updatePageComponent: 'cms/update-page-component/',
+        getPageComponents: 'cms/get-page-components/'
     },
     expert_system: {
         studyGroups: 'expert_system/study-groups/',
@@ -65,9 +74,13 @@ export const endpoints = {
         vacancies: 'expert_system/vacancies/',
         vacancySkills: 'expert_system/vacancy-skills/',
         applications: 'expert_system/applications/',
-
-        setUserSkills: 'expert_system/set-user-skills',
+      
+        orientationResults: 'expert_system/orientation-results/',
+        orientationUserAnswers: 'expert_system/orientation-answers/',
+        setUserSkillTest: 'expert_system/set-user-skill-test',
+        getUserSkillTest: 'expert_system/get-user-skill-tests',
         getUserSkills: 'expert_system/get-user-skills',
+        setUserSkills: 'expert_system/set-user-skills',
 
         getAllTests: 'expert_system/get-all-tests',
         createTest: 'expert_system/create-test',

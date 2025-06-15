@@ -92,11 +92,11 @@ const deletePermission = async (permissionid) => {
                 data-bs-toggle="modal"
                 data-bs-target="#roleEdit"
                 @click="changingrow(row)"
-                :disabled="row.accession_type === 'Доступ к Панели администратора'"
+                :disabled="row.accession_type === 'Доступ к панели администратора'"
               >
                 Изменить
               </button>
-              <button @click="deletePermission(row.id)" class="btn btn-sm btn-outline-primary" :disabled="row.accession_type === 'Доступ к Панели администратора'">
+              <button @click="deletePermission(row.id)" class="btn btn-sm btn-outline-primary" :disabled="row.accession_type === 'Доступ к панели администратора'">
                 Удалить
               </button>
               <ModalCenter title="Изменить разрешение" modalId="roleEdit" >

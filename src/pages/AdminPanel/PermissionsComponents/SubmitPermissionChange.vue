@@ -94,6 +94,7 @@ const props = defineProps({
   row: { type: Object, required: true },
 })
 watch(props, (newProps) => {
+  loadCategories()
   permission_id.value= newProps.row.id  
   name.value = newProps.row.name
   category.value = newProps.row.category
@@ -101,13 +102,14 @@ watch(props, (newProps) => {
       if(acsst =='Доступ к Странице') {
         acsst = 'PageAccession'
       }
-      else if(acsst == 'Доступ к Компоненту') {
-        acsst = 'ComponentAccession'
+      else if(acsst == 'Доступ к Компоненту на чтение и запись') {
+        acsst = 'ComponentAccessionToReadAndWrite'
       }
-      else if(acsst == 'Доступ к Панели администратора') {
-        acsst = 'AdminPanelAccession'
+      else if(acsst == 'Доступ к Компоненту на чтение') {
+        acsst = 'ComponentAccessionToRead'
       }
   accession_type.value = acsst
+  console.log(accession_type.value)
   path.value = newProps.row.path
   component_id.value = newProps.row.component_id
 })
@@ -143,15 +145,7 @@ const loadCategories = async () => {
   }
 }
 
-onMounted(() => {
-  loadCategories()
-  permission_id.value = props.row.id
-  name.value = props.row.name
-  category.value = props.row.category
-  accession_type.value = props.row.accession_type
-  path.value = props.row.path
-  component_id.value = props.row.component_id
-})
+
 
 const canDismiss = computed(() => {
   const ErrorName = name.value.trim() !==''

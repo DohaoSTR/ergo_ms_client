@@ -14,7 +14,7 @@
         </div>
       </div>
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-6" id="1">
       <div class="card">
         <h4 class="mb-3">Контурные значки</h4>
         <div class="d-flex gap-2 flex-wrap">
@@ -28,7 +28,7 @@
         </div>
       </div>
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-6" id="2">
       <div class="card">
         <h4 class="mb-3">Таблетки по умолчанию</h4>
         <div class="d-flex gap-2 flex-wrap">
@@ -42,9 +42,9 @@
         </div>
       </div>
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-6" id="3">
       <div class="card">
-        <h4 class="mb-3">Контурные таблетки</h4>
+        <h4 class="mb-3" >Контурные таблетки </h4>
         <div class="d-flex gap-2 flex-wrap">
           <span class="badge rounded-pill border border-primary text-primary">Primary</span>
           <span class="badge rounded-pill border border-secondary text-secondary">Secondary</span>
@@ -185,13 +185,6 @@
     </div>
   </div>
 </template>
-<script setup>
-import { checkAccessToPage, CheckAccessToComponent } from '@/js/GroupsPolitics';
-import { onMounted } from 'vue';
-onMounted(async () => {
-  await checkAccessToPage();
-  await CheckAccessToComponent("http://localhost:8001/components/badges", 1);
-});
-</script>
+
 
 <style scoped lang="scss"></style>

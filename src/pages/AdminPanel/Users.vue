@@ -11,6 +11,7 @@ onMounted(async () => {
     const users = await GetUserGroupsAndPermissions()
     for(let i of users) {
       rows.value.push({
+        user_id: i.user_id,
         user: i.user,
         groups: i.groups,
         permissions: i.permissions
@@ -34,12 +35,14 @@ const UpdateUsersGroupsAndPermissions = async () => {
     const users = await GetUserGroupsAndPermissions()
     for(let i of users) {
       value.push({
+        user_id:i.user_id,
         user: i.user,
         groups: i.groups,
         permissions: i.permissions
       })
     }
     rows.value = value
+    
   } catch (error) {
     console.error('Error fetching group categories:', error)
   }

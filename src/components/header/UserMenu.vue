@@ -19,7 +19,7 @@ const userDropdownMenu = ref([
     id: 3,
     title: 'Выход',
     icon: Power,
-    link: { name: 'NotFound' },
+    link: { name: 'logout' },
   },
 ])
 </script>

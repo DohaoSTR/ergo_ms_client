@@ -20,7 +20,6 @@ export const CheckAccess = {
         return response;
     },
     async AddGroupCategory(name, createGroup) {
-        console.log(createGroup)
         const response = await apiClient.post(endpoints.cms.addGroupCategory, {
             category_name: name,
             create_admin_group: createGroup,
@@ -114,9 +113,10 @@ export const CheckAccess = {
         }, true);
         return response;
     },
-    async RemoveUserPermissions(username, permissionName) {
-        const response = await apiClient.delete(endpoints.cms.removeUserPermission, {
-            data: { username: username, permissions_name: permissionName },
+    async RemoveUserPermissions(user_id, permissionName) {
+        const response = await apiClient.post(endpoints.cms.removeUserPermission, {
+            user_id: user_id,
+            permissions_name: permissionName ,
         }, true);
         return response;
     },
@@ -127,9 +127,10 @@ export const CheckAccess = {
         }, true);
         return response;
     },
-    async RemoveUserGroups(username, groupName) {
-        const response = await apiClient.delete(endpoints.cms.removeUserGroup, {
-            data: { username: username, groups_name: groupName },
+    async RemoveUserGroups(user_id, groupName) {
+        const response = await apiClient.post(endpoints.cms.removeUserGroup, {
+             user_id: user_id, 
+             groups_name: groupName ,
         }, true);
         return response;
     },
@@ -151,17 +152,19 @@ export const CheckAccess = {
         }, true);
         return response;
     },
-    async AddGroupsPermissions(groupName, permissionsName) {
+    async AddGroupsPermissions(groupName, permissionsName, changeothergroups) {
         const response = await apiClient.post(endpoints.cms.addGroupsPermissions, {
             group_name: groupName,
             permissions_name: permissionsName,
+            change_other_groups: changeothergroups
         }, true);
         return response;
     },
-    async RemoveGroupsPermissions(groupName, permissionsName) {
+    async RemoveGroupsPermissions(groupName, permissionsName, changeothergroups) {
         const response = await apiClient.post(endpoints.cms.removeGroupsPermissions, {
              group_name: groupName,
-             permissions_name: permissionsName
+             permissions_name: permissionsName,
+             change_other_groups: changeothergroups
         }, true);
         return response;
     },
@@ -169,4 +172,52 @@ export const CheckAccess = {
         const response = await apiClient.get(endpoints.cms.getUserName, {}, true);
         return response;
     },
+    async GetPages() {
+        const response = await apiClient.get(endpoints.cms.getpages, {}, true);
+        return response;
+    },
+    async PutPages(path, type) {
+        const response = await apiClient.put(endpoints.cms.putpages, {
+            path:path,
+            limination_type: type
+        }, true);
+        return response;
+    },
+
+    async AddPageComponent(path, componentId) {
+        const response = await apiClient.post(endpoints.cms.addPageComponent, {
+            path: path,
+            component_id: componentId
+        }, true);
+        return response;
+    },
+
+    async RemovePageComponent(path, componentId) {
+        const response = await apiClient.delete(endpoints.cms.removePageComponent, {
+            path: path,
+            component_id: componentId
+        }, true);
+        return response;
+    },
+
+    async UpdatePageComponent(path, oldComponentId, newComponentId) {
+        
+        const response = await apiClient.put(endpoints.cms.updatePageComponent, {
+            path: path,
+            old_component_id: oldComponentId,
+            new_component_id: newComponentId
+        }, true);
+        return response;
+    },
+
+    async GetPageComponents() {
+        const response = await apiClient.get(endpoints.cms.getPageComponents, {}, true);
+        return response;
+    },
+
+    async GetClosedPagesForUser() {
+        const response = await apiClient.get(endpoints.cms.getClosedPagesForUser, {}, true);
+        return response;
+    }
+
 }

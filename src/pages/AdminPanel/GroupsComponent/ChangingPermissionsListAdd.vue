@@ -1,5 +1,9 @@
 <template>
     <div class="container mt-5">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked v-model="changeothergroups" />
+        <label class="form-check-label" for="flexCheckChecked"> Изменить права для других групп </label>
+    </div>
       <div class="row">
         <div class="col-md-6">
           <h5>Разрешения категории</h5>
@@ -44,6 +48,7 @@
   const list2 = ref([])
   const list1 = ref([])
   const category = ref('')
+  const changeothergroups = ref(false)
   const props = defineProps({
     category: { type: String, required: true },
   })
@@ -71,7 +76,7 @@
   
   const changePermissions = async (group_name) => {
       let permissions = list2.value.map(i => i.id)
-      await AddGroupsPermissions(group_name, list2.value)
+      await AddGroupsPermissions(group_name, list2.value, changeothergroups.value)
       list1.value =[]
       list2.value =[]
     }
