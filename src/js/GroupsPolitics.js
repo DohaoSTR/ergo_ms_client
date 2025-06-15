@@ -33,7 +33,7 @@ export const CheckAccessToComponents = async (path) => {
             for (let acc of accesses){
                 if(!acc.write){
                     const element = document.getElementById(acc.component)
-                    element.style.pointerEvents = 'none';
+                    element.style.pointerEvents = 'none'
                     element.style.userSelect = 'none';
                     element.style.webkitUserSelect ='none'
                     element.style.MozUserSelect ='none'

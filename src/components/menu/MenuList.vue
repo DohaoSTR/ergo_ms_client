@@ -5,8 +5,7 @@ import {
   ChatMenuSection,
   EmailMenuSection,
   SettingsMenuSection,
-  UserMenuSection,
-
+  UserMenuSection,  
   MapsMenuSection,
   BillingMenuSection,
   CalendarMenuSection,
