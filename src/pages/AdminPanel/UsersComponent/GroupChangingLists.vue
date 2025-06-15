@@ -46,6 +46,7 @@
   const props = defineProps({
     list: { type: Array, required: true },
     username: { type: String, required: true },
+    user_id:{type: Number, required:true}
   })    
     const moveItem = (fromList, toList, index) => {
         const item = fromList.splice(index, 1)[0];
@@ -90,7 +91,7 @@
         }
         if(deletlist.length > 0) 
         {
-          await RemoveUserGroups(props.username, deletlist)
+          await RemoveUserGroups(props.user_id, deletlist)
         }
         const addlist = []
         for(let i of list2.value) {

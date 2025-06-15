@@ -14,6 +14,7 @@ const emit = defineEmits(['updateUserGroupsAndPermissions'])
 const data = ref(props.rows)
 
 const rowselected = ref({
+  user_id:0,
   user: '',
   groups:[],
   permissions:[]

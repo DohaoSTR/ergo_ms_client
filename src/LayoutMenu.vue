@@ -55,6 +55,7 @@ function closeSidebar() {
 onMounted(() => {
   updateMenuVisibility()
   window.addEventListener('resize', updateMenuVisibility)
+  
 })
 
 onBeforeUnmount(() => {

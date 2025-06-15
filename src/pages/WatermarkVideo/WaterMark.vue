@@ -51,7 +51,6 @@ const props = defineProps({
 onMounted(async () => {
     const response = await CheckAccess.GetUserName();
     user.value = response.data;
-    window.addEventListener('resize', handleFullscreenChange);    
 });
 </script>
   

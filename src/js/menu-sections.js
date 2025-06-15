@@ -36,21 +36,10 @@ export const UserMenuSection = {
   ],
 }
 
-// Аналитика
-export const AnalyzeMenuSection = {
-  id: 2,
-  icon: Code2,
-  routeName: 'Analyze',
-  title: 'Анализ',
-  list: [
-    { path: 'DatabaseAnalyze', name: 'Анализ Bitcoin' },
-  ],
-};
-
 
 // Настройки аккаунта
 export const SettingsMenuSection = {
-  id: 3,
+  id: 2,
   icon: UserCog,
   routeName: 'Settings',
   title: 'Настройки',
@@ -65,7 +54,7 @@ export const SettingsMenuSection = {
 
 // Электронная почта
 export const EmailMenuSection = {
-  id: 4,
+  id: 3,
   icon: AtSign,
   routeName: 'Email',
   title: 'Электронная почта',
@@ -73,7 +62,7 @@ export const EmailMenuSection = {
 
 // Мессенджер
 export const ChatMenuSection = {
-  id: 5,
+  id: 4,
   icon: MessagesSquare,
   routeName: 'Messenger',
   title: 'Мессенджер',
@@ -81,7 +70,7 @@ export const ChatMenuSection = {
 
 // Карты
 export const MapsMenuSection = {
-  id: 6,
+  id: 5,
   icon: Map,
   routeName: 'Maps',
   title: 'Карты',
@@ -89,7 +78,7 @@ export const MapsMenuSection = {
 
 // Ценовой план
 export const BillingMenuSection = {
-  id: 7,
+  id: 6,
   icon: Wallet,
   routeName: 'Billing',
   title: 'Ценовой план',
@@ -97,7 +86,7 @@ export const BillingMenuSection = {
 
 // Календарь
 export const CalendarMenuSection = {
-  id: 8,
+  id: 7,
   icon: Calendar,
   routeName: 'Calendar',
   title: 'Календарь',
@@ -105,7 +94,7 @@ export const CalendarMenuSection = {
 
 // Канбан-доска
 export const KanbanMenuSection = {
-  id: 9,
+  id: 8,
   icon: Grid2x2,
   routeName: 'Kanban',
   title: 'Канбан-доска',
@@ -113,7 +102,7 @@ export const KanbanMenuSection = {
 
 // Таблицы
 export const TablesMenuSection = {
-  id: 10,
+  id: 9,
   icon: Table2,
   routeName: 'Tables',
   title: 'Таблицы',
@@ -121,7 +110,7 @@ export const TablesMenuSection = {
 
 // Графики
 export const ChartsMenuSection = {
-  id: 11,
+  id: 10,
   icon: ChartSpline,
   routeName: 'Charts',
   title: 'Графики',
@@ -133,7 +122,7 @@ export const ChartsMenuSection = {
 
 // Модальные окна
 export const ModalWindowsMenuSection = {
-  id: 12,
+  id: 11,
   icon: PictureInPicture2,
   routeName: 'ModalWindows',
   title: 'Модальные окна',
@@ -141,14 +130,14 @@ export const ModalWindowsMenuSection = {
 
 // Модальные окна
 export const InputsMenuSection = {
-  id: 13,
+  id: 12,
   icon: TextCursorInput,
   routeName: 'Inputs',
   title: 'Формы ввода',
 }
 
 export const ComponentsMenuSection = {
-  id: 14,
+  id: 13,
   icon: Component,
   routeName: 'Components',
   title: 'Остальные',
@@ -163,7 +152,7 @@ export const ComponentsMenuSection = {
 
 // Админ-панель
 export const AdminPanelMenuSection = {
-  id: 15,
+  id: 14,
   icon: KeySquare,
   routeName: 'AdminPanel',
   title: 'Админ-панель',
@@ -172,11 +161,12 @@ export const AdminPanelMenuSection = {
     { path: 'GroupsPanel', name: 'Настройка групп' },
     { path: 'PermissionsPanel', name: 'Настройка прав' },
     { path: 'UsersPanel', name: 'Настройка пользователей' },
+    { path: 'LiminationPanel', name:'Настройка ограничений'}
   ],
 }
 
 export const WatermarkedVideoSection = {
-  id: 16,
+  id: 15,
   icon: Video,
   routeName: 'Watermarked-Video',
   title: 'Видео с вотермаркой',
@@ -184,7 +174,7 @@ export const WatermarkedVideoSection = {
 
 // BI секция
 export const BIMenuSection = {
-  id: 17,
+  id: 16,
   icon: ChartSpline,
   routeName: 'BI',
   title: 'BI',
@@ -208,7 +198,7 @@ export const BIMenuSection = {
 }
 
 export const ShortcodesMenuSection = {
-  id: 18,
+  id: 17,
   icon: Braces,
   routeName: 'Shortcodes',
   title: 'Редактор страниц',
@@ -221,7 +211,7 @@ export const ShortcodesMenuSection = {
 
 // Модуль учебной аналитики
 export const EducationAnalyticMenuSection = {
-  id: 19,
+  id: 18,
   icon: ChartCandlestick,
   routeName: 'EducationAnalyticModule',
   title: 'Учебная аналитика',
@@ -238,7 +228,7 @@ export const EducationAnalyticMenuSection = {
 
 // Модуль экспертной системы
 export const ExpertSystemSection = {
-  id: 20,
+  id: 19,
   icon: ChartBarStacked,
   routeName: 'ExpertSystem',
   title: 'Экспертная система вакансий',
@@ -255,3 +245,14 @@ export const ExpertSystemSection = {
     { path: 'StudentsList', name: 'Студенты' }
   ],
 }
+
+// Аналитика
+export const AnalyzeMenuSection = {
+  id: 20,
+  icon: Code2,
+  routeName: 'Analyze',
+  title: 'Анализ',
+  list: [
+    { path: 'DatabaseAnalyze', name: 'Анализ Bitcoin' },
+  ],
+};
