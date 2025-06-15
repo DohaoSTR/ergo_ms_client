@@ -1,4 +1,3 @@
-<!-- components/ChartPlaceholder.vue -->
 <template>
   <div class="empty-chart" v-if="text">
     <div class="alert alert-info info-box">

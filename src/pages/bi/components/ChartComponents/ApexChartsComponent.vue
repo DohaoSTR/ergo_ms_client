@@ -5,7 +5,9 @@ import VueApexCharts from 'vue3-apexcharts'
 const props = defineProps({
   type   : String,
   fields : Object,
-  dataset: { type: Array, default: () => [] }
+  settings: { type: Array, default: () => [] },
+  dataset: { type: Array, default: () => [] },
+  colorField: { type: [Object, null], default: null }
 })
 
 const basePalette = [
@@ -17,22 +19,31 @@ function getColumn (field) {
   return field ? props.dataset.map(r => r[field.name]) : []
 }
 
+function findField(keys, many=false) {
+  for (const k of keys) {
+    if (props.fields[k] && props.fields[k].length)
+      return many ? props.fields[k] : props.fields[k][0]
+  }
+  return many ? [] : null
+}
+
 const chartHeight   = ref(400)
 const containerRef  = ref(null)
-const xField        = computed(() => props.fields?.x?.[0])
-const yFields       = computed(() => props.fields?.y || [])
-const colorField    = computed(() => props.fields?.color?.[0] || null)
-const labelsEnabled = computed(() => (props.fields?.labels?.length ?? 0) > 0)
 
 onMounted(() => {
   resize();
   window.addEventListener('resize', resize)
 })
+
 onBeforeUnmount(() => window.removeEventListener('resize', resize))
+
 function resize () {
   if (containerRef.value) chartHeight.value = containerRef.value.offsetHeight
 }
 
+const colorField = computed(() =>
+  findField(['color'])
+)
 const colorScale = computed(() => {
   if (!colorField.value) return {}
   const uniq = [...new Set(props.dataset.map(r => r[colorField.value.name]))]
@@ -46,46 +57,78 @@ const seriesColors = computed(() => {
 })
 
 const series = computed(() => {
-  if (!xField.value || !yFields.value.length) return []
-
+  // PIE / DONUT
   if (['pie', 'donut'].includes(props.type)) {
-    const y = yFields.value[0]
-    return getColumn(y).map(Number)
+    const labelField = findField(['category', 'labels', 'x'])
+    const valueField = findField(['indicators', 'y'])
+    if (!labelField || !valueField) return []
+    return getColumn(valueField).map(Number)
   }
 
-  if (['bar', 'line', 'area', 'radar'].includes(props.type)) {
-    return yFields.value.map(y => ({
+if (['bar','line','area','radar'].includes(props.type)) {
+  const xField = findField(['x'])
+  let yFields = [
+    ...(props.fields.indicators || []),
+    ...(props.fields.y || []),
+    ...(props.fields.y2 || [])
+  ]
+  if (!xField || !yFields.length) return []
+
+  const isNumeric = arr =>
+    arr.some(val => typeof val === 'number' && !isNaN(val) && val !== null)
+
+  return yFields
+    .map((y, i) => ({
       name: y.name,
       data: getColumn(y).map(Number),
       color: colorField.value ? undefined : undefined
     }))
-  }
+    .filter(seriesObj => isNumeric(seriesObj.data))
+}
 
-  if (props.type === 'scatter' && yFields.value.length === 1) {
-    const y = yFields.value[0]
+  if (props.type === 'scatter') {
+    const xField = findField(['x'])
+    const yField = findField(['y'])
+    if (!xField || !yField) return []
     return [{
-      name: y.name,
+      name: yField.name,
       data: props.dataset.map(r => ({
-        x: +r[xField.value.name],
-        y: +r[y.name],
+        x: +r[xField.name],
+        y: +r[yField.name],
         fillColor: colorField.value ? colorScale.value[r[colorField.value.name]] : basePalette[0]
       }))
     }]
   }
 
-  if (props.type === 'heatmap' && yFields.value.length === 1) {
-    const y = yFields.value[0]
-    return [{
-      name: y.name,
-      data: props.dataset.map(r => ({
-        x: r[xField.value.name],
-        y: +r[y.name]
-      }))
-    }]
-  }
+  if (props.type === 'heatmap') {
+  const xField = findField(['x'])
+  const yField = findField(['y'])
+  const valueField = findField(['value', 'indicators', 'y'])
+  if (!xField || !yField || !valueField) return []
+
+  const yValues = [...new Set(getColumn(yField))]
+  const xValues = [...new Set(getColumn(xField))]
+
+  const series = yValues.map((yval, idx) => ({
+    name: yval,
+    data: xValues.map(xval => {
+      const row = props.dataset.find(
+        r => r[xField.name] === xval && r[yField.name] === yval
+      )
+      return {
+        x: xval,
+        y: row ? Number(row[valueField.name]) : null
+      }
+    })
+  }))
+  console.log('HEATMAP series:', series)
+  return series
+}
 
   return []
 })
+
+const labelsEnabled = computed(() => !!findField(['labels']))
 
 const chartOptions = computed(() => {
   const opts = {
@@ -95,8 +138,13 @@ const chartOptions = computed(() => {
     colors: seriesColors.value
   }
 
-  if (xField.value) {
-    opts.xaxis = { categories: getColumn(xField.value) }
+  if (['pie','donut','radar'].includes(props.type)) {
+    const labelField = findField(['category', 'labels', 'x'])
+    if (labelField) opts.labels = getColumn(labelField)
+  }
+  if (['bar','line','area','scatter','heatmap'].includes(props.type)) {
+    const xField = findField(['x'])
+    if (xField) opts.xaxis = { categories: getColumn(xField) }
   }
   opts.tooltip = { theme: 'light' }
   return opts

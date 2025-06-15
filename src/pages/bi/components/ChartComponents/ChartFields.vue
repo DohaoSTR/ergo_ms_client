@@ -5,13 +5,13 @@
     </div>
     <ul class="fields-list">
         <b>Показатели:</b>
-      <li v-for="f in filteredFields" :key="f.id" class="field-item" :class="{ selected: isSelected(f) }" @click="!isSelected(f) && selectField(f)">
+      <li v-for="f in availableFields" :key="f.id" class="field-item" :class="{ selected: isSelected(f) }" @click="!isSelected(f) && selectField(f)">
         <span class="field-icon">
           <component :is="typeIcon[f.type] || Type" size="16" />
         </span>
         <span class="field-name">{{ f.name }}</span>
       </li>
-      <li v-if="!filteredFields.length" class="field-empty">
+      <li v-if="!availableFields.length" class="field-empty">
         <i>Ничего не найдено</i>
       </li>
     </ul>
@@ -23,7 +23,7 @@ import { ref, computed, watch } from 'vue'
 import { Type, Hash, Calendar, CheckCircle } from 'lucide-vue-next'
 import chartService from '@/js/api/services/bi/chartService.js'
 
-const props = defineProps({ fields: { type: Array, default: () => [] }, selected: { type: Array, default: () => [] } })
+const props = defineProps({ fields: { type: Array, default: () => [] }, selected: { type: Array, default: () => [] }, allowedTypes: { type: Array, default: () => null } })
 const emit = defineEmits(['select'])
 const fields = ref([])
 const search = ref('')
@@ -62,10 +62,10 @@ async function fetchColumns(datasetId) {
   }
 }
 
-const filteredFields = computed(() =>
-  (props.fields || []).filter(f =>
-    f.name.toLowerCase().includes(search.value.trim().toLowerCase())
-  )
+const availableFields = computed(() =>
+  (props.fields || [])
+    .filter(f => !props.allowedTypes || props.allowedTypes.includes(f.type))
+    .filter(f => f.name.toLowerCase().includes(search.value.trim().toLowerCase()))
 )
 
 function isSelected(field) {

@@ -48,7 +48,6 @@
                     <option value="7">Тепловая карта</option>
                 </select>
             </div>
-            <!-- 3 (раньше это был .body-settings) -->
             <div class="fields sectors body-settings border-elements elements-color"
                 v-if="!isFullScreen && selectedChartType">
                 <div v-for="setting in settingTypes" :key="setting.key" class="setting">
@@ -78,32 +77,26 @@
                     </div>
                 </div>
             </div>
-            <!-- 4 -->
             <div class="indicators sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Показатели</h5>
                 <div class="sectors-body">
                     <DatasetIndicators :dataset="selectedDataset" :fields="indicators" />
                 </div>
             </div>
-            <!-- 5 -->
             <div class="measures sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Измерения</h5>
                 <div class="sectors-body">
                     <DatasetMeasures :dataset="selectedDataset" />
                 </div>
-
             </div>
-            <!-- 6 -->
             <div class="parameters settings sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Параметры</h5>
                 <div class="sectors-body">
                     <DatasetSettings :dataset="selectedDataset" />
                 </div>
             </div>
-
-            <!-- 7 -->
             <div class="body-chart border-elements elements-color" :class="{ fullscreen: isFullScreen }">
-                <ChartArea :dataset="datasetRows" :chart-type="selectedChartType" :fields="selectedFields" />
+                <ChartArea :dataset="datasetRows" :chart-type="chartTypeKey" :fields="selectedFields" :settings="settingTypes" />
             </div>
         </div>
     </div>
@@ -121,13 +114,13 @@
         <div v-if="isFieldsModalVisible" class="tooltip-panel-fields"
             :style="{ left: fieldsModalPosition.x + 'px', top: fieldsModalPosition.y + 'px', position: 'fixed', zIndex: 1000 }"
             ref="fieldsModalRef">
-            <ChartFields :fields="indicators" :selected="selectedForModal" @select="handleFieldSelect" />
+            <ChartFields :fields="indicators" :selected="selectedForModal" :allowed-types="currentAllowedTypes" @select="handleFieldSelect" />
         </div>
     </transition>
 </template>
 
 <script setup>
-import { ChartPie, Maximize, MoveDown, MoveRight, PaintBucket, ArrowDownWideNarrow, Type, Plus, CircleAlert, Ellipsis, Filter, Database, Hash, Calendar, CheckCircle, X } from 'lucide-vue-next'
+import { ChartPie, Maximize, Type, Plus, Ellipsis, Database, Hash, Calendar, CheckCircle, X } from 'lucide-vue-next'
 import { ref, nextTick, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 
 import DatasetTooltip from '@/pages/bi/components/ChartComponents/DatasetsTooltip.vue'
@@ -137,6 +130,7 @@ import DatasetSettings from '@/pages/bi/components/ChartComponents/DatasetSettin
 import ChartFields from '@/pages/bi/components/ChartComponents/ChartFields.vue'
 import ChartArea from '@/pages/bi/components/ChartComponents/ChartArea.vue'
 
+import { chartSettingsConfig } from '@/js/api/services/bi/chartSettingsConfig.js'
 import chartService from '@/js/api/services/bi/chartService.js'
 
 const isFullScreen = ref(false)
@@ -151,41 +145,38 @@ const fieldsModalPosition = ref({ x: 0, y: 0 })
 const fieldsModalRef = ref(null)
 
 const selectedDataset = ref(null)
-const selectedChartType = ref('')
+const selectedChartType = ref(null)
 
 const indicators = ref([])
 const currentSetting = ref('')
 
 const datasetRows = ref([])
 
-const selectedFields = ref({
-    y: [],
-    x: [],
-    color: [],
-    sort: [],
-    labels: [],
-    filters: []
-})
+const currentAllowedTypes = ref(null)
+
+const chartTypeMap = {
+  1: 'line', // Линейная диаграмма
+  2: 'bar', // Столбчатая диаграмма
+  3: 'pie', // Круговая диаграмма
+  4: 'donut', // Кольцевая диаграмма
+  5: 'scatter', // Точечная диаграмма
+  6: 'radar', // Радарная диаграмма
+  7: 'heatmap' // Тепловая карта
+}
+
+const chartTypeKey = computed(() => chartTypeMap[selectedChartType.value])
+
+const settingTypes = computed(() =>
+  chartSettingsConfig[chartTypeKey.value] || []
+)
+
+const selectedFields = ref({})
 
 watch(selectedChartType, () => {
-    selectedFields.value = {
-        y: [],
-        x: [],
-        color: [],
-        sort: [],
-        labels: [],
-        filters: []
-    }
+  const settings = chartSettingsConfig[chartTypeKey.value] || []
+  selectedFields.value = {}
+  for (const s of settings) selectedFields.value[s.key] = []
 })
-
-const settingTypes = [
-    { key: 'y', label: 'Y', icon: MoveDown },
-    { key: 'x', label: 'X', icon: MoveRight },
-    { key: 'color', label: 'Цвета', icon: PaintBucket },
-    { key: 'sort', label: 'Сортировка', icon: ArrowDownWideNarrow },
-    { key: 'labels', label: 'Подписи', icon: Type },
-    { key: 'filters', label: 'Фильтры', icon: Filter }
-]
 
 const typeIcon = {
     string: Type,
@@ -208,6 +199,9 @@ function openFieldsModal(event, settingKey) {
     }
     isFieldsModalVisible.value = true
     currentSetting.value = settingKey
+
+    const setting = settingTypes.value.find(s => s.key === settingKey)
+    currentAllowedTypes.value = setting?.allowedTypes || null
 }
 
 function openDatasetTooltip(event) {
@@ -238,13 +232,15 @@ function onClickOutside(event) {
     const fieldsModalEl = fieldsModalRef.value
     if (
         isDatasetTooltipVisible.value &&
-        datasetModalEl && !datasetModalEl.contains(event.target)
+        datasetModalEl &&
+        !datasetModalEl.contains(event.target)
     ) {
         isDatasetTooltipVisible.value = false
     }
     if (
         isFieldsModalVisible.value &&
-        fieldsModalEl && !fieldsModalEl.contains(event.target)
+        fieldsModalEl &&
+        !fieldsModalEl.contains(event.target)
     ) {
         isFieldsModalVisible.value = false
     }

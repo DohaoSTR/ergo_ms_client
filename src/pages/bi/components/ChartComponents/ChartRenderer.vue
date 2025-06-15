@@ -1,63 +1,91 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import ApexChartsComponent from './ApexChartsComponent.vue'
 import ChartJsComponent from './ChartJsComponent.vue'
+import { CircleAlert } from 'lucide-vue-next'
 
 const props = defineProps({
   type: String,
   fields: Object,
+  settings: Array,
   dataset: [Object, Array],
 })
 
 const selectedEngine = ref('chartjs')
 
-const colorField = computed(() => props.fields.color[0] || null)
+const colorField = computed(() =>
+  Array.isArray(props.fields.color) && props.fields.color.length > 0
+    ? props.fields.color[0]
+    : null
+)
 
 const chartTypeMap = {
-  "1": "line",
-  "2": "bar",
-  "3": "pie",
-  "4": "doughnut",
-  "5": "scatter",
-  "6": "radar",
-  "7": "heatmap"
+  1: "line",
+  2: "bar",
+  3: "pie",
+  4: "doughnut",
+  5: "scatter",
+  6: "radar",
+  7: "heatmap"
 }
 
-const chartKind = computed(() => chartTypeMap[props.type] || "bar")
+const chartKind = computed(() => {
+  if (!props.type) return "bar"
+  if (typeof props.type === "string" && supportedByApex.includes(props.type)) return props.type
+  if (chartTypeMap[props.type]) return chartTypeMap[props.type]
+  return "bar"
+})
 
 const supportedByApex = ['line', 'bar', 'pie', 'donut', 'area', 'scatter', 'radar', 'heatmap']
 const supportedByChartJs = ['line', 'bar', 'pie', 'doughnut', 'scatter', 'radar']
+
 
 const isTypeSupported = computed(() =>
   selectedEngine.value === 'apex'
     ? supportedByApex.includes(chartKind.value)
     : supportedByChartJs.includes(chartKind.value)
 )
+
+const availableEngines = computed(() => {
+  const engines = []
+  if (supportedByChartJs.includes(chartKind.value)) engines.push('chartjs')
+  if (supportedByApex.includes(chartKind.value))    engines.push('apex')
+  return engines
+})
+
+watch([chartKind, availableEngines], () => {
+  if (!availableEngines.value.includes(selectedEngine.value)) {
+    selectedEngine.value = availableEngines.value[0]
+  }
+})
 </script>
 
 <template>
   <div class="area" style="display: flex; flex-direction: column; height: 100%; width: 100%; gap: 10px;">
     <div class="header" style="display: flex; justify-content: flex-end;">
       <select v-model="selectedEngine" class="form-select" style="width: 10rem;">
-        <option value="chartjs">Chart.js</option>
-        <option value="apex">ApexCharts</option>
+        <option v-for="engine in availableEngines" :key="engine" :value="engine">
+          {{ engine === 'chartjs' ? 'Chart.js' : 'ApexCharts' }}
+        </option>
       </select>
     </div>
-    <div class="chart" style="display: flex; height: 100%; width: 100%;">
+    <div class="chart" style="display: flex; height: 100%; width: 100%; justify-content: center; align-items: center;">
       <ChartJsComponent v-if="selectedEngine === 'chartjs' && isTypeSupported"
         :type="chartKind"
         :fields="fields"
+        :settings="settings"
         :color-field="colorField"
         :dataset="dataset"
       />
       <ApexChartsComponent v-else-if="selectedEngine === 'apex' && isTypeSupported"
         :type="chartKind"
         :fields="fields"
+        :settings="settings"
         :color-field="colorField"
         :dataset="dataset"
       />
-      <div v-else class="alert alert-warning mt-4">
-        Такой тип графика не поддерживается выбранной библиотекой.
+      <div v-else class="alert alert-warning mt-4" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px;">
+        <CircleAlert :size="40" class="me-1" />Такой тип графика не поддерживается выбранной библиотекой.
       </div>
     </div>
   </div>
