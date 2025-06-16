@@ -27,7 +27,6 @@ const mainRoutes = [
     }
   }
 ]
-
 // Панель управления
 const dashboardRoutes = [
   {
@@ -157,25 +156,17 @@ const settingsRoutes = [
         },
       },
       {
+        path: 'site-settings',
+        name: 'SiteSettings',
+        component: () => import('@/pages/settings/siteSettings/ParentLayout.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: 'billing',
         name: 'BillingSettings',
         component: () => import('@/pages/settings/billing/ParentLayout.vue'),
-        meta: {
-          requiresAuth: true,
-        },
-      },
-      {
-        path: 'notifications',
-        name: 'NotificationSettings',
-        component: () => import('@/pages/settings/notifications/ParentLayout.vue'),
-        meta: {
-          requiresAuth: true,
-        },
-      },
-      {
-        path: 'connections',
-        name: 'ConnectionSettings',
-        component: () => import('@/pages/settings/connections/ParentLayout.vue'),
         meta: {
           requiresAuth: true,
         },
@@ -351,6 +342,55 @@ const componentsRoutes = [
     ],
   },
 ]
+// Управление маршрутами
+const controlRoutes = [
+  {
+    path: '/files',
+    name: 'Files',
+    component: () => import('@/pages/controlFiles/ParentLayout.vue'),
+    redirect: { name: 'FileManager' },
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: 'filemanager',
+        name: 'FileManager',
+        component: () => import('@/pages/controlFiles/FileManager.vue'),
+        meta: { requiresAuth: true, title: 'Файлы' }
+      }
+    ],
+  },
+]
+// Управление категориями
+const categoriesRoutes = [
+  {
+    path: '/categories',
+    name: 'Categories',
+    component: () => import('@/pages/categories/ParentLayout.vue'),
+    redirect: { name: 'PageCategories' },
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: 'page-categories',
+        name: 'PageCategories',
+        component: () => import('@/pages/categories/PageCategories.vue'),
+        meta: { requiresAuth: true, title: 'Категории' }
+      },
+      {
+        path: 'categories-list',
+        name: 'PageCategoriesManager',
+        component:() => import('@/pages/categories/CategoriesManagerPage.vue'),
+        meta: { requiresAuth: true, title: 'Создание категорий' }
+      },
+      {
+        path: 'tags-list',
+        name: 'TagsManager',
+        component:() => import('@/pages/categories/TagsManagerPage.vue'),
+        meta: { requiresAuth: true, title: 'Создание тегов' }
+      } 
+    ],
+  },
+]
+
 
 // Маршрутизация страниц модуля учебной аналитики
 const learningAnalyticsRoutes = [
@@ -892,6 +932,8 @@ const routes = [
   ...shortcodeRoutes,
   ...expertSystemRoutes,
   ...learningAnalyticsRoutes,
+  ...controlRoutes,
+  ...categoriesRoutes,
 ]
 
 routes.forEach((route) => {

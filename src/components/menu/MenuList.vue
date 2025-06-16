@@ -1,6 +1,9 @@
 <script setup>
+import { apiClient } from '@/js/api/manager'
+import { endpoints } from '@/js/api/endpoints'
 import { onMounted, ref, watch } from 'vue'
 import { ChevronLeft, Cog, Minus } from 'lucide-vue-next'
+
 import {
   AnalyzeMenuSection,
   ChatMenuSection,
@@ -22,6 +25,8 @@ import {
   ShortcodesMenuSection,
   EducationAnalyticMenuSection,
   ExpertSystemSection,
+  FilesMenuSection,
+  CategoriesMenuSection,
 } from '@/js/menu-sections.js'
 
 import MenuGroup from '@/components/menu/MenuGroup.vue'
@@ -157,6 +162,8 @@ const menuSections = ref([
   ShortcodesMenuSection,
   ExpertSystemSection,
   AnalyzeMenuSection,
+  FilesMenuSection,
+  CategoriesMenuSection,
 ])
 
 const separators = (index) => {
@@ -165,6 +172,19 @@ const separators = (index) => {
       return 'Шаблоны'
   }
 }
+
+const siteName = ref('...')
+
+onMounted(async () => {
+  const res = await apiClient.get(endpoints.settings.lastSettings)
+  if (res.success) {
+    const settings = Array.isArray(res.data) ? res.data[0] : res.data
+    siteName.value = settings?.site_name || 'ERGO MS'
+  } else {
+    siteName.value = 'ERGO MS'
+  }
+})
+
 </script>
 
 <template>
@@ -180,7 +200,7 @@ const separators = (index) => {
           <Cog :size="32" />
         </div>
         <div class="side-header__title text-smooth-animation" :class="{ hidden: !isHovering }">
-          ERGO MS
+          {{ siteName }}
         </div>
       </RouterLink>
       <div class="side-menu__toggle">

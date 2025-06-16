@@ -19,7 +19,9 @@ import {
   KeySquare,
   BookOpen,
   NotepadTextDashed,
-  Video
+  Video,
+  Files,
+  Layers
 } from 'lucide-vue-next'
 
 // Аккаунт
@@ -46,8 +48,7 @@ export const SettingsMenuSection = {
   list: [
     { path: 'AccountSettings', name: 'Аккаунт' },
     { path: 'SecuritySettings', name: 'Безопасность' },
-    { path: 'NotificationSettings', name: 'Уведомления' },
-    { path: 'ConnectionSettings', name: 'Связи' },
+    { path: 'SiteSettings', name: 'Настройки'},
     { path: 'Roles', name: 'Ролевые настройки' },
   ],
 }
@@ -254,5 +255,29 @@ export const AnalyzeMenuSection = {
   title: 'Анализ',
   list: [
     { path: 'DatabaseAnalyze', name: 'Анализ Bitcoin' },
+  ],
+};
+
+export const FilesMenuSection = {
+  id: 21,
+  icon: Files,
+  routeName: 'FileManager',
+  path: '/files',
+  title: 'Файлы',
+  list: [
+    { path: 'FileManager', name: 'Обзор файлов' },
+  ],
+}
+
+export const CategoriesMenuSection = {
+  id: 22,
+  icon: Layers,
+  routeName: 'Categories',
+  path: '/categories',
+  title: 'Категории страниц',
+  list: [
+    { path: 'PageCategories', name: 'Категории' },
+    { path: 'PageCategoriesManager', name: 'Создание категорий' },
+    { path: 'TagsManager', name: 'Создание тегов' },
   ],
 };
