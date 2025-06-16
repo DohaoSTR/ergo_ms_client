@@ -31,6 +31,7 @@
 <script setup>
 import { ChevronRight, Dot } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 const props = defineProps({
   data: { type: Object, required: true },
@@ -42,23 +43,76 @@ const props = defineProps({
 
 const showFull = computed(() => props.isCollapsed || props.isHovering)
 
+const router = useRouter()
+const route = useRoute()
 const emit = defineEmits(['toggle', 'action', 'navigate', 'reset-page'])
+
+const isCurrentRoute = computed(() => {
+  return route.name === props.data.routeName
+})
+
+const isCurrentGroupPage = computed(() => {
+  // Проверяем, находится ли пользователь на основной странице группы
+  if (route.name === props.data.routeName) {
+    return true
+  }
+  
+  // Проверяем, находится ли пользователь на одной из подстраниц группы
+  if (props.data.list) {
+    return props.data.list.some(item => {
+      // Для обычных Vue страниц
+      if (item.path && route.name === item.path) {
+        return true
+      }
+      // Для BI offcanvas страниц
+      if (item.isOffcanvas && item.page === props.currentPage) {
+        return true
+      }
+      return false
+    })
+  }
+  
+  return false
+})
 
 function emitNavigate(item) {
   if (item.page) {
     emit('navigate', item)
   }
 }
+
+function routeClick(event) {
+  event.preventDefault() // Всегда блокируем стандартную навигацию RouterLink
+  
+  if (props.data.list) {
+    // Если у элемента есть подменю
+    if (props.isOpen) {
+      // Если группа открыта - просто закрываем, не переходим никуда
+      emit('toggle')
+    } 
+    else {
+      // Если группа закрыта - открываем
+      emit('toggle')
+      
+      // Переходим на основную страницу только если пользователь НЕ находится в пределах этой группы
+      if (!isCurrentGroupPage.value) {
+        router.push({ name: props.data.routeName })
+      }
+    }
+  } else {
+    // Если подменю нет - просто переходим на страницу
+    router.push({ name: props.data.routeName })
+  }
+}
+
 </script>
 
 <template>
   <li class="side-menu__group side-group">
-    <RouterLink
-      :to="{ name: data.routeName }"
+    <div
       class="side-title nav-btn"
-      active-class="side-title--active"
-      exact-active-class="side-title--exact-active"
-      @click="$emit('toggle'); $emit('reset-page')"
+      :class="{ 'side-title--active': isCurrentRoute }"
+      @click="routeClick($event)"
     >
       <div class="side-title__label">
         <div class="side-icon icon-flex">
@@ -71,7 +125,7 @@ function emitNavigate(item) {
       <div v-if="isHovering && data.list" class="nav-icon icon-flex">
         <ChevronRight :size="20" :class="{ rotated: isOpen }" />
       </div>
-    </RouterLink>
+    </div>
 
     <ul
       v-if="data.list"

@@ -76,10 +76,15 @@ const handleMouseLeave = () => {
 
 const route = useRoute()
 const openGroupId = ref(null)
+const preventAutoOpen = ref(false)
 
 watch(
   () => route.matched,
   (newMatched) => {
+    if (preventAutoOpen.value) {
+      preventAutoOpen.value = false
+      return
+    }
     for (let i of menuSections.value) {
       if (i.routeName === newMatched[0].name) {
         openGroupId.value = i.id
@@ -88,6 +93,7 @@ watch(
   },
   { immediate: false },
 )
+
 onMounted(async()=>{
   let closedpages = await GetClosedPagesForUser()  
   for (let clpage of closedpages)
@@ -124,8 +130,15 @@ onMounted(async()=>{
   }
 }
 )
+
 const toggleGroup = (id) => {
-  openGroupId.value = openGroupId.value === id ? null : id
+  if (openGroupId.value === id) {
+    // Если закрываем группу, устанавливаем флаг для предотвращения автоматического открытия
+    preventAutoOpen.value = true
+    openGroupId.value = null
+  } else {
+    openGroupId.value = id
+  }
 }
 
 function handleAction(action) {
