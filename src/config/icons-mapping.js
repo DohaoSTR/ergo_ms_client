@@ -31,7 +31,9 @@ import {
   KeySquare,
   BookOpen,
   NotepadTextDashed,
-  Video
+  Video,
+  Files,
+  Layers,
 } from 'lucide-vue-next'
 
 /**
@@ -60,7 +62,9 @@ export const iconMapping = {
   KeySquare,
   BookOpen,
   NotepadTextDashed,
-  Video
+  Video,
+  Files,
+  Layers,
 }
 
 /**

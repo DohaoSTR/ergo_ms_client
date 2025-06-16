@@ -632,6 +632,86 @@
           "requiresAuth": true
         }
       }
+    },
+    {
+      "id": 15,
+      "icon": "Files",
+      "routeName": "Files",
+      "title": "Файлы",
+      "route": {
+        "path": "/files",
+        "component": "@/pages/controlFiles/ParentLayout.vue",
+        "redirect": "FileManager",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        {
+          "path": "FileManager",
+          "name": "Обзор файлов",
+          "route": {
+            "path": "filemanager",
+            "component": "@/pages/controlFiles/FileManager.vue",
+            "meta": {
+              "title": "Файлы",
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "icon": "Layers",
+      "routeName": "Categories",
+      "title": "Категории страниц",
+      "route": {
+        "path": "/categories",
+        "component": "@/pages/categories/ParentLayout.vue",
+        "redirect": "PageCategories",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        {
+          "path": "PageCategories",
+          "name": "Категории",
+          "route": {
+            "path": "page-categories",
+            "component": "@/pages/categories/PageCategories.vue",
+            "meta": {
+              "title": "Категории",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "PageCategoriesManager",
+          "name": "Создание категорий",
+          "route": {
+            "path": "categories-list",
+            "component": "@/pages/categories/CategoriesManagerPage.vue",
+            "meta": {
+              "title": "Создание категорий",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "TagsManager",
+          "name": "Создание тегов",
+          "route": {
+            "path": "tags-list",
+            "component": "@/pages/categories/TagsManagerPage.vue",
+            "meta": {
+              "title": "Создание тегов",
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
     }
   ],
   "separators": {
