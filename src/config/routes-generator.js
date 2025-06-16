@@ -36,7 +36,7 @@ import menuConfig from '@/config/menu-config.json'
 function createLazyImport(componentPath) {
   // Убираем префикс @/ и добавляем ./ для relative import
   const relativePath = componentPath.replace('@/', '../')
-  return () => import(/* webpackChunkName: "[request]" */ relativePath)
+  return () => import(/* @vite-ignore */ relativePath)
 }
 
 /**
@@ -134,7 +134,7 @@ import coreRoutesConfig from '@/config/core-routes-config.json'
 function transformComponentPath(componentPath) {
   // Убираем префикс @/ и добавляем ./ для relative import (аналогично createLazyImport)
   const relativePath = componentPath.replace('@/', '../')
-  return () => import(/* webpackChunkName: "[request]" */ relativePath)
+  return () => import(/* @vite-ignore */ relativePath)
 }
 
 /**
