@@ -97,55 +97,11 @@
           }
         },
         { 
-          "path": "NotificationSettings", 
-          "name": "Уведомления",
-          "route": {
-            "path": "notifications",
-            "component": "@/pages/settings/notifications/ParentLayout.vue",
-            "meta": {
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
-          "path": "ConnectionSettings", 
-          "name": "Связи",
-          "route": {
-            "path": "connections",
-            "component": "@/pages/settings/connections/ParentLayout.vue",
-            "meta": {
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
           "path": "SiteSettings", 
           "name": "Настройки сайта",
           "route": {
             "path": "site-settings",
             "component": "@/pages/settings/siteSettings/ParentLayout.vue",
-            "meta": {
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
-          "path": "BillingSettings", 
-          "name": "Биллинг",
-          "route": {
-            "path": "billing",
-            "component": "@/pages/settings/billing/ParentLayout.vue",
-            "meta": {
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
-          "path": "Roles", 
-          "name": "Ролевые настройки",
-          "route": {
-            "path": "roles",
-            "component": "@/pages/roles/ParentLayout.vue",
             "meta": {
               "requiresAuth": true
             }
