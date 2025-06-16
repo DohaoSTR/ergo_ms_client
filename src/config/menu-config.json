@@ -119,6 +119,28 @@
           }
         },
         { 
+          "path": "SiteSettings", 
+          "name": "Настройки сайта",
+          "route": {
+            "path": "site-settings",
+            "component": "@/pages/settings/siteSettings/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "BillingSettings", 
+          "name": "Биллинг",
+          "route": {
+            "path": "billing",
+            "component": "@/pages/settings/billing/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
           "path": "Roles", 
           "name": "Ролевые настройки",
           "route": {
