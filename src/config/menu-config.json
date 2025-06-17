@@ -604,8 +604,8 @@
       "routeName": "AssetsAnalyse",
       "title": "Анализ курсов активов",
       "route": {
-        "path": "/user/analyze/assets-analyse",
-        "component": "@/pages/user/analyze/DatabaseAnalyze.vue",
+        "path": "/user/assets-analyse",
+        "component": "@/pages/assets_analysis/DatabaseAnalyze.vue",
         "meta": {
           "requiresAuth": true
         }
