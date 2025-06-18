@@ -3,37 +3,43 @@ import { checkToken } from '@/js/api/services/auth-index'
 
 const mainRoutes = [
   {
-    path: '/',
+    path: '/account',
     redirect: { name: 'Account' },
     meta: {
       requiresAuth: true,
     },
   },
   {
+    path: '/:parts(.*)+',
+    name: 'CmsAnyDepthPage',
+    component: () => import('@/pages/shortcodes/CmsPage.vue'),
+    meta: { public: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/pages/NotFound.vue'),
     meta: {
+      public: true,
       title: 'Страница не найдена',
       requiresAuth: true,
     },
   },
   {
-    path:'/logout',
-    name:'logout',
-    component:()=> import('@/components/header/Logout.vue'),
-    meta:{
-      title:'-',
+    path: '/logout',
+    name: 'logout',
+    component: () => import('@/components/header/Logout.vue'),
+    meta: {
+      title: '-',
     }
   }
 ]
-
 // Панель управления
 const dashboardRoutes = [
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: () => import('@/pages/dashboard/ParentLayout.vue'),
+    component: () => import('@/pages/dashboard/AnaliticsView.vue'),
     redirect: { name: 'Analytics' },
     meta: {
       requiresAuth: true,
@@ -42,7 +48,7 @@ const dashboardRoutes = [
       {
         path: 'analytics',
         name: 'Analytics',
-        component: () => import('@/pages/dashboard/ParentLayout.vue'),
+        component: () => import('@/pages/dashboard/AnaliticsView.vue'),
         meta: {
           requiresAuth: true,
         },
@@ -87,6 +93,30 @@ const userRoutes = [
         },
       },
       {
+        path: 'projects',
+        name: 'PersonalProjects',
+        component: () => import('@/pages/user/projects/ParentLayout.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'projects',
+        name: 'InvitedProjects',
+        component: () => import('@/pages/user/projects/ParentLayout.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'createproject',
+        name: 'CreateProject',
+        component: () => import('@/pages/user/projects/CreateProject.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: 'connections',
         name: 'Connections',
         component: () => import('@/pages/user/connections/ParentLayout.vue'),
@@ -95,9 +125,9 @@ const userRoutes = [
         },
       },
       {
-        path: 'analytics',
-        name: 'Analytics',
-        component: () => import('@/pages/dashboard/ParentLayout.vue'),
+        path: 'analitics',
+        name: 'Analitics',
+        component: () => import('@/pages/dashboard/AnaliticsView.vue'),
         meta: {
           requiresAuth: true,
         },
@@ -157,25 +187,17 @@ const settingsRoutes = [
         },
       },
       {
+        path: 'site-settings',
+        name: 'SiteSettings',
+        component: () => import('@/pages/settings/siteSettings/ParentLayout.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: 'billing',
         name: 'BillingSettings',
         component: () => import('@/pages/settings/billing/ParentLayout.vue'),
-        meta: {
-          requiresAuth: true,
-        },
-      },
-      {
-        path: 'notifications',
-        name: 'NotificationSettings',
-        component: () => import('@/pages/settings/notifications/ParentLayout.vue'),
-        meta: {
-          requiresAuth: true,
-        },
-      },
-      {
-        path: 'connections',
-        name: 'ConnectionSettings',
-        component: () => import('@/pages/settings/connections/ParentLayout.vue'),
         meta: {
           requiresAuth: true,
         },
@@ -309,6 +331,16 @@ const inputsRoutes = [
     meta: { title: 'Формы ввода', requiresAuth: true },
   },
 ]
+// формирование команды
+const teambuildingRoutes = [
+  {
+    path: '/teambuilding',
+    name: 'TeamBuilding',
+    component: () => import('@/pages/teambuilding/ParentLayout.vue'),
+    meta: { title: 'Формирование команды', requiresAuth: true },
+  },
+]
+// ЭС компетенции
 
 // Компоненты
 const componentsRoutes = [
@@ -351,6 +383,55 @@ const componentsRoutes = [
     ],
   },
 ]
+// Управление маршрутами
+const controlRoutes = [
+  {
+    path: '/files',
+    name: 'Files',
+    component: () => import('@/pages/controlFiles/ParentLayout.vue'),
+    redirect: { name: 'FileManager' },
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: 'filemanager',
+        name: 'FileManager',
+        component: () => import('@/pages/controlFiles/FileManager.vue'),
+        meta: { requiresAuth: true, title: 'Файлы' }
+      }
+    ],
+  },
+]
+// Управление категориями
+const categoriesRoutes = [
+  {
+    path: '/categories',
+    name: 'Categories',
+    component: () => import('@/pages/categories/ParentLayout.vue'),
+    redirect: { name: 'PageCategories' },
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: 'page-categories',
+        name: 'PageCategories',
+        component: () => import('@/pages/categories/PageCategories.vue'),
+        meta: { requiresAuth: true, title: 'Категории' }
+      },
+      {
+        path: 'categories-list',
+        name: 'PageCategoriesManager',
+        component: () => import('@/pages/categories/CategoriesManagerPage.vue'),
+        meta: { requiresAuth: true, title: 'Создание категорий' }
+      },
+      {
+        path: 'tags-list',
+        name: 'TagsManager',
+        component: () => import('@/pages/categories/TagsManagerPage.vue'),
+        meta: { requiresAuth: true, title: 'Создание тегов' }
+      }
+    ],
+  },
+]
+
 
 // Маршрутизация страниц модуля учебной аналитики
 const learningAnalyticsRoutes = [
@@ -471,6 +552,40 @@ const startRoutes = [
     },
   },
 ]
+// экспертная система
+const expsysRoutes = [
+  {
+    path: '/expsys',
+    name: 'Expsys',
+    component: () => import('@/pages/expsys/ParentLayout.vue'),
+    redirect: { name: 'CRMSubjects' },
+    children: [
+      {
+        path: 'crm_subjects',
+        name: 'CRMSubjects',
+        component: () => import('@/pages/expsys/SubjectsManager.vue'),
+        meta: { title: 'Предметы', requiresAuth: true },
+      },
+      {
+        path: 'indicators',
+        name: 'Indicators',
+        component: () => import('@/pages/expsys/IndicatorsManager.vue'),
+        meta: { title: 'Индикаторы', requiresAuth: true },
+      },
+           {
+        path: 'competencies',
+        name: 'Competencies',
+        component: () => import('@/pages/expsys/CompetenceManager.vue'),
+        meta: { title: 'Компетенции', requiresAuth: true },
+           },
+           {
+        path: 'vectors',
+        name: 'Vectors',
+        component: () => import('@/pages/expsys/VektorDevelopment.vue'),
+        meta: { title: 'Вектор развития', requiresAuth: true },
+      },
+      ]
+}]
 
 const adminpanelRoutes = [
   {
@@ -624,7 +739,7 @@ const shortcodeRoutes = [
         },
       },
       {
-        path: 'editor',
+        path: 'shortcode-editor',
         name: 'ShortcodeEditor',
         component: () => import('@/pages/shortcodes/editor/ShortcodeEditor.vue'),
         meta: {
@@ -642,17 +757,8 @@ const shortcodeRoutes = [
         },
       },
       {
-        path: 'create-template',
-        name: 'CreateTemplate',
-        component: () => import('@/pages/shortcodes/editor/CreateTemplate.vue'),
-        meta: {
-          title: 'Создание шаблонов',
-          requiresAuth: true
-        },
-      },
-      {
         path: 'categories-page',
-        name: 'PageCategories',
+        name: 'PageShortcodeCategories',
         component: () => import('@/pages/shortcodes/editor/PageCategories.vue'),
         meta: {
           title: 'Категории страниц',
@@ -660,11 +766,29 @@ const shortcodeRoutes = [
         },
       },
       {
-        path: 'templates',
+        path: 'templates/',
         name: 'Templates',
         component: () => import('@/pages/shortcodes/editor/TemplateManager.vue'),
         meta: {
           title: 'Компоненты',
+          requiresAuth: true
+        },
+      },
+      {
+        path: 'pages/',
+        name: 'Pages',
+        component: () => import('@/pages/shortcodes/AllPages.vue'),
+        meta: {
+          title: 'Страницы',
+          requiresAuth: true
+        },
+      },
+      {
+        path: 'site-layouts/',
+        name: 'Layouts',
+        component: () => import('@/pages/shortcodes/SiteLayout.vue'),
+        meta: {
+          title: 'Страницы',
           requiresAuth: true
         },
       },
@@ -796,12 +920,12 @@ const expertSystemRoutes = [
         })
       },
       {
-        path:'test-result/:id',
-        name:'TestResult',
-        component:()=> import('@/pages/expert-system/Tests/TestResult.vue'),
-        meta:{title:'Результат теста', requiresAuth:true},
-        props:(route)=>({
-          id:Number(route.params.id)
+        path: 'test-result/:id',
+        name: 'TestResult',
+        component: () => import('@/pages/expert-system/Tests/TestResult.vue'),
+        meta: { title: 'Результат теста', requiresAuth: true },
+        props: (route) => ({
+          id: Number(route.params.id)
         })
       },
       {
@@ -864,9 +988,64 @@ const expertSystemRoutes = [
           requiresAuth: true,
         },
       },
+      {
+        path: 'expdashboard',
+        name: 'ExpertDashboard',
+        component: () => import('@/pages/expert-system/ExpertSystemDashboard.vue'),
+        meta: {
+          requiresAuth: true,
+          title: 'Дашборд экспертной системы'
+        }
+      },
     ],
   },
 ]
+
+// LMS
+const LMSRouters = [{
+    path: '/LMS',
+    name: 'LMS',
+    component: () =>
+        import ('@/pages/LMS/ParentLayout.vue'),
+    //meta: { title: 'LMS', requiresAuth: true },
+    redirect: { name: 'LMSSubjects' },
+    children: [{
+            path: 'lms_subjects',
+            name: 'LMSSubjects',
+            component: () =>
+                import ('@/pages/LMS/Lesson/SubjectsLMS.vue'),
+            meta: { title: 'Предметы', requiresAuth: true },
+        },
+        {
+            path: 'forStudent',
+            name: 'ForStudent',
+            component: () =>
+                import ('@/pages/LMS/ForStudent/ForStudentLMS.vue'),
+            meta: { title: 'Статистика', requiresAuth: true },
+        },
+        {
+            path: 'forTheacher',
+            name: 'ForTheacher',
+            component: () =>
+                import ('@/pages/LMS/ForTheacher/ForTheacherLMS.vue'),
+            meta: { title: 'Для преподавателя', requiresAuth: true },
+        },
+        {
+            path: 'lesson',
+            name: 'Lesson',
+            component:() =>
+                import ('@/pages/LMS/Lesson/LessonLMS.vue'),
+            meta: {title: 'Уроки', requiresAuth: true},
+        },
+        {
+            path: 'createLesson',
+            name: 'CreateLesson',
+            component:() =>
+                import ('@/pages/LMS/ForTheacher/CreateLessonLMS.vue'),
+            meta: {title: 'Создание урока', requiresAuth: true}
+        }
+    ]
+}, ]
 
 const routes = [
   ...startRoutes,
@@ -886,12 +1065,17 @@ const routes = [
   ...modalWindowsRoutes,
   ...inputsRoutes,
   ...componentsRoutes,
+  ...teambuildingRoutes,
+  ...expsysRoutes,
   ...adminpanelRoutes,
   ...waterMarkvideoRoute,
   ...biRoutes,
   ...shortcodeRoutes,
   ...expertSystemRoutes,
   ...learningAnalyticsRoutes,
+  ...controlRoutes,
+  ...categoriesRoutes,
+  ...LMSRouters,
 ]
 
 routes.forEach((route) => {
@@ -909,33 +1093,30 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to, from, next) => {
-  if (to.meta.requiresAuth) {
-    runCheckToken()
-      .then((isChecked) => {
-        if (isChecked === false) {
-          next({ name: 'StartPage' })
-        } else {
-          next(true)
-        }
-      })
-      .catch((error) => {
-        console.error('Ошибка проверки токена:', error)
-        next({ name: 'StartPage' })
-      })
-  } else {
-    next()
-  }
-})
-
+import { checkAccessToPage, CheckAccessToComponents } from './GroupsPolitics'
 async function runCheckToken() {
   const isChecked = await checkToken()
   return isChecked
 }
-import { checkAccessToPage, CheckAccessToComponents } from './GroupsPolitics'
-export default router
-router.beforeEach((to, from, next) => {
-    checkAccessToPage(to.path)
+
+router.beforeEach(async (to, from, next) => {
+  try {
+    // 1) нужна авторизация?
+    if (to.meta.requiresAuth && !(await runCheckToken())) {
+      return next({ name: 'StartPage' })
+    }
+
+    // 2) page / component ACL (выполняем параллельно)
+    await Promise.all([
+      checkAccessToPage(to.path),
+      CheckAccessToComponents(to.path),
+    ])
+
     next()
-    CheckAccessToComponents(to.path)
+  } catch (err) {
+    console.error('Router guard error:', err)
+    next({ name: 'StartPage' })
+  }
 })
+
+export default router;

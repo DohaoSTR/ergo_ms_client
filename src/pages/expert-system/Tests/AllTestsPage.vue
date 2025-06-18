@@ -9,7 +9,7 @@
               <h5 class="card-title">{{ test.title }}</h5>
               <p class="card-text">
                 <strong>Навык:</strong> {{ test.skill }}<br>
-                <strong>Вопросов:</strong> {{ test.questionCount }}<br>
+                <strong>Вопросов:</strong> {{ test.count_of_questions }}<br>
                 <strong>Описание:</strong> {{ test.description }}
               </p>
   

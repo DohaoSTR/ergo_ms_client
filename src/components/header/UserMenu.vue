@@ -1,6 +1,24 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Bolt, CircleUserRound, Power } from 'lucide-vue-next'
+import { apiClient } from '@/js/api/manager'
+import { endpoints } from '@/js/api/endpoints'
+
+const avatarUrl = ref('/src/assets/avatars/avatar-45.png')
+
+async function fetchAvatar() {
+  try {
+    const resp = await apiClient.get(endpoints.userAvatars.list)
+    if (resp.data.length && resp.data[0].image) {
+      avatarUrl.value = resp.data[0].image
+    } else {
+      avatarUrl.value = '/src/assets/avatars/avatar-45.png'
+    }
+  } catch {
+    avatarUrl.value = '/src/assets/avatars/avatar-45.png'
+  }
+}
+onMounted(fetchAvatar)
 
 const userDropdownMenu = ref([
   {
@@ -32,7 +50,7 @@ const userDropdownMenu = ref([
       aria-expanded="false"
       data-bs-offset="16,20"
     >
-      <img src="/src/assets/avatars/avatar-45.png" alt="User" />
+      <img :src="avatarUrl" alt="User" />
     </div>
     <ul class="dropdown-menu dropdown-menu-end">
       <li v-for="item in userDropdownMenu" :key="item.id">
@@ -55,6 +73,7 @@ const userDropdownMenu = ref([
 <style scoped lang="scss">
 img {
   border-radius: 100%;
+  object-fit: cover;
 }
 
 .dropdown .dropdown-menu-end {

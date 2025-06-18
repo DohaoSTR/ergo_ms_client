@@ -1,13 +1,20 @@
+<!-- NavigationButtons.vue -->
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 
-defineProps({
+const props = defineProps({
   data: { type: Array, default: () => [] },
 })
 
+const route = useRoute()
 const scrollContainer = ref(null)
 const isScrolledToEnd = ref(false)
 const isScrolledToStart = ref(true)
+
+const showNavigation = computed(() => {
+  return props.data.some(item => item.title === 'Все' && route.name === item.link ||route.name === 'PersonalProjects'||route.name === 'InvitedProjects'||route.name==='CreateProject')
+})
 
 const handleScroll = () => {
   const container = scrollContainer.value
@@ -16,7 +23,6 @@ const handleScroll = () => {
     const scrollWidth = container.scrollWidth
     const clientWidth = container.clientWidth
 
-    // Проверяем, что прокрутка почти до конца
     isScrolledToEnd.value = scrollLeft + clientWidth >= scrollWidth - 0.4
     isScrolledToStart.value = scrollLeft <= 0.4
   }
@@ -26,7 +32,11 @@ const handleScroll = () => {
 <template>
   <div
     class="navbar-scroll"
-    :class="{ scrolledToEnd: isScrolledToEnd, scrolledToStart: isScrolledToStart }"
+    :class="{ 
+      scrolledToEnd: isScrolledToEnd, 
+      scrolledToStart: isScrolledToStart,
+      'd-none': !showNavigation
+    }"
   >
     <div class="navbar-scroll-wrapper py-1" ref="scrollContainer" @scroll="handleScroll">
       <ul class="navbar-nav flex-row gap-1">
@@ -59,6 +69,7 @@ li {
 
 .navbar-scroll {
   position: relative;
+  flex-grow: 1;
 
   &::after {
     content: '';

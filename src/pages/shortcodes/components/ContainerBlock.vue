@@ -1,21 +1,24 @@
 <script setup>
+import { computed } from 'vue'
 import RecursiveRenderer from '../editor/RecursiveRenderer.vue'
 
-const {component} = defineProps({
-  component: { type: Object, required: true }
+const props = defineProps({
+  component: { type: Object, required: true },
 })
+
+/* кастомная ширина, если передали extra_data.max_width */
+const maxW = computed(
+  () => props.component.extra_data?.max_width || '100vw'
+)
 </script>
 
 <template>
-  <div :class="[component.class_list,component.extra_data.align,'border']">
-    <p v-if="component.extra_data.text">{{ component.extra_data.text }}</p>
-    <!-- рекурсия по дочерним элементам -->
-    <div v-if="component.children?.length" class="border">
-      <RecursiveRenderer
-        v-for="child in component.children"
-        :key="child.uid"
-        :component="child"
-      />
-    </div>
+  <div :class="[
+    props.component.class_list,
+    'mx-auto py-3 px-2',
+    'd-flex flex-wrap gap-3',
+    'border'
+  ]" :style="{ maxWidth: maxW }">
+    <RecursiveRenderer v-for="child in props.component.children || []" :key="child.uid" :component="child" />
   </div>
 </template>

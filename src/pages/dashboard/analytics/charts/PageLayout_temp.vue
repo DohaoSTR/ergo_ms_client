@@ -1,14 +1,15 @@
 <script setup>
-import CardInfo from '@/pages/dashboard/cards/CardInfo.vue'
-import CardOrders from '@/pages/dashboard/cards/CardOrders.vue'
-import CardSales from '@/pages/dashboard/cards/CardSales.vue'
-import CardTotalRevenue from '@/pages/dashboard/cards/CardTotalRevenue.vue'
-import CardPayments from '@/pages/dashboard/cards/CardPayments.vue'
-import CardRevenue from '@/pages/dashboard/cards/CardRevenue.vue'
-import CardProfileReport from '@/pages/dashboard/cards/CardProfileReport.vue'
-import CardOrderStatistics from '@/pages/dashboard/cards/CardOrderStatistics.vue'
-import CardFinanceTab from '@/pages/dashboard/cards/CardFinanceTab.vue'
-import CardTransactions from '@/pages/dashboard/cards/CardTransactions.vue'
+import CardInfo from '@/pages/dashboard/analytics/cards/CardInfo.vue'
+import CardOrders from '@/pages/dashboard/analytics/cards/CardOrders.vue'
+import CardSales from '@/pages/dashboard/analytics/cards/CardSales.vue'
+import CardTotalRevenue from '@/pages/dashboard/analytics/cards/CardTotalRevenue.vue'
+import CardPayments from '@/pages/dashboard/analytics/cards/CardPayments.vue'
+import CardRevenue from '@/pages/dashboard/analytics/cards/CardRevenue.vue'
+import CardProfileReport from '@/pages/dashboard/analytics/cards/CardProfileReport.vue'
+import CardOrderStatistics from '@/pages/dashboard/analytics/cards/CardOrderStatistics.vue'
+import CardFinanceTab from '@/pages/dashboard/analytics/cards/CardFinanceTab.vue'
+import CardTransactions from '@/pages/dashboard/analytics/cards/CardTransactions.vue'
+import CardNewDiana from '@/pages/dashboard/analytics/cards/CardNewDiana.vue'
 </script>
 
 <template>
@@ -34,6 +35,7 @@ import CardTransactions from '@/pages/dashboard/cards/CardTransactions.vue'
     <div class="col-md-6 col-lg-4 order-1 mb-4"><CardFinanceTab /></div>
     <div class="col-md-6 col-lg-4 order-2 mb-4"><CardTransactions /></div>
   </div>
+  <div><CardNewDiana/></div>
 </template>
 
 <style lang="scss" scoped></style>

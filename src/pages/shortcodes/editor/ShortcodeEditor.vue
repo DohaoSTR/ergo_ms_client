@@ -25,7 +25,7 @@
       @click.self="closeSettings"
     >
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title">Настройки: {{ selectedComponent?.name || '—' }}</h5>
+        <h5 class="offcanvas-title">Настройки: {{ selectedComponent?.template_name || '—' }}</h5>
         <button type="button" class="btn-close" @click="closeSettings"></button>
       </div>
 

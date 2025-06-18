@@ -16,10 +16,15 @@ import {
   TextCursorInput,
   UserCog,
   Wallet,
+  HandHeart,
   KeySquare,
   BookOpen,
   NotepadTextDashed,
-  Video
+  Video,
+  GraduationCapIcon,
+  Files,
+  BarChart3,
+  Layers
 } from 'lucide-vue-next'
 
 // Аккаунт
@@ -33,6 +38,7 @@ export const UserMenuSection = {
     { path: 'Teams', name: 'Команды' },
     { path: 'Projects', name: 'Проекты' },
     { path: 'Connections', name: 'Связи' },
+    { path: 'Analitics', name: 'Статистика'}
   ],
 }
 
@@ -46,8 +52,7 @@ export const SettingsMenuSection = {
   list: [
     { path: 'AccountSettings', name: 'Аккаунт' },
     { path: 'SecuritySettings', name: 'Безопасность' },
-    { path: 'NotificationSettings', name: 'Уведомления' },
-    { path: 'ConnectionSettings', name: 'Связи' },
+    { path: 'SiteSettings', name: 'Настройки' },
     { path: 'Roles', name: 'Ролевые настройки' },
   ],
 }
@@ -161,7 +166,7 @@ export const AdminPanelMenuSection = {
     { path: 'GroupsPanel', name: 'Настройка групп' },
     { path: 'PermissionsPanel', name: 'Настройка прав' },
     { path: 'UsersPanel', name: 'Настройка пользователей' },
-    { path: 'LiminationPanel', name:'Настройка ограничений'}
+    { path: 'LiminationPanel', name: 'Настройка ограничений' }
   ],
 }
 
@@ -204,8 +209,10 @@ export const ShortcodesMenuSection = {
   title: 'Редактор страниц',
   list: [
     { path: 'MainShortcodePage', name: 'Главная' },
-    { path: 'ShortcodeEditor', name: 'Редактор страниц' },
     { path: 'Templates', name: 'Компоненты' },
+    { path: 'Pages', name: 'Страницы' },
+    { path: 'Layouts', name: 'Разметка сайта' },
+    { path: 'PageShortcodeCategories', name: 'Категории шорткодов' },
   ],
 }
 
@@ -242,7 +249,8 @@ export const ExpertSystemSection = {
     { path: 'OrientationTest', name: 'Менеджер тестов' },
     { path: 'AllTests', name: 'Управление тестами для навыков' },
     { path: 'StudentCourses', name: 'Рекомендованные курсы' },
-    { path: 'StudentsList', name: 'Студенты' }
+    { path: 'StudentsList', name: 'Студенты' },
+    { path: 'ExpertDashboard', name: 'Дашборд'}
   ],
 }
 
@@ -256,3 +264,60 @@ export const AnalyzeMenuSection = {
     { path: 'DatabaseAnalyze', name: 'Анализ Bitcoin' },
   ],
 };
+
+export const FilesMenuSection = {
+  id: 21,
+  icon: Files,
+  routeName: 'FileManager',
+  path: '/files',
+  title: 'Файлы',
+  list: [
+    { path: 'FileManager', name: 'Обзор файлов' },
+  ],
+}
+
+export const CategoriesMenuSection = {
+  id: 22,
+  icon: Layers,
+  routeName: 'Categories',
+  path: '/categories',
+  title: 'Категории страниц',
+  list: [
+    { path: 'PageCategories', name: 'Категории' },
+    { path: 'PageCategoriesManager', name: 'Создание категорий' },
+    { path: 'TagsManager', name: 'Создание тегов' },
+  ],
+};
+
+// Формирование команды
+export const TeamBuildingMenuSection = {
+  id: 23,
+  icon: HandHeart,
+  routeName: 'TeamBuilding',
+  title: 'Формирование команды',
+}
+// ЭС компетенции
+export const ExpsysMenuSection = {
+  id: 24,
+  icon: HandHeart,
+  routeName: 'Expsys',
+  title: 'Экспертная система',
+    list: [
+    { path: 'CRMSubjects', name: 'Предметы' },
+    { path: 'Competencies', name: 'Компетенции' },
+    { path: 'Indicators', name: 'Индикаторы компетенций' },
+    { path: 'Vectors', name: 'Вектор развития' },
+  ],
+}
+
+export const LMSMenuSection = {
+    id: 25,
+    icon: GraduationCapIcon,
+    routeName: 'LMS',
+    title: 'Образование',
+    list: [
+        { path: 'LMSSubjects', name: 'Предметы' },
+        { path: 'ForStudent', name: 'Статистика' },
+        { path: 'ForTheacher', name: 'Для преподователей' },
+    ],
+}

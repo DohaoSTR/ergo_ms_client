@@ -1,4 +1,10 @@
 {
-  "compilerOptions": { "paths": { "@/*": ["./src/*"] }, "types": ["pinia"] },
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["pinia"]
+  },
   "exclude": ["node_modules", "dist"]
 }

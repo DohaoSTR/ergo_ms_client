@@ -68,7 +68,7 @@
           </div>
 
           <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-success">
+            <button type="submit" class="btn btn-success text-white">
               {{ isNew ? 'Создать' : 'Сохранить' }}
             </button>
             <button type="button" class="btn btn-outline-secondary" @click="cancel">Отмена</button>
@@ -171,9 +171,7 @@ onMounted(load)
   font-family: Menlo, Consolas, monospace;
   background-color: #f8f9fa;
   border: 1px solid #ced4da;
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s;
 }
 .code-editor:focus {
   background-color: #fff;
