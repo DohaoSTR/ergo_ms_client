@@ -1,6 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
-
+import { computed,watch } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -10,26 +9,52 @@ import ruLocale from '@fullcalendar/core/locales/ru'
 import bootstrap5Plugin from '@fullcalendar/bootstrap5'
 import { useCalendarStore } from '@/stores/calendarStore.js'
 
-// Хранилище
 const calendarStore = useCalendarStore()
+// === Логируем события для дебага ===
+watch(
+  () => calendarStore.events,
+  (newVal) => {
+    console.log('Все события:', newVal)
+  },
+  { immediate: true }
+)
+// === Фильтрованные события ===
+const filteredEvents = computed(() => {
+  return calendarStore.events.filter((event) => {
+    if (!event || !event.classNames) return false
+    const categories = Array.isArray(event.classNames)
+      ? event.classNames
+      : [event.classNames]
+    return categories.some(category =>
+      calendarStore.activeFilterIds.includes(category)
+    )
+  })
+})
+// Клик по событию
+const handleEventClick = (info) => {
+  const eventId = info.event.id
+  const numericId = parseInt(eventId.replace('task-', '').replace('event-', ''), 10)
 
-const emits = defineEmits(['toggleCalendarMenu'])
-
+  calendarStore.setSelectedEvent({
+    id: numericId,
+    title: info.event.title,
+    category: info.event.classNames[0],
+    startDate: info.event.start,
+    endDate: info.event.end,
+    allDay: info.event.allDay
+  })
+}
 // Клик по дате
 const handleDateClick = (info) => {
-  // Данные из календаря
+  // Защита: если нажали на событие — не вызываем форму создания
+  if (info.jsEvent.detail === 0 && info.view.type !== 'listMonth') {
+    console.warn('Клик по событию, пропускаем создание')
+    return
+  }
   const eventStartDate = info.date
   const eventEndDate = new Date(eventStartDate)
-
-  const currentTime = new Date()
-
-  // Текущее время для начала события
-  eventStartDate.setHours(currentTime.getHours())
-  eventStartDate.setMinutes(currentTime.getMinutes())
-
-  // Текущее время для окончания события + 15 минут
-  eventEndDate.setHours(currentTime.getHours())
-  eventEndDate.setMinutes(currentTime.getMinutes() + 15)
+  eventEndDate.setDate(eventStartDate.getDate() + 1)
+  eventEndDate.setHours(23, 59, 59, 999)
 
   calendarStore.setSelectedEvent({
     id: calendarStore.getNextEventId(),
@@ -37,58 +62,47 @@ const handleDateClick = (info) => {
     category: null,
     startDate: eventStartDate,
     endDate: eventEndDate,
-    allDay: false,
+    allDay: true,
   })
 }
 
-// Клик по событию
-const handleEventClick = (info) => {
-  calendarStore.setSelectedEvent({
-    id: info.event.id,
-    title: info.event.title,
-    category: info.event.classNames[0],
-    startDate: info.event.start,
-    endDate: info.event.end,
-    allDay: info.event.allDay,
-  })
-}
 
-// ==========================================
 
-// Список идентификаторов активных фильтров
-const activeFiltersId = ref([])
-
-// Слежка за изменениями
-watch(
-  () => calendarStore.activeFilterIds,
-  (newValue) => {
-    activeFiltersId.value = newValue
-  },
-  { immediate: true },
-)
-
-// Фильтрация событий по активным идентификаторам
-const filteredEvents = computed(() => {
-  return calendarStore.events.filter((event) => activeFiltersId.value.includes(event.classNames))
-})
-
-// Настройки календаря
+// === Подключаем вычисляемое свойство из хранилища ===
 const calendarOptions = computed(() => ({
-  dateClick: handleDateClick,
-  eventClick: handleEventClick,
-  locales: [ruLocale],
-  locale: 'RU',
   plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin, bootstrap5Plugin],
   initialView: 'dayGridMonth',
+  locale: 'RU',
+  locales: [ruLocale],
+  events: filteredEvents.value, // ✅ Передаем напрямую
+  dateClick: handleDateClick,
+  eventClick: handleEventClick,
+  eventContent: (arg) => {
+
+    const priority = calendarStore.getPriorityName(arg.event.extendedProps.priority)
+    let holidayLabel = ''
+  if (arg.event.classNames.includes('calendarEventFilterHolidays')) {
+    holidayLabel = '<div class="fc-event-holiday">🎉 Праздник</div>'
+  }
+    return {
+      html: `
+       <div class="fc-event-task ${arg.event.classNames.join(' ')}">
+      <div class="fc-event-title">${arg.event.title}</div>
+      ${holidayLabel}
+      ${priority ? `<div class="fc-event-priority">${priority}</div>` : ''}
+    </div>
+      `
+    }
+  },
+
   themeSystem: 'bootstrap5',
   contentHeight: 'auto',
-  editable: true,
   customButtons: {
     menuButton: {
       text: '☰',
       click: function () {
         if (window.innerWidth > 992) return
-        emits('toggleCalendarMenu', true)
+        this.$emit('toggleCalendarMenu', true)
       },
     },
   },
@@ -99,15 +113,29 @@ const calendarOptions = computed(() => ({
     right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth',
   },
   titleFormat: { year: 'numeric', month: 'long' },
-  events: filteredEvents.value,
-}))
+}
+))
+
+console.log('Фильтры:', calendarStore.activeFilterIds)
+console.log('Фильтрованные события:', calendarStore.filteredEvents)
 </script>
 
 <template>
-  <FullCalendar :options="calendarOptions" />
+ <div class="calendar-container">
+    <FullCalendar :options="calendarOptions" />
+  </div>
 </template>
 
 <style lang="scss">
+.calendar-container {
+  height: calc(100vh - 60px); /* Вычитаем высоту header, если есть */
+  overflow-y: auto;
+  padding-bottom: 20px;
+
+  .fc {
+    min-height: 100%;
+  }
+}
 // Календарь fullcalendar
 .fc-header-toolbar {
   @media (width <= 1330px) {
@@ -122,6 +150,7 @@ const calendarOptions = computed(() => ({
     gap: 8px;
   }
 }
+
 
 .fc-menuButton-button {
   @media (width > 992px) {
@@ -158,6 +187,60 @@ const calendarOptions = computed(() => ({
   }
 }
 
+.calendarEventFilterHolidays {
+  background-color: var(--bs-warning-bg-subtle);
+  .fc-event-title {
+    color: var(--bs-warning-text-emphasis);
+  }
+}
+.fc-event-task {
+  padding: 2px 4px;
+  .fc-event-title {
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .fc-event-priority {
+    font-size: 0.75rem;
+    opacity: 0.8;
+  }
+}
+
+.task-priority-1 {
+  background-color: var(--bs-danger-bg-subtle);
+  .fc-event-title {
+    color: var(--bs-danger-text-emphasis);
+  }
+  border-left: 3px solid var(--bs-danger);
+}
+
+.task-priority-2 {
+  background-color: var(--bs-warning-bg-subtle);
+  .fc-event-title {
+    color: var(--bs-warning-text-emphasis);
+  }
+  border-left: 3px solid var(--bs-warning);
+}
+
+.task-priority-3 {
+  background-color: var(--bs-info-bg-subtle);
+  .fc-event-title {
+    color: var(--bs-info-text-emphasis);
+  }
+  border-left: 3px solid var(--bs-info);
+}
+
+.task-priority-4 {
+  background-color: var(--bs-success-bg-subtle);
+  .fc-event-title {
+    color: var(--bs-success-text-emphasis);
+  }
+  border-left: 3px solid var(--bs-success);
+}
+.fc-event-holiday {
+  font-size: 0.75rem;
+  color: #e67e22;
+  margin-top: 2px;
+}
 .calendarEventFilterHolidays {
   background-color: var(--bs-warning-bg-subtle);
   .fc-event-title {

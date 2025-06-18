@@ -1,10 +1,28 @@
 <template>
   <div class="page-creation min-vh-100 d-flex align-items-center">
     <div class="container py-5">
-      <div class="fancy-title mx-auto">Выберите действие</div>
+      <div class="fancy-title mx-auto">Система управления контентом</div>
 
+      <!-- Главные действия -->
+      <h5 class="section-title mt-4 mb-2">Страницы</h5>
       <div class="row gx-4 gy-4">
-        <div v-for="opt in options" :key="opt.title" class="col-12 col-md-6">
+        <div v-for="opt in pageOptions" :key="opt.title" class="col-12 col-md-6">
+          <div class="option-card" @click="navigateTo(opt.route)">
+            <div class="icon-wrapper me-4">
+              <component :is="opt.icon" size="28" class="text-primary" />
+            </div>
+            <div class="content">
+              <h3 class="option-title mb-1">{{ opt.title }}</h3>
+              <p class="option-desc mb-0">{{ opt.description }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Работа с шорткодами -->
+      <h5 class="section-title mt-5 mb-2">Шорткоды и компоненты</h5>
+      <div class="row gx-4 gy-4">
+        <div v-for="opt in shortcodeOptions" :key="opt.title" class="col-12 col-md-6">
           <div class="option-card" @click="navigateTo(opt.route)">
             <div class="icon-wrapper me-4">
               <component :is="opt.icon" size="28" class="text-primary" />
@@ -22,44 +40,43 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { FileText, Copy, Tag, Grid2x2 } from 'lucide-vue-next'
+import { FileText, Copy, Grid2x2 } from 'lucide-vue-next'
 
 const router = useRouter()
 const navigateTo = (route) => router.push(route)
 
-const options = [
+const pageOptions = [
   {
     title: 'Создать страницу',
-    description: 'Новая страница с нуля или из шаблона',
+    description: 'Новая страница',
     route: '/shortcodes/create-page',
     icon: FileText,
   },
   {
-    title: 'Создать шаблон страницы',
-    description: 'Шаблон для повторного использования',
-    route: '/shortcodes/create-template',
-    icon: Copy,
+    title: 'Список страниц',
+    description: 'Все страницы сайта',
+    route: '/shortcodes/pages',
+    icon: Grid2x2,
   },
+]
+
+const shortcodeOptions = [
   {
-    title: 'Управление категориями',
-    description: 'Создание и редактирование категорий компонентов',
-    route: '/shortcodes/categories-page',
-    icon: Tag,
+    title: 'Галерея компонентов',
+    description: 'Просмотр и добавление шорткодов',
+    route: '/shortcodes/templates/',
+    icon: Grid2x2,
   },
   {
     title: 'Редактор шаблонов шорткодов',
-    description: 'Создание и управление шаблонами шорткодов',
-    route: '/shortcodes/templates',
-    icon: Grid2x2,
+    description: 'Создание и управление шаблонами компонентов',
+    route: 'templates',
+    icon: Copy,
   },
 ]
 </script>
 
 <style scoped>
-.page-creation {
-  background-color: #f4f6f9;
-}
-
 .fancy-title {
   font-family: 'Segoe UI', Arial, sans-serif;
   font-size: 2.75rem;
@@ -71,6 +88,7 @@ const options = [
   position: relative;
   display: inline-block;
 }
+
 .fancy-title::after {
   content: '';
   position: absolute;
@@ -83,6 +101,12 @@ const options = [
   border-radius: 2px;
 }
 
+.section-title {
+  font-weight: 600;
+  color: var(--bs-primary);
+  letter-spacing: 0.02em;
+}
+
 .option-card {
   display: flex;
   align-items: center;
@@ -91,12 +115,10 @@ const options = [
   padding: 1.5rem;
   border-radius: 0.75rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease,
-    border-left-width 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-left-width 0.3s ease;
   cursor: pointer;
 }
+
 .option-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
@@ -111,9 +133,7 @@ const options = [
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.04),
-    0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .option-title {
@@ -121,6 +141,7 @@ const options = [
   font-weight: 500;
   color: #212529;
 }
+
 .option-desc {
   font-size: 0.95rem;
   color: #495057;

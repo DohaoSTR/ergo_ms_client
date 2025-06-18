@@ -5,6 +5,22 @@ import CalendarNavbar from '@/pages/calendar/CalendarMenu.vue'
 import CalendarContent from '@/pages/calendar/CalendarView.vue'
 import CalendarManageEvents from '@/pages/calendar/CalendarEdit.vue'
 
+import { useCalendarStore } from '@/stores/calendarStore.js'
+
+const calendarStore = useCalendarStore()
+
+
+onMounted(async () => {
+  await calendarStore.initialize()
+  await calendarStore.loadTasksFromAPI()
+  await calendarStore.loadProjects()
+
+  if (calendarStore.projects.length > 0) {
+    const firstProjectId = calendarStore.projects[0].id
+    await calendarStore.loadSectionsByProject(firstProjectId)}
+})
+
+
 // Боковое основное меню
 const isCalendarMenuOpen = ref(window.innerWidth >= 992)
 const isOverlayVisible = ref(false)
@@ -17,10 +33,18 @@ const toggleCalendarMenu = () => {
 
 // Переключение видимости меню в зависимости от ширины экрана
 const autoToggleCalendarMenu = () => {
-  if (window.innerWidth >= 992) {
+ const width = window.innerWidth
+
+  if (width > 1300) {
+    // Полный десктопный режим
+    isCalendarMenuOpen.value = true
+    isOverlayVisible.value = false
+  } else if (width > 767 && width <= 1300) {
+    // Средние экраны
     isCalendarMenuOpen.value = true
     isOverlayVisible.value = false
   } else {
+    // Мобильные устройства
     isCalendarMenuOpen.value = false
     isOverlayVisible.value = false
   }

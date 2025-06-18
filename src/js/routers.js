@@ -50,33 +50,30 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to, from, next) => {
-  if (to.meta.requiresAuth) {
-    runCheckToken()
-      .then((isChecked) => {
-        if (isChecked === false) {
-          next({ name: 'StartPage' })
-        } else {
-          next(true)
-        }
-      })
-      .catch((error) => {
-        console.error('Ошибка проверки токена:', error)
-        next({ name: 'StartPage' })
-      })
-  } else {
-    next()
-  }
-})
-
+import { checkAccessToPage, CheckAccessToComponents } from './GroupsPolitics'
 async function runCheckToken() {
   const isChecked = await checkToken()
   return isChecked
 }
-import { checkAccessToPage, CheckAccessToComponents } from './GroupsPolitics'
-export default router
-router.beforeEach((to, from, next) => {
-    checkAccessToPage(to.path)
+
+router.beforeEach(async (to, from, next) => {
+  try {
+    // 1) нужна авторизация?
+    if (to.meta.requiresAuth && !(await runCheckToken())) {
+      return next({ name: 'StartPage' })
+    }
+
+    // 2) page / component ACL (выполняем параллельно)
+    await Promise.all([
+      checkAccessToPage(to.path),
+      CheckAccessToComponents(to.path),
+    ])
+
     next()
-    CheckAccessToComponents(to.path)
+  } catch (err) {
+    console.error('Router guard error:', err)
+    next({ name: 'StartPage' })
+  }
 })
+
+export default router;

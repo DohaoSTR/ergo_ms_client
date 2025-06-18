@@ -41,15 +41,11 @@
               v-model="edit.discourage_search_engines"
               type="checkbox"
               class="form-check-input"
-              :id="'discourage'"
+              id="discourage"
             />
             <label class="form-check-label" for="discourage">
               Запретить индексацию сайта (Discourage Search Engines)
             </label>
-          </div>
-          <div class="mb-4">
-            <label class="form-label">Политика конфиденциальности</label>
-            <textarea v-model="edit.privacy_policy" class="form-control" rows="3"></textarea>
           </div>
           <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
             <button type="submit" class="btn btn-primary btn-lg px-4">Сохранить</button>
@@ -61,12 +57,52 @@
           <div v-if="error" class="alert alert-danger mt-4 text-center fs-5">{{ error }}</div>
         </form>
       </div>
+
+      <div class="card shadow p-4 mt-4">
+        <h4 class="mb-3">Журнал изменений</h4>
+
+        <div v-if="loadingLogs" class="text-center py-3">
+          Загрузка логов…
+        </div>
+        <div v-else-if="logsError" class="alert alert-danger">
+          Ошибка: {{ logsError }}
+        </div>
+        <div v-else-if="!logs.length" class="text-muted">
+          Нет записей в логе.
+        </div>
+        <table v-else class="table table-sm table-striped">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Пользователь</th>
+              <th>Действие</th>
+              <th>Изменения</th>
+              <th>Время</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in logs" :key="item.id">
+              <td>{{ item.id }}</td>
+              <td>{{ item.user || '—' }}</td>
+              <td>{{ item.action }}</td>
+              <td>
+                <ul class="mb-0 ps-3">
+                  <li v-for="(change, field) in item.changes || {}" :key="field">
+                    <strong>{{ field }}:</strong> {{ change[0] }} → {{ change[1] }}
+                  </li>
+                </ul>
+              </td>
+              <td>{{ new Date(item.timestamp).toLocaleString() }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
 
@@ -86,6 +122,31 @@ const error = ref('')
 const original = ref({})
 const settingsId = ref(null)
 
+const logs = ref([])
+const loadingLogs = ref(false)
+const logsError = ref(null)
+
+async function fetchLogs() {
+  if (!settingsId.value) return
+  loadingLogs.value = true
+  logsError.value = null
+  try {
+    const res = await apiClient.get(endpoints.audit, {
+      content_type__model: 'generalsettings',
+      object_id: settingsId.value,
+    })
+    if (res.success) {
+      logs.value = res.data
+    } else {
+      logsError.value = res.message || 'Не удалось получить логи'
+    }
+  } catch (e) {
+    logsError.value = e.message || 'Ошибка сети'
+  } finally {
+    loadingLogs.value = false
+  }
+}
+
 onMounted(async () => {
   try {
     const res = await apiClient.get(endpoints.settings.lastSettings)
@@ -93,11 +154,18 @@ onMounted(async () => {
       Object.assign(edit, res.data)
       original.value = { ...res.data }
       settingsId.value = res.data.id
+      await fetchLogs()
     } else {
       error.value = res.message || 'Не удалось получить настройки'
     }
   } catch (e) {
     error.value = e?.message || 'Ошибка загрузки настроек'
+  }
+})
+
+watch(settingsId, (newId) => {
+  if (newId) {
+    fetchLogs()
   }
 })
 
@@ -111,14 +179,16 @@ async function saveSite() {
     return
   }
   try {
-    // Сохраняем только через PUT, т.к. запись уже есть!
     const putUrl = `${endpoints.settings.generalSettings}${settingsId.value}/`
     const res = await apiClient.put(putUrl, { ...edit })
     if (res.success) {
       message.value = 'Изменения сохранены'
       error.value = ''
       original.value = { ...edit }
-      setTimeout(() => (message.value = ''), 2000)
+      await fetchLogs()
+      setTimeout(() => {
+        message.value = ''
+      }, 2000)
     } else {
       error.value = res.message || 'Ошибка сохранения'
       message.value = ''
@@ -143,6 +213,5 @@ body {
 .card {
   border-radius: 22px;
   border: none;
-  min-height: 520px;
 }
 </style>

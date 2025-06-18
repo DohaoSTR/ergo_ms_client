@@ -80,18 +80,15 @@ class ApiClient {
 
     async patch(endpoint, data = {}, needToken = true) {
         try {
-          const config = {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          };
-          if (needToken) {
-            this._addAuthToken(config);
-          }
-          const response = await this.client.patch(endpoint, data, config);
-          return this.handleResponse(response);
-        } catch (error) {
-          return this.handleError(error);
+            const cfg = {}
+            if (needToken) this._addAuthToken(cfg)
+            if (data instanceof FormData) {
+                cfg.headers = { ...cfg.headers, 'Content-Type': undefined }
+            }
+            const r = await this.client.patch(endpoint, data, cfg)
+            return this.handleResponse(r)
+        } catch (e) {
+            return this.handleError(e)
         }
     }
 
@@ -108,7 +105,7 @@ class ApiClient {
             return this.handleError(error);
         }
     }
-  
+
     async upload(endpoint, formData, needToken = true) {
         try {
             const config = {
@@ -152,10 +149,10 @@ class ApiClient {
     }
 
     logout() {
-        Cookies.remove('token')
-        Cookies.remove('refresh')
+        Cookies.remove('token');
+        Cookies.remove('refresh');
+        Cookies.remove('userId');
     }
-
     // Обработчики ответов
     handleResponse(response) {
         // Успешные статусы: 200 OK, 201 Created, 204 No Content и т.д.
@@ -184,10 +181,10 @@ class ApiClient {
     // Обработчик ошибок
     handleError(error) {
         const errorMessage = error.response?.data?.message ||
-                            error.response?.data?.detail ||
-                            error.response?.data ||
-                            error.message ||
-                            'Ошибка сервера';
+            error.response?.data?.detail ||
+            error.response?.data ||
+            error.message ||
+            'Ошибка сервера';
 
         const status = error.response?.status;
         const statusText = error.response?.statusText;
