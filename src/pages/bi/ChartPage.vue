@@ -234,7 +234,6 @@ async function onChartNameSaved({ name, description }) {
       }
     }
   } catch (err) {
-    // обработка ошибок
   }
   isSaveModalVisible.value = false
 }
@@ -254,24 +253,20 @@ async function fetchChartIfEditing() {
     }
     selectedDataset.value = dsObj
 
-    // Установить тип, движок, параметры чарта
     selectedChartType.value = String(data.chart_type ?? '')
-    console.log('selectedChartType', selectedChartType.value)
     selectedEngine.value = data.engine ?? ''
     selectedFields.value = { ...(data.params ?? {}) }
 
-    // Догрузить строки датасета
     if (dsObj?.id) {
       const { data: rows } = await chartService.getRows(dsObj.id)
       datasetRows.value = rows
     }
-    // Сохраняем оригинал для сравнения
     originalChart.value = {
       name: data.name,
       datasetId: typeof data.dataset === 'object' && data.dataset !== null ? data.dataset.id : data.dataset,
       chart_type: data.chart_type,
       engine: data.engine,
-      params: JSON.parse(JSON.stringify(data.params ?? {})), // глубокая копия!
+      params: JSON.parse(JSON.stringify(data.params ?? {})),
     }
   } finally {
     loading.value = false
@@ -357,7 +352,6 @@ function removeField(field, type) {
 watch(
     () => selectedDataset.value?.id,
     async id => {
-        // Не сбрасываем тип, если в режиме редактирования
         if (!isEditMode.value) {
             selectedChartType.value = ''
             selectedFields.value = {

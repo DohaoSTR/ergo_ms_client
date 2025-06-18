@@ -26,7 +26,7 @@ export const chartSettingsConfig = {
     { key: 'labels', label: 'Подписи', icon: Type, allowedTypes: ['string'] },
     { key: 'filters', label: 'Фильтры', icon: Filter, allowedTypes: ['string', 'number', 'date', 'boolean'] }
   ],
-  donut: [
+  doughnut: [
     { key: 'category', label: 'Категории', icon: Server, allowedTypes: ['string'] },
     { key: 'color', label: 'Цвета', icon: PaintBucket, allowedTypes: ['string', 'number'] },
     { key: 'indicators', label: 'Показатели', icon: ChartPie, allowedTypes: ['number'] },
