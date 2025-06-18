@@ -175,6 +175,10 @@ async function previewTxtLocally(file) {
   errorState.value = null
 
   try {
+    // Проверяем MIME type на всякий случай
+    if (!file.type.startsWith('text/') && !file.name.endsWith('.txt')) {
+      throw new Error('Файл не является текстовым (.txt)')
+    }
     const text = await file.text()
     const lines = text.split(/\r?\n/).filter(line => line.trim() !== '')
     const sep = delimiter.value === '\\t' ? '\t' : delimiter.value
@@ -191,7 +195,7 @@ async function previewTxtLocally(file) {
 
     rawData.value = parsed
   } catch (err) {
-    errorState.value = 'Ошибка чтения файла: ' + err.message
+    errorState.value = 'Ошибка чтения txt-файла: ' + err.message
     rawData.value = []
   } finally {
     isLoading.value = false

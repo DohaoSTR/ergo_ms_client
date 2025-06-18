@@ -213,7 +213,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .menu-item {
   padding: 6px 10px;
   font-size: 0.85rem;
-  color: #e4e4e7;
+  color: var(--color-primary-text);
   cursor: pointer;
   transition: background 0.15s ease;
   line-height: 1.2;

@@ -1,13 +1,13 @@
 <template>
   <div v-if="file">
     <!-- CSV preview -->
-    <CsvPreview v-if="file.file_type === 'csv'" :file="file" :key="`csv-${file.id}`" />
+    <CsvPreview v-if="isCsvFile(file)" :file="file" :key="`csv-${file.id || file.temp_path || file.name}`" />
 
     <!-- XLSX preview -->
     <XlsxPreview v-else-if="isXlsxFile(file)" :file="file" :key="`xlsx-${file.id || file.temp_path || file.name}`"/>
 
     <!-- TXT preview -->
-    <TxtPreview v-else-if="file.file_type === 'txt'" :file="file" :key="`txt-${file.id}`" />
+    <TxtPreview v-else-if="isTxtFile(file)" :file="file" :key="`txt-${file.id || file.temp_path || file.name}`" />
 
     <div v-else class="text-muted p-4">Формат файла не поддерживается для предпросмотра.</div>
   </div>
@@ -23,13 +23,21 @@ const props = defineProps({
 })
 
 function isXlsxFile(file) {
-  if (file.originalFile && (file.originalFile instanceof File || file.originalFile instanceof Blob)) {
-    return true
-  }
-  if (file.file_type === 'xlsx') {
-    return true
-  }
+  if (!file) return false
+  if (file.file_type === 'xlsx') return true
+  if (file.name && file.name.toLowerCase().endsWith('.xlsx')) return true
   return false
+}
+
+function isTxtFile(file) {
+  console.log('Preview type:', props.file?.file_type, props.file?.name)
+  return file.file_type === 'txt' ||
+    (file.name && file.name.toLowerCase().endsWith('.txt'))
+}
+
+function isCsvFile(file) {
+  return file.file_type === 'csv' ||
+    (file.name && file.name.toLowerCase().endsWith('.csv'))
 }
 </script>
   

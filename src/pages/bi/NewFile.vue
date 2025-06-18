@@ -117,8 +117,8 @@ function replaceFile(file) {
 }
 
 function openConnectionDialog() {
-  connectorType.value = 'file'  // тип локальной загрузки
-  connectionConfig.value = { source: 'local_upload' } // фиктивная заглушка
+  connectorType.value = 'file'
+  connectionConfig.value = { source: 'local_upload' }
   showConnectionDialog.value = true
 }
 
@@ -132,18 +132,14 @@ async function createConnection(data) {
     }
     const connRes = await apiClient.post('/bi_analysis/bi_connections/', payload)
     if (!connRes.success || !connRes.data?.id) {
-      console.error('Ошибка создания подключения:', connRes.errors || connRes)
       alert('Не удалось создать подключение')
       return
     }
     const newConnectionId = connRes.data.id
-    console.log(tempUploadedFiles.value)
     await finalizeUploads(newConnectionId)
     alert('Подключение успешно создано и файлы загружены!')
     router.push(`/bi/connections/${newConnectionId}/files/`)
-
   } catch (err) {
-    console.error('Ошибка при создании подключения:', err)
     alert('Произошла ошибка при создании подключения')
   }
 }
