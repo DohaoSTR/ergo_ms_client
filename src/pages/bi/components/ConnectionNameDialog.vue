@@ -1,12 +1,12 @@
 <template>
-  <div v-if="visible" class="modal-overlay">
+  <div v-show="visible" class="modal-overlay">
     <div class="modal-window">
       <div class="modal-header">
-        <h5 class="modal-title">{{ modelValue ? 'Редактирование чарта' : 'Создание чарта' }}</h5>
+        <h5 class="modal-title">Название подключения</h5>
         <button class="close-btn" @click="cancel">×</button>
       </div>
-      <input v-model="localName" class="form-control my-3" placeholder="Введите название"/>
-      <textarea v-model="localDescription" class="form-control my-2" placeholder="Описание (необязательно)"/>
+
+      <input v-model="localName" class="form-control my-3" placeholder="Введите название" @keyup.enter="submit" />
       <div class="modal-footer">
         <button class="btn btn-secondary" @click="cancel">Отмена</button>
         <button class="btn btn-primary" @click="submit" :disabled="!localName">
@@ -20,25 +20,67 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-const props = defineProps({ visible: Boolean, modelValue: String, description: String })
+import { apiClient } from '@/js/api/manager'
+import { endpoints } from '@/js/api/endpoints'
+
+const props = defineProps({
+  visible: Boolean,
+  modelValue: String,
+  connectorType: String,
+  connectionConfig: Object,
+  connectionFiles: {
+    type: Array,
+    default: () => []
+  }
+})
+
 const emit = defineEmits(['update:visible', 'saved'])
 
 const localName = ref(props.modelValue || '')
-const localDescription = ref(props.description || '')
 const error = ref('')
 
-watch(() => props.modelValue, newVal => { localName.value = newVal || '' })
-watch(() => props.description, newVal => { localDescription.value = newVal || '' })
+watch(() => props.modelValue, (newVal) => {
+  localName.value = newVal || ''
+})
 
-function submit() {
+function extractErrorMessage(err) {
+  if (err.response && err.response.data) {
+    const data = err.response.data
+    if (typeof data === 'object') {
+      return Object.values(data).flat().join(', ') || 'Неизвестная ошибка'
+    }
+    return String(data)
+  }
+  return err.message || 'Неизвестная ошибка'
+}
+
+async function submit() {
   if (!localName.value) return
-  emit('saved', { name: localName.value, description: localDescription.value })
+
+  error.value = ''
+
+  try {
+    const isFileConnection = props.connectorType === undefined
+
+    emit('saved', {
+      name: localName.value,
+      connector_type: isFileConnection ? 'file' : props.connectorType,
+      config: isFileConnection ? { source: 'local_upload' } : (props.connectionConfig || {})
+    })
+    emit('update:visible', false)
+
+  } catch (err) {
+    console.error('Ошибка при сохранении подключения:', err.response?.data || err)
+    error.value = 'Не удалось сохранить подключение'
+  }
+}
+
+function cancel() {
   emit('update:visible', false)
 }
-function cancel() { emit('update:visible', false) }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .modal-overlay {
   position: fixed;
   inset: 0;
