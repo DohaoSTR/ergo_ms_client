@@ -14,6 +14,8 @@ export const authService = {
         if (response.success) {
             Cookies.set('token', response.data.access, { expires: thirtyMinutesInDays });
             Cookies.set('refresh', response.data.refresh, { expires: thirtyMinutesInDays });
+            Cookies.set('userId', response.data.user_id, { expires: thirtyMinutesInDays }); 
+
         }
         
         return response;
@@ -64,5 +66,6 @@ export const authService = {
     logout() {
         Cookies.remove('token');
         Cookies.remove('refresh');
+        Cookies.remove('userId'); 
     }
 }; 

@@ -1,6 +1,6 @@
 <template>
     <!-- Сообщение об ошибках -->
-    <div v-if="errors.length && mode === 'edit'" class="alert alert-danger">
+    <div v-if="(errors.length>0  & submitted)" class="alert alert-danger">
       <strong>Исправьте ошибки:</strong>
       <ul>
         <li v-for="(error, i) in errors" :key="i">{{ error }}</li>
@@ -84,6 +84,7 @@ const props = defineProps({
 
 // Data
 const mode = ref('edit')
+const submitted = ref(false)
 const test = ref({
   title: '',
   skill: '',
@@ -150,13 +151,18 @@ function validate() {
 }
 
 async function saveTest() {
-  if (!validate()) return
+  if (!validate()) {
+    submitted.value = true
+    return
+  }
 
   try {
+    submitted.value = true
     let url = `${endpoints.expert_system.updateTest}/${props.id}/`
     console.log(url) 
     await apiClient.patch(url, test.value)
     router.push({ name: 'AllTests' }) // Redirect after saving
+    submitted.value = false
   } catch (err) {
     console.error('Failed to update test', err)
     errors.value.push('Не удалось сохранить изменения. Пожалуйста, попробуйте снова.')

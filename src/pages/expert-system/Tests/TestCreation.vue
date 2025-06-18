@@ -2,7 +2,7 @@
     <div class="container mt-5">
       <h2 class="mb-4">Создание нового теста</h2>
   
-      <div v-if="errors.length & submitted" class="alert alert-danger">
+      <div v-if="(errors.length>0) & submitted" class="alert alert-danger">
         <strong>Исправьте ошибки:</strong>
         <ul>
           <li v-for="(error, i) in errors" :key="i">{{ error }}</li>
@@ -140,7 +140,6 @@ const submitted = ref(false)
           errors.value.push(`Вопрос ${i + 1} должен иметь хотя бы один правильный ответ`)
       })
     }
-  
     return errors.value.length === 0
   }
   
