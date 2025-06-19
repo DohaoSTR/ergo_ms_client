@@ -1,29 +1,4 @@
-<!--
-  КОМПОНЕНТ СПИСКА БОКОВОГО МЕНЮ
-  
-  Основной компонент для отображения и управления боковым меню приложения.
-  Обрабатывает всю логику взаимодействия с меню, включая навигацию,
-  состояния секций и интеграцию с системой прав доступа.
-  
-  Основные возможности:
-  - Отображение секций меню из menu-sections.js
-  - Сворачивание/разворачивание меню с анимацией
-  - Hover-эффекты для свернутого состояния
-  - Автоматическое определение активной секции по текущему маршруту
-  - Интеграция с системой прав доступа (GroupsPolitics)
-  - Поддержка специальных действий (offcanvas для BI модуля)
-  - Адаптивность и поддержка скрытия на мобильных устройствах
-  
-  Системы прав:
-  - CheckAccessToAdminPanel: проверка доступа к админ-панели
-  - GetClosedPagesForUser: получение списка закрытых для пользователя страниц
-  - Динамическое скрытие недоступных секций и пунктов меню
-  
-  События:
-  - left-padding: изменение отступа основного контента
-  - open-sidebar: открытие боковой панели для BI модуля
-  - reset-page: сброс текущей страницы
--->
+
 
 <script setup>
 import { apiClient } from '@/js/api/manager'
@@ -34,7 +9,8 @@ import { ChevronLeft, Cog, Minus } from 'lucide-vue-next'
 import {
   allMenuSections,
   getSeparator,
-  AdminPanelMenuSection,
+  shouldShowSeparator,
+  AdminPanelMenuSection
 } from '@/js/menu-sections.js'
 
 import MenuGroup from '@/components/menu/MenuGroup.vue'
@@ -75,7 +51,7 @@ const handleMouseLeave = () => {
 }
 
 const route = useRoute()
-const openGroupId = ref(null)
+const openGroupRouteName = ref(null)
 const preventAutoOpen = ref(false)
 
 watch(
@@ -87,7 +63,7 @@ watch(
     }
     for (let i of menuSections.value) {
       if (i.routeName === newMatched[0].name) {
-        openGroupId.value = i.id
+        openGroupRouteName.value = i.routeName
       }
     }
   },
@@ -131,13 +107,13 @@ onMounted(async()=>{
 }
 )
 
-const toggleGroup = (id) => {
-  if (openGroupId.value === id) {
+const toggleGroup = (routeName) => {
+  if (openGroupRouteName.value === routeName) {
     // Если закрываем группу, устанавливаем флаг для предотвращения автоматического открытия
     preventAutoOpen.value = true
-    openGroupId.value = null
+    openGroupRouteName.value = null
   } else {
-    openGroupId.value = id
+    openGroupRouteName.value = routeName
   }
 }
 
@@ -168,6 +144,10 @@ const separators = (index) => {
   return getSeparator(index)
 }
 
+const hasSeparator = (index) => {
+  return shouldShowSeparator(index)
+}
+
 const siteName = ref('...')
 
 onMounted(async () => {
@@ -178,6 +158,8 @@ onMounted(async () => {
   } else {
     siteName.value = 'ERGO MS'
   }
+  
+
 })
 
 </script>
@@ -207,23 +189,25 @@ onMounted(async () => {
     <div class="side-header__shadow" style="display: block"></div>
     <PerfectScrollbar :tag="'ul'" class="side-menu__list p-3" :class="{ short: !isHovering }">
       <li v-for="(section, index) in menuSections" :key="index">
-        <MenuGroup
-          :is-hovering="isHovering"
-          :is-collapsed="!isCollapsed"
-          :is-open="openGroupId === section.id"
-          :data="section"
-          :current-page="props.currentPage"
-          @toggle="toggleGroup(section.id)"
-          @action="handleAction"
-          @navigate="handleNavigate"
-          @reset-page="resetCurrentPage"
-        />
-        <div v-if="[1].includes(index)" class="side-menu__divider side-divider py-3">
+        <!-- Сепаратор перед секцией -->
+        <div v-if="hasSeparator(index)" class="side-menu__divider side-divider py-3">
           <div class="side-divider__icon"><Minus :size="20" /></div>
           <div class="side-divider__name text-smooth-animation" :class="{ hidden: !isHovering }">
             {{ separators(index) }}
           </div>
         </div>
+        
+        <MenuGroup
+          :is-hovering="isHovering"
+          :is-collapsed="!isCollapsed"
+          :is-open="openGroupRouteName === section.routeName"
+          :data="section"
+          :current-page="props.currentPage"
+          @toggle="toggleGroup(section.routeName)"
+          @action="handleAction"
+          @navigate="handleNavigate"
+          @reset-page="resetCurrentPage"
+        />
       </li>
     </PerfectScrollbar>
   </aside>

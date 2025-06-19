@@ -250,6 +250,104 @@ export function generateAllRoutes() {
 }
 
 /**
+ * ФУНКЦИИ ДЛЯ РАБОТЫ С АДАПТИВНЫМИ SEPARATORS
+ */
+
+/**
+ * Генерирует адаптивные separators на основе текущих элементов меню
+ * @returns {Object} - объект с позициями separators
+ */
+export function generateAdaptiveSeparators() {
+  const separators = {}
+  const menuSections = menuConfig.menuSections
+  
+  // Обрабатываем каждый раздел и ищем места для separators
+  for (let i = 0; i < menuSections.length; i++) {
+    const section = menuSections[i]
+    
+    // Проверяем, есть ли separator для данной позиции в конфигурации
+    if (menuConfig.separators) {
+      // Ищем separator по индексу в массиве
+      const separatorByIndex = Object.keys(menuConfig.separators).find(key => {
+        return parseInt(key) === i
+      })
+      
+      if (separatorByIndex) {
+        separators[i] = menuConfig.separators[separatorByIndex]
+        continue
+      }
+      
+      // Ищем separator по id элемента
+      const separatorById = menuConfig.separators[section.id.toString()]
+      if (separatorById) {
+        separators[i] = separatorById
+        continue
+      }
+      
+      // Ищем separator по имени роута
+      const separatorByRoute = Object.keys(menuConfig.separators).find(key => {
+        return key === section.routeName
+      })
+      
+      if (separatorByRoute) {
+        separators[i] = menuConfig.separators[separatorByRoute]
+      }
+    }
+  }
+  
+  return separators
+}
+
+/**
+ * Получает позицию separator для указанного индекса
+ * @param {number} index - индекс элемента меню
+ * @returns {string|null} - название separator или null
+ */
+export function getSeparatorByIndex(index) {
+  const separators = generateAdaptiveSeparators()
+  return separators[index] || null
+}
+
+/**
+ * Проверяет, должен ли отображаться separator перед указанным элементом
+ * @param {number} index - индекс элемента меню
+ * @returns {boolean} - должен ли отображаться separator
+ */
+export function shouldShowSeparator(index) {
+  return getSeparatorByIndex(index) !== null
+}
+
+/**
+ * Получает структуру меню с информацией о separators
+ * @returns {Object} - объект с массивом элементов меню и информацией о separators
+ */
+export function getMenuWithSeparators() {
+  const menuSections = menuConfig.menuSections
+  const separators = generateAdaptiveSeparators()
+  
+  return {
+    sections: menuSections,
+    separators: separators,
+    getSeparatorAt: (index) => separators[index] || null,
+    hasSeparatorAt: (index) => separators.hasOwnProperty(index)
+  }
+}
+
+/**
+ * Обновляет конфигурацию separators новыми значениями
+ * @param {Object} newSeparators - новая конфигурация separators
+ * @returns {Object} - обновленная конфигурация меню
+ */
+export function updateSeparatorsConfig(newSeparators) {
+  // Примечание: эта функция возвращает обновленную конфигурацию
+  // Для применения изменений нужно сохранить файл menu-config.json
+  return {
+    ...menuConfig,
+    separators: newSeparators
+  }
+}
+
+/**
  * Дополнительные служебные функции для работы с маршрутами
  */
 

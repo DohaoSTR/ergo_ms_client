@@ -1,7 +1,6 @@
 {
   "menuSections": [
     {
-      "id": 1,
       "icon": "CircleUserRound",
       "routeName": "User",
       "title": "Аккаунт",
@@ -83,7 +82,6 @@
       ]
     },
     {
-      "id": 2,
       "icon": "UserCog",
       "routeName": "Settings",
       "title": "Настройки",
@@ -132,7 +130,6 @@
       ]
     },
     {
-      "id": 3,
       "icon": "AtSign",
       "routeName": "Email",
       "title": "Электронная почта",
@@ -145,7 +142,6 @@
       }
     },
     {
-      "id": 4,
       "icon": "MessagesSquare",
       "routeName": "Messenger",
       "title": "Мессенджер",
@@ -158,7 +154,6 @@
       }
     },
     {
-      "id": 5,
       "icon": "Map",
       "routeName": "Maps",
       "title": "Карты",
@@ -172,7 +167,6 @@
       }
     },
     {
-      "id": 6,
       "icon": "Calendar",
       "routeName": "Calendar",
       "title": "Календарь",
@@ -185,8 +179,7 @@
         }
       }
     },
-    {
-      "id": 7,
+        {
       "icon": "Grid2x2",
       "routeName": "Kanban",
       "title": "Канбан-доска",
@@ -199,15 +192,14 @@
         }
       }
     },
-    {
-      "id": 8,
+        {
       "icon": "KeySquare",
       "routeName": "AdminPanel",
       "title": "Админ-панель",
       "route": {
         "path": "/AdminPanel",
         "component": "@/pages/AdminPanel/ParentLayout.vue",
-        "redirect": "GroupsPanel",
+        "redirect": "UsersPanel",
         "meta": {
           "title": "Админ-панель",
           "requiresAuth": true
@@ -215,8 +207,20 @@
       },
       "list": [
         { 
+          "path": "UsersPanel", 
+          "name": "Пользователи",
+          "route": {
+            "path": "UsersPanel",
+            "component": "@/pages/AdminPanel/Users.vue",
+            "meta": {
+              "title": "Панель пользователей",
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
           "path": "CategoriesPanel", 
-          "name": "Настройка категорий",
+          "name": "Категории",
           "route": {
             "path": "CategoriesPanel",
             "component": "@/pages/AdminPanel/Categories.vue",
@@ -228,7 +232,7 @@
         },
         { 
           "path": "GroupsPanel", 
-          "name": "Настройка групп",
+          "name": "Группы",
           "route": {
             "path": "GroupsPanel",
             "component": "@/pages/AdminPanel/Groups.vue",
@@ -240,7 +244,7 @@
         },
         { 
           "path": "PermissionsPanel", 
-          "name": "Настройка прав",
+          "name": "Права",
           "route": {
             "path": "PermissionsPanel",
             "component": "@/pages/AdminPanel/Permissions.vue",
@@ -251,20 +255,8 @@
           }
         },
         { 
-          "path": "UsersPanel", 
-          "name": "Настройка пользователей",
-          "route": {
-            "path": "UsersPanel",
-            "component": "@/pages/AdminPanel/Users.vue",
-            "meta": {
-              "title": "Панель пользователей",
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
           "path": "LiminationPanel", 
-          "name": "Настройка ограничений",
+          "name": "Ограничения",
           "route": {
             "path": "LiminationsPanel",
             "component": "@/pages/AdminPanel/limitationSettings.vue",
@@ -276,8 +268,7 @@
         }
       ]
     },
-    {
-      "id": 9,
+        {
       "icon": "Video",
       "routeName": "Watermarked-Video",
       "title": "Видео с вотермаркой",
@@ -289,8 +280,7 @@
         }
       }
     },
-    {
-      "id": 10,
+        {
       "icon": "ChartSpline",
       "routeName": "BI",
       "title": "BI",
@@ -320,7 +310,7 @@
       ]
     },
     {
-      "id": 11,
+
       "icon": "Braces",
       "routeName": "Shortcodes",
       "title": "Редактор страниц",
@@ -373,7 +363,7 @@
       ]
     },
     {
-      "id": 12,
+
       "icon": "ChartCandlestick",
       "routeName": "EducationAnalyticModule",
       "title": "Учебная аналитика",
@@ -473,7 +463,7 @@
       ]
     },
     {
-      "id": 13,
+
       "icon": "ChartBarStacked",
       "routeName": "ExpertSystem",
       "title": "Анализ вакансий",
@@ -621,7 +611,7 @@
       ]
     },
     {
-      "id": 14,
+
       "icon": "Code2",
       "routeName": "AssetsAnalyse",
       "title": "Анализ курсов активов",
@@ -634,7 +624,7 @@
       }
     },
     {
-      "id": 15,
+
       "icon": "Files",
       "routeName": "Files",
       "title": "Файлы",
@@ -662,7 +652,7 @@
       ]
     },
     {
-      "id": 16,
+
       "icon": "Layers",
       "routeName": "Categories",
       "title": "Категории страниц",
@@ -712,9 +702,144 @@
           }
         }
       ]
+    },
+    {
+      "icon": "GraduationCap",
+      "routeName": "LMS",
+      "title": "LMS",
+      "route": {
+        "path": "/LMS",
+        "component": "@/pages/LMS/ParentLayout.vue",
+        "redirect": "LMSSubjects",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        {
+          "path": "LMSSubjects",
+          "name": "Предметы",
+          "route": {
+            "path": "lms_subjects",
+            "component": "@/pages/LMS/Lesson/SubjectsLMS.vue",
+            "meta": {
+              "title": "Предметы",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "ForStudent",
+          "name": "Для студента",
+          "route": {
+            "path": "forStudent",
+            "component": "@/pages/LMS/ForStudent/ForStudentLMS.vue",
+            "meta": {
+              "title": "Статистика",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "ForTheacher",
+          "name": "Для преподавателя",
+          "route": {
+            "path": "forTheacher",
+            "component": "@/pages/LMS/ForTheacher/ForTheacherLMS.vue",
+            "meta": {
+              "title": "Для преподавателя",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "Lesson",
+          "name": "Уроки",
+          "route": {
+            "path": "lesson",
+            "component": "@/pages/LMS/Lesson/LessonLMS.vue",
+            "meta": {
+              "title": "Уроки",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "CreateLesson",
+          "name": "Создание урока",
+          "route": {
+            "path": "createLesson",
+            "component": "@/pages/LMS/ForTheacher/CreateLessonLMS.vue",
+            "meta": {
+              "title": "Создание урока",
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "icon": "Brain",
+      "routeName": "Expsys",
+      "title": "Экспертная система",
+      "route": {
+        "path": "/expsys",
+        "component": "@/pages/expsys/ParentLayout.vue",
+        "redirect": "CRMSubjects",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        {
+          "path": "CRMSubjects",
+          "name": "Предметы",
+          "route": {
+            "path": "crm_subjects",
+            "component": "@/pages/expsys/SubjectsManager.vue",
+            "meta": {
+              "title": "Предметы",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "Indicators",
+          "name": "Индикаторы",
+          "route": {
+            "path": "indicators",
+            "component": "@/pages/expsys/IndicatorsManager.vue",
+            "meta": {
+              "title": "Индикаторы",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "Competencies",
+          "name": "Компетенции",
+          "route": {
+            "path": "competencies",
+            "component": "@/pages/expsys/CompetenceManager.vue",
+            "meta": {
+              "title": "Компетенции",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "Vectors",
+          "name": "Вектор развития",
+          "route": {
+            "path": "vectors",
+            "component": "@/pages/expsys/VektorDevelopment.vue",
+            "meta": {
+              "title": "Вектор развития",
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
     }
-  ],
-  "separators": {
-    "1": "Модули"
-  }
+  ]
 } 

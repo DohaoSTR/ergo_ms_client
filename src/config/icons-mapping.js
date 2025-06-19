@@ -34,6 +34,15 @@ import {
   Video,
   Files,
   Layers,
+  GraduationCap,
+  Brain,
+  Users,
+  BarChart3,
+  Table,
+  FileText,
+  Square,
+  Puzzle,
+  CreditCard,
 } from 'lucide-vue-next'
 
 /**
@@ -65,6 +74,15 @@ export const iconMapping = {
   Video,
   Files,
   Layers,
+  GraduationCap,
+  Brain,
+  Users,
+  BarChart3,
+  Table,
+  FileText,
+  Square,
+  Puzzle,
+  CreditCard,
 }
 
 /**
