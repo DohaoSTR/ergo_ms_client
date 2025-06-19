@@ -30,7 +30,7 @@ const isMenuToggledManually = ref(false)
 const isOverlayVisible = ref(false)
 
 const isDatasetSidebarOpen = ref(false)
-const currentSidebarPage = ref('datasets')
+const currentSidebarPage = ref('')
 
 function updateMenuVisibility() {
   if (window.innerWidth >= 1200) {
@@ -60,12 +60,13 @@ function leftToggle(val) {
 }
 
 function openSidebarWithPage(pageName) {
-  currentSidebarPage.value = pageName
+  currentSidebarPage.value = pageName || 'datasets'
   isDatasetSidebarOpen.value = true
 }
 
 function closeSidebar() {
   isDatasetSidebarOpen.value = false
+  currentSidebarPage.value = ''
 }
 
 onMounted(() => {

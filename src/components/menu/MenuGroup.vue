@@ -64,10 +64,96 @@ const isCurrentGroupPage = computed(() => {
       if (item.path && route.name === item.path) {
         return true
       }
+      
       // Для BI offcanvas страниц
       if (item.isOffcanvas && item.page === props.currentPage) {
         return true
       }
+      
+      // Для BI элементов с подвкладками (только с разделителями)
+      if (item.isOffcanvas && item.page && props.currentPage && item.page.length > 2) {
+        if (props.currentPage.startsWith(item.page + '-') || 
+            props.currentPage.startsWith(item.page + '_') || 
+            props.currentPage.startsWith(item.page + '.')) {
+          return true
+        }
+      }
+      
+      // Для BI элементов с page без isOffcanvas флага
+      if (item.page && !item.isOffcanvas && item.page === props.currentPage) {
+        return true
+      }
+      
+      // Дополнительная проверка для BI элементов с иерархией подвкладок
+      // Только если currentPage начинается с itemPage и есть разделитель (более строгая проверка)
+      if (item.page && props.currentPage && item.page.length > 2) {
+        const itemPage = item.page.toLowerCase()
+        const currentPage = props.currentPage.toLowerCase()
+        
+        // Проверяем только если currentPage начинается с itemPage + разделитель
+        if (currentPage.startsWith(itemPage + '-') || currentPage.startsWith(itemPage + '_') || 
+            currentPage.startsWith(itemPage + '.')) {
+          return true
+        }
+      }
+      
+      return false
+    })
+  }
+  
+  return false
+})
+
+// Новый computed для выделения основного элемента меню
+const shouldHighlightMainItem = computed(() => {
+  // Выделяем если пользователь находится на основной странице группы
+  if (route.name === props.data.routeName) {
+    return true
+  }
+  
+  // Выделяем если пользователь находится на любой подстранице этой группы
+  if (props.data.list) {
+    return props.data.list.some(item => {
+      // Для обычных Vue страниц
+      if (item.path && route.name === item.path) {
+        return true
+      }
+      
+      // Для BI offcanvas страниц
+      if (item.isOffcanvas && item.page === props.currentPage) {
+        return true
+      }
+      
+      // Для BI элементов с подвкладками (только с разделителями)
+      if (item.isOffcanvas && item.page && props.currentPage && item.page.length > 2) {
+        const basePage = item.page
+        const currentPage = props.currentPage
+        // Проверяем если текущая страница является подвкладкой данной BI вкладки
+        if (currentPage.startsWith(basePage + '-') || 
+            currentPage.startsWith(basePage + '_') || 
+            currentPage.startsWith(basePage + '.')) {
+          return true
+        }
+      }
+      
+      // Для BI элементов с page без isOffcanvas флага
+      if (item.page && !item.isOffcanvas && item.page === props.currentPage) {
+        return true
+      }
+      
+      // Дополнительная проверка для BI элементов с иерархией подвкладок
+      // Только если currentPage начинается с itemPage и есть разделитель (более строгая проверка)
+      if (item.page && props.currentPage && item.page.length > 2) {
+        const itemPage = item.page.toLowerCase()
+        const currentPage = props.currentPage.toLowerCase()
+        
+        // Проверяем только если currentPage начинается с itemPage + разделитель
+        if (currentPage.startsWith(itemPage + '-') || currentPage.startsWith(itemPage + '_') || 
+            currentPage.startsWith(itemPage + '.')) {
+          return true
+        }
+      }
+      
       return false
     })
   }
@@ -111,7 +197,7 @@ function routeClick(event) {
   <li class="side-menu__group side-group">
     <div
       class="side-title nav-btn"
-      :class="{ 'side-title--active': isCurrentRoute }"
+      :class="{ 'side-title--active': shouldHighlightMainItem }"
       @click="routeClick($event)"
     >
       <div class="side-title__label">
@@ -143,7 +229,14 @@ function routeClick(event) {
           <a
             href="#"
             class="side-subtitle nav-btn"
-            :class="{ 'side-subtitle--active': item.page === currentPage }"
+            :class="{ 
+              'side-subtitle--active': item.page === currentPage || 
+                                     (item.page && currentPage && item.page.length > 2 && (
+                                       currentPage.startsWith(item.page + '-') ||
+                                       currentPage.startsWith(item.page + '_') ||
+                                       currentPage.startsWith(item.page + '.')
+                                     ))
+            }"
             @click.prevent="emitNavigate(item)"
           >
             <div class="side-subtitle__label">
@@ -160,26 +253,57 @@ function routeClick(event) {
           </a>
         </template>
 
-        <!-- 🔶 Обычные Vue страницы -->
+        <!-- 🔶 Обычные Vue страницы и BI элементы без isOffcanvas -->
         <template v-else>
-          <RouterLink
-            :to="{ name: item.path }"
-            class="side-subtitle nav-btn"
-            active-class="side-subtitle--active"
-            exact-active-class="side-subtitle--exact-active"
-          >
-            <div class="side-subtitle__label">
-              <div class="nav-icon icon-flex"><Dot :size="20" /></div>
-              <div
-                v-if="showFull"
-                class="d-inline-block text-truncate side-subtitle__name"
-                style="max-width: 9.375rem"
-                :title="item.name"
-              >
-                {{ item.name }}
+          <!-- Если это BI элемент с page (без isOffcanvas) -->
+          <template v-if="item.page">
+            <a
+              href="#"
+              class="side-subtitle nav-btn"
+              :class="{ 
+                'side-subtitle--active': item.page === currentPage || 
+                                       (item.page && currentPage && item.page.length > 2 && (
+                                         currentPage.startsWith(item.page + '-') ||
+                                         currentPage.startsWith(item.page + '_') ||
+                                         currentPage.startsWith(item.page + '.')
+                                       ))
+              }"
+              @click.prevent="emitNavigate(item)"
+            >
+              <div class="side-subtitle__label">
+                <div class="nav-icon icon-flex"><Dot :size="20" /></div>
+                <div
+                  v-if="showFull"
+                  class="d-inline-block text-truncate side-subtitle__name"
+                  style="max-width: 9.375rem"
+                  :title="item.name"
+                >
+                  {{ item.name }}
+                </div>
               </div>
-            </div>
-          </RouterLink>
+            </a>
+          </template>
+          <!-- Обычные Vue страницы -->
+          <template v-else>
+            <RouterLink
+              :to="{ name: item.path }"
+              class="side-subtitle nav-btn"
+              active-class="side-subtitle--active"
+              exact-active-class="side-subtitle--exact-active"
+            >
+              <div class="side-subtitle__label">
+                <div class="nav-icon icon-flex"><Dot :size="20" /></div>
+                <div
+                  v-if="showFull"
+                  class="d-inline-block text-truncate side-subtitle__name"
+                  style="max-width: 9.375rem"
+                  :title="item.name"
+                >
+                  {{ item.name }}
+                </div>
+              </div>
+            </RouterLink>
+          </template>
         </template>
       </li>
     </ul>
