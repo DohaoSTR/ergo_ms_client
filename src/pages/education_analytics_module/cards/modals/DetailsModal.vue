@@ -196,6 +196,7 @@ async function fetchAndStartEdit() {
       }
     }
 
+    console.log(`Запрашиваем данные по URL для ID=${recordId}:`, endpoint);
     const response = await apiClient.get(endpoint);
 
     // Получаем данные из ответа сервера, но всегда используем исходный ID
@@ -238,6 +239,7 @@ async function fetchAndStartEdit() {
       fetchedData = { ...props.selectedRow };
     }
 
+    console.log('Получены данные для редактирования, устанавливаем ID =', recordId);
 
     // Сохраняем оригинальные данные для возможности отката
     originalData.value = fetchedData;
@@ -287,6 +289,7 @@ async function fetchAndRefresh() {
       }
     }
 
+    console.log(`Обновление данных по URL для ID=${recordId}:`, endpoint);
     const response = await apiClient.get(endpoint);
 
     // Получаем данные из ответа сервера, но всегда используем исходный ID
@@ -343,6 +346,7 @@ async function fetchAndRefresh() {
       }, 2000);
     }
 
+    console.log('Данные успешно обновлены');
   } catch (error) {
     console.error('Ошибка при обновлении данных:', error);
 
@@ -425,6 +429,7 @@ function determineRecordType(record) {
                           'baseDisciplines', 'base_disciplines', 'disciplines',
                           'vacancies', 'employers', 'acms', 'vcms', 'ucms'];
       if (knownTypes.includes(part)) {
+        console.log(`Определен тип записи по пути API: ${part}`);
         return part === 'base_disciplines' ? 'baseDisciplines' : part;
       }
     }
@@ -503,6 +508,7 @@ function startEdit(data = null) {
 
   // Форматируем JSON для отображения в редакторе
   jsonEditValue.value = JSON.stringify(editData, null, 2);
+  console.log(`Данные установлены в редактор для записи с ID=${originalId}`);
 
   // Обновляем локальный буфер (без ID)
   localEditBuffer.value = { ...editData };
@@ -562,6 +568,7 @@ async function saveChanges() {
       delete updatedData.id;
     }
 
+    console.log('Данные для сохранения:', updatedData);
 
     emit('save', updatedData);
   } catch (error) {
@@ -597,6 +604,7 @@ function formatJsonField(value) {
  * Жизненный цикл компонента
  */
 onMounted(() => {
+  console.log('DetailsModal смонтирован, isEditing =', props.isEditing);
 
   // При монтировании компонента, если мы находимся в режиме редактирования, запускаем редактирование
   if (props.isEditing) {
@@ -606,6 +614,7 @@ onMounted(() => {
 
 // Отслеживаем изменения в режиме редактирования
 watch(() => props.isEditing, (newValue) => {
+  console.log('Изменение режима редактирования:', newValue);
   if (newValue === true) {
     fetchAndStartEdit();
   }
@@ -613,6 +622,7 @@ watch(() => props.isEditing, (newValue) => {
 
 // Отслеживаем изменения в выбранной записи
 watch(() => props.selectedRow, (newValue) => {
+  console.log('Изменение выбранной записи:', newValue);
   if (props.isEditing && newValue && Object.keys(newValue).length > 0) {
     // Если выбрана новая запись и мы в режиме редактирования, запускаем редактирование
     fetchAndStartEdit();

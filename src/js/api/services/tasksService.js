@@ -482,6 +482,7 @@ const updatesTask = async (taskId, updatedData) => {
       endpoints.crm.tasks.assignee_task.replace('{id}', taskId)
     );
 
+    console.log('Task Assignee API Response:', response.data);
     
     if (response.data && response.data.success && response.data.assignee) {
       return {

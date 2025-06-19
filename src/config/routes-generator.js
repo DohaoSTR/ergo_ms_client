@@ -116,6 +116,7 @@ export function generateRoutesFromConfig() {
       .map(transformMenuSection)
       .filter(route => route !== null) // Убираем невалидные маршруты
 
+    console.log(`✅ Сгенерировано ${routes.length} маршрутов из JSON конфигурации`)
     return routes
   } catch (error) {
     console.error('❌ Ошибка генерации маршрутов из конфигурации:', error)

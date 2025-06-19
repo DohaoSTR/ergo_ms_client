@@ -46,6 +46,7 @@ const fetchTaskStatus = async () => {
         }
 
         if (failedToLoadImages.value) {
+            console.log('Failed to load images. Need to delete task.')
         }
     } catch (err) {
         console.error('Error fetching task status:', err);
@@ -71,6 +72,7 @@ const fetchResultImages = async () => {
     }
 
     if (!taskData.value.result.kde_plots_ids && !taskData.value.result.masks_ids) {
+        console.log('Has no results, needs deletion');
     }
 };
 

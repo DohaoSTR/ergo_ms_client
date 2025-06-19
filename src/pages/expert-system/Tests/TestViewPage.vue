@@ -159,6 +159,7 @@ async function saveTest() {
   try {
     submitted.value = true
     let url = `${endpoints.expert_system.updateTest}/${props.id}/`
+    console.log(url) 
     await apiClient.patch(url, test.value)
     router.push({ name: 'AllTests' }) // Redirect after saving
     submitted.value = false

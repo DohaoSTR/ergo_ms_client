@@ -121,6 +121,7 @@ function submitLesson() {
     files: fileList.value,
     questions: questions.value
   }
+  console.log('Данные отправлены:', lessonData)
   alert('Урок с тестированием создан')
 }
 

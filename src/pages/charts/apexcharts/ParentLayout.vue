@@ -34,6 +34,7 @@ onUnmounted(() => {
   if (observer) observer.disconnect()
 })
 
+console.log(currentTheme.value)
 </script>
 
 <template>

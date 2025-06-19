@@ -128,6 +128,7 @@ const handleSubmit = async () => {
 
   }
 
+  console.log('Отправляемая задача:', taskData)
   try {
     // Создаём задачу через API
     const createdTask = await calendarStore.createCalendarTask(taskData)
@@ -179,7 +180,9 @@ const deleteEvent = (eventId) => {
   calendarStore.deleteEvent(eventId)
   calendarStore.cleanSelectedEvent()
 }
+console.log('formData.id:', formData.id)
 
+console.log('Событие в хранилище:', calendarStore.events.find(e => e.id === formData.id))
 </script>
 
 <template>

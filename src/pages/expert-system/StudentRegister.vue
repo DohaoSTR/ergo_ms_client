@@ -178,6 +178,7 @@ export default {
             : Object.values(resp.errors).flat().join(' ')
           throw new Error(msg)
         }
+        console.log(this.form.has_experience)
         if(this.form.has_experience){
           this.$router.push({ name: 'Addstudentskills' })
         }

@@ -33,6 +33,7 @@ const changingrow = (row)=>{
       permissions: row.permissions,
   }
   } catch (error) {
+    console.log(error)
   }
 }
 watch(() => props.rows, (newRows) => {

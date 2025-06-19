@@ -188,6 +188,7 @@ export const createSubject = async (subjectData) => {
             subjectData
         );
 
+        console.log('Response from server:', response);
 
         if (response.success) {
             return response.data;
@@ -220,6 +221,7 @@ export const createCompetence = async (competenceData) => {
             competenceData
         );
 
+        console.log('Response from server:', response);
 
         if (response.success) {
             return response.data;
@@ -252,6 +254,7 @@ export const createIndicator = async (indicatorData) => {
             indicatorData
         );
 
+        console.log('Response from server:', response);
 
         if (response.success) {
             return response.data;

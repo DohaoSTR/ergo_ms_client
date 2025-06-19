@@ -575,6 +575,7 @@ async function saveAddJson() {
   isAdding.value = true;
   try {
     const resp = await apiClient.post(api.create, payload);
+    console.log('Ответ сервера:', resp.data); // Для отладки
 
     // Проверяем наличие ответа
     if (!resp) {
@@ -811,6 +812,7 @@ async function fetchRecordDetails(id, api) {
       ? api.get(id)
       : `${api.get}?id=${id}`;
 
+    console.log(`Загрузка деталей записи ID=${id}:`, endpoint);
     const response = await apiClient.get(endpoint);
 
     let data = null;
@@ -848,6 +850,7 @@ async function fetchRecordDetails(id, api) {
 
     // Обновляем данные только если что-то получили
     if (data) {
+      console.log('Получены детали записи:', data);
       selectedRow.value = data;
     } else {
       console.warn(`Не найдены данные для записи с ID=${id}`);
@@ -933,6 +936,7 @@ function startEditInModal() {
     // (они будут обновлены после загрузки с сервера)
     editBuffer.value = { ...selectedRow.value };
 
+    console.log('Переход в режим редактирования с данными:', editBuffer.value);
   } else {
     toastRef.value?.show('Не удалось получить данные для редактирования', 'error');
   }
@@ -967,6 +971,8 @@ async function saveEditInModal() {
       return;
     }
 
+    console.log(`Отправляемые данные для записи с ID=${originalId}:`, updatedData);
+    console.log('URL запроса:', api.update(originalId));
 
     // Отправляем запрос
     await apiClient.put(api.update(originalId), updatedData);
