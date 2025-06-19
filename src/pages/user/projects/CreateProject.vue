@@ -21,7 +21,6 @@ const closeModal = () => {
 }
 
 const addParticipants = () => {
-  console.log('Добавление участников')
 }
 
 

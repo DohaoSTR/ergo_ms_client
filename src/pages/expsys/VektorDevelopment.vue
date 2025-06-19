@@ -157,7 +157,6 @@ onMounted(async () => {
         // description и category можно добавить если нужны
       }));
 
-      console.log('Competences loaded:', competences.value);
     } else {
       throw new Error('Некорректный формат данных');
     }

@@ -139,7 +139,6 @@ async function submitTest() {
     const response = await apiClient.post(endpoints.expert_system.evaluateTest, 
       result.value
     );
-    console.log(response)
     router.push({name:'TestResult', params:{id: Number(response.data.testresultid)}})
   } catch (error) {
     console.error('Ошибка при отправке теста:', error);

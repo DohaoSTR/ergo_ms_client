@@ -25,7 +25,6 @@ const skills = ref([]);
 
 onMounted(async () => {
   const response = await apiClient.get(endpoints.expert_system.skills,)
-  console.log(response)
   skills.value = response.data;
 });
 

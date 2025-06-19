@@ -296,7 +296,6 @@ const uploadFile = async () => {
 
     if (response && response.success) {
       // Логирование для отладки
-      console.log('Ответ от сервера:', response)
 
       // Устанавливаем заголовки и данные для предпросмотра, с проверкой на наличие данных
       previewHeaders.value = response.data?.headers || []
@@ -309,9 +308,6 @@ const uploadFile = async () => {
       competenciesCount.value = response.data?.competencies_count || 0
 
       // Дополнительное логирование для отладки
-      console.log('Информация о файле:', fileSummary.value)
-      console.log('Количество дисциплин:', disciplinesCount.value)
-      console.log('Количество компетенций:', competenciesCount.value)
 
       toastRef.value?.show('Файл успешно загружен', 'success')
     } else {

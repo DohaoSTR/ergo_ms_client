@@ -120,12 +120,9 @@ async function checkConnection() {
       database: database.value,
     }
 
-    console.log('REQUEST PAYLOAD:', requestPayload)
 
     const response = await apiClient.post(endpoints.bi.CheckConnection, requestPayload)
 
-    console.log('RESPONSE:', response)
-    console.log('RESPONSE.DATA:', response.data)
 
     const data = response.data || {}
 
@@ -136,7 +133,6 @@ async function checkConnection() {
       error.value = false
     } else {
       const raw = data.message || 'Ошибка соединения'
-      console.log('RAW ERROR MESSAGE:', raw)
       message.value = translateErrorMessage(String(raw).trim())
       error.value = true
     }

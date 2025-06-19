@@ -127,7 +127,6 @@ const subtasks = computed({
 // Методы задач
 // Методы задач
 const updateTask = async (updatedData) => {
-  console.log('Updating task with data:', updatedData); // Логирование для отладки
   
   const backendData = {
     title: updatedData.title,
@@ -146,13 +145,11 @@ const updateTask = async (updatedData) => {
     }
   })
   
-  console.log('Prepared backend data:', backendData); // Логирование для отладки
   
   try {
     const response = await kanbanStore.updatesTask(currentTask.value.id, backendData)
     //response.updatedTask.assignee_id = response.updatedTask.user
 
-    console.log('Update response:', response); // Логирование для отладки
     return { success: true, updatedTask: response.updatedTask }
   } catch (error) {
     console.error('Update task error:', error);
@@ -166,7 +163,6 @@ const saveTask = async () => {
   
   isLoading.value = true
   try {
-    console.log('Current assignee_id before save:', currentTask.value.assignee_id); // Логирование
     
     const updates = {
       title: taskTitle.value,
@@ -177,7 +173,6 @@ const saveTask = async () => {
       deadline: deadline.value
     }
     
-    console.log('Prepared updates:', updates); // Логирование
     
     const { success } = await updateTask(updates)
     if (success) {

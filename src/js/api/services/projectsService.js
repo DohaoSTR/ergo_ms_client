@@ -54,7 +54,6 @@ export const fetchCountTasksProject = async (projectId, countDone = null) => {
 };
 export const fetchUserProjects = async () => {
     try {
-      console.log(endpoints.crm.projects.allprojects)
       const response = await apiClient.get(endpoints.crm.projects.allprojects, { user_id: parseInt(Cookies.get('userId')) })
       // Возвращаем массив проектов
       return response.data.data.map(project => ({
@@ -78,7 +77,6 @@ export const fetchUserProjects = async () => {
 
 export const fetchPersonalUserProjects = async () => {
   try {
-    console.log(endpoints.crm.projects.personalprojects)
     const response = await apiClient.get(endpoints.crm.projects.personalprojects, { user_id: parseInt(Cookies.get('userId')) })
     // Возвращаем массив проектов
     return response.data.data.map(project => ({
@@ -138,7 +136,6 @@ export const createNewProject = async (projectData) => {
 
 export const fetchInvitedUserProjects = async () => {
   try {
-    console.log(endpoints.crm.projects.invitedprojects)
     const response = await apiClient.get(endpoints.crm.projects.invitedprojects, { user_id: parseInt(Cookies.get('userId')) })
     // Возвращаем массив проектов
     return response.data.data.map(project => ({
@@ -240,7 +237,6 @@ export const fetchProjectUsers = async (projectId) => {
       endpoints.crm.projects.usersproject.replace('{id}', projectId)
     );
 
-    console.log('API Response:', response.data); // Добавляем логирование
     
     // Адаптируем под структуру вашего Python-кода
     if (response.data && response.data.success && response.data.users) {

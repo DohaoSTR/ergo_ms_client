@@ -12,7 +12,6 @@ export function useFileList(tempUploadedFiles, selectedFile, uploadedFiles, curr
   }
 
   function removeTempFile(file) {
-    console.log('[removeTempFile] попытка удалить:', file.name || file.temp_path)
 
     const index = tempUploadedFiles.value.findIndex(f => f.temp_path === file.temp_path)
     if (index !== -1) {
@@ -22,16 +21,12 @@ export function useFileList(tempUploadedFiles, selectedFile, uploadedFiles, curr
         selectedFile.value = null
       }
 
-      console.log('[removeTempFile] удалено и предпросмотр сброшен (если был)')
     } else {
       console.warn('[removeTempFile] файл не найден среди временных')
     }
   }
 
   function openSheetPicker(file) {
-    console.log('[openSheetPicker]', file)
-    console.log('pendingSheets:', file.pendingSheets)
-    console.log('processedSheets:', file.processedSheets)
 
     currentUploadFile.value = file
     availableSheets.value = file.pendingSheets

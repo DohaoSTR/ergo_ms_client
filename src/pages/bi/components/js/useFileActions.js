@@ -19,7 +19,6 @@ export function useFileActions(uploadedFiles, selectedFile, fileToReplace, loadU
           selectedFile.value = null
         }
 
-        console.log('[deleteFile] удалён успешно')
       } else {
         console.warn('[deleteFile] ошибка удаления:', res)
         alert('Не удалось удалить файл')
@@ -54,7 +53,6 @@ export function useFileActions(uploadedFiles, selectedFile, fileToReplace, loadU
     )
 
     if (res.success) {
-      console.log('[handleFileReplace] Файл заменён:', res.data)
       await loadUserFiles()
     } else {
       console.error('[handleFileReplace] Ошибка замены файла:', res.errors)

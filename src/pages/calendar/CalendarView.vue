@@ -14,7 +14,6 @@ const calendarStore = useCalendarStore()
 watch(
   () => calendarStore.events,
   (newVal) => {
-    console.log('Все события:', newVal)
   },
   { immediate: true }
 )
@@ -116,8 +115,6 @@ const calendarOptions = computed(() => ({
 }
 ))
 
-console.log('Фильтры:', calendarStore.activeFilterIds)
-console.log('Фильтрованные события:', calendarStore.filteredEvents)
 </script>
 
 <template>

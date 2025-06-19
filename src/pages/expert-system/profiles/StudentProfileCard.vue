@@ -336,8 +336,6 @@ async function DeleteSkill(id) {
   let index = items.value.findIndex(item => item.id == id)
   let deletedskill = items.value[index].name
   items.value.splice(index, 1)
-  console.log(id)
-  console.log(await apiClient.delete(endpoints.expert_system.deleteTestResultBySkill, {skill_id:id}))
   let url = `${endpoints.expert_system.userSkills}${id}/`
   const resp = await apiClient.delete(url)
   if (!resp.success) {

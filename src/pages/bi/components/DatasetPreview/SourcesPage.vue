@@ -111,17 +111,14 @@ function openActionMenu(connection, event) {
 }
 
 function handleOpen() {
-  console.log('Открыть', actionMenu.value.connection)
   actionMenu.value.visible = false
 }
 
 function handleReplace() {
-  console.log('Заменить', actionMenu.value.connection)
   actionMenu.value.visible = false
 }
 
 function handleDelete() {
-  console.log('Удалить', actionMenu.value.connection)
   actionMenu.value.visible = false
 }
 

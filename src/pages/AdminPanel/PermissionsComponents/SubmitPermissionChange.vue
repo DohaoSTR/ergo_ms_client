@@ -109,7 +109,6 @@ watch(props, (newProps) => {
         acsst = 'ComponentAccessionToRead'
       }
   accession_type.value = acsst
-  console.log(accession_type.value)
   path.value = newProps.row.path
   component_id.value = newProps.row.component_id
 })

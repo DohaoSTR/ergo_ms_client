@@ -141,7 +141,6 @@ export const useKanbanStore = defineStore('kanbanStore', () => {
       }
 
       const data = await response.json()
-      console.log('Ответ сервера:', data)
 
       // Обрабатываем ответ сервера
       const newSection = {

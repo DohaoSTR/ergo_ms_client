@@ -81,13 +81,11 @@ const deleteGroup = async (id) => {
     });
 
     if (!response.ok) {
-      console.log('Произошла ошибка при удалении группы');
       return;
     }
 
     fetchGroups();
   } catch (err) {
-    console.log(err);
   }
 }
 

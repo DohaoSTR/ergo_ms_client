@@ -104,7 +104,6 @@ export const useCalendarStore = defineStore('calendarStore', () => {
       // Не загружаем пользователя повторно, если уже есть ID
     }
 
-    console.log('Пользователь из кук:', currentUserId.value)
     return true
 
   } catch (error) {
@@ -118,7 +117,6 @@ export const useCalendarStore = defineStore('calendarStore', () => {
     if (!eventId) return -1
 
   const numericId = parseInt(eventId.toString().replace('event-', '').replace('task-', ''), 10)
-  console.log(numericId)
   return events.value.findIndex((el) => {
     const currentId = typeof el.id === 'string'
       ? parseInt(el.id.replace('event-', '').replace('task-', ''), 10)
@@ -223,9 +221,6 @@ export const useCalendarStore = defineStore('calendarStore', () => {
    const loadTasksFromAPI = async () => {
     try {
       const result = await apiClient.get('http://localhost:8000/api/crm/calendar/tasks/')
-      console.log('Ответ от API:', result)
-       console.log('data:', result.data)
-       console.log('Является ли result.data массивом?', Array.isArray(result.data))
 
     if (!result) {
       throw new Error('Пустой ответ от API')
@@ -243,7 +238,6 @@ export const useCalendarStore = defineStore('calendarStore', () => {
       tasks = [result.data] // ← Если пришёл один объект
     }
 
-    console.log('Список задач:', tasks)
 
     // === Добавляем каждую задачу как событие ===
     tasks.forEach(task => {
@@ -252,7 +246,6 @@ export const useCalendarStore = defineStore('calendarStore', () => {
         return
       }
 
-      console.log('Добавляем задачу:', task)
       addTaskAsEvent(task)
     })
     } catch (error) {
@@ -267,7 +260,6 @@ export const useCalendarStore = defineStore('calendarStore', () => {
 
   // ===== Добавление задачи как события =====
   const addTaskAsEvent = (task) => {
-  console.log('addTaskAsEvent: Полученная задача', task)
   const taskId = task.id
   const taskText = task.text || task.title || 'Без названия'
   //const taskUsername = task.user?.username || task.user_id ? `ID ${task.user_id}` : ""
@@ -296,8 +288,6 @@ export const useCalendarStore = defineStore('calendarStore', () => {
   const eventEnd = new Date(deadlineDate)
   eventEnd.setDate(eventEnd.getDate() + 1)
   eventEnd.setHours(0, 0, 0, 0)
-  console.log('Задача:', task)
-  console.log('Парсированная дата:', deadlineDate)
 
   const priority = task.priority || 4 // Если приоритет не указан — ставим "Рутинная"
   const calendarEvent = {
@@ -318,13 +308,9 @@ export const useCalendarStore = defineStore('calendarStore', () => {
     }
 
   }
-  console.log('Добавляем событие:', calendarEvent)
-  console.log('Событие добавлено на:', eventStart.toDateString())
-  console.log(task)
   if (!events.value.some(e => e.id === calendarEvent.id)) {
     events.value.push(calendarEvent)
     toast.info(`Задача "${taskText}" добавлена в календарь`)
-    console.log(task)
   }
 }
 
@@ -389,7 +375,6 @@ const loadSectionsByProject = async (projectId) => {
     }
 
     sections.value = response.data
-    console.log(`Loaded ${sections.value.length} sections`)
 
   } catch (error) {
     console.error("Failed to load sections:", {
@@ -495,7 +480,6 @@ const deleteTaskFromAPI = async (taskId) => {
   watch(
   () => activeFilterIds,
   (newVal) => {
-    console.log('Активные фильтры:', newVal)
   },
   { immediate: true }
 ) */
@@ -541,7 +525,6 @@ const deleteTaskFromAPI = async (taskId) => {
       }
     });
 
-    console.log(`Добавлено ${holidays.length} праздников`);
   } catch (error) {
     console.error('Ошибка загрузки праздников:', error);
     toast.error('Не удалось загрузить праздники');

@@ -11,7 +11,6 @@ const fetchUserCount = async () => {
   try {
     const response = await axios.get('http://localhost:8000/api/podmodule1/users-count/');
     userCount.value = response.data.data[0].count;
-    console.log('Количество пользователей:', response);
   }
   catch (error) {
     console.error('Ошибка при получении количества пользователей:', error);

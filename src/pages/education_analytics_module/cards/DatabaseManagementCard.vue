@@ -148,18 +148,15 @@ const loadSampleData = async () => {
       if (step.delay) {
         // Добавляем задержку между шагами, если указана
         await new Promise(resolve => setTimeout(resolve, step.delay))
-        console.log(`Добавлена задержка ${step.delay}ms: ${step.message}`)
         continue
       }
 
       try {
-        console.log(`Загрузка ${step.name}...`)
         const response = await apiClient.post(step.endpoint, {})
         const result = processApiResponse(response, step.name)
 
         if (result.success) {
           successCount++;
-          console.log(`✓ ${result.message}`)
           // Показываем уведомление об успехе
           toastRef.value?.show(result.message, 'success')
         } else {
