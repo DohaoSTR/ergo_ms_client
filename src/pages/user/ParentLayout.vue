@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { LayoutGrid, Link, UserRound, SquarePlus } from 'lucide-vue-next'
+import { LayoutGrid, Link, UserRound, SquarePlus, UsersRound } from 'lucide-vue-next'
 
 import MainInfo from '@/pages/user/CardMain.vue'
 import NavigationButtons from '@/components/NavigationButtons.vue'

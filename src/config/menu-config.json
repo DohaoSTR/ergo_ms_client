@@ -47,6 +47,28 @@
             }
           }
         },
+        {
+          "path": "PersonalProjects",
+          "name": "Личные",
+          "route": {
+            "path": "personal-projects",
+            "component": "@/pages/user/projects/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "InvitedProjects",
+          "name": "Приглашённые",
+          "route": {
+            "path": "invited-projects",
+            "component": "@/pages/user/projects/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
         { 
           "path": "Connections", 
           "name": "Связи",
