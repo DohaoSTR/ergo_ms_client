@@ -58,6 +58,8 @@ const validateForm = () => {
   )
 }
 
+const route = useRoute();
+
 // Обработка формы
 const submitForm = async () => {
   if (validateForm()) {
