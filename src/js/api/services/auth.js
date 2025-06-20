@@ -39,14 +39,18 @@ export const authService = {
         return await apiClient.post(endpoints.auth.verifyCode, { email, code }, false);
     },
     
-    async registration(firstName, username, email, password) {
-        return await apiClient.post(endpoints.auth.registration, {
+    async registration(firstName, username, email, password, url_id) {
+        const reg_param = {
             first_name: firstName,
             username,
             email,
             password,
             is_superuser: false
-        }, false);
+        };
+        if (url_id) {
+            reg_param.url_id = url_id;
+        }
+        return await apiClient.post(endpoints.auth.registration, reg_param, false);
     },
     
     async checkToken() {
