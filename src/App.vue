@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import LayoutMenu from '@/LayoutMenu.vue'
 import LayoutStart from '@/LayoutStart.vue'
 import LayoutPublic from '@/LayoutPublic.vue'
+import NotificationProvider from '@/components/NotificationProvider.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,5 +28,6 @@ const currentLayout = computed(() => {
 <template>
   <div v-if="isReady">
     <component :is="currentLayout" />
+    <NotificationProvider />
   </div>
 </template>

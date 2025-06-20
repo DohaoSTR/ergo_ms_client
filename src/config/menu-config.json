@@ -765,6 +765,141 @@
           }
         }
       ]
+    },
+    {
+      "icon": "GraduationCap",
+      "routeName": "LMS",
+      "title": "Система обучения",
+      "route": {
+        "path": "/lms",
+        "component": "@/pages/lms/ParentLayout.vue",
+        "redirect": "LMSDashboard",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        {
+          "path": "LMSDashboard",
+          "name": "Дашборд",
+          "route": {
+            "path": "dashboard",
+            "component": "@/pages/lms/Dashboard/DashboardView.vue",
+            "meta": {
+              "title": "Дашборд LMS",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "LMSCourses",
+          "name": "Мои курсы",
+          "route": {
+            "path": "courses",
+            "component": "@/pages/lms/Courses/CoursesView.vue",
+            "meta": {
+              "title": "Мои курсы",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "LMSCatalog",
+          "name": "Каталог курсов",
+          "route": {
+            "path": "catalog",
+            "component": "@/pages/lms/Catalog/CatalogView.vue",
+            "meta": {
+              "title": "Каталог курсов",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "LMSAssignments",
+          "name": "Задания",
+          "route": {
+            "path": "assignments",
+            "component": "@/pages/lms/Assignments/AssignmentsView.vue",
+            "meta": {
+              "title": "Задания",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "LMSTests",
+          "name": "Тесты",
+          "route": {
+            "path": "tests",
+            "component": "@/pages/lms/Tests/TestsView.vue",
+            "meta": {
+              "title": "Тесты",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "LMSForums",
+          "name": "Форумы",
+          "route": {
+            "path": "forums",
+            "component": "@/pages/lms/Forums/ForumsView.vue",
+            "meta": {
+              "title": "Форумы",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "LMSGrades",
+          "name": "Оценки",
+          "route": {
+            "path": "grades",
+            "component": "@/pages/lms/Grades/GradesView.vue",
+            "meta": {
+              "title": "Оценки",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "LMSCalendar",
+          "name": "Календарь",
+          "route": {
+            "path": "calendar",
+            "component": "@/pages/lms/Calendar/CalendarView.vue",
+            "meta": {
+              "title": "Календарь LMS",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "LMSBadges",
+          "name": "Достижения",
+          "route": {
+            "path": "badges",
+            "component": "@/pages/lms/Badges/BadgesView.vue",
+            "meta": {
+              "title": "Достижения",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "LMSTeaching",
+          "name": "Преподавание",
+          "route": {
+            "path": "teaching",
+            "component": "@/pages/lms/Teaching/TeachingView.vue",
+            "meta": {
+              "title": "Преподавание",
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
     }
   ]
 } 

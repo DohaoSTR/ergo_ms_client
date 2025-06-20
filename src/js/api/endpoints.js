@@ -43,7 +43,6 @@ export const endpoints = {
             usersproject:'crm/projects/users-project/{id}/',
         },
         calendar:{
-
           createTask: 'crm/tasks/task/',
         }
     },
@@ -68,12 +67,7 @@ export const endpoints = {
             countsstudents:'/expsys_module/countstudents-subject/',
             countslessons:'/expsys_module/countlessons-subject/',
             countstests:'/expsys_module/counttests-subject/',
-
-
-
-
         },
-
     },
     cms: {
         checkAccessToPage: 'cms/check_access_to_page/',
@@ -173,7 +167,7 @@ export const endpoints = {
           testingData: 'expert_system/analytics/testing-data/',
       }
     },
-  bi: {
+    bi: {
         DatasetsList: 'bi_analysis/bi_datasets/',
         ConnectionsList: 'bi_analysis/bi_connections/',
         CheckConnection: 'bi_analysis/bi_connections/check-connection/',
@@ -194,6 +188,64 @@ export const endpoints = {
         create: 'settings/tags/',
         update: id => `settings/tags/${id}/`,
         delete: id => `settings/tags/${id}/`
+    },
+    lms: {
+        // Пользователи и профили
+        profiles: 'lms/api/profiles/',
+        myProfile: 'lms/profile/me/',
+        userRoles: 'lms/user/roles/',
+        switchRole: 'lms/user/roles/switch/',
+        
+        // Курсы
+        categories: 'lms/api/categories/',
+        deleteCategory: id => `lms/api/categories/${id}/`,
+        courseFormats: 'lms/api/course-formats/',
+        deleteCourseFormat: id => `lms/api/course-formats/${id}/`,
+        subjects: 'lms/api/subjects/',
+        enrollments: 'lms/api/enrollments/',
+        themes: 'lms/api/themes/',
+        lessons: 'lms/api/lessons/',
+        
+        // Записи на курсы
+        enroll: id => `lms/subjects/${id}/enroll/`,
+        unenroll: id => `lms/subjects/${id}/unenroll/`,
+        enrolledStudents: id => `lms/subjects/${id}/students/`,
+        
+        // Тестирование
+        testBanks: 'lms/api/test-banks/',
+        tests: 'lms/api/tests/',
+        testAttempts: 'lms/api/test-attempts/',
+        startTest: id => `lms/tests/${id}/start/`,
+        
+        // Задания
+        assignments: 'lms/api/assignments/',
+        submittedAssignments: 'lms/api/submitted-assignments/',
+        
+        // Форумы
+        forums: 'lms/api/forums/',
+        discussions: 'lms/api/discussions/',
+        posts: 'lms/api/posts/',
+        
+        // Календарь
+        calendar: 'lms/api/calendar/',
+        upcomingEvents: 'lms/calendar/upcoming/',
+        
+        // Значки и достижения
+        badges: 'lms/api/badges/',
+        userBadges: 'lms/api/user-badges/',
+        
+        // Уведомления
+        notifications: 'lms/api/notifications/',
+        markAsRead: id => `lms/notifications/${id}/read/`,
+        markAllAsRead: 'lms/notifications/read-all/',
+        
+        // Личные сообщения
+        messages: 'lms/api/messages/',
+        
+        // Аналитика
+        studentStats: 'lms/analytics/student/',
+        teacherStats: 'lms/analytics/teacher/',
+        dashboard: 'lms/analytics/dashboard/'
     },
     userAvatars: {
         list: 'settings/user-avatars/',

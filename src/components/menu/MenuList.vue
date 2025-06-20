@@ -151,15 +151,18 @@ const hasSeparator = (index) => {
 const siteName = ref('...')
 
 onMounted(async () => {
-  const res = await apiClient.get(endpoints.settings.lastSettings)
-  if (res.success) {
-    const settings = Array.isArray(res.data) ? res.data[0] : res.data
-    siteName.value = settings?.site_name || 'ERGO MS'
-  } else {
+  try {
+    const res = await apiClient.get(endpoints.settings.lastSettings)
+    if (res.success) {
+      const settings = Array.isArray(res.data) ? res.data[0] : res.data
+      siteName.value = settings?.site_name || 'ERGO MS'
+    } else {
+      siteName.value = 'ERGO MS'
+    }
+  } catch (error) {
+    console.warn('Настройки сайта недоступны, используется название по умолчанию')
     siteName.value = 'ERGO MS'
   }
-  
-
 })
 
 </script>
