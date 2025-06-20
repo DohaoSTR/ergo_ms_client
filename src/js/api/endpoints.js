@@ -203,13 +203,24 @@ export const endpoints = {
         deleteCourseFormat: id => `lms/api/course-formats/${id}/`,
         subjects: 'lms/api/subjects/',
         enrollments: 'lms/api/enrollments/',
+        
+        // Темы курсов
         themes: 'lms/api/themes/',
+        reorderLessons: id => `lms/themes/${id}/reorder-lessons/`,
+        
+        // Уроки
         lessons: 'lms/api/lessons/',
+        duplicateLesson: id => `lms/lessons/${id}/duplicate/`,
+        toggleLessonVisibility: id => `lms/lessons/${id}/toggle-visibility/`,
+        lessonsByCourse: 'lms/lessons/by-course/',
         
         // Записи на курсы
         enroll: id => `lms/subjects/${id}/enroll/`,
         unenroll: id => `lms/subjects/${id}/unenroll/`,
         enrolledStudents: id => `lms/subjects/${id}/students/`,
+        duplicateSubject: id => `lms/subjects/${id}/duplicate/`,
+        toggleSubjectPublished: id => `lms/subjects/${id}/toggle-published/`,
+        subjectStructure: id => `lms/subjects/${id}/structure/`,
         
         // Тестирование
         testBanks: 'lms/api/test-banks/',

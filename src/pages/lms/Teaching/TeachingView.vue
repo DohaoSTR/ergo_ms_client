@@ -1,13 +1,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Settings, Users, BookOpen, Plus, Edit, BarChart } from 'lucide-vue-next'
+import { Settings, Users, BookOpen, Plus, Edit, BarChart, List } from 'lucide-vue-next'
 import RoleGuard from '../components/RoleGuard.vue'
+import LessonManager from '../components/LessonManager.vue'
 
 const teachingCourses = ref([])
 const selectedTab = ref('courses')
+const selectedCourse = ref(null)
 
 const tabs = [
   { value: 'courses', label: 'Мои курсы', icon: BookOpen },
+  { value: 'lessons', label: 'Управление уроками', icon: List },
   { value: 'students', label: 'Студенты', icon: Users },
   { value: 'analytics', label: 'Аналитика', icon: BarChart }
 ]
@@ -39,6 +42,11 @@ function createCourse() {
 
 function editCourse(course) {
   console.log('Редактировать курс:', course.id)
+}
+
+function manageLessons(course) {
+  selectedCourse.value = course
+  selectedTab.value = 'lessons'
 }
 
 onMounted(fetchTeachingData)
@@ -83,9 +91,14 @@ onMounted(fetchTeachingData)
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-start mb-3">
                 <h6>{{ course.title }}</h6>
-                <button @click="editCourse(course)" class="btn btn-sm btn-outline-primary">
-                  <Edit :size="16" />
-                </button>
+                <div class="d-flex gap-2">
+                  <button @click="manageLessons(course)" class="btn btn-sm btn-outline-success" title="Управление уроками">
+                    <List :size="16" />
+                  </button>
+                  <button @click="editCourse(course)" class="btn btn-sm btn-outline-primary" title="Редактировать курс">
+                    <Edit :size="16" />
+                  </button>
+                </div>
               </div>
               
               <div class="course-stats">
@@ -107,6 +120,30 @@ onMounted(fetchTeachingData)
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Управление уроками -->
+    <div v-else-if="selectedTab === 'lessons'">
+      <div v-if="selectedCourse" class="mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <button @click="selectedTab = 'courses'" class="btn btn-outline-secondary">
+            ← Назад к курсам
+          </button>
+          <div>
+            <h5 class="mb-0">{{ selectedCourse.title }}</h5>
+            <small class="text-muted">Управление уроками курса</small>
+          </div>
+        </div>
+        <LessonManager :course-id="selectedCourse.id" />
+      </div>
+      <div v-else class="text-center py-5">
+        <List :size="48" class="text-muted mb-3" />
+        <h5 class="text-muted">Выберите курс</h5>
+        <p class="text-muted">Перейдите к курсам и выберите курс для управления уроками</p>
+        <button @click="selectedTab = 'courses'" class="btn btn-primary">
+          Перейти к курсам
+        </button>
       </div>
     </div>
 

@@ -4,7 +4,7 @@ import { AlertTriangle, Check, X } from 'lucide-vue-next'
 const props = defineProps({
   show: { type: Boolean, default: false },
   title: { type: String, default: 'Подтверждение' },
-  message: { type: String, required: true },
+  message: { type: String, default: '' },
   confirmText: { type: String, default: 'Удалить' },
   cancelText: { type: String, default: 'Отмена' },
   variant: { type: String, default: 'danger', validator: (value) => ['danger', 'warning', 'primary'].includes(value) },
@@ -35,7 +35,7 @@ function handleClose() {
 
 <template>
   <div 
-    v-if="show" 
+    v-if="show && message" 
     class="modal fade show d-block" 
     tabindex="-1"
     style="background-color: rgba(0, 0, 0, 0.5);"
@@ -60,7 +60,7 @@ function handleClose() {
         </div>
         
         <div class="modal-body pt-2">
-          <p class="mb-0">{{ message }}</p>
+          <p class="mb-0" style="white-space: pre-line;">{{ message }}</p>
         </div>
         
         <div class="modal-footer border-0 pt-2">

@@ -59,6 +59,11 @@ export function useNotifications() {
     }
   }
   
+  // Функция для очистки всех уведомлений
+  function clearAllNotifications() {
+    notifications.value.splice(0, notifications.value.length)
+  }
+  
   // Быстрые методы для разных типов уведомлений
   function showSuccess(message, duration = 3000) {
     return showNotification(message, 'success', duration)
@@ -151,6 +156,7 @@ export function useNotifications() {
     // Методы уведомлений
     showNotification,
     removeNotification,
+    clearAllNotifications,
     showSuccess,
     showError,
     showWarning,

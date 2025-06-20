@@ -898,6 +898,30 @@
               "requiresAuth": true
             }
           }
+        },
+        {
+          "path": "LMSLessonsManagement",
+          "name": "Управление уроками",
+          "route": {
+            "path": "lessons-management",
+            "component": "@/pages/lms/LessonsManagement/LessonsManagementView.vue",
+            "meta": {
+              "title": "Управление уроками",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "LMSCategoriesAndFormats",
+          "name": "Категории и форматы",
+          "route": {
+            "path": "categories-and-formats",
+            "component": "@/pages/lms/CategoriesAndFormats/CategoriesAndFormatsView.vue",
+            "meta": {
+              "title": "Категории и форматы",
+              "requiresAuth": true
+            }
+          }
         }
       ]
     }

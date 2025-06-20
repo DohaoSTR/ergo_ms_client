@@ -160,7 +160,7 @@ onMounted(async () => {
       siteName.value = 'ERGO MS'
     }
   } catch (error) {
-    console.warn('Настройки сайта недоступны, используется название по умолчанию')
+    // Тихо устанавливаем значение по умолчанию без логирования ошибки
     siteName.value = 'ERGO MS'
   }
 })

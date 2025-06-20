@@ -4,11 +4,11 @@ import { AlertTriangle, Trash2, X } from 'lucide-vue-next'
 const props = defineProps({
   show: { type: Boolean, default: false },
   title: { type: String, default: 'Выберите действие' },
-  message: { type: String, required: true },
+  message: { type: String, default: '' },
   choices: { 
     type: Array, 
-    required: true,
-    validator: (choices) => choices.every(choice => 
+    default: () => [],
+    validator: (choices) => choices.length === 0 || choices.every(choice => 
       choice.label && choice.value && choice.variant
     )
   },
@@ -50,7 +50,7 @@ function getButtonClass(variant) {
 
 <template>
   <div 
-    v-if="show" 
+    v-if="show && message && choices.length > 0" 
     class="modal fade show d-block" 
     tabindex="-1"
     style="background-color: rgba(0, 0, 0, 0.5);"

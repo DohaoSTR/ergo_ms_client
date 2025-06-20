@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { BookOpen, Play, CheckCircle, Clock, Users, Star, Search, Filter } from 'lucide-vue-next'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
+import CourseImagePlaceholder from '../components/CourseImagePlaceholder.vue'
 
 const courses = ref([])
 const loading = ref(true)
@@ -21,10 +22,14 @@ const filteredCourses = computed(() => {
 
   // Фильтрация по тексту
   if (searchQuery.value) {
-    filtered = filtered.filter(course =>
-      course.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      course.instructor.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
+    filtered = filtered.filter(course => {
+      const subject = course.subject || course
+      return (
+        subject.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        subject.description?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        subject.teacher?.username?.toLowerCase().includes(searchQuery.value.toLowerCase())
+      )
+    })
   }
 
   // Фильтрация по статусу
@@ -50,71 +55,50 @@ async function fetchCourses() {
   try {
     loading.value = true
     const response = await apiClient.get(endpoints.lms.enrollments)
-    courses.value = response.data
-  } catch (error) {
-    console.error('Ошибка загрузки курсов:', error)
-    // Демо данные
-    courses.value = [
-      {
-        id: 1,
-        title: 'Основы веб-разработки',
-        description: 'Изучите HTML, CSS и JavaScript с нуля',
-        instructor: 'Иван Петров',
-        progress: 75,
-        status: 'active',
-        duration: '8 недель',
-        studentsCount: 156,
-        rating: 4.8,
-        image: '/src/assets/course-web.jpg',
-        isFavorite: true,
-        nextLesson: 'Работа с DOM',
-        lastAccessed: '2024-01-12'
-      },
-      {
-        id: 2,
-        title: 'Python для начинающих',
-        description: 'Основы программирования на Python',
-        instructor: 'Мария Сидорова',
-        progress: 45,
-        status: 'active',
-        duration: '6 недель',
-        studentsCount: 89,
-        rating: 4.6,
-        image: '/src/assets/course-python.jpg',
-        isFavorite: false,
-        nextLesson: 'Функции и модули',
-        lastAccessed: '2024-01-10'
-      },
-      {
-        id: 3,
-        title: 'Дизайн интерфейсов',
-        description: 'UX/UI дизайн современных приложений',
-        instructor: 'Анна Иванова',
-        progress: 100,
-        status: 'completed',
-        duration: '4 недели',
-        studentsCount: 234,
-        rating: 4.9,
-        image: '/src/assets/course-design.jpg',
-        isFavorite: true,
-        completedDate: '2024-01-08'
-      },
-      {
-        id: 4,
-        title: 'Машинное обучение',
-        description: 'Введение в ML и нейронные сети',
-        instructor: 'Дмитрий Козлов',
-        progress: 30,
-        status: 'active',
-        duration: '12 недель',
-        studentsCount: 67,
-        rating: 4.7,
-        image: '/src/assets/course-ml.jpg',
-        isFavorite: false,
-        nextLesson: 'Линейная регрессия',
-        lastAccessed: '2024-01-11'
+    
+    // Получаем записи пользователя на курсы
+    const enrollments = response.data.results || response.data || []
+    
+    // Преобразуем данные записей в формат, удобный для отображения
+    courses.value = enrollments.map(enrollment => {
+      const subject = enrollment.subject
+      return {
+        id: enrollment.id,
+        subjectId: subject.id,
+        name: subject.name,
+        description: subject.description,
+        summary: subject.summary,
+        instructor: subject.teacher ? `${subject.teacher.first_name} ${subject.teacher.last_name}`.trim() || subject.teacher.username : 'Неизвестный преподаватель',
+        progress: 0, // TODO: рассчитать прогресс
+        status: enrollment.status,
+        enrollmentDate: enrollment.enrollment_date,
+        lastAccessed: enrollment.last_accessed || enrollment.enrollment_date,
+        studentsCount: subject.enrolled_students_count || 0,
+        rating: 0, // TODO: добавить рейтинг
+        category: subject.category,
+        course_format: subject.course_format,
+        start_date: subject.start_date,
+        end_date: subject.end_date,
+        is_published: subject.is_published,
+        isFavorite: false, // TODO: добавить систему избранного
+        image: subject.image,
+        subject: subject // Сохраняем полные данные курса
       }
-    ]
+    })
+    
+    console.log('Загружены мои курсы:', courses.value)
+    
+  } catch (error) {
+    console.error('Ошибка загрузки моих курсов:', error)
+    
+    if (error.response?.status === 404 || error.response?.status === 401) {
+      // Пользователь не записан ни на один курс или нет доступа
+      courses.value = []
+    } else {
+      // Показываем ошибку
+      console.error('Ошибка при загрузке курсов:', error)
+      courses.value = []
+    }
   } finally {
     loading.value = false
   }
@@ -131,9 +115,76 @@ function getStatusBadge(status) {
   }
 }
 
+function getCourseImageUrl(course) {
+  if (course.image && course.image !== '/src/assets/course-web.jpg' && course.image !== '/src/assets/course-python.jpg' && course.image !== '/src/assets/course-design.jpg' && course.image !== '/src/assets/course-ml.jpg') {
+    // Если есть изображение и оно не является демо-ссылкой
+    if (typeof course.image === 'string') {
+      return course.image.startsWith('http') ? course.image : `${window.location.origin}${course.image}`
+    }
+  }
+  
+  // Возвращаем null для использования компонента-заглушки
+  return null
+}
+
 function openCourse(courseId) {
-  // Логика открытия курса
+  // Переход к странице курса или к урокам курса
   console.log('Открыть курс:', courseId)
+  
+  // Найдем курс по ID
+  const course = courses.value.find(c => c.id === courseId)
+  if (!course) {
+    console.error('Курс не найден:', courseId)
+    return
+  }
+
+  // Если курс завершен, показываем сертификат или результаты
+  if (course.status === 'completed') {
+    // Показываем модальное окно с результатами
+    showCourseResults(course)
+    return
+  }
+
+  // Иначе переходим к следующему уроку или первому уроку
+  openLessonForCourse(course)
+}
+
+function showCourseResults(course) {
+  // Показываем результаты завершенного курса
+  alert(`🎉 Поздравляем!\n\nКурс "${course.title}" успешно завершен!\n\nВаши результаты:\n• Прогресс: ${course.progress}%\n• Дата завершения: ${course.completedDate}\n\nСертификат будет отправлен на вашу почту в течение 24 часов.`)
+}
+
+async function openLessonForCourse(course) {
+  try {
+    // Получаем список уроков курса
+    const response = await apiClient.get(endpoints.lms.lessons + `?course_id=${course.id}`)
+    const lessons = response.data.results || response.data || []
+    
+    if (lessons.length === 0) {
+      alert(`Курс "${course.title}" пока не содержит уроков.`)
+      return
+    }
+
+    // Находим следующий урок для изучения или первый урок
+    let targetLesson = lessons.find(lesson => !isLessonCompleted(course.id, lesson.id))
+    if (!targetLesson) {
+      targetLesson = lessons[0] // Если все уроки завершены, открываем первый
+    }
+
+    // TODO: Здесь должен быть переход к компоненту просмотра урока
+    // Пока показываем уведомление
+    alert(`Переход к уроку: "${targetLesson.title}"\n\n(Урок ${targetLesson.order} из ${lessons.length})`)
+    
+  } catch (error) {
+    console.error('Ошибка загрузки уроков:', error)
+    alert(`Ошибка при открытии курса "${course.title}". Попробуйте позже.`)
+  }
+}
+
+function isLessonCompleted(courseId, lessonId) {
+  // Проверяем завершение урока через localStorage (для демо)
+  const completedKey = `lesson_${courseId}_${lessonId}_completed`
+  return localStorage.getItem(completedKey) === 'true'
 }
 
 function toggleFavorite(course) {
@@ -190,7 +241,17 @@ onMounted(fetchCourses)
       <div v-for="course in filteredCourses" :key="course.id" class="col-lg-6 col-xl-4 mb-4">
         <div class="card course-card h-100">
           <div class="course-image">
-            <img :src="course.image" :alt="course.title" class="card-img-top" />
+            <img 
+              v-if="getCourseImageUrl(course)"
+              :src="getCourseImageUrl(course)" 
+              :alt="course.name" 
+              class="card-img-top" 
+            />
+            <CourseImagePlaceholder 
+              v-else
+              height="200px"
+              :text="course.name || 'Курс'"
+            />
             <div class="course-overlay">
               <button @click="openCourse(course.id)" class="btn btn-primary btn-sm">
                 <Play :size="16" class="me-1" />
@@ -204,7 +265,7 @@ onMounted(fetchCourses)
           
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
-              <h6 class="card-title mb-0">{{ course.title }}</h6>
+              <h6 class="card-title mb-0">{{ course.name }}</h6>
               <span :class="`badge ${getStatusBadge(course.status).class}`">
                 {{ getStatusBadge(course.status).text }}
               </span>
@@ -218,11 +279,11 @@ onMounted(fetchCourses)
                   <Users :size="14" />
                   {{ course.studentsCount }}
                 </span>
-                <span class="d-flex align-items-center gap-1">
+                <span v-if="course.start_date" class="d-flex align-items-center gap-1">
                   <Clock :size="14" />
-                  {{ course.duration }}
+                  Начало: {{ new Date(course.start_date).toLocaleDateString('ru') }}
                 </span>
-                <span class="d-flex align-items-center gap-1">
+                <span v-if="course.rating > 0" class="d-flex align-items-center gap-1">
                   <Star :size="14" />
                   {{ course.rating }}
                 </span>
@@ -241,12 +302,12 @@ onMounted(fetchCourses)
               <div class="progress mb-2" style="height: 6px;">
                 <div class="progress-bar" :style="`width: ${course.progress}%`"></div>
               </div>
-              <small class="text-muted">Следующий урок: {{ course.nextLesson }}</small>
+              <small class="text-muted">Записан: {{ new Date(course.enrollmentDate).toLocaleDateString('ru') }}</small>
             </div>
 
             <div v-else-if="course.status === 'completed'" class="completed-section text-center">
               <CheckCircle :size="24" class="text-success mb-2" />
-              <small class="text-muted">Завершен {{ new Date(course.completedDate).toLocaleDateString('ru') }}</small>
+              <small class="text-muted">Завершен {{ course.lastAccessed ? new Date(course.lastAccessed).toLocaleDateString('ru') : 'недавно' }}</small>
             </div>
           </div>
         </div>

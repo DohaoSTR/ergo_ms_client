@@ -81,7 +81,7 @@ onMounted(() => {
   >
     <div 
       v-if="visible"
-      :class="`alert ${bgMap[type]} d-flex align-items-center position-fixed toast-notification`"
+      :class="`alert ${bgMap[type]} d-flex align-items-center toast-notification`"
       role="alert"
     >
       <component :is="iconMap[type]" :size="20" :class="colorMap[type]" class="me-2" />
@@ -99,11 +99,13 @@ onMounted(() => {
 
 <style scoped>
 .toast-notification {
+  position: relative;
   min-width: 300px;
   max-width: 400px;
   border: none;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
 }
 
 .toast-enter-active,

@@ -10,8 +10,16 @@ const {
   choiceDialog,
   closeConfirmDialog,
   closeChoiceDialog,
-  removeNotification
+  removeNotification,
+  clearAllNotifications
 } = useNotifications()
+
+// Очищаем все уведомления при монтировании компонента
+import { onMounted } from 'vue'
+onMounted(() => {
+  // Удаляем все существующие уведомления
+  clearAllNotifications()
+})
 </script>
 
 <template>
@@ -42,30 +50,43 @@ const {
   />
 
   <!-- Уведомления (глобальные) -->
-  <div class="notification-container">
-    <NotificationToast
-      v-for="notification in notifications"
-      :key="notification.id"
-      :show="notification.show"
-      :message="notification.message"
-      :type="notification.type"
-      :duration="notification.duration"
-      @close="removeNotification(notification.id)"
-    />
-  </div>
+  <Teleport to="body">
+    <div class="notification-container">
+      <NotificationToast
+        v-for="notification in notifications"
+        :key="notification.id"
+        :show="notification.show"
+        :message="notification.message"
+        :type="notification.type"
+        :duration="notification.duration"
+        @close="removeNotification(notification.id)"
+      />
+    </div>
+  </Teleport>
 </template>
 
-<style scoped>
+<style>
 .notification-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1056;
-  pointer-events: none;
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  z-index: 2147483647 !important;
+  pointer-events: none !important;
+  max-width: 400px !important;
 }
 
 .notification-container > * {
   pointer-events: auto;
   margin-bottom: 10px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .notification-container {
+    right: 10px !important;
+    left: 10px !important;
+    top: 10px !important;
+    max-width: none !important;
+  }
 }
 </style> 
