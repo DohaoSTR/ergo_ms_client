@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { Cable, Grid2x2Plus, Plus, Table, X } from 'lucide-vue-next'
 import ClickHouseIcon from '@/assets/bi/icons/clickhouse.svg'
 import PostgresIcon from '@/assets/bi/icons/postgres.svg'
@@ -75,15 +75,12 @@ import JoinFullIcon from '@/pages/bi/components/icons/JoinFullIcon.vue'
 
 const showTooltip = ref(false)
 const showTableTooltip = ref(false)
-const tableLinksVisible = ref(false)
 
 const tooltipPosition = ref({ x: 0, y: 0 })
 const tableTooltipPosition = ref({ x: 0, y: 0 })
 
 const tooltipRef = ref(null)
 const buttonRef = ref(null)
-
-const editingRelation = ref(null)
 
 const props = defineProps({
   selectedConnection: Object,
@@ -96,14 +93,12 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:selectedConnection', 'update:mainTable', 'openTableLinkModal', 'tablesLoaded', 'editRelation', 'removeRelation'])
 
-/* 1.  temp-id всех уже подключённых таблиц (строками)  */
 const usedTableIds = computed(() => {
   const set = new Set(props.relations.map(r => Number(r.rightTableId)))
-  if (props.mainTable) set.add(Number(props.mainTable.id))   // сама главная
-  return set                           // { 128, 130, 1369 … }
+  if (props.mainTable) set.add(Number(props.mainTable.id))
+  return set
 })
 
-/* 2.  id исходного файла главной таблицы                */
 const mainFileId = props.mainTable?.file_id ?? null
 
 const availableTablesForRelation = computed(() => {
@@ -111,22 +106,11 @@ const availableTablesForRelation = computed(() => {
 
   return props.allTables.filter(t => {
     const idNum = Number(t.id)
-    /* а) сама главная или её клон */
     if (idNum === props.mainTable.id) return false
-
-    /* б) отрицательный «сырой» двойник главной */
     if (mainFileId !== null && idNum === -mainFileId) return false
-
-    /* в) таблица того же файла, что уже использован */
     if (mainFileId !== null && t.file_id === mainFileId) return false
-
-    /* г) FileUpload – «отрицательный дубликат» существующей temp-таблицы */
     if (idNum < 0 && usedTableIds.value.has(Math.abs(idNum))) return false
-
-    /* 4. служебные temp-таблицы без исходного файла */
     if (t.file_upload_id == null && t.file_id == null) return false
-
-    /* д) temp-таблица уже в связях */
     return !usedTableIds.value.has(idNum)
   })
 })
@@ -202,7 +186,6 @@ function onClickOutside(event) {
 
 function onEditRelation(rel, idx) {
   emit('editRelation', rel, idx)
-  console.log('free tables:', availableTablesForRelation.value)
 }
 
 onMounted(() => {

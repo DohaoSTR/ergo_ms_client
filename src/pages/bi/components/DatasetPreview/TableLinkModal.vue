@@ -62,19 +62,10 @@
 import { ref, computed, watch } from 'vue'
 import { Trash2, Loader } from 'lucide-vue-next'
 
-import { checkJoinCompatibility } from '@/pages/bi/components/DatasetPreview/js/autoJoin'
-import datasetService from '@/js/api/services/bi/datasetService'
-
 const joinType = ref('inner')
 const relationLines  = ref([])
 const isJoinLoading = ref(false)
 const joinError = ref(null)
-
-const selectedLeftColumn = ref(null)
-const selectedRightColumn = ref(null)
-const selectedJoinType = ref('INNER JOIN')
-
-const datasetId = computed(() => props.datasetId)
 
 const emit = defineEmits(['close', 'apply', 'selectTable'])
 
@@ -85,8 +76,6 @@ const props = defineProps({
   editRelation: Object,
   datasetId: [String, Number],
 })
-
-const mainFileId = props.mainTable.file_id || props.mainTable.id
 
 const canApply = computed(() =>
   relationLines.value.length > 0 &&
@@ -107,36 +96,32 @@ const linkedTableColumns = ref([])
 
 mainTableColumns.value = getTableColumns(props.mainTable)
 
+const usedStagingIds = props.linkedTableIds || [];
+const usedFileIds = props.allTables
+  .filter(t => usedStagingIds.includes(t.id))
+  .map(t => t.file_id);
+
 const availableTables = computed(() => {
-  const base = props.allTables.filter(t => {
-    /* 1. никогда не показываем «левую» таблицу  */
-    if (t.id === props.mainTable.id) return false
-    if (t.isMain)                    return false
-      if (t.file_id === mainFileId)                 return false   // тот же файл
-      if (t.id === -mainFileId)                     return false   // temp-id главной
-
-    /* 2. уже присоединена – скрываем   */
-    if (props.linkedTableIds.includes(t.id)) return false
-
-    if (t.file_upload_id == null && t.file_id == null) return false
-
-    return true
-  })
-
-  /* в режиме edit добавляем редактируемую, если её отфильтровали */
-  if (props.editRelation) {
-    const cur = props.allTables.find(t => t.id === props.editRelation.rightTableId)
-    if (cur && !base.some(x => x.id === cur.id)) base.unshift(cur)
-  }
-  return base
-})
+  if (!props.mainTable) return [];
+  return props.allTables.filter(t => {
+    if (t.id === props.mainTable.id) return false;
+    if (t.isMain) return false;
+    if (t.file_id && t.file_id === props.mainTable.file_id) return false;
+    if (usedStagingIds.includes(t.id)) return false;
+    if (t.file_id && usedFileIds.includes(t.file_id)) return false;
+    if (t.file_upload_id == null && t.file_id == null) return false;
+    return true;
+  });
+});
 
 function getTableName(table) {
-  const file = table.file_upload || {}
-  let name = table.display_name || table.table_name || table.name || 'Неизвестная таблица'
-  if (file.sheet_name) name += ` (${file.sheet_name})`
-  if (file.original_filename) name += ` [${file.original_filename}]`
-  return name
+  if (!table) return 'Неизвестно';
+  const file = table.file_upload || {};
+  let name = table.display_name || table.table_name || table.name || 'Неизвестная таблица';
+  if (file.sheet_name) name += ` (${file.sheet_name})`;
+  if (file.original_filename) name += ` [${file.original_filename}]`;
+  if (!file.original_filename && table.file_upload_name) name = table.file_upload_name;
+  return name;
 }
 
 function removeRelationLine(idx) {
@@ -146,29 +131,7 @@ function addRelationLine() {
   relationLines.value.push({ left: null, right: null })
 }
 
-function getTableColumnTypes(table) {
-  return table?.columns_info?.types || [];
-}
-
-async function onApply() {
-  if (!canApply.value) return
-
-  const lines = relationLines.value.map(l => ({ left: l.left, right: l.right }))
-
-  const linkedTable   = props.allTables.find(t => t.id === selectedTableId.value)
-  const realRightId   = linkedTable.file_id || Math.abs(selectedTableId.value)
-
-  emit('apply', {
-    leftTableId : props.mainTable.id,
-    rightTableId: realRightId,
-    joinType    : joinType.value,
-    lines
-  })
-  emit('close')
-}
-
 function getTableColumns(table) {
-  /* если columns_info нет, пытаемся найти «родительский» FileUpload */
   if (!table) return []
   if (!table?.columns_info && table?.file_id) {
     const backup = props.allTables.find(f => f.id === -table.file_id)
@@ -183,65 +146,31 @@ async function handleAutoJoinAndApply() {
   joinError.value = null
 
   try {
-    // 1. Проверяем выбранную таблицу и связь
     const linkedTable = props.allTables.find(t => t.id === selectedTableId.value)
     if (!linkedTable) throw new Error('Таблица не выбрана')
     if (!relationLines.value.length) throw new Error('Не выбрана пара полей для связи')
     const mainLine = relationLines.value[0]
     if (!mainLine.left || !mainLine.right) throw new Error('Выберите оба поля для связи')
 
-    // 2. Проверяем режим: драфт или настоящий датасет
-    if (!props.datasetId) {
-      // Драфтовый режим — сразу отправляем событие наружу
-      const lines = relationLines.value.map(line => ({
-        left: line.left,
-        right: line.right
-      }));
+    const lines = relationLines.value.map(line => ({
+      left: line.left,
+      right: line.right
+    }));
 
-      emit('apply', {
-        leftTableId: props.mainTable.id,
-        rightTableId: selectedTableId.value,
-        joinType: joinType.value,
-        lines: lines
-      });
-      emit('close');
-      return;
-    }
+    const rightTableId = linkedTable.id
 
-    // 3. (Оригинальная логика для настоящего датасета)
-    let stagingName = linkedTable.table_ref || linkedTable.table_name || linkedTable.name;
-    let fileId = linkedTable.file_id || linkedTable.id;
-
-    if (!stagingName || (!stagingName.startsWith('staging_') && !stagingName.startsWith('temp_'))) {
-      const resp = await datasetService.addTableToDataset(props.datasetId, fileId);
-      const newTable = resp?.data;
-      if (!newTable || !newTable.table_ref) {
-        throw new Error('Сервер не вернул корректную staging-таблицу (table_ref)');
-      }
-      stagingName = newTable.table_ref;
-    }
-
-    if (!stagingName) throw new Error('У таблицы нет staging/table_ref (temp_xxxx)')
-
-    const joinResp = await datasetService.joinTable({
-      datasetId: props.datasetId,
-      stagingName,
-      leftColumn: mainLine.left,
-      rightColumn: mainLine.right,
-      joinType: joinType.value?.toUpperCase() + ' JOIN' || 'INNER JOIN'
+    emit('apply', {
+      leftTableId: props.mainTable.id,
+      rightTableId,
+      joinType: joinType.value,
+      lines
     });
-
-    const data = joinResp?.data;
-    if (data?.success) {
-      onApply();
-    } else {
-      joinError.value = data?.error || 'Ошибка проверки';
-    }
+    emit('close');
   } catch (e) {
     joinError.value = e.message || 'Ошибка соединения';
     console.error('catch error', e);
   } finally {
-    isJoinLoading.value = false;
+    isJoinLoading.value = false
   }
 }
 
@@ -266,27 +195,21 @@ watch(linkedTable, (tbl) => {
 watch(
    () => props.editRelation,
    (rel) => {
-     if (!rel) {                       // режим «create»
+     if (!rel) {
       joinType.value      = 'inner'
-      relationLines.value = []        // пусто, пока пользователь не нажмёт кнопку
+      relationLines.value = []
       return
      }
      selectedTableId.value = Number(rel.rightTableId)
      joinType.value = (rel.joinType || 'INNER JOIN')
-                     .split(' ')[0]        // "INNER", "LEFT", …
-                     .toLowerCase()        // → inner | left | …
+                     .split(' ')[0]
+                     .toLowerCase()
      relationLines.value   = rel.lines?.length
        ? rel.lines.map(l => ({ left: l.left,  right: l.right }))
        : [{ left: rel.leftColumn, right: rel.rightColumn }]
    },
    { immediate: true }
 )
-
-console.log('mainTable:', props.mainTable)
-console.log('mainTableColumns:', mainTableColumns.value)
-console.log('linkedTable:', props.allTables.find(t => t.id === selectedTableId.value))
-console.log('linkedTableColumns:', linkedTableColumns.value)
-
 </script>
 
 <style scoped lang="scss">

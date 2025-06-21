@@ -18,16 +18,16 @@ export default {
     return apiClient.post(BASE, payload)
   },
   joinTable({ datasetId, stagingName, leftColumn, rightColumn, joinType }) {
-  return apiClient.post(
-    `/bi_analysis/bi_datasets/${datasetId}/auto-join/`,
-    {
-      staging_name: stagingName,
-      left_column: leftColumn,
-      right_column: rightColumn,
-      join_type: joinType
-    }
-  );
-},
+    return apiClient.post(
+      `/bi_analysis/bi_datasets/${datasetId}/auto-join/`,
+      {
+        staging_name: stagingName,
+        left_column : leftColumn,
+        right_column: rightColumn,
+        join_type   : joinType || 'INNER JOIN',
+      },
+    );
+  },
   getDataset(id) {
     // GET /api/bi_analysis/bi_datasets/{id}/
     return apiClient.get(`${BASE}${id}/`)
@@ -135,10 +135,7 @@ export default {
     limit
   })
   },
-  addRelation({ datasetId, rightTableId, joinType, lines }) {
-  return apiClient.post(
-    `/bi_analysis/bi_datasets/${datasetId}/add-relation/`,
-    { rightTableId, joinType, lines }
-  )
-},
+  addRelation({ datasetId, ...rest }) {
+  return apiClient.post(`/bi_analysis/bi_datasets/${datasetId}/add-relation/`, rest)
+}
 }
