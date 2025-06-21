@@ -210,11 +210,11 @@ async function saveDataset(finalName) {
       // Добавляем связи после создания датасета
       for (const rel of relations.value) {
     await datasetService.addRelation({
-      datasetId   : dsId,
-      rightTableId: rel.file_id ?? Math.abs(rel.rightTableId),
-      joinType    : rel.joinType,
-      lines       : rel.lines,
-  })
+      datasetId: dsId,
+      rightTableId: rel.rightTableId,
+      joinType: rel.joinType,
+      lines: rel.lines,
+    })
   }
       // Получаем обновлённый датасет (с таблицами и связями)
       const { data: updated } = await datasetService.getDataset(dsId)
@@ -264,6 +264,16 @@ function handleTablesLoaded(files) {
         mainTable.value.columns_info = match.columns_info
       }
     }
+  }
+}
+
+async function fetchConnectionFiles(connId) {
+  try {
+    const { data } = await connectionService.getFiles(connId)        // ← фикс
+    console.table(data.map(f => f.original_filename))
+    fileUploadsCache.value = data
+  } catch (e) {
+    console.warn('Не удалось получить файлы подключения', e)
   }
 }
 
@@ -439,13 +449,25 @@ async function hydrateFromDataset(ds) {
 
   const connId = main?.connection || ds.selectedConnection
   if (connId) {
-    try {
-      const conn = await connectionService.get(connId)
-      selectedConnection.value = conn
-    } catch (e) {
-      console.warn('Не удалось получить подключение', e)
+    if (!selectedConnection.value)
       selectedConnection.value = { id: connId, name: `Connection #${connId}` }
+
+    await fetchConnectionFiles(connId)
+    buildAllTables(fileUploadsCache.value)
+
+   try {
+     const resp  = await connectionService.get(connId)      
+  const conn  = resp?.data ?? resp                       
+  if (conn && conn.name) {
+     selectedConnection.value = {
+       ...selectedConnection.value,
+       name: conn.name || selectedConnection.value.name,
+       connector_type: conn.connector_type ?? selectedConnection.value.connector_type
+     }
     }
+   } catch (e) {
+     console.warn('Не удалось получить название подключения', e)
+   }
   } else {
     selectedConnection.value = null
   }
@@ -538,7 +560,6 @@ function tabLabel(tab) {
 }
 
 async function loadPreview() {
-  console.log('mainTable.value:', mainTable.value)
   isPreviewLoading.value = true
   try {
     if (isNewPage.value) {
@@ -584,7 +605,6 @@ async function loadPreview() {
 
 watch(mainTable, async (val, oldVal) => {
   if (val && val.file_type && !val.file_id) {
-    // Добавим file_id, если это FileUpload
     val.file_id = val.id
   }
   if (
@@ -592,13 +612,8 @@ watch(mainTable, async (val, oldVal) => {
     (val.file_id || val.table_name) &&
     selectedConnection.value
   ) {
-    console.log('pong!')
     await loadPreview()
   }
-})
-
-watch(mainTable, (val, oldVal) => {
-  console.log('mainTable changed:', val)
 })
 
 watch(mainTable, async (val, oldVal) => {
@@ -623,9 +638,6 @@ function detectColumnType(values) {
 }
 
 async function loadFields() {
-  console.log('1mainTable.value:', mainTable.value)
-  console.log('1relations:', relations.value)
-  console.log('1allTablesOfConnection:', allTablesOfConnection.value)
   if (previewCols.value.length && previewRows.value.length) {
     const allDraftTables = [
       mainTable.value,
@@ -633,9 +645,7 @@ async function loadFields() {
     ];
     const col2Table = {};
     previewCols.value.forEach(col => {
-      console.log('col:', col)
       allDraftTables.forEach(t => {
-        console.log('columns of table:', t?.columns_info?.columns)
       })
       let foundTable = allDraftTables.find(t =>
         t?.columns_info?.columns?.includes(col)
