@@ -29,7 +29,7 @@
         </transition>
 
         <transition name="fade-slide" appear>
-            <div class="table-links" v-if="mainTable">
+            <div class="table-links" v-if="mainTable && relations.length && relations">
                 <div class="main-connections">
                     <div>Связи:</div>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
