@@ -4,15 +4,13 @@
     '--footer-height': isPreviewVisible ? footerHeight + 'px' : '0px'
   }">
     <header class="file_area_header">
-      <div class="file_area_header_label">
-        <Database />
+      <div class="file_area_header_label"><Database />
         <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
           <h4 class="header-label" style="margin-bottom:3px;">{{ headerName }}</h4>
         </div>
       </div>
       <div class="file_area_header_buttons">
-        <button v-if="isNewPage" class="btn btn-primary" :disabled="!canCreateDataset || saving"
-          @click="showDatasetDialog = true">Создать датасет</button>
+        <button v-if="isNewPage" class="btn btn-primary" :disabled="!canCreateDataset || saving" @click="showDatasetDialog = true">Создать датасет</button>
           
         <button class="btn btn-success save-btn" :hidden="isNewPage" :disabled="!isDirty || saving" @click="editDataset"
           style="color: var(--color-primary-background); min-width: 170px; position: relative;">
@@ -20,14 +18,11 @@
           <span v-else-if="saving" class="saving-spinner">
             <svg class="spin" width="22" height="22" viewBox="0 0 44 44">
               <circle cx="22" cy="22" r="18" fill="none" stroke-width="5" stroke="#fff" stroke-linecap="round" />
-            </svg>
-            Сохраняем…
-          </span>
+            </svg>Сохраняем…</span>
           <span v-else-if="saveSuccess" style="display: flex; align-items: center; gap: 6px;">
             <svg width="22" height="22" viewBox="0 0 20 20">
               <polyline points="4,10 9,16 17,4" stroke="#fff" stroke-width="3" fill="none" />
-            </svg>
-            Сохранено!
+            </svg>Сохранено!
           </span>
         </button>
       </div>
@@ -856,7 +851,7 @@ async function refreshFields() {
 // ==== Футер ресайз ====
 const footerHeight = ref(200)
 const footerMin = 200
-const footerMax = 400
+let footerMax = 400
 let isFooterResizing = false
 let footerStartY = 0
 let footerStartHeight = 0
@@ -865,6 +860,18 @@ function startFooterResize(e) {
   isFooterResizing = true
   footerStartY = e.clientY
   footerStartHeight = footerHeight.value
+
+  const layout = document.querySelector('.layout')
+  const toolbar = document.querySelector('.toolbar')
+
+  if (layout && toolbar) {
+    const layoutRect = layout.getBoundingClientRect()
+    const toolbarRect = toolbar.getBoundingClientRect()
+    footerMax = layoutRect.bottom - toolbarRect.bottom
+  } else {
+    footerMax = 600
+  }
+
   window.addEventListener('mousemove', resizeFooter)
   window.addEventListener('mouseup', stopFooterResize)
 }
@@ -996,6 +1003,7 @@ body {
 
 .layout {
   display: grid;
+  position: relative;
   grid-template-rows: 56px 50px 1fr var(--footer-height, 200px);
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -1074,6 +1082,7 @@ body {
 
 .file_area {
   grid-area: field;
+  padding-bottom: 200px;
   padding: 1rem;
   display: flex;
   flex-direction: column;
