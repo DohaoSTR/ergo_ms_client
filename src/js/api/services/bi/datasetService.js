@@ -33,7 +33,7 @@ export default {
     return apiClient.get(`${BASE}${id}/`)
   },
   updateDataset(id, payload) {
-    return apiClient.patch(`${BASE}${id}/`, payload)
+    return apiClient.patch(`/bi_analysis/bi_datasets/${id}/`, payload)
   },
   deleteDataset(id) {
     return apiClient.delete(`${BASE}${id}/`)
@@ -128,5 +128,17 @@ export default {
         connection_id: connectionId,
         file_id: fileId,
     })
+  },
+  draftPreview(draft, limit = 20) {
+  return apiClient.post('/bi_analysis/bi_datasets/draft_preview/', {
+    ...draft,
+    limit
+  })
+  },
+  addRelation({ datasetId, rightTableId, joinType, lines }) {
+  return apiClient.post(
+    `/bi_analysis/bi_datasets/${datasetId}/add-relation/`,
+    { rightTableId, joinType, lines }
+  )
 },
 }

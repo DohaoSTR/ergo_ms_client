@@ -151,27 +151,20 @@ function getTableColumnTypes(table) {
 }
 
 async function onApply() {
-  if (!canApply.value) return;
-  const lines = relationLines.value.map(line => ({
-    left: line.left,
-    right: line.right
-  }));
+  if (!canApply.value) return
 
-  const linkedTable = props.allTables.find(t => t.id === selectedTableId.value);
+  const lines = relationLines.value.map(l => ({ left: l.left, right: l.right }))
 
-  const ok = checkJoinCompatibility(props.mainTable, linkedTable, lines);
-  if (!ok) {
-    alert('Ошибка: типы выбранных столбцов не совпадают!');
-    return;
-  }
+  const linkedTable   = props.allTables.find(t => t.id === selectedTableId.value)
+  const realRightId   = linkedTable.file_id || Math.abs(selectedTableId.value)
 
   emit('apply', {
-    leftTableId: props.mainTable.id,
-    rightTableId: selectedTableId.value,
-    joinType: joinType.value,
-    lines: lines
-  });
-  emit('close');
+    leftTableId : props.mainTable.id,
+    rightTableId: realRightId,
+    joinType    : joinType.value,
+    lines
+  })
+  emit('close')
 }
 
 function getTableColumns(table) {
@@ -186,7 +179,6 @@ function getTableColumns(table) {
 }
 
 async function handleAutoJoinAndApply() {
-  console.log("handleAutoJoinAndApply: called");
   isJoinLoading.value = true
   joinError.value = null
 
@@ -198,16 +190,29 @@ async function handleAutoJoinAndApply() {
     const mainLine = relationLines.value[0]
     if (!mainLine.left || !mainLine.right) throw new Error('Выберите оба поля для связи')
 
-    // 2. Проверяем что datasetId есть!
-    if (!props.datasetId) throw new Error('Не передан id датасета для добавления таблицы!')
+    // 2. Проверяем режим: драфт или настоящий датасет
+    if (!props.datasetId) {
+      // Драфтовый режим — сразу отправляем событие наружу
+      const lines = relationLines.value.map(line => ({
+        left: line.left,
+        right: line.right
+      }));
 
-    // 3. Проверяем stagingName
+      emit('apply', {
+        leftTableId: props.mainTable.id,
+        rightTableId: selectedTableId.value,
+        joinType: joinType.value,
+        lines: lines
+      });
+      emit('close');
+      return;
+    }
+
+    // 3. (Оригинальная логика для настоящего датасета)
     let stagingName = linkedTable.table_ref || linkedTable.table_name || linkedTable.name;
     let fileId = linkedTable.file_id || linkedTable.id;
 
-    // 4. Если staging/table_ref нет или не начинается с "staging_" или "temp_", вызываем addTableToDataset
     if (!stagingName || (!stagingName.startsWith('staging_') && !stagingName.startsWith('temp_'))) {
-      console.log('[DEBUG] addTableToDataset: datasetId', props.datasetId, 'fileId', fileId)
       const resp = await datasetService.addTableToDataset(props.datasetId, fileId);
       const newTable = resp?.data;
       if (!newTable || !newTable.table_ref) {
@@ -216,11 +221,8 @@ async function handleAutoJoinAndApply() {
       stagingName = newTable.table_ref;
     }
 
-    // 5. Проверяем stagingName ещё раз
     if (!stagingName) throw new Error('У таблицы нет staging/table_ref (temp_xxxx)')
 
-    // 6. Выполняем joinTable
-    console.log('[DEBUG] joinTable: datasetId', props.datasetId, 'stagingName', stagingName)
     const joinResp = await datasetService.joinTable({
       datasetId: props.datasetId,
       stagingName,

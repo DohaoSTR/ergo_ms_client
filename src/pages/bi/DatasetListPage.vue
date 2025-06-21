@@ -27,20 +27,15 @@ function goToNewDataset() {
 async function fetchDatasets () {
   loading.value = true
   try {
-    const { data } = await apiClient.get(endpoints.bi.DatasetsList, {
-      params: { is_temporary: false }
-    })
-
+    const { data } = await apiClient.get(endpoints.bi.DatasetsList)
     const rows = Array.isArray(data) ? data : (data.results || [])
-    datasets.value = rows
-  .filter(item => item.is_temporary === false)
-  .map(item => new DatasetDTO({
+    datasets.value = rows.map(item => new DatasetDTO({
       id:   item.id,
       name: item.name,
       owner_username: item.owner_username,
       created_at: item.created_at,
       storage_type: item.storage_type
-  }))
+    }))
   } catch (err) {
     console.error('Ошибка загрузки датасетов:', err)
   } finally {

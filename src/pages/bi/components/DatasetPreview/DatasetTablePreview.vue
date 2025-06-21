@@ -4,7 +4,7 @@
       <div class="title-label" style="font-weight: bold; margin-right:2rem">Предпросмотр</div>
       <div class="title-input">
         <div class="input-label-left">Количество строк:</div>
-        <input type="text" v-model="limitInput" class="form-control form-control-sm"/>
+        <input type="text" v-model.lazy.number="limit" @change="commitLimit(inner)" class="form-control form-control-sm" min="1" max="1000">
         <div class="input-label-right">не больше 1000</div>
       </div>
     </div>
@@ -12,7 +12,7 @@
       <div class="spinner">Загружаем данные…</div>
     </div>
     <div v-else class="main-grid">
-      <Vue3Datatable :columns="datatableColumns" :rows="tableRows" :loading="props.loading" :page-size="props.limit" skin="table table-hover" noDataContent="Нет данных"/>
+      <Vue3Datatable :columns="datatableColumns" :rows="visibleRows" :loading="props.loading" :is-preview-visible="isPreviewVisible" :page-size="limit" skin="table table-hover" noDataContent="Нет данных"/>
     </div>
   </div>
 </template>
@@ -26,14 +26,43 @@ const props = defineProps({
   rows: Array,
   loading: Boolean,
   limit: Number,
-  fields: Array
+  fields: Array,
+  isPreviewVisible: Boolean,
+  datasetId: Number
 })
 
-const loading = ref(false)
+const limit = ref(props.limit ?? 10)
+
+watch(() => props.limit, v => { limit.value = v })
+
+const emit = defineEmits(['update:limit'])
+
+watch(limit, v => emit('update:limit', v))
 
 const nameMap = computed(() =>
   Object.fromEntries((props.fields || []).map(f => [f.source_column, f.name]))
 )
+
+const datatableColumns = computed(() =>
+  props.cols.map(col => ({
+    title: nameMap.value[col] || col,
+    field: toField(nameMap.value[col] || col),
+    sortable: true,
+  }))
+)
+
+const tableRows = computed(() => {
+  const fields = props.cols.map(toField)
+  return props.rows.map(rowArr =>
+    fields.reduce((obj, field, idx) => ({ ...obj, [field]: rowArr[idx] }), {})
+  )
+})
+
+const visibleRows = computed(() =>
+  tableRows.value.slice(0, limit.value)
+)
+
+const loading = ref(false)
 
 function toField(str) {
   const map = {
@@ -47,38 +76,12 @@ function toField(str) {
     .replace(/^_+|_+$/g, '');
 }
 
-// 2. computed
-const datatableColumns = computed(() =>
-  props.cols.map((col) => ({
-    title: nameMap.value[col] || col,
-    field: toField(nameMap.value[col] || col),
-    sortable: true,
-  }))
-)
-
-const tableRows = computed(() => {
-  const fields = props.cols.map(toField)
-  return props.rows.map(rowArr =>
-    fields.reduce((obj, field, idx) => {
-      obj[field] = rowArr[idx]
-      return obj
-    }, {})
-  )
-})
-
-const limitInput = ref(String(props.limit))
-const limit      = ref(props.limit)
-
-watch(() => props.limit, v => {
-  limit.value = v
-  limitInput.value = String(v)
-})
-
-watch(limitInput, val => {
-  const num = parseInt(val.replace(/\D/g,'')) || props.limit
-  limit.value      = Math.min(1000, Math.max(1, num))
-  limitInput.value = String(limit.value)
-})
+function commitLimit (raw) {
+  const n = Number(raw) || 1
+  const clamped = Math.min(1000, Math.max(1, n))
+  inner.value = clamped
+  emit('update:limit', clamped)
+}
 </script>
 
 <style scoped lang="scss">
