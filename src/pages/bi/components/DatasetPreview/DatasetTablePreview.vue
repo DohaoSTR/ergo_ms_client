@@ -4,15 +4,21 @@
       <div class="title-label" style="font-weight: bold; margin-right:2rem">Предпросмотр</div>
       <div class="title-input">
         <div class="input-label-left">Количество строк:</div>
-        <input type="text" v-model.lazy.number="limit" @change="commitLimit(inner)" class="form-control form-control-sm" min="1" max="1000">
+        <input type="number" v-model.number="localLimit" class="form-control form-control-sm" min="1" max="1000"/>
         <div class="input-label-right">не больше 1000</div>
       </div>
     </div>
-    <div v-if="loading" class="preview-loading">
-      <div class="spinner">Загружаем данные…</div>
-    </div>
-    <div v-else class="main-grid">
-      <Vue3Datatable :columns="datatableColumns" :rows="visibleRows" :loading="props.loading" :is-preview-visible="isPreviewVisible" :page-size="limit" skin="table table-hover" noDataContent="Нет данных"/>
+    <div class="main-grid" style="position: relative;">
+      <Vue3Datatable
+        :columns="datatableColumns"
+        :rows="visibleRows"
+        :loading="props.loading"
+        :is-preview-visible="isPreviewVisible"
+        :page-size="limit"
+        skin="table table-hover"
+        :selectRowOnClick="false"
+        noDataContent="Нет данных"
+      />
     </div>
   </div>
 </template>
@@ -24,20 +30,27 @@ import Vue3Datatable from '@bhplugin/vue3-datatable'
 const props = defineProps({
   cols: Array,
   rows: Array,
-  loading: Boolean,
   limit: Number,
   fields: Array,
   isPreviewVisible: Boolean,
   datasetId: Number
 })
 
-const limit = ref(props.limit ?? 10)
-
-watch(() => props.limit, v => { limit.value = v })
+const localLimit = ref(props.limit ?? 10)
+watch(() => props.limit, v => {
+  if (localLimit.value !== v) localLimit.value = v
+})
 
 const emit = defineEmits(['update:limit'])
 
-watch(limit, v => emit('update:limit', v))
+function clamp(val) {
+  const n = Number(val) || 1
+  return Math.max(1, Math.min(1000, n))
+}
+
+watch(localLimit, v => {
+  emit('update:limit', clamp(v))
+})
 
 const nameMap = computed(() =>
   Object.fromEntries((props.fields || []).map(f => [f.source_column, f.name]))
@@ -58,11 +71,7 @@ const tableRows = computed(() => {
   )
 })
 
-const visibleRows = computed(() =>
-  tableRows.value.slice(0, limit.value)
-)
-
-const loading = ref(false)
+const visibleRows = computed(() => tableRows.value)
 
 function toField(str) {
   const map = {
@@ -75,49 +84,9 @@ function toField(str) {
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
 }
-
-function commitLimit (raw) {
-  const n = Number(raw) || 1
-  const clamped = Math.min(1000, Math.max(1, n))
-  inner.value = clamped
-  emit('update:limit', clamped)
-}
 </script>
 
 <style scoped lang="scss">
-.preview-loading {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-secondary-text);
-  font-size: 1.1rem;
-  font-style: italic;
-}
-
-.loading-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.4);
-  z-index: 10;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid var(--color-border);
-  border-top-color: var(--color-border);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 .preview-main {
   position: relative;
   height: 100%;
@@ -157,6 +126,7 @@ input {
   min-height: 0;
   overflow-y: auto;
   overflow-x: auto;
+  position: relative;
 }
 
 :deep(.vue3-datatable__table-wrapper) {

@@ -4,14 +4,16 @@
     '--footer-height': isPreviewVisible ? footerHeight + 'px' : '0px'
   }">
     <header class="file_area_header">
-      <div class="file_area_header_label"><Database />
+      <div class="file_area_header_label">
+        <Database />
         <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
           <h4 class="header-label" style="margin-bottom:3px;">{{ headerName }}</h4>
         </div>
       </div>
       <div class="file_area_header_buttons">
-        <button v-if="isNewPage" class="btn btn-primary" :disabled="!canCreateDataset || saving" @click="showDatasetDialog = true">Создать датасет</button>
-          
+        <button v-if="isNewPage" class="btn btn-primary" :disabled="!canCreateDataset || saving"
+          @click="showDatasetDialog = true">Создать датасет</button>
+
         <button class="btn btn-success save-btn" :hidden="isNewPage" :disabled="!isDirty || saving" @click="editDataset"
           style="color: var(--color-primary-background); min-width: 170px; position: relative;">
           <span v-if="!saving && !saveSuccess">Сохранить датасет</span>
@@ -80,11 +82,16 @@
     <transition name="slide-footer">
       <div class="footer-wrapper" v-if="isPreviewVisible">
         <div class="footer-resizer" @mousedown.prevent="startFooterResize"></div>
-        <footer class="footer-content" :style="{ height: footerHeight + 'px' }">
-          <template v-if="isPreviewLoading"></template>
-          <template v-else-if="previewRows && previewRows.length">
-            <DatasetTablePreview v-model:limit="previewLimit" :cols="previewCols" :rows="previewRows"
-              :loading="isPreviewLoading" :fields="fields" :dataset-id="dataset.value?.id" />
+        <footer class="footer-content" :style="{ height: footerHeight + 'px', position: 'relative' }">
+          <template v-if="previewRows && previewRows.length">
+            <DatasetTablePreview v-model:limit="previewLimit" :cols="previewCols" :rows="previewRows" :fields="fields"
+              :dataset-id="dataset.value?.id" />
+            <transition name="fade">
+              <div v-if="isPreviewLoading" class="footer-overlay">
+                <div class="spinner"></div>
+                <span>Загружаем данные…</span>
+              </div>
+            </transition>
           </template>
           <template v-else>
             <div class="preview-placeholder">
@@ -192,15 +199,8 @@ const currentDatasetId = computed(() => dataset.value?.id)
 
 const emit = defineEmits([
   'update:selectedConnection',
-  'tableDrop'
+  'tableDrop', 'limit'
 ])
-
-const props = defineProps({
-  previewLimit: {
-    type: Number,
-    default: 10
-  }
-})
 
 const headerName = computed(() =>
   dataset.value?.name || 'Новый датасет'
@@ -222,7 +222,6 @@ const isDirty = computed(() => {
 })
 
 function normalizeRelations(relations) {
-  // Приводим id к строке, сортируем массив по id, сортируем lines
   return (relations || [])
     .map(rel => ({
       rightTableId: String(rel.rightTableId),
@@ -327,25 +326,23 @@ async function editDataset(finalName = dataset.value?.name) {
     const curMap = new Map(relations.value.map(r => [String(r.rightTableId), r]));
 
     for (const [id, rel] of curMap) {
-   const orig = origMap.get(id);
-   // связь уже была и не изменилась → пропускаем
-   if (
-     orig &&
-     orig.joinType === rel.joinType &&
-     JSON.stringify(orig.lines) === JSON.stringify(rel.lines)
-   ) {
-     continue;
-   }
+      const orig = origMap.get(id);
+      if (
+        orig &&
+        orig.joinType === rel.joinType &&
+        JSON.stringify(orig.lines) === JSON.stringify(rel.lines)
+      ) {
+        continue;
+      }
       const tableObj = allTablesOfConnection.value.find(
         t => Number(t.id) === Number(rel.rightTableId)
       );
       const relationPayload = {
-        datasetId    : dataset.value.id,
-        rightTableId : rel.rightTableId,
-        joinType     : rel.joinType,
-        lines        : rel.lines,
+        datasetId: dataset.value.id,
+        rightTableId: rel.rightTableId,
+        joinType: rel.joinType,
+        lines: rel.lines,
       };
-      // file_id нужен только при самом первом добавлении
       if (tableObj?.file_id) relationPayload.file_id = tableObj.file_id;
 
       await datasetService.addRelation(relationPayload);
@@ -362,8 +359,8 @@ async function editDataset(finalName = dataset.value?.name) {
     const { data: fresh } = await datasetService.getDataset(dsId)
     const { data: files } = await connectionService.getFiles(fresh.connection)
     fileUploadsCache.value = files
-    await hydrateFromDataset(fresh)      // подтянет connection-files, mainTable, relations …
-    relations.value = getRelationsFromDataset(fresh, mainTable.value?.id) // Явная синхронизация
+    await hydrateFromDataset(fresh)
+    relations.value = getRelationsFromDataset(fresh, mainTable.value?.id)
     dataset.value = fresh
     origDatasetRef.value = JSON.parse(JSON.stringify(fresh));
     saveSuccess.value = true
@@ -459,17 +456,16 @@ function buildAllTables(files = fileUploadsCache.value, freshTables) {
 
   updateSelectedTables();
 
- relations.value = relations.value
-   .map(rel => {
-     // пытаемся найти таблицу либо по id DataSetTable, либо по file_id
-     const tbl =
-       allTablesOfConnection.value.find(t => t.id      === rel.rightTableId) ||
-       allTablesOfConnection.value.find(t => t.file_id === rel.rightTableId);
+  relations.value = relations.value
+    .map(rel => {
+      const tbl =
+        allTablesOfConnection.value.find(t => t.id === rel.rightTableId) ||
+        allTablesOfConnection.value.find(t => t.file_id === rel.rightTableId);
 
-     if (!tbl) return null;                // файл/таблица ещё не загружена
-     return { ...rel, rightTableId: tbl.id }; // гарантируем «живой» id
-   })
-   .filter(Boolean);
+      if (!tbl) return null;
+      return { ...rel, rightTableId: tbl.id };
+    })
+    .filter(Boolean);
 
   const actualMain = allTablesOfConnection.value.find(t => t.isMain);
   if (actualMain) mainTable.value = actualMain;
@@ -697,30 +693,35 @@ function tabLabel(tab) {
 }
 
 async function loadPreview() {
-  const main = mainTable.value
-  const joined = relations.value.map(rel => {
-    const tbl = allTablesOfConnection.value.find(t => t.id === rel.rightTableId)
-    if (!tbl) return null
-    return {
-      ...tbl,
-      joinType: rel.joinType,
-      lines: rel.lines
+  isPreviewLoading.value = true
+  try {
+    const main = mainTable.value
+    const joined = relations.value.map(rel => {
+      const tbl = allTablesOfConnection.value.find(t => t.id === rel.rightTableId)
+      if (!tbl) return null
+      return {
+        ...tbl,
+        joinType: rel.joinType,
+        lines: rel.lines
+      }
+    })
+      .filter(Boolean)
+    const resp = await datasetService.draftPreview({
+      connection_id: selectedConnection.value?.id,
+      mainTable: main,
+      joinedTables: joined,
+      limit: previewLimit.value,
+    })
+    if (resp && resp.data) {
+      previewCols.value = resp.data.columns || []
+      previewRows.value = resp.data.rows || []
+      await loadFields()
+    } else {
+      previewCols.value = []
+      previewRows.value = []
     }
-  })
-    .filter(Boolean)
-  const resp = await datasetService.draftPreview({
-    connection_id: selectedConnection.value?.id,
-    mainTable: main,
-    joinedTables: joined,
-    limit: previewLimit.value,
-  })
-  if (resp && resp.data) {
-    previewCols.value = resp.data.columns || []
-    previewRows.value = resp.data.rows || []
-    await loadFields()
-  } else {
-    previewCols.value = []
-    previewRows.value = []
+  } finally {
+    isPreviewLoading.value = false
   }
 }
 
@@ -736,6 +737,10 @@ watch(mainTable, async (val, oldVal) => {
     await loadPreview()
   }
   updateSelectedTables();
+})
+
+watch(previewLimit, val => {
+  loadPreview()
 })
 
 watch(mainTable, async (val, oldVal) => {
@@ -1146,7 +1151,7 @@ body {
   position: relative;
   padding: 0.75rem 0 0.75rem 0.75rem;
   padding-bottom: 6px !important;
-  background-color: var(--color-hover-background);
+  background-color: var(--color-header-background);
   border-top: 1px solid var(--color-border);
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
@@ -1265,4 +1270,28 @@ body {
     transform: rotate(360deg);
   }
 }
+
+.footer-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: var(--color-primary-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  pointer-events: all;
+  font-size: 1.1rem;
+}
+.spinner {
+  width: 32px; height: 32px;
+  border: 4px solid var(--color-border);
+  border-top: 4px solid var(--color-secondary-text);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin-bottom: 1rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.fade-enter-active, .fade-leave-active { transition: opacity .3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

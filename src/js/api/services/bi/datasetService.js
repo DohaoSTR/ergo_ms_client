@@ -129,13 +129,10 @@ export default {
         file_id: fileId,
     })
   },
-  draftPreview(draft, limit = 20) {
-  return apiClient.post('/bi_analysis/bi_datasets/draft_preview/', {
-    ...draft,
-    limit
-  })
+  draftPreview(draft) {
+    return apiClient.post('/bi_analysis/bi_datasets/draft_preview/', draft)
   },
   addRelation({ datasetId, ...rest }) {
-  return apiClient.post(`/bi_analysis/bi_datasets/${datasetId}/add-relation/`, rest)
-}
+    return apiClient.post(`/bi_analysis/bi_datasets/${datasetId}/add-relation/`, rest)
+  }
 }
