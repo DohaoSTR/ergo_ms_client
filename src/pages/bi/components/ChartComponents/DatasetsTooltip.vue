@@ -1,7 +1,7 @@
 <template>
   <div class="section-title">Датасеты</div>
   <input class="form-control mb-2" type="text" placeholder="Поиск по имени" v-model="filter" autocomplete="off"/>
-  <ul class="dataset-list">
+  <ul v-if="filteredDatasets.length > 0" class="dataset-list">
     <template v-if="isLoading">
       <li v-for="n in 4" :key="n" class="dataset-item loading">
         <div class="skeleton-icon" />
@@ -9,17 +9,13 @@
       </li>
     </template>
     <template v-else>
-      <li v-for="dataset in filteredDatasets"
-          :key="dataset.id"
-          class="dataset-item"
-          :class="{ selected: isSelected(dataset) }"
-          @click="emit('select', dataset)">
+      <li v-for="dataset in filteredDatasets" :key="dataset.id" class="dataset-item" :class="{ selected: isSelected(dataset) }" @click="emit('select', dataset)">
         <Database class="icon"/>
         <span class="dataset-name">{{ dataset.name }}</span>
       </li>
     </template>
   </ul>
-  <div v-if="!isLoading && filteredDatasets.length === 0" class="no-data">
+  <div v-else class="no-data">
     Нет датасетов
   </div>
 </template>
@@ -44,13 +40,12 @@ function isSelected(dataset) {
   return String(dataset.id) === String(props.selectedDataset.id)
 }
 
-// API загрузка датасетов как в листе
 async function fetchDatasets() {
   isLoading.value = true
   try {
-    const { data } = await apiClient.get(endpoints.bi.DatasetsList, { params: { is_temporary: false } })
+    const { data } = await apiClient.get(endpoints.bi.DatasetsList)
     const rows = Array.isArray(data) ? data : (data.results || [])
-    datasets.value = rows.filter(item => item.is_temporary === false)
+    datasets.value = rows
   } catch (err) {
     console.error('Ошибка загрузки датасетов:', err)
   } finally {
@@ -116,6 +111,11 @@ onMounted(fetchDatasets)
   text-align: center;
   font-size: 14px;
   color: var(--color-primary-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  height: 100%;
 }
 .loading {
   pointer-events: none;
