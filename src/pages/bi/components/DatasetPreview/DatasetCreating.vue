@@ -29,7 +29,7 @@
         </transition>
 
         <transition name="fade-slide" appear>
-            <div class="table-links" v-if="mainTable && relations.length && relations">
+            <div class="table-links" v-if="mainTable && relations">
                 <div class="main-connections">
                     <div>Связи:</div>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -45,6 +45,7 @@
                         <button type="button" v-if="availableTablesForRelation.length" class="btn btn-primary button-card-connection" ref="buttonRef" @click="emit('openTableLinkModal')">
                             <Plus :size="24" />Добавить связь
                         </button>
+                        <span v-if="availableTablesForRelation.length"><i>Нет доступных таблиц для связи</i></span>
                     </div>
                 </div>
             </div>

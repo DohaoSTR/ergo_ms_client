@@ -210,27 +210,6 @@ const canCreateDataset = computed(() =>
   isNewPage.value && !!mainTable.value?.id
 )
 
-function isFieldsDirty() {
-  if (!origDatasetRef.value || !Array.isArray(origDatasetRef.value.fields)) return false;
-  const origAgg = {};
-  origDatasetRef.value.fields.forEach(f => {
-    if (f && f.name) origAgg[f.name] = f.aggregation;
-  });
-
-  const curAgg = {};
-  fields.value.forEach(f => {
-    if (f && f.name) curAgg[f.name] = f.aggregation;
-  });
-
-  if (Object.keys(curAgg).length !== Object.keys(origAgg).length) return true;
-
-  for (const name in curAgg) {
-    if (!(name in origAgg)) return true;
-    if (curAgg[name] !== origAgg[name]) return true;
-  }
-  return false;
-}
-
 const isDirty = computed(() => {
   if (!origDatasetRef.value) return false;
   if (selectedConnection.value?.id !== origDatasetRef.value.connection) return true;
@@ -240,21 +219,48 @@ const isDirty = computed(() => {
   const orig = JSON.stringify(normalizeRelations(getRelationsFromDataset(origDatasetRef.value, origMain ? origMain.id : null)));
   if (cur !== orig) return true;
   if (isFieldsDirty()) return true;
+  return false;
 });
 
-function normalizeRelations(relations) {
-  return (relations || [])
-    .map(rel => ({
-      rightTableId: String(rel.rightTableId),
-      joinType: rel.joinType,
-      lines: (rel.lines || [])
-        .map(line => ({
-          left: String(line.left),
-          right: String(line.right)
+function isFieldsDirty() {
+  if (!origDatasetRef.value || !Array.isArray(origDatasetRef.value.fields)) return false;
+
+  const keysToCheck = ['name', 'aggregation', 'type', 'description'];
+  const origMap = new Map(origDatasetRef.value.fields.map(f => [f.name, f]));
+
+  // Если список полей отличается по именам
+  const curNames = new Set(fields.value.map(f => f.name));
+  const origNames = new Set(origDatasetRef.value.fields.map(f => f.name));
+  if (curNames.size !== origNames.size || ![...curNames].every(n => origNames.has(n))) return true;
+
+  // Сравнение по значимым параметрам
+  for (const f of fields.value) {
+    const orig = origMap.get(f.name);
+    if (!orig) return true;
+
+    for (const key of keysToCheck) {
+      if ((f[key] || '') !== (orig[key] || '')) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function normalizeRelations (rels = []) {
+  return rels
+    .map(({ rightTableId, joinType, lines = [] }) => ({
+      rightTableId: String(rightTableId),
+      joinType: String(joinType),
+      lines: lines
+        .map(({ left, right }) => ({
+          left: String(left),
+          right: String(right)
         }))
         .sort((a, b) => (a.left + a.right).localeCompare(b.left + b.right))
     }))
-    .sort((a, b) => String(a.rightTableId).localeCompare(String(b.rightTableId)));
+    .sort((a, b) => String(a.rightTableId).localeCompare(String(b.rightTableId)))
 }
 
 async function saveDataset(finalName) {
@@ -267,7 +273,7 @@ async function saveDataset(finalName) {
       .map(f => ({
         name: f.name,
         aggregation: f.aggregation
-    }));
+      }));
 
 
     if (!dsId) {
@@ -338,12 +344,16 @@ async function editDataset(finalName = dataset.value?.name) {
     }
 
     const fieldsAgg = fields.value
-    .filter(f => f.name)
-    .map(f => ({
-      id: (typeof f.id === 'number' || (typeof f.id === 'string' && !f.id.startsWith('new_'))) ? f.id : undefined,
-      name: f.name,
-      aggregation: f.aggregation
-    }));
+  .filter(f => f.name)
+  .map(f => ({
+    id: (typeof f.id === 'number' || (typeof f.id === 'string' && !f.id.toString().startsWith('new_'))) ? f.id : undefined,
+    name: f.name,
+    aggregation: f.aggregation,
+    type: f.type,
+    description: f.description,
+    source_column: f.source?.column,
+    source_table: f.source_table,
+  }));
 
     const patch = {};
     if (selectedConnection.value?.id !== origDatasetRef.value.connection)
@@ -769,18 +779,16 @@ async function loadPreview() {
 }
 
 watch(mainTable, async (val, oldVal) => {
-  if (val && val.file_type && !val.file_id) {
-    val.file_id = val.id
-  }
-  if (
-    val &&
-    (val.file_id || val.table_name) &&
-    selectedConnection.value
-  ) {
-    await loadPreview()
+  if (!val) return;
+
+  // normalise `file_id` once
+  if (val.file_type && !val.file_id) val.file_id = val.id;
+
+  if ((val.file_id || val.table_name) && selectedConnection.value) {
+    await loadPreview();
   }
   updateSelectedTables();
-})
+});
 
 watch(previewLimit, val => {
   loadPreview()
@@ -822,42 +830,43 @@ async function loadFields() {
 
     // 1. Загруженный датасет: поля из origDatasetRef.value.fields
     if (dataset.value?.id && Array.isArray(origDatasetRef.value?.fields) && origDatasetRef.value.fields.length) {
-      // Но только если кол-во и имена колонок совпадают с предпросмотром
-      const origFieldsMap = new Map(
-        origDatasetRef.value.fields.map(f => [f.name, f])
-      );
-      const fieldsList = previewCols.value.map((col, idx) => {
-        const orig = origFieldsMap.get(col);
-        const tableObj = col2Table[col] || mainTable.value;
-        const tableName = tableObj?.display_name || tableObj?.name || tableObj?.table_name || 'НеизвестнаяТаблица';
-        const columnValues = previewRows.value.map(row => row[idx]);
-        const colType = detectColumnType(columnValues);
+  const origFieldsMap = new Map(
+  origDatasetRef.value.fields.map(f => [String(f.id ?? f.name), f])
+);
 
-        if (orig) {
-          // Сохраняем всю информацию из БД
-          return {
-            ...orig,
-            // Но обновляем тип и source (на случай обновления данных)
-            type: colType,
-            source: { table: tableName, column: col },
-            source_table: tableObj?.id,
-          };
-        }
-        // Для новых полей — дефолтная агрегация
-        const aggOptions = getAggregationOptions(colType);
-        return {
-          id: 'new_' + idx,
-          name: col,
-          source: { table: tableName, column: col },
-          source_table: tableObj?.id,
-          type: colType,
-          aggregation: aggOptions[0]?.value ?? 'none',
-          description: ''
-        }
-      });
-      fields.value = fieldsList;
-      return;
-    }
+  const fieldsList = previewCols.value.map((col, idx) => {
+  // Пробуем найти по id, если id нет — fallback по name
+  let orig = origDatasetRef.value.fields.find(f => f.source_column === col || f.name === col);
+  if (origFieldsMap.has(String(orig?.id))) orig = origFieldsMap.get(String(orig.id));
+  const tableObj = col2Table[col] || mainTable.value;
+  const columnValues = previewRows.value.map(row => row[idx]);
+  const colType = detectColumnType(columnValues);
+
+  if (orig) {
+    return {
+      ...orig,
+      source: orig.source || { table: tableObj?.display_name || tableObj?.name || tableObj?.table_name, column: col },
+      source_table: orig.source_table || tableObj?.id,
+      source_column: orig.source_column || col,
+      values: columnValues,
+    };
+  }
+  // Новое поле
+  const aggOptions = getAggregationOptions(colType);
+  return {
+    id: 'new_' + idx,
+    name: col,
+    source: { table: tableObj?.display_name || tableObj?.name || tableObj?.table_name, column: col },
+    source_table: tableObj?.id,
+    source_column: col,
+    type: colType,
+    aggregation: aggOptions[0]?.value ?? 'none',
+    description: ''
+  }
+});
+fields.value = fieldsList;
+  return;
+}
 
     // 2. Новый датасет: дефолтная агрегация
     const newFields = previewCols.value.map((col, idx) => {
@@ -1364,15 +1373,30 @@ body {
   pointer-events: all;
   font-size: 1.1rem;
 }
+
 .spinner {
-  width: 32px; height: 32px;
+  width: 32px;
+  height: 32px;
   border: 4px solid var(--color-border);
   border-top: 4px solid var(--color-secondary-text);
   border-radius: 50%;
   animation: spin .8s linear infinite;
   margin-bottom: 1rem;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-.fade-enter-active, .fade-leave-active { transition: opacity .3s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity .3s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

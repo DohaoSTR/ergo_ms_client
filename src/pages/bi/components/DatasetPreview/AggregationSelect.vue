@@ -53,7 +53,7 @@ watch(show, v => {
   border-radius: 0.7rem;
   font-size: 1rem;
   font-weight: 500;
-  min-width: 110px;
+  width: 100%;
   text-align: center;
   line-height: 1.25;
   margin: 0;
@@ -74,7 +74,7 @@ watch(show, v => {
 .agg-dark      { background: #1a1c20; color: var(--color-hover-background);}
 
 .agg-chip {
-  padding: 0.4em 1.3em;
+  padding: 0.4em;
   font-size: 1em;
   border: none;
   border-radius: 9px;

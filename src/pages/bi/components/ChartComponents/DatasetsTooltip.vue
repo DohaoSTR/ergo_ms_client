@@ -1,66 +1,51 @@
 <template>
   <div class="section-title">Датасеты</div>
-  <input class="form-control mb-2" type="text" placeholder="Поиск по имени" v-model="filter" autocomplete="off"/>
-  <ul v-if="filteredDatasets.length > 0" class="dataset-list">
-    <template v-if="isLoading">
-      <li v-for="n in 4" :key="n" class="dataset-item loading">
-        <div class="skeleton-icon" />
-        <div class="skeleton-text" />
-      </li>
-    </template>
-    <template v-else>
-      <li v-for="dataset in filteredDatasets" :key="dataset.id" class="dataset-item" :class="{ selected: isSelected(dataset) }" @click="emit('select', dataset)">
-        <Database class="icon"/>
-        <span class="dataset-name">{{ dataset.name }}</span>
-      </li>
-    </template>
+  <input class="form-control mb-2" type="text" placeholder="Поиск по имени" v-model="filter" autocomplete="off" />
+  
+  <ul v-if="props.isLoading" class="dataset-list">
+    <li v-for="n in 4" :key="n" class="dataset-item loading">
+      <div class="skeleton-icon" />
+      <div class="skeleton-text" />
+    </li>
   </ul>
+  
+  <ul v-else-if="filteredDatasets.length > 0" class="dataset-list">
+    <li v-for="dataset in filteredDatasets" :key="dataset.id" class="dataset-item"
+      :class="{ selected: isSelected(dataset) }" @click="emit('select', dataset)">
+      <Database class="icon" />
+      <span class="dataset-name">{{ dataset.name }}</span>
+    </li>
+  </ul>
+  
   <div v-else class="no-data">
     Нет датасетов
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { Database } from 'lucide-vue-next'
-import { apiClient } from '@/js/api/manager'
-import { endpoints } from '@/js/api/endpoints'
 
 const props = defineProps({
-  selectedDataset: Object
+  selectedDataset: Object,
+  datasets: Array,
+  isLoading: Boolean,
 })
 const emit = defineEmits(['select'])
 
 const filter = ref('')
-const isLoading = ref(true)
-const datasets = ref([])
 
 function isSelected(dataset) {
   if (!props.selectedDataset) return false
   return String(dataset.id) === String(props.selectedDataset.id)
 }
 
-async function fetchDatasets() {
-  isLoading.value = true
-  try {
-    const { data } = await apiClient.get(endpoints.bi.DatasetsList)
-    const rows = Array.isArray(data) ? data : (data.results || [])
-    datasets.value = rows
-  } catch (err) {
-    console.error('Ошибка загрузки датасетов:', err)
-  } finally {
-    isLoading.value = false
-  }
-}
-
 const filteredDatasets = computed(() => {
   const search = filter.value.toLowerCase()
-  return datasets.value.filter(ds =>
+  return (props.datasets || []).filter(ds =>
     ds.name && ds.name.toLowerCase().includes(search)
   )
 })
-
-onMounted(fetchDatasets)
 </script>
 
 <style scoped lang="scss">
@@ -69,6 +54,7 @@ onMounted(fetchDatasets)
   color: var(--color-primary-text);
   margin-bottom: 10px;
 }
+
 .dataset-list {
   list-style: none;
   padding: 0 0 10px 0;
@@ -80,6 +66,7 @@ onMounted(fetchDatasets)
   height: 100%;
   overflow-y: auto;
 }
+
 .dataset-item {
   display: flex;
   align-items: center;
@@ -89,16 +76,19 @@ onMounted(fetchDatasets)
   transition: background 0.2s;
   width: 100%;
   cursor: pointer;
+
   &:hover,
   &.selected {
     background-color: var(--color-hover-background);
   }
 }
+
 .icon {
   width: 16px;
   height: 16px;
   color: var(--color-accent);
 }
+
 .dataset-name {
   font-size: 14px;
   color: var(--color-primary-text);
@@ -106,6 +96,7 @@ onMounted(fetchDatasets)
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .no-data {
   padding: 12px;
   text-align: center;
@@ -117,30 +108,48 @@ onMounted(fetchDatasets)
   min-height: 120px;
   height: 100%;
 }
+
 .loading {
   pointer-events: none;
   background: transparent !important;
 }
+
 .skeleton-icon,
 .skeleton-text {
   background-color: var(--color-secondary-text);
   border-radius: 4px;
   animation: shimmer 1.3s infinite ease-in-out;
 }
+
 .skeleton-icon {
   width: 16px;
   height: 16px;
 }
+
 .skeleton-text {
   width: 150px;
   height: 14px;
   margin-left: 10px;
-  border-radius: 4px;
 }
+
+.skeleton-icon,
+.skeleton-text {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  border-radius: 4px;
+  animation: shimmer 1.3s infinite ease-in-out;
+}
+
 @keyframes shimmer {
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.4; }
+  0% {
+    background-position: 100% 0;
+    opacity: 0.5;
+  }
+
+  100% {
+    background-position: 0 0;
+    opacity: 1;
+  }
 }
 
 .dataset-item.selected {

@@ -19,7 +19,7 @@
             <input v-model="f.name" @input="updateField(idx, 'name', f.name)"
               class="form-control form-control-sm" placeholder="Имя…" />
           </td>
-          <td>
+          <td style="max-width: 250px;">
             <span v-if="f.expression">
               <button class="source-btn" @click="onSourceClick(f)">
                 <SquareFunction />
@@ -36,8 +36,14 @@
               </button>
             </span>
           </td>
-          <td>{{ f.type }}</td>
           <td>
+            <select v-model="f.type" class="form-select form-select">
+              <option v-for="typeOption in getTypeOptionsForField(f)" :key="typeOption.value" :value="typeOption.value">
+                {{ typeOption.label }}
+              </option>
+            </select>
+          </td>
+          <td style="max-width: 100px;">
             <AggSelect :modelValue="f.aggregation" @update:modelValue="val => updateField(idx, 'aggregation', val)" :options="getAggregationOptions(f.type)" :aggregationColorMap="aggregationColorMap"/>
           </td>
           <td>
@@ -60,10 +66,9 @@ import datasetService from '@/js/api/services/bi/datasetService'
 import { SquareFunction } from 'lucide-vue-next';
 
 import {
-  typeOptions,
+  getTypeOptionsForField,
   getAggregationOptions,
-  aggregationColorMap,
-  aggregationOptionsMap
+  aggregationColorMap
 } from '@/pages/bi/components/DatasetPreview/js/DatasetPreviewFieldOptions.js'
 
 const showModal = ref(false)
@@ -79,16 +84,6 @@ const props = defineProps({
 
 const emit = defineEmits(['edit-field', 'add-field', 'update:fields', 'removeTable'])
 
-const tableLabel = (tableKey) => {
-  if (!tableKey) return 'Нет источника';
-  const tbl = props.tables.find(t => String(t.id) === String(tableKey));
-  if (tbl) return tbl.display_name || tbl.name || tbl.table || tbl.id;
-  const byName = props.tables.find(t => t.name === tableKey || t.table === tableKey);
-  if (byName) return byName.display_name || byName.name || byName.table;
-  if (typeof tableKey === 'string' && tableKey.startsWith('expr')) return 'Вычисляемое поле';
-  return tableKey;
-};
-
 function updateField(idx, key, value) {
   const newFields = props.fields.map((f, i) => i === idx ? { ...f, [key]: value } : f);
   emit('update:fields', newFields);
@@ -102,18 +97,6 @@ function removeField(idx) {
 
 function onSourceClick(field) {
   emit('edit-field', field)
-}
-
-function onSourceSave(newSource) {
-  if (!selectedField.value) return
-  const idx = props.fields.findIndex(f => f.id === selectedField.value.id)
-  if (idx !== -1) {
-    const updatedFields = props.fields.map((f, i) => i === idx
-      ? { ...f, source: newSource, source_column: newSource.column }
-      : f)
-    emit('update:fields', updatedFields)
-  }
-  showModal.value = false
 }
 
 function getFieldSourceLabel(field) {
