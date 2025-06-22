@@ -210,16 +210,37 @@ const canCreateDataset = computed(() =>
   isNewPage.value && !!mainTable.value?.id
 )
 
-const isDirty = computed(() => {
-  if (!origDatasetRef.value) return false
-  if (selectedConnection.value?.id !== origDatasetRef.value.connection) return true
-  if (mainTable.value?.file_id !== origDatasetRef.value.file_source) return true
+function isFieldsDirty() {
+  if (!origDatasetRef.value || !Array.isArray(origDatasetRef.value.fields)) return false;
+  const origAgg = {};
+  origDatasetRef.value.fields.forEach(f => {
+    if (f && f.name) origAgg[f.name] = f.aggregation;
+  });
 
+  const curAgg = {};
+  fields.value.forEach(f => {
+    if (f && f.name) curAgg[f.name] = f.aggregation;
+  });
+
+  if (Object.keys(curAgg).length !== Object.keys(origAgg).length) return true;
+
+  for (const name in curAgg) {
+    if (!(name in origAgg)) return true;
+    if (curAgg[name] !== origAgg[name]) return true;
+  }
+  return false;
+}
+
+const isDirty = computed(() => {
+  if (!origDatasetRef.value) return false;
+  if (selectedConnection.value?.id !== origDatasetRef.value.connection) return true;
+  if (mainTable.value?.file_id !== origDatasetRef.value.file_source) return true;
   const origMain = (origDatasetRef.value.tables || []).find(t => t.order === 0);
-  const cur = JSON.stringify(normalizeRelations(relations.value))
-  const orig = JSON.stringify(normalizeRelations(getRelationsFromDataset(origDatasetRef.value, origMain ? origMain.id : null)))
-  return cur !== orig
-})
+  const cur = JSON.stringify(normalizeRelations(relations.value));
+  const orig = JSON.stringify(normalizeRelations(getRelationsFromDataset(origDatasetRef.value, origMain ? origMain.id : null)));
+  if (cur !== orig) return true;
+  if (isFieldsDirty()) return true;
+});
 
 function normalizeRelations(relations) {
   return (relations || [])
@@ -241,6 +262,14 @@ async function saveDataset(finalName) {
   try {
     let dsId = dataset.value?.id
 
+    const fieldsAgg = fields.value
+      .filter(f => f.name)
+      .map(f => ({
+        name: f.name,
+        aggregation: f.aggregation
+    }));
+
+
     if (!dsId) {
       const payload = {
         name: finalName,
@@ -248,6 +277,7 @@ async function saveDataset(finalName) {
         connection: selectedConnection.value?.id || null,
         file_source: mainTable.value?.file_id || null,
         table_ref: mainTable.value?.table_ref || null,
+        fields: fieldsAgg.length ? fieldsAgg : undefined
       }
       const res = await datasetService.createDataset(payload)
       if (!res?.data?.id) throw new Error('Ошибка при создании датасета')
@@ -307,6 +337,13 @@ async function editDataset(finalName = dataset.value?.name) {
       }
     }
 
+    const fieldsAgg = fields.value
+    .filter(f => f.name)
+    .map(f => ({
+      name: f.name,
+      aggregation: f.aggregation
+    }));
+
     const patch = {};
     if (selectedConnection.value?.id !== origDatasetRef.value.connection)
       patch.connection = selectedConnection.value.id;
@@ -316,6 +353,10 @@ async function editDataset(finalName = dataset.value?.name) {
     }
     if (datasetName && datasetName !== origDatasetRef.value.name)
       patch.name = datasetName;
+
+    if (fieldsAgg.length) {
+      patch.fields = fieldsAgg;
+    }
 
     if (Object.keys(patch).length) {
       await datasetService.updateDataset(dsId, patch);
@@ -721,6 +762,7 @@ async function loadPreview() {
       previewRows.value = []
     }
   } finally {
+    console.log('fields.value:', fields.value)
     isPreviewLoading.value = false
   }
 }
