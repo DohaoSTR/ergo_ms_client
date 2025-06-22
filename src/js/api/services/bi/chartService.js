@@ -6,7 +6,12 @@ export default {
     return apiClient.get(endpoints.bi.ChartsColumns(datasetId))
   },
   getRows(datasetId) {
+    console.log('getRows called with id', id)
     return apiClient.get(endpoints.bi.ChartsRows(datasetId))
+  },
+  getDatasetRows(datasetId) {
+    console.log('getDatasetRows called with id', datasetId)
+    return apiClient.get(`/bi_analysis/bi_datasets/${datasetId}/rows/`)
   },
   getChart(chartId) {
     return apiClient.get(`/bi_analysis/bi_charts/${chartId}/`)

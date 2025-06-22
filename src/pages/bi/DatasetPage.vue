@@ -340,6 +340,7 @@ async function editDataset(finalName = dataset.value?.name) {
     const fieldsAgg = fields.value
     .filter(f => f.name)
     .map(f => ({
+      id: (typeof f.id === 'number' || (typeof f.id === 'string' && !f.id.startsWith('new_'))) ? f.id : undefined,
       name: f.name,
       aggregation: f.aggregation
     }));
@@ -813,32 +814,70 @@ async function loadFields() {
     ];
     const col2Table = {};
     previewCols.value.forEach(col => {
-      allDraftTables.forEach(t => {
-      })
       let foundTable = allDraftTables.find(t =>
         t?.columns_info?.columns?.includes(col)
       );
       col2Table[col] = foundTable || mainTable.value;
     });
 
-    fields.value = previewCols.value.map((col, idx) => {
+    // 1. Загруженный датасет: поля из origDatasetRef.value.fields
+    if (dataset.value?.id && Array.isArray(origDatasetRef.value?.fields) && origDatasetRef.value.fields.length) {
+      // Но только если кол-во и имена колонок совпадают с предпросмотром
+      const origFieldsMap = new Map(
+        origDatasetRef.value.fields.map(f => [f.name, f])
+      );
+      const fieldsList = previewCols.value.map((col, idx) => {
+        const orig = origFieldsMap.get(col);
+        const tableObj = col2Table[col] || mainTable.value;
+        const tableName = tableObj?.display_name || tableObj?.name || tableObj?.table_name || 'НеизвестнаяТаблица';
+        const columnValues = previewRows.value.map(row => row[idx]);
+        const colType = detectColumnType(columnValues);
+
+        if (orig) {
+          // Сохраняем всю информацию из БД
+          return {
+            ...orig,
+            // Но обновляем тип и source (на случай обновления данных)
+            type: colType,
+            source: { table: tableName, column: col },
+            source_table: tableObj?.id,
+          };
+        }
+        // Для новых полей — дефолтная агрегация
+        const aggOptions = getAggregationOptions(colType);
+        return {
+          id: 'new_' + idx,
+          name: col,
+          source: { table: tableName, column: col },
+          source_table: tableObj?.id,
+          type: colType,
+          aggregation: aggOptions[0]?.value ?? 'none',
+          description: ''
+        }
+      });
+      fields.value = fieldsList;
+      return;
+    }
+
+    // 2. Новый датасет: дефолтная агрегация
+    const newFields = previewCols.value.map((col, idx) => {
       const tableObj = col2Table[col] || mainTable.value;
       const tableName = tableObj?.display_name || tableObj?.name || tableObj?.table_name || 'НеизвестнаяТаблица';
-      const columnName = col;
       const columnValues = previewRows.value.map(row => row[idx]);
       const colType = detectColumnType(columnValues);
       const aggOptions = getAggregationOptions(colType);
 
       return {
         id: 'new_' + idx,
-        name: columnName,
-        source: { table: tableName, column: columnName },
+        name: col,
+        source: { table: tableName, column: col },
         source_table: tableObj?.id,
         type: colType,
-        aggregation: aggOptions[0]?.value || 'none',
+        aggregation: aggOptions[0]?.value ?? 'none',
         description: ''
       }
     });
+    fields.value = newFields;
     return;
   }
   fields.value = [];

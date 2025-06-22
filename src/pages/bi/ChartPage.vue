@@ -17,10 +17,12 @@
                     @click="toggleFullScreen">
                     <Maximize />На весь экран
                 </button>
-                <button class="btn btn-sm btn-primary" :disabled="!chartRequiredFieldsFilled || !isChartDirty" @click="isSaveModalVisible = true">{{ isEditMode ? 'Сохранить изменения' : 'Создать чарт' }}</button>
+                <button class="btn btn-sm btn-primary" :disabled="!chartRequiredFieldsFilled || !isChartDirty"
+                    @click="isSaveModalVisible = true">{{ isEditMode ? 'Сохранить изменения' : 'Создать чарт'
+                    }}</button>
             </div>
         </div>
-        <div :class="['body-grid', { 'no-fields': !selectedChartType, fullscreen:  isFullScreen }]">
+        <div :class="['body-grid', { 'no-fields': !selectedChartType, fullscreen: isFullScreen }]">
             <div class="datasets sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Датасет</h5>
                 <button ref="buttonRef" v-if="!selectedDataset" class="btn btn-sm fw-bold" @click="openDatasetTooltip"
@@ -34,7 +36,8 @@
             </div>
             <div class="diagramtype sectors border-elements elements-color">
                 <h5 class="m-0 me-2">Тип диаграммы</h5>
-                <select class="form-select form-select-sm" id="smallSelect" style="cursor: pointer;" :disabled="!selectedDataset" v-model="selectedChartType">
+                <select class="form-select form-select-sm" id="smallSelect" style="cursor: pointer;"
+                    :disabled="!selectedDataset" v-model="selectedChartType">
                     <option value="" disabled hidden>Выберите тип диаграммы</option>
                     <option value="line">Линейная диаграмма</option>
                     <option value="bar">Столбчатая диаграмма</option>
@@ -93,7 +96,8 @@
                 </div>
             </div>
             <div class="body-chart border-elements elements-color" :class="{ fullscreen: isFullScreen }">
-                <ChartArea :dataset="datasetRows" :chart-type="selectedChartType" :fields="selectedFields" :key="selectedChartType" :settings="settingTypes" @engineChange="selectedEngine = $event"/>
+                <ChartArea :dataset="datasetRows" :chart-type="selectedChartType" :fields="selectedFields"
+                    :key="selectedChartType" :settings="settingTypes" @engineChange="selectedEngine = $event" />
             </div>
         </div>
     </div>
@@ -111,10 +115,12 @@
         <div v-if="isFieldsModalVisible" class="tooltip-panel-fields"
             :style="{ left: fieldsModalPosition.x + 'px', top: fieldsModalPosition.y + 'px', position: 'fixed', zIndex: 1000 }"
             ref="fieldsModalRef">
-            <ChartFields :fields="indicators" :selected="selectedForModal" :allowed-types="currentAllowedTypes" @select="handleFieldSelect" />
+            <ChartFields :fields="indicators" :selected="selectedForModal" :allowed-types="currentAllowedTypes"
+                @select="handleFieldSelect" />
         </div>
     </transition>
-    <ChartNameDialog v-if="isSaveModalVisible" :visible="isSaveModalVisible" v-model="chartName" @update:visible="isSaveModalVisible = $event" @saved="onChartNameSaved"/>
+    <ChartNameDialog v-if="isSaveModalVisible" :visible="isSaveModalVisible" v-model="chartName"
+        @update:visible="isSaveModalVisible = $event" @saved="onChartNameSaved" />
 </template>
 
 <script setup>
@@ -166,12 +172,12 @@ const chartData = ref({})
 const chartName = ref('Новая диаграмма')
 
 const settingTypes = computed(() =>
-  chartSettingsConfig[selectedChartType.value] || []
+    chartSettingsConfig[selectedChartType.value] || []
 )
 
 const selectedFields = ref({})
 
-watch(chartData, d => { chartName.value = d?.name || 'Новая диаграмма' }, { immediate:true })
+watch(chartData, d => { chartName.value = d?.name || 'Новая диаграмма' }, { immediate: true })
 
 const typeIcon = {
     string: Type,
@@ -181,96 +187,96 @@ const typeIcon = {
 }
 
 const chartRequiredFieldsFilled = computed(() => {
-  if (!selectedDataset.value) {
-    return false
-  }
-  if (!selectedChartType.value) {
-    return false
-  }
-
-  const required = []
-  if (selectedChartType.value === 'line' || selectedChartType.value === 'bar') required.push('x', 'y')
-  if (selectedChartType.value === 'pie' || selectedChartType.value === 'donut') required.push('category', 'indicators')
-  if (selectedChartType.value === 'scatter') required.push('x', 'y')
-  if (selectedChartType.value === 'radar') required.push('category', 'indicators')
-  if (selectedChartType.value === 'heatmap') required.push('x', 'y', 'value')
-
-  for (const key of required) {
-    if (!selectedFields.value[key] || !selectedFields.value[key].length) {
-      return false
+    if (!selectedDataset.value) {
+        return false
     }
-  }
+    if (!selectedChartType.value) {
+        return false
+    }
 
-  if (!selectedEngine.value) {
-    return false
-  }
+    const required = []
+    if (selectedChartType.value === 'line' || selectedChartType.value === 'bar') required.push('x', 'y')
+    if (selectedChartType.value === 'pie' || selectedChartType.value === 'donut') required.push('category', 'indicators')
+    if (selectedChartType.value === 'scatter') required.push('x', 'y')
+    if (selectedChartType.value === 'radar') required.push('category', 'indicators')
+    if (selectedChartType.value === 'heatmap') required.push('x', 'y', 'value')
 
-  return true
+    for (const key of required) {
+        if (!selectedFields.value[key] || !selectedFields.value[key].length) {
+            return false
+        }
+    }
+
+    if (!selectedEngine.value) {
+        return false
+    }
+
+    return true
 })
 
 async function onChartNameSaved({ name, description }) {
-  chartName.value = name
-   const payload = {
-   name,
-   description,
-   dataset: selectedDataset.value.id,
-   chart_type: selectedChartType.value,
-   engine: selectedEngine.value,
-   params : selectedFields.value,
-   options: {}
- }
-  try {
-    if (isEditMode.value) {
-      // Редактирование
-      const { data: updated } = await chartService.updateChart(chartId.value, payload)
-      chartData.value = updated
-      // Можно показать уведомление
-    } else {
-      // Создание
-      const { data } = await chartService.createChart(payload)
-      // Переход на страницу созданного чарта
-      if (data && data.id) {
-        router.push({ name: 'ChartPage', params: { id: data.id } })
-      }
+    chartName.value = name
+    const payload = {
+        name,
+        description,
+        dataset: selectedDataset.value.id,
+        chart_type: selectedChartType.value,
+        engine: selectedEngine.value,
+        params: selectedFields.value,
+        options: {}
     }
-  } catch (err) {
-  }
-  isSaveModalVisible.value = false
+    try {
+        if (isEditMode.value) {
+            // Редактирование
+            const { data: updated } = await chartService.updateChart(chartId.value, payload)
+            chartData.value = updated
+            // Можно показать уведомление
+        } else {
+            // Создание
+            const { data } = await chartService.createChart(payload)
+            // Переход на страницу созданного чарта
+            if (data && data.id) {
+                router.push({ name: 'ChartPage', params: { id: data.id } })
+            }
+        }
+    } catch (err) {
+    }
+    isSaveModalVisible.value = false
 }
 
 async function fetchChartIfEditing() {
-  if (!chartId.value) return
-  loading.value = true
-  try {
-    const { data } = await chartService.getChart(chartId.value)
-    chartData.value = data
-    let dsObj
-    if (typeof data.dataset === 'object' && data.dataset !== null) {
-      dsObj = data.dataset
-    } else if (data.dataset) {
-      const { data: ds } = await chartService.getDataset(data.dataset)
-      dsObj = ds
-    }
-    selectedDataset.value = dsObj
+    if (!chartId.value) return
+    loading.value = true
+    try {
+        const { data } = await chartService.getChart(chartId.value)
+        chartData.value = data
+        let dsObj
+        if (typeof data.dataset === 'object' && data.dataset !== null) {
+            dsObj = data.dataset
+        } else if (data.dataset) {
+            const { data: ds } = await chartService.getDataset(data.dataset)
+            dsObj = ds
+        }
+        selectedDataset.value = dsObj
 
-    selectedChartType.value = String(data.chart_type ?? '')
-    selectedEngine.value = data.engine ?? ''
-    selectedFields.value = { ...(data.params ?? {}) }
+        selectedChartType.value = String(data.chart_type ?? '')
+        selectedEngine.value = data.engine ?? ''
+        selectedFields.value = { ...(data.params ?? {}) }
 
-    if (dsObj?.id) {
-      const { data: rows } = await chartService.getRows(dsObj.id)
-      datasetRows.value = rows
+        if (dsObj?.id) {
+            const { data: rows } = await chartService.getRows(dsObj.id)
+            datasetRows.value = rows
+        }
+        originalChart.value = {
+            name: data.name,
+            datasetId: typeof data.dataset === 'object' && data.dataset !== null ? data.dataset.id : data.dataset,
+            chart_type: data.chart_type,
+            engine: data.engine,
+            params: JSON.parse(JSON.stringify(data.params ?? {})),
+        }
+    } finally {
+        loading.value = false
     }
-    originalChart.value = {
-      name: data.name,
-      datasetId: typeof data.dataset === 'object' && data.dataset !== null ? data.dataset.id : data.dataset,
-      chart_type: data.chart_type,
-      engine: data.engine,
-      params: JSON.parse(JSON.stringify(data.params ?? {})),
-    }
-  } finally {
-    loading.value = false
-  }
 }
 
 const selectedForModal = computed(() => selectedFields.value[currentSetting.value] || [])
@@ -307,10 +313,11 @@ function closeDatasetTooltip() {
 }
 
 async function handleSelectDataset(ds) {
+    console.log('handleSelectDataset', ds?.id)
     selectedDataset.value = ds
     closeDatasetTooltip()
     if (ds?.id) {
-        const { data } = await chartService.getRows(ds.id)
+        const { data } = await chartService.getDatasetRows(ds.id)
         datasetRows.value = data
     }
 }
@@ -352,6 +359,7 @@ function removeField(field, type) {
 watch(
     () => selectedDataset.value?.id,
     async id => {
+        console.log('selectedDataset id changed', id)
         if (!isEditMode.value) {
             selectedChartType.value = ''
             selectedFields.value = {
@@ -364,7 +372,7 @@ watch(
         if (id) {
             const [{ data: cols }, { data: rows }] = await Promise.all([
                 chartService.getColumns(id),
-                chartService.getRows(id)
+                chartService.getDatasetRows(id)
             ])
             indicators.value = (cols.columns || []).map((c, i) => ({
                 id: 'col_' + i,
@@ -378,16 +386,16 @@ watch(
 )
 
 const isChartDirty = computed(() => {
-  if (!isEditMode.value) return true
+    if (!isEditMode.value) return true
 
-  if (chartName.value !== (originalChart.value.name ?? '')) return true
-  if ((selectedDataset.value?.id || null) !== (originalChart.value.datasetId || null)) return true
-  if (selectedChartType.value !== (originalChart.value.chart_type ?? '')) return true
-  if (selectedEngine.value !== (originalChart.value.engine ?? '')) return true
+    if (chartName.value !== (originalChart.value.name ?? '')) return true
+    if ((selectedDataset.value?.id || null) !== (originalChart.value.datasetId || null)) return true
+    if (selectedChartType.value !== (originalChart.value.chart_type ?? '')) return true
+    if (selectedEngine.value !== (originalChart.value.engine ?? '')) return true
 
-  if (JSON.stringify(selectedFields.value) !== JSON.stringify(originalChart.value.params || {})) return true
+    if (JSON.stringify(selectedFields.value) !== JSON.stringify(originalChart.value.params || {})) return true
 
-  return false
+    return false
 })
 
 onMounted(() => {
@@ -411,43 +419,43 @@ onBeforeUnmount(() => {
 }
 
 .body-grid {
-  display: grid;
-  grid-template-columns: 17.5rem repeat(3, 1fr);
-  grid-template-rows: 6rem 6rem auto;
-  grid-template-areas:
-    "datasets   indicators measures parameters"
-    "diagramtype indicators measures parameters"
-    "fields     chart      chart    chart";
-  gap: 30px;
+    display: grid;
+    grid-template-columns: 17.5rem repeat(3, 1fr);
+    grid-template-rows: 6rem 6rem auto;
+    grid-template-areas:
+        "datasets   indicators measures parameters"
+        "diagramtype indicators measures parameters"
+        "fields     chart      chart    chart";
+    gap: 30px;
 }
 
 .body-grid.fullscreen {
-  grid-template-areas:
-      "chart chart chart chart"
-      "chart chart chart chart"
-      "chart chart chart chart";
+    grid-template-areas:
+        "chart chart chart chart"
+        "chart chart chart chart"
+        "chart chart chart chart";
 
-  .body-chart {
-    grid-column: 1 / -1;
-    grid-row:    1 / -1;
-  }
+    .body-chart {
+        grid-column: 1 / -1;
+        grid-row: 1 / -1;
+    }
 
-  .datasets,
-  .diagramtype,
-  .fields,
-  .indicators,
-  .measures,
-  .parameters {
-    display: none;
-  }
+    .datasets,
+    .diagramtype,
+    .fields,
+    .indicators,
+    .measures,
+    .parameters {
+        display: none;
+    }
 }
 
 .body-grid .body-chart {
-  grid-column: 2 / 5;
+    grid-column: 2 / 5;
 }
 
 .body-grid.no-fields .body-chart {
-  grid-column: 1 / -1;
+    grid-column: 1 / -1;
 }
 
 .datasets {
@@ -510,7 +518,7 @@ onBeforeUnmount(() => {
     overflow: hidden;
 }
 
-.dataset-selected:hover{
+.dataset-selected:hover {
     background-color: var(--color-hover-background);
 }
 

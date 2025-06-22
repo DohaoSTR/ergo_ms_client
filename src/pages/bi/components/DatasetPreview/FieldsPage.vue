@@ -38,7 +38,7 @@
           </td>
           <td>{{ f.type }}</td>
           <td>
-            <AggSelect v-model="f.aggregation" :options="getAggregationOptions(f.type)" :aggregationColorMap="aggregationColorMap" />
+            <AggSelect :modelValue="f.aggregation" @update:modelValue="val => updateField(idx, 'aggregation', val)" :options="getAggregationOptions(f.type)" :aggregationColorMap="aggregationColorMap"/>
           </td>
           <td>
             <input v-model="f.description" class="form-control form-control-sm" placeholder="Описание…" />
