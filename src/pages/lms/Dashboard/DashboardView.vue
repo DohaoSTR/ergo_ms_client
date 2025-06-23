@@ -1,149 +1,183 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { BookOpen, FileCheck, Award, Clock, TrendingUp, Users, Star, MessageSquare, GraduationCap, ClipboardCheck } from 'lucide-vue-next'
-import { apiClient } from '@/js/api/manager'
-import { endpoints } from '@/js/api/endpoints'
-import { globalUserRole } from '../composables/useUserRole'
+import { useUserRole } from '../composables/useUserRole'
+import { useLmsData } from '../composables/useApi'
+import { useUtils } from '../composables/useUtils'
+import BaseCard from '../components/BaseCard.vue'
+
+const { lmsApi, loading } = useLmsData()
+const userRole = useUserRole()
+const { formatDate, formatRelativeTime } = useUtils()
 
 const dashboardData = ref({
-  stats: {
-    enrolledCourses: 0,
-    completedTests: 0,
-    earnedBadges: 0,
-    studyHours: 0
-  },
+  stats: {},
   recentCourses: [],
   upcomingEvents: [],
   notifications: [],
   achievements: []
 })
 
-const loading = ref(true)
-const userRole = globalUserRole
-
 // Данные в зависимости от роли
 const roleBasedData = computed(() => {
-  if (userRole.isTeacher.value || userRole.isAdmin.value) {
+  if (userRole.isTeacher.value) {
     return {
-      stats: {
-        createdCourses: 8,
-        totalStudents: 156,
-        pendingGrades: 23,
-        teachingHours: 240
-      },
       statsLabels: {
         createdCourses: 'Созданных курсов',
         totalStudents: 'Всего студентов',
         pendingGrades: 'К проверке',
         teachingHours: 'Часов преподавания'
       },
-      statsIcons: [BookOpen, Users, ClipboardCheck, Clock],
-      recentActivities: [
-        { id: 1, title: 'Новый студент в курсе "JavaScript"', type: 'enrollment', time: '2 часа назад' },
-        { id: 2, title: 'Сданное задание требует проверки', type: 'assignment', time: '4 часа назад' },
-        { id: 3, title: 'Вопрос на форуме курса "Python"', type: 'forum', time: '1 день назад' }
-      ]
+      statsIcons: [BookOpen, Users, ClipboardCheck, Clock]
+    }
+  } else if (userRole.isAdmin.value) {
+    return {
+      statsLabels: {
+        totalCourses: 'Всего курсов',
+        totalStudents: 'Всего студентов',
+        totalTeachers: 'Преподавателей',
+        systemHealth: 'Работоспособность'
+      },
+      statsIcons: [BookOpen, Users, GraduationCap, TrendingUp]
     }
   } else {
     return {
-      stats: {
-        enrolledCourses: 5,
-        completedTests: 12,
-        earnedBadges: 8,
-        studyHours: 47
-      },
       statsLabels: {
         enrolledCourses: 'Записанных курсов',
         completedTests: 'Пройденных тестов',
         earnedBadges: 'Получено значков',
         studyHours: 'Часов обучения'
       },
-      statsIcons: [BookOpen, FileCheck, Award, Clock],
-      recentActivities: [
-        { id: 1, title: 'Новое задание в курсе "JavaScript"', type: 'assignment', time: '2 часа назад' },
-        { id: 2, title: 'Получен новый значок "Активный студент"', type: 'badge', time: '1 день назад' },
-        { id: 3, title: 'Комментарий преподавателя к работе', type: 'feedback', time: '2 дня назад' }
-      ]
+      statsIcons: [BookOpen, FileCheck, Award, Clock]
     }
   }
 })
 
 async function loadDashboardData() {
   try {
-    loading.value = true
+    let response
     
     if (userRole.isStudent.value) {
-      // Загружаем данные для студентов
-      const response = await apiClient.get(endpoints.lms.studentStats)
-      console.log('Статистика студента:', response.data)
-      dashboardData.value = {
-        enrolledCourses: response.data.enrolled_courses || 0,
-        completedCourses: response.data.completed_courses || 0,
-        averageGrade: response.data.average_grade || 0,
-        testsCompleted: response.data.tests_completed || 0,
-        recentCourses: response.data.recent_courses || [],
-        upcomingEvents: response.data.upcoming_events || [],
-        notifications: response.data.notifications || [],
-        recentGrades: response.data.recent_grades || [],
-        badges: response.data.badges || []
-      }
+      response = await lmsApi.getStudentStats()
+      dashboardData.value = processStudentData(response?.data)
     } else if (userRole.isTeacher.value) {
-      // Загружаем данные для преподавателей
-      const response = await apiClient.get(endpoints.lms.teacherStats)
-      console.log('Статистика преподавателя:', response.data)
-      dashboardData.value = {
-        totalCourses: response.data.total_courses || 0,
-        totalStudents: response.data.total_students || 0,
-        averageGrade: response.data.average_grade || 0,
-        activeTests: response.data.active_tests || 0,
-        recentCourses: response.data.recent_courses || [],
-        upcomingEvents: response.data.upcoming_events || [],
-        notifications: response.data.notifications || [],
-        pendingGrades: response.data.pending_grades || [],
-        courseStats: response.data.course_stats || []
-      }
+      response = await lmsApi.getTeacherStats()
+      dashboardData.value = processTeacherData(response?.data)
     } else {
-      // Загружаем общие данные дашборда
-      const response = await apiClient.get(endpoints.lms.dashboard)
-      console.log('Общая статистика:', response.data)
-      dashboardData.value = response.data
+      response = await lmsApi.getDashboardData()
+      dashboardData.value = processAdminData(response?.data)
     }
   } catch (error) {
     console.error('Ошибка загрузки данных дашборда:', error)
-    // Устанавливаем пустые данные вместо демо-данных
-    if (userRole.isStudent.value) {
-      dashboardData.value = {
-        enrolledCourses: 0,
-        completedCourses: 0,
-        averageGrade: 0,
-        testsCompleted: 0,
-        recentCourses: [],
-        upcomingEvents: [],
-        notifications: [],
-        recentGrades: [],
-        badges: []
-      }
-    } else if (userRole.isTeacher.value) {
-      dashboardData.value = {
-        totalCourses: 0,
-        totalStudents: 0,
-        averageGrade: 0,
-        activeTests: 0,
-        recentCourses: [],
-        upcomingEvents: [],
-        notifications: [],
-        pendingGrades: [],
-        courseStats: []
-      }
-    } else {
-      dashboardData.value = {
-        recentCourses: [],
-        upcomingEvents: [],
-        notifications: []
-      }
-    }
-  } finally {
-    loading.value = false
+    // Показываем пустые данные при ошибке
+    dashboardData.value = getEmptyData()
+  }
+}
+
+function processStudentData(data) {
+  if (!data) return getEmptyStudentData()
+  
+  return {
+    stats: {
+      enrolledCourses: data.enrolled_courses || 0,
+      completedTests: data.tests_completed || 0,
+      earnedBadges: data.badges_count || 0,
+      studyHours: data.study_hours || 0
+    },
+    recentCourses: data.recent_courses || [],
+    upcomingEvents: data.upcoming_events || [],
+    notifications: data.notifications || [],
+    achievements: data.achievements || []
+  }
+}
+
+function processTeacherData(data) {
+  if (!data) return getEmptyTeacherData()
+  
+  return {
+    stats: {
+      createdCourses: data.total_courses || 0,
+      totalStudents: data.total_students || 0,
+      pendingGrades: data.pending_grades || 0,
+      teachingHours: data.teaching_hours || 0
+    },
+    recentCourses: data.recent_courses || [],
+    upcomingEvents: data.upcoming_events || [],
+    notifications: data.notifications || [],
+    achievements: data.achievements || []
+  }
+}
+
+function processAdminData(data) {
+  if (!data) return getEmptyAdminData()
+  
+  return {
+    stats: {
+      totalCourses: data.total_courses || 0,
+      totalStudents: data.total_students || 0,
+      totalTeachers: data.total_teachers || 0,
+      systemHealth: data.system_health || 0
+    },
+    recentCourses: data.recent_courses || [],
+    upcomingEvents: data.upcoming_events || [],
+    notifications: data.notifications || [],
+    achievements: data.achievements || []
+  }
+}
+
+// Функции для пустых состояний (когда нет данных с сервера)
+function getEmptyStudentData() {
+  return {
+    stats: {
+      enrolledCourses: 0,
+      completedTests: 0,
+      earnedBadges: 0,
+      studyHours: 0
+    },
+    recentCourses: [],
+    upcomingEvents: [],
+    notifications: [],
+    achievements: []
+  }
+}
+
+function getEmptyTeacherData() {
+  return {
+    stats: {
+      createdCourses: 0,
+      totalStudents: 0,
+      pendingGrades: 0,
+      teachingHours: 0
+    },
+    recentCourses: [],
+    upcomingEvents: [],
+    notifications: [],
+    achievements: []
+  }
+}
+
+function getEmptyAdminData() {
+  return {
+    stats: {
+      totalCourses: 0,
+      totalStudents: 0,
+      totalTeachers: 0,
+      systemHealth: 0
+    },
+    recentCourses: [],
+    upcomingEvents: [],
+    notifications: [],
+    achievements: []
+  }
+}
+
+function getEmptyData() {
+  if (userRole.isStudent.value) {
+    return getEmptyStudentData()
+  } else if (userRole.isTeacher.value) {
+    return getEmptyTeacherData()
+  } else {
+    return getEmptyAdminData()
   }
 }
 
@@ -151,6 +185,21 @@ async function loadDashboardData() {
 function getStatColor(index) {
   const colors = ['primary', 'success', 'warning', 'info']
   return colors[index % colors.length]
+}
+
+// Функция для получения типа уведомления
+function getNotificationType(type) {
+  const typeMap = {
+    'success': 'success',
+    'error': 'danger',
+    'warning': 'warning',
+    'info': 'info',
+    'assignment': 'primary',
+    'badge': 'success',
+    'enrollment': 'info',
+    'grading': 'warning'
+  }
+  return typeMap[type] || 'info'
 }
 
 // Заголовок в зависимости от роли
@@ -212,19 +261,23 @@ onMounted(loadDashboardData)
               </div>
             </div>
             <div v-else-if="!dashboardData.recentCourses || dashboardData.recentCourses.length === 0" class="text-center py-4 text-muted">
-              Нет активных курсов
+              <BookOpen :size="32" class="mb-2" />
+              <p class="mb-0">Нет активных курсов</p>
+              <small>Запишитесь на курсы в каталоге</small>
             </div>
             <div v-else>
               <div v-for="course in dashboardData.recentCourses" :key="course.id" class="course-item mb-3">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <div>
-                    <h6 class="mb-1">{{ course.title }}</h6>
-                    <p class="text-muted small mb-1">Преподаватель: {{ course.instructor }}</p>
+                    <h6 class="mb-1">{{ course.name || course.title }}</h6>
+                    <p class="text-muted small mb-1">
+                      Преподаватель: {{ course.instructor || course.teacher?.username || 'Не указан' }}
+                    </p>
                   </div>
-                  <span class="badge bg-primary">{{ course.progress }}%</span>
+                  <span class="badge bg-primary">{{ course.progress || 0 }}%</span>
                 </div>
                 <div class="progress" style="height: 6px;">
-                  <div class="progress-bar" role="progressbar" :style="`width: ${course.progress}%`"></div>
+                  <div class="progress-bar" role="progressbar" :style="`width: ${course.progress || 0}%`"></div>
                 </div>
               </div>
             </div>
@@ -246,19 +299,20 @@ onMounted(loadDashboardData)
               </div>
             </div>
             <div v-else-if="!dashboardData.upcomingEvents || dashboardData.upcomingEvents.length === 0" class="text-center py-4 text-muted">
-              Нет предстоящих событий
+              <Clock :size="32" class="mb-2" />
+              <p class="mb-0">Нет предстоящих событий</p>
             </div>
             <div v-else>
               <div v-for="event in dashboardData.upcomingEvents" :key="event.id" class="event-item d-flex align-items-center gap-3 mb-3">
                 <div class="event-date text-center">
-                  <div class="date-day fw-bold">{{ new Date(event.date).getDate() }}</div>
+                  <div class="date-day fw-bold">{{ formatDate(event.date, { day: 'numeric' }) }}</div>
                   <div class="date-month small text-muted">
-                    {{ new Date(event.date).toLocaleDateString('ru', { month: 'short' }) }}
+                    {{ formatDate(event.date, { month: 'short' }) }}
                   </div>
                 </div>
                 <div class="flex-grow-1">
-                  <h6 class="mb-1">{{ event.title }}</h6>
-                  <p class="text-muted small mb-0">{{ event.time }}</p>
+                  <h6 class="mb-1">{{ event.title || event.name }}</h6>
+                  <p class="text-muted small mb-0">{{ event.description || formatDate(event.date, { hour: '2-digit', minute: '2-digit' }) }}</p>
                 </div>
               </div>
             </div>
@@ -282,12 +336,18 @@ onMounted(loadDashboardData)
               </div>
             </div>
             <div v-else-if="!dashboardData.notifications || dashboardData.notifications.length === 0" class="text-center py-4 text-muted">
-              Нет новых уведомлений
+              <MessageSquare :size="32" class="mb-2" />
+              <p class="mb-0">Нет новых уведомлений</p>
             </div>
             <div v-else>
               <div v-for="notification in dashboardData.notifications" :key="notification.id" 
-                   :class="`alert alert-${notification.type === 'success' ? 'success' : notification.type === 'warning' ? 'warning' : 'info'} py-2`">
-                {{ notification.text }}
+                   :class="`alert alert-${getNotificationType(notification.type)} py-2 mb-2`">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    {{ notification.message || notification.text }}
+                  </div>
+                  <small class="text-muted">{{ formatRelativeTime(notification.createdAt || notification.created_at) }}</small>
+                </div>
               </div>
             </div>
           </div>

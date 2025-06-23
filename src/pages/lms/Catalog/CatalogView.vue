@@ -143,13 +143,8 @@ const availableFormats = computed(() => {
     console.error('Ошибка при обработке форматов:', error)
   }
   
-  // Fallback на стандартные форматы
-  return formatOptions.map(opt => ({ 
-    id: opt.value, 
-    name: opt.label, 
-    description: opt.label,
-    is_active: true 
-  }))
+  // Если нет форматов из API, возвращаем пустой массив
+  return []
 })
 
 const filteredCourses = computed(() => {

@@ -11,12 +11,12 @@
               <h3 class="mb-1">Управление уроками</h3>
               <p class="text-muted mb-0">Создавайте, редактируйте и организуйте уроки ваших курсов</p>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 action-buttons">
               <button @click="openThemeModal" class="btn btn-success">
                 <Plus :size="18" class="me-2" />
                 Создать тему
               </button>
-              <button @click="openLessonModal" class="btn btn-primary" :disabled="!selectedCourse">
+              <button @click="openLessonModal" class="btn btn-primary">
                 <Plus :size="18" class="me-2" />
                 Создать урок
               </button>
@@ -62,9 +62,9 @@
       </div>
 
       <!-- Статистика -->
-      <div class="row mb-4">
+      <div class="row mb-4 stats-container">
         <div class="col-md-3">
-          <div class="card text-center">
+          <div class="card text-center stats-card">
             <div class="card-body">
               <h4 class="text-primary mb-0">{{ stats.totalCourses }}</h4>
               <small class="text-muted">Курсов</small>
@@ -72,7 +72,7 @@
           </div>
         </div>
         <div class="col-md-3">
-          <div class="card text-center">
+          <div class="card text-center stats-card">
             <div class="card-body">
               <h4 class="text-success mb-0">{{ stats.totalThemes }}</h4>
               <small class="text-muted">Тем</small>
@@ -80,7 +80,7 @@
           </div>
         </div>
         <div class="col-md-3">
-          <div class="card text-center">
+          <div class="card text-center stats-card">
             <div class="card-body">
               <h4 class="text-info mb-0">{{ stats.totalLessons }}</h4>
               <small class="text-muted">Уроков</small>
@@ -88,10 +88,10 @@
           </div>
         </div>
         <div class="col-md-3">
-          <div class="card text-center">
+          <div class="card text-center stats-card">
             <div class="card-body">
-              <h4 class="text-warning mb-0">{{ stats.hiddenLessons }}</h4>
-              <small class="text-muted">Скрытых</small>
+              <h4 class="text-warning mb-0">{{ stats.visibleLessons }}</h4>
+              <small class="text-muted">Видимых</small>
             </div>
           </div>
         </div>
@@ -106,8 +106,8 @@
       <!-- Курсы и темы -->
       <div v-else-if="groupedData.length === 0" class="text-center py-5">
         <BookOpen :size="48" class="text-muted mb-3" />
-        <h5 class="text-muted">Уроки не найдены</h5>
-        <p class="text-muted">Создайте первый курс и добавьте в него уроки</p>
+        <h5 class="text-muted">Курсы не найдены</h5>
+        <p class="text-muted">Создайте первый курс и добавьте в него темы и уроки</p>
       </div>
 
       <!-- Структура курсов -->
@@ -193,7 +193,8 @@
 
                       <div v-else class="row">
                         <div v-for="lesson in theme.lessons" :key="lesson.id" class="col-md-6 col-lg-4 mb-3">
-                          <div class="card h-100 lesson-card">
+                          <div class="card h-100 lesson-card position-relative">
+                            <div :class="`lesson-type-indicator lesson-type-${lesson.lessontype}`"></div>
                             <div class="card-body">
                               <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h6 class="card-title mb-0">{{ lesson.name }}</h6>
@@ -588,7 +589,7 @@
                 >
                   <option value="">Выберите тему</option>
                   <option v-for="theme in availableThemes" :key="theme.id" :value="theme.id">
-                    {{ theme.name }}
+                    {{ theme.displayName || theme.name }}
                   </option>
                 </select>
                 <div v-if="lessonValidationErrors.theme" class="invalid-feedback">
@@ -1006,13 +1007,13 @@ const stats = computed(() => {
   const totalCourses = courses.value.length
   const totalThemes = themes.value.length
   const totalLessons = lessons.value.length
-  const hiddenLessons = lessons.value.filter(l => !l.is_visible).length
+  const visibleLessons = lessons.value.filter(l => l.is_visible).length
   
   return {
     totalCourses,
     totalThemes,
     totalLessons,
-    hiddenLessons
+    visibleLessons
   }
 })
 
@@ -1045,39 +1046,72 @@ const filteredLessons = computed(() => {
 })
 
 const groupedData = computed(() => {
+  console.log('🔄 Пересчет groupedData')
+  console.log('📚 Курсы:', courses.value.length, courses.value.map(c => ({id: c.id, name: c.name})))
+  console.log('📂 Темы:', themes.value.length, themes.value.map(t => ({id: t.id, name: t.name, subject: t.subject})))
+  console.log('📖 Уроки:', lessons.value.length)
+  console.log('🔍 Выбранный курс:', selectedCourseId.value)
+  
   const courseGroups = {}
   
+  // Создаем группы для всех курсов или только выбранного
   courses.value.forEach(course => {
-    if (!selectedCourseId.value || course.id === selectedCourseId.value) {
+    if (!selectedCourseId.value || course.id.toString() === selectedCourseId.value.toString()) {
       courseGroups[course.id] = {
         course,
         themes: [],
         totalLessons: 0
       }
+      console.log(`➕ Добавлена группа для курса: ${course.name} (ID: ${course.id})`)
     }
   })
 
+  // Добавляем темы в соответствующие курсы
   themes.value.forEach(theme => {
-    if (courseGroups[theme.subject]) {
-      courseGroups[theme.subject].themes.push({
+    // Извлекаем ID курса - может быть как числом, так и объектом
+    let courseId = theme.subject
+    if (typeof courseId === 'object' && courseId?.id) {
+      courseId = courseId.id
+    }
+    courseId = String(courseId) // Приводим к строке для сравнения
+    
+    console.log(`📂 Обрабатываем тему: ${theme.name} для курса ID: ${courseId}`)
+    
+    if (courseGroups[courseId]) {
+      courseGroups[courseId].themes.push({
         ...theme,
         lessons: []
       })
+      console.log(`✅ Тема "${theme.name}" добавлена в курс ID: ${courseId}`)
+    } else {
+      console.log(`❌ Курс ID: ${courseId} не найден в courseGroups`, Object.keys(courseGroups))
     }
   })
 
+  // Добавляем уроки в темы
   filteredLessons.value.forEach(lesson => {
     const theme = themes.value.find(t => t.id === lesson.theme)
-    if (theme && courseGroups[theme.subject]) {
-      const courseGroup = courseGroups[theme.subject]
-      const themeInGroup = courseGroup.themes.find(t => t.id === theme.id)
-      if (themeInGroup) {
-        themeInGroup.lessons.push(lesson)
-        courseGroup.totalLessons++
+    if (theme) {
+      // Извлекаем ID курса из темы
+      let courseId = theme.subject
+      if (typeof courseId === 'object' && courseId?.id) {
+        courseId = courseId.id
+      }
+      courseId = String(courseId)
+      
+      const courseGroup = courseGroups[courseId]
+      if (courseGroup) {
+        const themeInGroup = courseGroup.themes.find(t => t.id === theme.id)
+        if (themeInGroup) {
+          themeInGroup.lessons.push(lesson)
+          courseGroup.totalLessons++
+          console.log(`📖 Урок "${lesson.name}" добавлен в тему "${theme.name}"`)
+        }
       }
     }
   })
 
+  // Сортируем темы и уроки
   Object.values(courseGroups).forEach(group => {
     group.themes.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
     group.themes.forEach(theme => {
@@ -1085,7 +1119,10 @@ const groupedData = computed(() => {
     })
   })
 
-  return Object.values(courseGroups).filter(group => group.totalLessons > 0 || !searchQuery.value)
+  const result = Object.values(courseGroups)
+  console.log('📊 Итоговый результат groupedData:', result)
+  
+  return result
 })
 
 async function fetchData() {
@@ -1098,25 +1135,47 @@ async function fetchData() {
       apiClient.get(endpoints.lms.lessons)
     ])
     
-    courses.value = coursesResponse.data.results || coursesResponse.data || []
-    themes.value = themesResponse.data.results || themesResponse.data || []
-    lessons.value = lessonsResponse.data.results || lessonsResponse.data || []
+    // Обрабатываем данные из API
+    courses.value = coursesResponse.data?.results || coursesResponse.data || []
+    themes.value = themesResponse.data?.results || themesResponse.data || []
+    lessons.value = lessonsResponse.data?.results || lessonsResponse.data || []
     
+    console.log('Данные загружены из API')
     console.log('Загружено данных:')
-    console.log('Курсы:', courses.value.length)
+    console.log('Курсы:', courses.value.length, '(' + courses.value.length + ')', courses.value)
     console.log('Темы:', themes.value.length)
     console.log('Уроки:', lessons.value.length)
     
+    // Отладка: показываем структуру первой темы
+    if (themes.value.length > 0) {
+      console.log('🔍 Структура первой темы:', themes.value[0])
+      console.log('🔍 Поле subject первой темы:', themes.value[0].subject, typeof themes.value[0].subject)
+    }
+    
   } catch (error) {
     console.error('Ошибка загрузки данных:', error)
-    handleApiError(error, 'Ошибка при загрузке данных')
+    // При ошибке API показываем пустые массивы
+    courses.value = []
+    themes.value = []
+    lessons.value = []
   } finally {
     loading.value = false
   }
 }
 
+
+
 function onCourseChange() {
   // Данные уже фильтруются через computed свойства
+}
+
+function formatDate(dateString) {
+  if (!dateString) return 'Не указано'
+  return new Date(dateString).toLocaleDateString('ru', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  })
 }
 
 function getLessonTypeIcon(type) {
@@ -1142,10 +1201,17 @@ function createTheme(course) {
 
 function editTheme(theme) {
   editingTheme.value = theme
+  
+  // Извлекаем ID курса из темы
+  let subjectId = theme.subject
+  if (typeof subjectId === 'object' && subjectId?.id) {
+    subjectId = subjectId.id
+  }
+  
   themeForm.value = {
     name: theme.name,
     description: theme.description,
-    subject: theme.subject,
+    subject: subjectId,
     sort_order: theme.sort_order || 0,
     is_visible: theme.is_visible,
     completion_required: theme.completion_required || false
@@ -1189,55 +1255,79 @@ async function saveTheme() {
     }
 
     // Подготовка данных с корректной обработкой пустых полей
+    const subjectId = parseInt(themeForm.value.subject)
+    
+    // Проверяем, что курс существует
+    const selectedCourseExists = courses.value.find(c => c.id === subjectId)
+    if (!selectedCourseExists) {
+      themeValidationErrors.value.subject = 'Выбранный курс не существует'
+      showError('Выбранный курс не найден')
+      return
+    }
+    
     const data = {
       name: themeForm.value.name.trim(),
-      description: themeForm.value.description ? themeForm.value.description.trim() : '',
-      subject: parseInt(themeForm.value.subject),
+      description: themeForm.value.description?.trim() || null, // API может требовать null вместо пустой строки
+      subject: subjectId,
       sort_order: parseInt(themeForm.value.sort_order) || 0,
       is_visible: Boolean(themeForm.value.is_visible),
       completion_required: Boolean(themeForm.value.completion_required)
     }
-
-    console.log('Отправляемые данные темы:', data)
-
-    if (editingTheme.value) {
-      await apiClient.put(`${endpoints.lms.themes}${editingTheme.value.id}/`, data)
-      showSuccess('Тема успешно обновлена')
-    } else {
-      await apiClient.post(endpoints.lms.themes, data)
-      showSuccess('Тема успешно создана')
+    
+    // Удаляем null поля, если API их не ожидает
+    if (data.description === null || data.description === '') {
+      delete data.description
     }
 
-    // Обязательно перезагружаем данные
+    console.log('Отправляемые данные темы:', data)
+    console.log('Доступные курсы:', courses.value.map(c => ({id: c.id, name: c.name})))
+
+    // Отправляем данные в API
+    let response
+    if (editingTheme.value) {
+      response = await apiClient.put(`${endpoints.lms.themes}${editingTheme.value.id}/`, data)
+    } else {
+      response = await apiClient.post(endpoints.lms.themes, data)
+    }
+
+    showSuccess(editingTheme.value ? 'Тема успешно обновлена' : 'Тема успешно создана')
     await fetchData()
     closeThemeModal()
 
   } catch (error) {
     console.error('Ошибка сохранения темы:', error)
-    console.error('Детали ошибки:', error.response?.data)
+    console.error('Статус ошибки:', error.response?.status)
+    console.error('Данные ошибки:', error.response?.data)
+    console.error('URL запроса:', error.config?.url)
+    console.error('Метод запроса:', error.config?.method)
+    console.error('Данные запроса:', error.config?.data)
     
     if (error.response?.data) {
       const errorData = error.response.data
+      console.log('Детальные ошибки валидации:', errorData)
+      
       if (typeof errorData === 'object') {
         // Обрабатываем ошибки валидации
         Object.keys(errorData).forEach(field => {
           if (Array.isArray(errorData[field])) {
-            themeValidationErrors.value[field] = errorData[field][0]
+            themeValidationErrors.value[field] = errorData[field].join(', ')
+            console.log(`Ошибка в поле ${field}:`, errorData[field])
           } else {
             themeValidationErrors.value[field] = errorData[field]
+            console.log(`Ошибка в поле ${field}:`, errorData[field])
           }
         })
         
-        // Показываем первую ошибку пользователю
-        const firstError = Object.values(themeValidationErrors.value)[0]
-        if (firstError) {
-          showError(`Ошибка валидации: ${firstError}`)
+        // Показываем все ошибки пользователю
+        const errorMessages = Object.entries(themeValidationErrors.value).map(([field, message]) => `${field}: ${message}`)
+        if (errorMessages.length > 0) {
+          showError(`Ошибки валидации:\n${errorMessages.join('\n')}`)
         }
       } else {
-        showError('Ошибка при сохранении темы')
+        showError(`Ошибка API: ${errorData}`)
       }
     } else {
-      handleApiError(error, 'Ошибка при сохранении темы')
+      showError('Ошибка соединения с сервером')
     }
   } finally {
     isSubmitting.value = false
@@ -1252,18 +1342,14 @@ async function deleteTheme(theme) {
   try {
     await apiClient.delete(`${endpoints.lms.themes}${theme.id}/`)
     await fetchData()
-    showDeleteSuccess('Тема')
+    showSuccess('Тема успешно удалена')
   } catch (error) {
     console.error('Ошибка удаления темы:', error)
-    handleApiError(error, 'Ошибка при удалении темы')
+    showError('Ошибка при удалении темы')
   }
 }
 
 function openLessonModal() {
-  if (!selectedCourse.value) {
-    showWarning('Выберите курс для создания урока')
-    return
-  }
   resetLessonForm()
   showLessonModal.value = true
 }
@@ -1331,40 +1417,68 @@ async function saveLesson() {
 
     const data = {
       name: lessonForm.value.name.trim(),
-      description: lessonForm.value.description.trim(),
+      description: lessonForm.value.description?.trim() || null,
       lessontype: lessonForm.value.lessontype,
       theme: lessonForm.value.theme,
-      sort_order: lessonForm.value.sort_order,
-      is_visible: lessonForm.value.is_visible,
-      completion_required: lessonForm.value.completion_required,
+      sort_order: parseInt(lessonForm.value.sort_order) || 0,
+      is_visible: Boolean(lessonForm.value.is_visible),
+      completion_required: Boolean(lessonForm.value.completion_required),
       availability_start: lessonForm.value.availability_start || null,
       availability_end: lessonForm.value.availability_end || null,
-      content: lessonForm.value.content
+      content: lessonForm.value.content?.trim() || null
     }
+    
+    // Удаляем пустые поля
+    Object.keys(data).forEach(key => {
+      if (data[key] === null || data[key] === '') {
+        delete data[key]
+      }
+    })
 
+    // Отправляем данные в API
+    let response
     if (editingLesson.value) {
-      await apiClient.put(`${endpoints.lms.lessons}${editingLesson.value.id}/`, data)
-      showSuccess('Урок успешно обновлен')
+      response = await apiClient.put(`${endpoints.lms.lessons}${editingLesson.value.id}/`, data)
     } else {
-      await apiClient.post(endpoints.lms.lessons, data)
-      showSuccess('Урок успешно создан')
+      response = await apiClient.post(endpoints.lms.lessons, data)
     }
 
+    showSuccess(editingLesson.value ? 'Урок успешно обновлен' : 'Урок успешно создан')
     await fetchData()
     closeLessonModal()
 
   } catch (error) {
     console.error('Ошибка сохранения урока:', error)
+    console.error('Статус ошибки:', error.response?.status)
+    console.error('Данные ошибки:', error.response?.data)
+    console.error('URL запроса:', error.config?.url)
+    console.error('Метод запроса:', error.config?.method)
+    console.error('Данные запроса:', error.config?.data)
     
     if (error.response?.data) {
       const errorData = error.response.data
+      console.log('Детальные ошибки валидации урока:', errorData)
+      
       if (typeof errorData === 'object') {
-        lessonValidationErrors.value = errorData
+        // Обрабатываем ошибки валидации
+        Object.keys(errorData).forEach(field => {
+          if (Array.isArray(errorData[field])) {
+            lessonValidationErrors.value[field] = errorData[field].join(', ')
+          } else {
+            lessonValidationErrors.value[field] = errorData[field]
+          }
+        })
+        
+        // Показываем все ошибки пользователю
+        const errorMessages = Object.entries(lessonValidationErrors.value).map(([field, message]) => `${field}: ${message}`)
+        if (errorMessages.length > 0) {
+          showError(`Ошибки валидации урока:\n${errorMessages.join('\n')}`)
+        }
       } else {
-        showError('Ошибка при сохранении урока')
+        showError(`Ошибка API: ${errorData}`)
       }
     } else {
-      handleApiError(error, 'Ошибка при сохранении урока')
+      showError('Ошибка соединения с сервером')
     }
   } finally {
     isSubmitting.value = false
@@ -1379,32 +1493,57 @@ async function deleteLesson(lesson) {
   try {
     await apiClient.delete(`${endpoints.lms.lessons}${lesson.id}/`)
     await fetchData()
-    showDeleteSuccess('Урок')
+    showSuccess('Урок успешно удален')
   } catch (error) {
     console.error('Ошибка удаления урока:', error)
-    handleApiError(error, 'Ошибка при удалении урока')
+    showError('Ошибка при удалении урока')
   }
+}
+
+function viewLesson(lesson) {
+  console.log('Просмотр урока:', lesson)
+  showWarning('Просмотр урока будет реализован в следующей версии')
 }
 
 async function duplicateLesson(lesson) {
   try {
-    await apiClient.post(endpoints.lms.duplicateLesson(lesson.id))
+    // Создаем копию урока через API
+    const duplicateData = {
+      name: `${lesson.name} (копия)`,
+      description: lesson.description,
+      lessontype: lesson.lessontype,
+      theme: lesson.theme,
+      sort_order: (lesson.sort_order || 0) + 1,
+      is_visible: lesson.is_visible,
+      completion_required: lesson.completion_required,
+      availability_start: lesson.availability_start,
+      availability_end: lesson.availability_end,
+      content: lesson.content
+    }
+    
+    await apiClient.post(endpoints.lms.lessons, duplicateData)
     await fetchData()
     showSuccess(`Урок "${lesson.name}" успешно скопирован`)
   } catch (error) {
     console.error('Ошибка дублирования урока:', error)
-    handleApiError(error, 'Ошибка при дублировании урока')
+    showError('Ошибка при копировании урока')
   }
 }
 
 async function toggleLessonVisibility(lesson) {
   try {
-    await apiClient.patch(endpoints.lms.toggleLessonVisibility(lesson.id))
+    // Обновляем видимость урока
+    const updateData = {
+      ...lesson,
+      is_visible: !lesson.is_visible
+    }
+    
+    await apiClient.put(`${endpoints.lms.lessons}${lesson.id}/`, updateData)
     await fetchData()
     showSuccess(`Урок "${lesson.name}" ${lesson.is_visible ? 'скрыт' : 'показан'}`)
   } catch (error) {
     console.error('Ошибка изменения видимости урока:', error)
-    handleApiError(error, 'Ошибка при изменении видимости урока')
+    showError('Ошибка при изменении видимости урока')
   }
 }
 
@@ -1413,9 +1552,17 @@ function editCourse(course) {
 }
 
 const availableThemes = computed(() => {
-  if (!selectedCourse.value) return []
-  return themes.value.filter(theme => theme.subject === selectedCourse.value.id)
+  // Показываем все темы с указанием курса
+  return themes.value.map(theme => {
+    const course = courses.value.find(c => c.id === theme.subject)
+    return {
+      ...theme,
+      displayName: `${theme.name} (${course?.name || 'Неизвестный курс'})`
+    }
+  })
 })
+
+
 
 onMounted(fetchData)
 </script>
@@ -1442,4 +1589,116 @@ onMounted(fetchData)
 .badge.small {
   font-size: 0.6rem;
 }
+
+/* Модальные окна */
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1040;
+}
+
+.modal {
+  z-index: 1050;
+}
+
+.modal.show {
+  display: block !important;
+}
+
+.modal-dialog {
+  margin: 1.75rem auto;
+  max-width: 500px;
+}
+
+.modal-dialog-lg {
+  max-width: 800px;
+}
+
+/* Анимации карточек */
+.stats-card {
+  transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для пустых состояний */
+.empty-state {
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.empty-state svg {
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+/* Стили для кнопок действий */
+.action-buttons .btn {
+  transition: all 0.2s ease;
+}
+
+.action-buttons .btn:hover {
+  transform: scale(1.05);
+}
+
+/* Улучшенные стили для аккордеона */
+.accordion-item {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin-bottom: 0.5rem;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.accordion-button {
+  font-weight: 500;
+  padding: 1rem 1.25rem;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: rgba(var(--bs-primary-rgb), 0.08);
+  border-color: rgba(var(--bs-primary-rgb), 0.125);
+}
+
+.accordion-body {
+  padding: 1rem 1.25rem;
+  background-color: #fafafa;
+}
+
+/* Стили для статистики */
+.stats-container .card {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.stats-container .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Цветные индикаторы для типов уроков */
+.lesson-type-indicator {
+  width: 4px;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 0 0 0 0.375rem;
+}
+
+.lesson-type-L { background-color: #0d6efd; }
+.lesson-type-V { background-color: #dc3545; }
+.lesson-type-A { background-color: #198754; }
+.lesson-type-Q { background-color: #fd7e14; }
+.lesson-type-F { background-color: #6f42c1; }
+.lesson-type-URL { background-color: #20c997; }
+.lesson-type-C { background-color: #ffc107; }
+.lesson-type-FILE { background-color: #6c757d; }
 </style> 

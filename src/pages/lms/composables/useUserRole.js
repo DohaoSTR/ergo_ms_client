@@ -109,38 +109,21 @@ export function useUserRole() {
       // Загружаем роли пользователя
       const roles = await authService.getUserRoles()
       console.log('Загруженные роли:', roles)
-      userRoles.value = Array.isArray(roles) ? roles : [{ role: 'student', is_active: true, created_at: new Date() }]
+      userRoles.value = Array.isArray(roles) ? roles : []
       userRole.value = await authService.getPrimaryRole()
       console.log('Основная роль:', userRole.value)
       
       // Загружаем информацию о текущем пользователе
-      try {
-        const user = await authService.getCurrentUser()
-        currentUser.value = user
-        console.log('Текущий пользователь:', user)
-      } catch (userError) {
-        console.error('Ошибка загрузки пользователя:', userError)
-        // Fallback на демо пользователя
-        currentUser.value = {
-          id: 1,
-          username: 'demo_user',
-          first_name: 'Демо',
-          last_name: 'Пользователь',
-          email: 'demo@example.com'
-        }
-      }
+      const user = await authService.getCurrentUser()
+      currentUser.value = user
+      console.log('Текущий пользователь:', user)
     } catch (error) {
       console.error('Ошибка загрузки ролей пользователя:', error)
-      // Fallback на роль студента для демо
-      userRoles.value = [{ role: 'student', is_active: true, created_at: new Date() }]
-      userRole.value = 'student'
-      currentUser.value = {
-        id: 1,
-        username: 'demo_user',
-        first_name: 'Демо',
-        last_name: 'Пользователь',
-        email: 'demo@example.com'
-      }
+      // При ошибке очищаем данные - пользователь должен перелогиниться
+      userRoles.value = []
+      userRole.value = null
+      currentUser.value = null
+      throw error // Прокидываем ошибку выше для обработки
     } finally {
       isLoading.value = false
     }

@@ -80,7 +80,7 @@ async function fetchCourses() {
         start_date: subject.start_date,
         end_date: subject.end_date,
         is_published: subject.is_published,
-        isFavorite: false, // TODO: добавить систему избранного
+        isFavorite: enrollment.is_favorite || false,
         image: subject.image,
         subject: subject // Сохраняем полные данные курса
       }
@@ -116,11 +116,8 @@ function getStatusBadge(status) {
 }
 
 function getCourseImageUrl(course) {
-  if (course.image && course.image !== '/src/assets/course-web.jpg' && course.image !== '/src/assets/course-python.jpg' && course.image !== '/src/assets/course-design.jpg' && course.image !== '/src/assets/course-ml.jpg') {
-    // Если есть изображение и оно не является демо-ссылкой
-    if (typeof course.image === 'string') {
-      return course.image.startsWith('http') ? course.image : `${window.location.origin}${course.image}`
-    }
+  if (course.image && typeof course.image === 'string') {
+    return course.image.startsWith('http') ? course.image : `${window.location.origin}${course.image}`
   }
   
   // Возвращаем null для использования компонента-заглушки
@@ -149,9 +146,19 @@ function openCourse(courseId) {
   openLessonForCourse(course)
 }
 
-function showCourseResults(course) {
-  // Показываем результаты завершенного курса
-  alert(`🎉 Поздравляем!\n\nКурс "${course.title}" успешно завершен!\n\nВаши результаты:\n• Прогресс: ${course.progress}%\n• Дата завершения: ${course.completedDate}\n\nСертификат будет отправлен на вашу почту в течение 24 часов.`)
+async function showCourseResults(course) {
+  try {
+    // Загружаем реальные результаты курса
+    const response = await apiClient.get(`${endpoints.lms.subjects}${course.id}/results/`)
+    const results = response.data
+    
+    // Здесь должно быть модальное окно с результатами
+    console.log('Результаты курса:', results)
+    alert(`🎉 Поздравляем!\n\nКурс "${course.name}" успешно завершен!\n\nВаши результаты:\n• Прогресс: ${results.progress || course.progress}%\n• Оценка: ${results.grade || 'Не указана'}\n\nСертификат будет отправлен на вашу почту в течение 24 часов.`)
+  } catch (error) {
+    console.error('Ошибка загрузки результатов:', error)
+    alert(`Курс "${course.name}" завершен, но результаты временно недоступны.`)
+  }
 }
 
 async function openLessonForCourse(course) {
@@ -166,14 +173,23 @@ async function openLessonForCourse(course) {
     }
 
     // Находим следующий урок для изучения или первый урок
-    let targetLesson = lessons.find(lesson => !isLessonCompleted(course.id, lesson.id))
+    let targetLesson = null
+    for (const lesson of lessons) {
+      const isCompleted = await isLessonCompleted(course.id, lesson.id)
+      if (!isCompleted) {
+        targetLesson = lesson
+        break
+      }
+    }
+    
     if (!targetLesson) {
       targetLesson = lessons[0] // Если все уроки завершены, открываем первый
     }
 
-    // TODO: Здесь должен быть переход к компоненту просмотра урока
-    // Пока показываем уведомление
-    alert(`Переход к уроку: "${targetLesson.title}"\n\n(Урок ${targetLesson.order} из ${lessons.length})`)
+    // Переходим к просмотру урока
+    console.log('Переход к уроку:', targetLesson)
+    // TODO: Здесь должен быть роутинг к компоненту урока
+    alert(`Переход к уроку: "${targetLesson.name || targetLesson.title}"\n\n(Урок ${targetLesson.sort_order || targetLesson.order || 1} из ${lessons.length})`)
     
   } catch (error) {
     console.error('Ошибка загрузки уроков:', error)
@@ -181,15 +197,29 @@ async function openLessonForCourse(course) {
   }
 }
 
-function isLessonCompleted(courseId, lessonId) {
-  // Проверяем завершение урока через localStorage (для демо)
-  const completedKey = `lesson_${courseId}_${lessonId}_completed`
-  return localStorage.getItem(completedKey) === 'true'
+async function isLessonCompleted(courseId, lessonId) {
+  try {
+    // Проверяем завершение урока через API
+    const response = await apiClient.get(`${endpoints.lms.lessons}${lessonId}/progress/?course=${courseId}`)
+    return response.data.completed || false
+  } catch (error) {
+    console.error('Ошибка проверки завершения урока:', error)
+    return false
+  }
 }
 
-function toggleFavorite(course) {
-  course.isFavorite = !course.isFavorite
-  // API вызов для обновления избранного
+async function toggleFavorite(course) {
+  try {
+    if (course.isFavorite) {
+      await apiClient.delete(`${endpoints.lms.subjects}${course.id}/favorite/`)
+      course.isFavorite = false
+    } else {
+      await apiClient.post(`${endpoints.lms.subjects}${course.id}/favorite/`)
+      course.isFavorite = true
+    }
+  } catch (error) {
+    console.error('Ошибка изменения избранного:', error)
+  }
 }
 
 onMounted(fetchCourses)
