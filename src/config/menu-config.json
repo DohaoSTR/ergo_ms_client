@@ -791,19 +791,7 @@
             }
           }
         },
-        {
-          "path": "LMSCourses",
-          "name": "Мои курсы",
-          "route": {
-            "path": "courses",
-            "component": "@/pages/lms/Courses/CoursesView.vue",
-            "meta": {
-              "title": "Мои курсы",
-              "requiresAuth": true
-            }
-          }
-        },
-        {
+                {
           "path": "LMSCatalog",
           "name": "Каталог курсов",
           "route": {
@@ -816,37 +804,13 @@
           }
         },
         {
-          "path": "LMSAssignments",
-          "name": "Задания",
+          "path": "LMSCourses",
+          "name": "Мои курсы",
           "route": {
-            "path": "assignments",
-            "component": "@/pages/lms/Assignments/AssignmentsView.vue",
+            "path": "courses",
+            "component": "@/pages/lms/Courses/CoursesView.vue",
             "meta": {
-              "title": "Задания",
-              "requiresAuth": true
-            }
-          }
-        },
-        {
-          "path": "LMSTests",
-          "name": "Тесты",
-          "route": {
-            "path": "tests",
-            "component": "@/pages/lms/Tests/TestsView.vue",
-            "meta": {
-              "title": "Тесты",
-              "requiresAuth": true
-            }
-          }
-        },
-        {
-          "path": "LMSForums",
-          "name": "Форумы",
-          "route": {
-            "path": "forums",
-            "component": "@/pages/lms/Forums/ForumsView.vue",
-            "meta": {
-              "title": "Форумы",
+              "title": "Мои курсы",
               "requiresAuth": true
             }
           }
@@ -888,25 +852,13 @@
           }
         },
         {
-          "path": "LMSTeaching",
-          "name": "Преподавание",
-          "route": {
-            "path": "teaching",
-            "component": "@/pages/lms/Teaching/TeachingView.vue",
-            "meta": {
-              "title": "Преподавание",
-              "requiresAuth": true
-            }
-          }
-        },
-        {
           "path": "LMSLessonsManagement",
-          "name": "Управление уроками",
+          "name": "Управление материалами",
           "route": {
             "path": "lessons-management",
             "component": "@/pages/lms/LessonsManagement/LessonsManagementView.vue",
             "meta": {
-              "title": "Управление уроками",
+              "title": "Управление материалами",
               "requiresAuth": true
             }
           }

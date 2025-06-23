@@ -6,21 +6,9 @@
     >
       <div class="row mb-4">
         <div class="col-12">
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-              <h3 class="mb-1">Управление уроками</h3>
-              <p class="text-muted mb-0">Создавайте, редактируйте и организуйте уроки ваших курсов</p>
-            </div>
-            <div class="d-flex gap-2 action-buttons">
-              <button @click="openThemeModal" class="btn btn-success">
-                <Plus :size="18" class="me-2" />
-                Создать тему
-              </button>
-              <button @click="openLessonModal" class="btn btn-primary">
-                <Plus :size="18" class="me-2" />
-                Создать урок
-              </button>
-            </div>
+          <div>
+            <h3 class="mb-1">Управление учебными материалами</h3>
+            <p class="text-muted mb-0">Создавайте, редактируйте и организуйте курсы, темы, уроки, тесты, задания и форумы</p>
           </div>
         </div>
       </div>
@@ -59,6 +47,7 @@
             <option value="required">Обязательные</option>
           </select>
         </div>
+
       </div>
 
       <!-- Статистика -->
@@ -108,19 +97,51 @@
         <BookOpen :size="48" class="text-muted mb-3" />
         <h5 class="text-muted">Курсы не найдены</h5>
         <p class="text-muted">Создайте первый курс и добавьте в него темы и уроки</p>
+        <button @click="createCourse" class="btn btn-primary">
+          <Plus :size="18" class="me-2" />
+          Создать первый курс
+        </button>
       </div>
 
       <!-- Структура курсов -->
       <div v-else>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="mb-0">Курсы</h4>
+          <button @click="createCourse" class="btn btn-outline-primary">
+            <Plus :size="18" class="me-2" />
+            Создать курс
+          </button>
+        </div>
         <div v-for="courseGroup in groupedData" :key="courseGroup.course.id" class="course-group mb-5">
           <!-- Заголовок курса -->
           <div class="card">
             <div class="card-header">
               <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-3">
+                  <!-- Изображение курса -->
+                  <div v-if="courseGroup.course.image" class="course-image">
+                    <img 
+                      :src="courseGroup.course.image" 
+                      :alt="courseGroup.course.name"
+                      class="rounded"
+                      style="width: 40px; height: 40px; object-fit: cover;"
+                    />
+                  </div>
+                  <div v-else class="course-image-wrapper" style="width: 40px; height: 40px;">
+                    <CourseImagePlaceholder 
+                      width="40px" 
+                      height="40px" 
+                      :text="courseGroup.course.name.charAt(0).toUpperCase()"
+                    />
+                  </div>
+                  
+                  <div>
                   <h5 class="mb-0">{{ courseGroup.course.name }}</h5>
+                    <div class="d-flex align-items-center gap-2 mt-1">
                   <span class="badge bg-light text-dark">{{ courseGroup.totalLessons }} уроков</span>
                   <span v-if="!courseGroup.course.is_published" class="badge bg-warning">Черновик</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="btn-group">
                   <button @click="editCourse(courseGroup.course)" class="btn btn-sm btn-outline-primary">
@@ -129,6 +150,13 @@
                   <button @click="createTheme(courseGroup.course)" class="btn btn-sm btn-outline-success">
                     <Plus :size="16" />
                     Тема
+                  </button>
+                  <button @click="createForum(courseGroup.course)" class="btn btn-sm btn-outline-secondary">
+                    <MessageSquare :size="16" />
+                    Форум
+                  </button>
+                  <button @click="deleteCourse(courseGroup.course)" class="btn btn-sm btn-outline-danger">
+                    <Trash2 :size="16" />
                   </button>
                 </div>
               </div>
@@ -149,10 +177,9 @@
                   <h2 class="accordion-header">
                     <button 
                       class="accordion-button"
-                      :class="{ collapsed: themeIndex !== 0 }"
+                      :class="{ collapsed: !isThemeExpanded(theme.id) }"
                       type="button" 
-                      data-bs-toggle="collapse" 
-                      :data-bs-target="`#theme-${theme.id}`"
+                      @click="toggleTheme(theme.id)"
                     >
                       <div class="d-flex justify-content-between align-items-center w-100 me-3">
                         <div class="d-flex align-items-center gap-3">
@@ -162,13 +189,14 @@
                           <span v-if="!theme.is_visible" class="badge bg-secondary">Скрыта</span>
                         </div>
                         <div class="btn-group" @click.stop>
-                          <button @click="editTheme(theme)" class="btn btn-sm btn-outline-primary">
+                          <button @click.stop="editTheme(theme)" class="btn btn-sm btn-outline-primary">
                             <Edit :size="14" />
                           </button>
-                          <button @click="createLesson(theme)" class="btn btn-sm btn-outline-success">
+                          <button @click.stop="createLesson(theme)" class="btn btn-sm btn-outline-success">
                             <Plus :size="14" />
+                            Урок
                           </button>
-                          <button @click="deleteTheme(theme)" class="btn btn-sm btn-outline-danger">
+                          <button @click.stop="deleteTheme(theme)" class="btn btn-sm btn-outline-danger">
                             <Trash2 :size="14" />
                           </button>
                         </div>
@@ -178,17 +206,36 @@
                   <div 
                     :id="`theme-${theme.id}`" 
                     class="accordion-collapse collapse"
-                    :class="{ show: themeIndex === 0 }"
-                    :data-bs-parent="`#course-accordion-${courseGroup.course.id}`"
+                    :class="{ show: isThemeExpanded(theme.id) }"
                   >
                     <div class="accordion-body">
+                      <!-- Действия с темой -->
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0 d-flex align-items-center gap-2">
+                          <BookOpen :size="18" />
+                          Уроки
+                        </h6>
+                        <div class="btn-group">
+                          <button @click.stop="createLesson(theme)" class="btn btn-sm btn-primary">
+                            <Plus :size="14" />
+                            Урок
+                          </button>
+                          <button @click.stop="createTest(theme)" class="btn btn-sm btn-info">
+                            <FileCheck :size="14" />
+                            Тест
+                          </button>
+                          <button @click.stop="createAssignment(theme)" class="btn btn-sm btn-warning">
+                            <ClipboardList :size="14" />
+                            Задание
+                          </button>
+                        </div>
+                      </div>
+
                       <!-- Уроки темы -->
                       <div v-if="theme.lessons.length === 0" class="text-center py-3">
                         <BookOpen :size="24" class="text-muted mb-2" />
                         <p class="text-muted mb-2">В теме нет уроков</p>
-                        <button @click="createLesson(theme)" class="btn btn-sm btn-primary">
-                          Создать первый урок
-                        </button>
+                        <small class="text-muted">Используйте кнопки выше для создания контента</small>
                       </div>
 
                       <div v-else class="row">
@@ -253,9 +300,74 @@
                                   <span v-else class="badge bg-secondary small">Скрытый</span>
                                   <span v-if="lesson.completion_required" class="badge bg-warning small">Обязательный</span>
                                 </div>
-                                <button @click="editLesson(lesson)" class="btn btn-sm btn-outline-primary">
+                                <button @click.stop="editLesson(lesson)" class="btn btn-sm btn-outline-primary">
                                   <Edit :size="12" />
                                 </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Форумы курса -->
+                      <div class="mt-4">
+                        <h6 class="mb-3 d-flex align-items-center gap-2">
+                          <MessageSquare :size="18" />
+                          Форумы курса
+                        </h6>
+                        
+                        <div v-if="getForumsByCourse(courseGroup.course.id).length === 0" class="text-center py-3 bg-light rounded">
+                          <MessageSquare :size="24" class="text-muted mb-2" />
+                          <p class="text-muted mb-2">В курсе нет форумов</p>
+                          <button @click.stop="createForum(courseGroup.course)" class="btn btn-sm btn-secondary me-2">
+                            Создать первый форум
+                          </button>
+
+                        </div>
+
+                        <div v-else class="row">
+                          <div v-for="forum in getForumsByCourse(courseGroup.course.id)" :key="forum.id" class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100 forum-card">
+                              <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                  <h6 class="card-title mb-0">{{ forum.name }}</h6>
+                                  <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                                      <MoreVertical :size="14" />
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                      <li>
+                                        <a class="dropdown-item" href="#" @click.prevent="editForum(forum)">
+                                          <Edit :size="14" class="me-2" />
+                                          Редактировать
+                                        </a>
+                                      </li>
+                                      <li><hr class="dropdown-divider"></li>
+                                      <li>
+                                        <a class="dropdown-item text-danger" href="#" @click.prevent="deleteForum(forum)">
+                                          <Trash2 :size="14" class="me-2" />
+                                          Удалить
+                                        </a>
+                                      </li>
+                                    </ul>
+                                  </div>
+                                </div>
+                                
+                                <p class="card-text text-muted small mb-2">
+                                  {{ forum.description || 'Без описания' }}
+                                </p>
+                                
+                                <div class="forum-meta small text-muted mb-2">
+                                  <div class="d-flex align-items-center gap-2 mb-1">
+                                    <MessageSquare :size="12" />
+                                    <span>{{ getForumTypeName(forum.forum_type) }}</span>
+                                  </div>
+                                </div>
+
+                                <div class="d-flex gap-1">
+                                  <span v-if="forum.is_moderated" class="badge bg-info small">Модерируемый</span>
+                                  <span v-if="forum.allow_anonymous" class="badge bg-warning small">Анонимный</span>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -579,21 +691,46 @@
                 </div>
               </div>
 
-              <div class="mb-3">
-                <label class="form-label">Тема *</label>
-                <select 
-                  v-model="lessonForm.theme" 
-                  class="form-select"
-                  :class="{ 'is-invalid': lessonValidationErrors.theme }"
-                  required
-                >
-                  <option value="">Выберите тему</option>
-                  <option v-for="theme in availableThemes" :key="theme.id" :value="theme.id">
-                    {{ theme.displayName || theme.name }}
-                  </option>
-                </select>
-                <div v-if="lessonValidationErrors.theme" class="invalid-feedback">
-                  {{ lessonValidationErrors.theme }}
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Курс *</label>
+                    <select 
+                      v-model="lessonForm.course" 
+                      @change="onLessonCourseChange"
+                      class="form-select"
+                      :class="{ 'is-invalid': lessonValidationErrors.course }"
+                      required
+                    >
+                      <option value="">Выберите курс</option>
+                      <option v-for="course in courses" :key="course.id" :value="course.id">
+                        {{ course.name }}
+                      </option>
+                    </select>
+                    <div v-if="lessonValidationErrors.course" class="invalid-feedback">
+                      {{ lessonValidationErrors.course }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Тема *</label>
+                    <select 
+                      v-model="lessonForm.theme" 
+                      class="form-select"
+                      :class="{ 'is-invalid': lessonValidationErrors.theme }"
+                      :disabled="!lessonForm.course"
+                      required
+                    >
+                      <option value="">Выберите тему</option>
+                      <option v-for="theme in getThemesByCourse(lessonForm.course)" :key="theme.id" :value="theme.id">
+                        {{ theme.name }}
+                      </option>
+                    </select>
+                    <div v-if="lessonValidationErrors.theme" class="invalid-feedback">
+                      {{ lessonValidationErrors.theme }}
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -926,20 +1063,928 @@
       </div>
     </div>
     <div v-if="showEditLessonModal" class="modal-backdrop fade show"></div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <ConfirmDialog
+      :show="showConfirmDialog"
+      :title="confirmDialogData.title"
+      :message="confirmDialogData.message"
+      :confirmText="confirmDialogData.confirmText"
+      :loading="dialogLoading"
+      @confirm="handleConfirmDialog"
+      @cancel="closeConfirmDialog"
+      @close="closeConfirmDialog"
+    />
+
+    <!-- Модальное окно создания курса -->
+    <div class="modal fade" :class="{ 'show d-block': showCourseModal }" tabindex="-1" v-if="showCourseModal">
+      <div class="modal-dialog modal-dialog-xxl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title d-flex align-items-center gap-2">
+              <BookOpen :size="20" class="text-primary" />
+              Создать новый курс
+            </h5>
+            <button type="button" class="btn-close" @click="closeCourseModal" :disabled="isSubmitting"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="saveCourse">
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <label class="form-label">Название курса *</label>
+                  <input 
+                    v-model="courseForm.name" 
+                    type="text" 
+                    :class="['form-control', courseValidationErrors.name ? 'is-invalid' : '']"
+                    required
+                    placeholder="Введите название курса"
+                  />
+                  <div v-if="courseValidationErrors.name" class="invalid-feedback">
+                    {{ courseValidationErrors.name }}
+                  </div>
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <label class="form-label">Краткое описание</label>
+                  <textarea 
+                    v-model="courseForm.summary" 
+                    :class="['form-control', courseValidationErrors.summary ? 'is-invalid' : '']"
+                    rows="2"
+                    placeholder="Краткое описание курса для каталога"
+                  ></textarea>
+                  <div v-if="courseValidationErrors.summary" class="invalid-feedback">
+                    {{ courseValidationErrors.summary }}
+                  </div>
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <label class="form-label">Полное описание *</label>
+                  <textarea 
+                    v-model="courseForm.description" 
+                    :class="['form-control', courseValidationErrors.description ? 'is-invalid' : '']"
+                    rows="4"
+                    placeholder="Подробное описание курса"
+                    required
+                  ></textarea>
+                  <div v-if="courseValidationErrors.description" class="invalid-feedback">
+                    {{ courseValidationErrors.description }}
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Категория</label>
+                  <select v-model="courseForm.category" class="form-select">
+                    <option :value="null">Без категории</option>
+                    <option v-for="category in categories" :key="category.id" :value="category.id">
+                      {{ category.name }}
+                    </option>
+                  </select>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Формат курса *</label>
+                  <select 
+                    v-model="courseForm.course_format" 
+                    :class="['form-select', courseValidationErrors.course_format ? 'is-invalid' : '']"
+                  >
+                    <option value="">Выберите формат курса</option>
+                    <option v-for="courseFormat in courseFormats" :key="courseFormat.id" :value="courseFormat.id">
+                      {{ courseFormat.name }}
+                    </option>
+                  </select>
+                  <div v-if="courseValidationErrors.course_format" class="invalid-feedback">
+                    {{ courseValidationErrors.course_format }}
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Дата начала</label>
+                  <input 
+                    v-model="courseForm.start_date" 
+                    type="date" 
+                    :class="['form-control', courseValidationErrors.start_date ? 'is-invalid' : '']"
+                  />
+                  <div v-if="courseValidationErrors.start_date" class="invalid-feedback">
+                    {{ courseValidationErrors.start_date }}
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Дата окончания</label>
+                  <input 
+                    v-model="courseForm.end_date" 
+                    type="date" 
+                    :class="['form-control', courseValidationErrors.end_date ? 'is-invalid' : '']"
+                  />
+                  <div v-if="courseValidationErrors.end_date" class="invalid-feedback">
+                    {{ courseValidationErrors.end_date }}
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Ключ записи</label>
+                  <input 
+                    v-model="courseForm.enrollment_key" 
+                    type="text" 
+                    :class="['form-control', courseValidationErrors.enrollment_key ? 'is-invalid' : '']"
+                    placeholder="Оставьте пустым для открытой записи"
+                  />
+                  <div v-if="courseValidationErrors.enrollment_key" class="invalid-feedback">
+                    {{ courseValidationErrors.enrollment_key }}
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Максимум студентов</label>
+                  <input 
+                    v-model="courseForm.max_enrollment" 
+                    type="number" 
+                    :class="['form-control', courseValidationErrors.max_enrollment ? 'is-invalid' : '']"
+                    placeholder="Без ограничений"
+                    min="1"
+                  />
+                  <div v-if="courseValidationErrors.max_enrollment" class="invalid-feedback">
+                    {{ courseValidationErrors.max_enrollment }}
+                  </div>
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <div class="form-check">
+                    <input 
+                      v-model="courseForm.is_self_enrollment" 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      id="selfEnrollment"
+                    />
+                    <label class="form-check-label" for="selfEnrollment">
+                      Разрешить самостоятельную запись
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <div class="form-check">
+                    <input 
+                      v-model="courseForm.is_published" 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      id="publishCourse"
+                    />
+                    <label class="form-check-label" for="publishCourse">
+                      Опубликовать курс сразу
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <label class="form-label">Изображение курса</label>
+                  <input 
+                    type="file" 
+                    class="form-control"
+                    accept="image/*"
+                    @change="handleImageUpload"
+                  />
+                  <div class="form-text">
+                    Выберите изображение для курса (максимум 5MB). Поддерживаются форматы: JPG, PNG, GIF.
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button 
+              type="button" 
+              class="btn btn-secondary" 
+              @click="closeCourseModal"
+              :disabled="isSubmitting"
+            >
+              Отмена
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-primary" 
+              @click="saveCourse"
+              :disabled="isSubmitting"
+            >
+              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              {{ isSubmitting ? 'Создание...' : 'Создать курс' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showCourseModal" class="modal-backdrop fade show"></div>
+
+    <!-- Модальное окно редактирования курса -->
+    <div class="modal fade" :class="{ 'show d-block': showEditCourseModal }" tabindex="-1" v-if="showEditCourseModal">
+      <div class="modal-dialog modal-dialog-xxl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title d-flex align-items-center gap-2">
+              <Edit :size="20" class="text-primary" />
+              Редактировать курс
+            </h5>
+            <button type="button" class="btn-close" @click="closeCourseModal" :disabled="isSubmitting"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="saveCourse">
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <label class="form-label">Название курса *</label>
+                  <input 
+                    v-model="courseForm.name" 
+                    type="text" 
+                    :class="['form-control', courseValidationErrors.name ? 'is-invalid' : '']"
+                    required
+                    placeholder="Введите название курса"
+                  />
+                  <div v-if="courseValidationErrors.name" class="invalid-feedback">
+                    {{ courseValidationErrors.name }}
+                  </div>
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <label class="form-label">Краткое описание</label>
+                  <textarea 
+                    v-model="courseForm.summary" 
+                    :class="['form-control', courseValidationErrors.summary ? 'is-invalid' : '']"
+                    rows="2"
+                    placeholder="Краткое описание курса для каталога"
+                  ></textarea>
+                  <div v-if="courseValidationErrors.summary" class="invalid-feedback">
+                    {{ courseValidationErrors.summary }}
+                  </div>
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <label class="form-label">Полное описание *</label>
+                  <textarea 
+                    v-model="courseForm.description" 
+                    :class="['form-control', courseValidationErrors.description ? 'is-invalid' : '']"
+                    rows="4"
+                    placeholder="Подробное описание курса"
+                    required
+                  ></textarea>
+                  <div v-if="courseValidationErrors.description" class="invalid-feedback">
+                    {{ courseValidationErrors.description }}
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Категория</label>
+                  <select v-model="courseForm.category" class="form-select">
+                    <option :value="null">Без категории</option>
+                    <option v-for="category in categories" :key="category.id" :value="category.id">
+                      {{ category.name }}
+                    </option>
+                  </select>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Формат курса *</label>
+                  <select 
+                    v-model="courseForm.course_format" 
+                    :class="['form-select', courseValidationErrors.course_format ? 'is-invalid' : '']"
+                  >
+                    <option value="">Выберите формат курса</option>
+                    <option v-for="courseFormat in courseFormats" :key="courseFormat.id" :value="courseFormat.id">
+                      {{ courseFormat.name }}
+                    </option>
+                  </select>
+                  <div v-if="courseValidationErrors.course_format" class="invalid-feedback">
+                    {{ courseValidationErrors.course_format }}
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Дата начала</label>
+                  <input 
+                    v-model="courseForm.start_date" 
+                    type="date" 
+                    :class="['form-control', courseValidationErrors.start_date ? 'is-invalid' : '']"
+                  />
+                  <div v-if="courseValidationErrors.start_date" class="invalid-feedback">
+                    {{ courseValidationErrors.start_date }}
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Дата окончания</label>
+                  <input 
+                    v-model="courseForm.end_date" 
+                    type="date" 
+                    :class="['form-control', courseValidationErrors.end_date ? 'is-invalid' : '']"
+                  />
+                  <div v-if="courseValidationErrors.end_date" class="invalid-feedback">
+                    {{ courseValidationErrors.end_date }}
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Ключ записи</label>
+                  <input 
+                    v-model="courseForm.enrollment_key" 
+                    type="text" 
+                    :class="['form-control', courseValidationErrors.enrollment_key ? 'is-invalid' : '']"
+                    placeholder="Оставьте пустым для открытой записи"
+                  />
+                  <div v-if="courseValidationErrors.enrollment_key" class="invalid-feedback">
+                    {{ courseValidationErrors.enrollment_key }}
+                  </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Максимум студентов</label>
+                  <input 
+                    v-model="courseForm.max_enrollment" 
+                    type="number" 
+                    :class="['form-control', courseValidationErrors.max_enrollment ? 'is-invalid' : '']"
+                    placeholder="Без ограничений"
+                    min="1"
+                  />
+                  <div v-if="courseValidationErrors.max_enrollment" class="invalid-feedback">
+                    {{ courseValidationErrors.max_enrollment }}
+                  </div>
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <div class="form-check">
+                    <input 
+                      v-model="courseForm.is_self_enrollment" 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      id="editSelfEnrollment"
+                    />
+                    <label class="form-check-label" for="editSelfEnrollment">
+                      Разрешить самостоятельную запись
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <div class="form-check">
+                    <input 
+                      v-model="courseForm.is_published" 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      id="editPublishCourse"
+                    />
+                    <label class="form-check-label" for="editPublishCourse">
+                      Опубликованный курс
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <label class="form-label">Изображение курса</label>
+                  <input 
+                    type="file" 
+                    class="form-control"
+                    accept="image/*"
+                    @change="handleImageUpload"
+                  />
+                  <div class="form-text">
+                    Выберите новое изображение для курса (максимум 5MB). Поддерживаются форматы: JPG, PNG, GIF.
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button 
+              type="button" 
+              class="btn btn-secondary" 
+              @click="closeCourseModal"
+              :disabled="isSubmitting"
+            >
+              Отмена
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-primary" 
+              @click="saveCourse"
+              :disabled="isSubmitting"
+            >
+              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              {{ isSubmitting ? 'Сохранение...' : 'Сохранить изменения' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showEditCourseModal" class="modal-backdrop fade show"></div>
+
+    <!-- Модальное окно создания теста -->
+    <div class="modal fade" :class="{ 'show d-block': showTestModal }" tabindex="-1" v-if="showTestModal">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title d-flex align-items-center gap-2">
+              <FileCheck :size="20" class="text-info" />
+              Создать тест
+            </h5>
+            <button type="button" class="btn-close" @click="closeTestModal"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="saveTest">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Название теста *</label>
+                    <input 
+                      v-model="testForm.name" 
+                      type="text" 
+                      class="form-control" 
+                      :class="{ 'is-invalid': testValidationErrors.name }"
+                      required
+                      placeholder="Введите название теста"
+                    />
+                    <div v-if="testValidationErrors.name" class="invalid-feedback">
+                      {{ testValidationErrors.name }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Заголовок теста *</label>
+                    <input 
+                      v-model="testForm.title" 
+                      type="text" 
+                      class="form-control" 
+                      :class="{ 'is-invalid': testValidationErrors.title }"
+                      required
+                      placeholder="Введите заголовок теста"
+                    />
+                    <div v-if="testValidationErrors.title" class="invalid-feedback">
+                      {{ testValidationErrors.title }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label">Описание</label>
+                <textarea 
+                  v-model="testForm.description" 
+                  class="form-control" 
+                  rows="3"
+                  placeholder="Описание теста"
+                ></textarea>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Курс *</label>
+                    <select 
+                      v-model="testForm.course" 
+                      @change="onTestCourseChange"
+                      class="form-select"
+                      :class="{ 'is-invalid': testValidationErrors.course }"
+                      required
+                    >
+                      <option value="">Выберите курс</option>
+                      <option v-for="course in courses" :key="course.id" :value="course.id">
+                        {{ course.name }}
+                      </option>
+                    </select>
+                    <div v-if="testValidationErrors.course" class="invalid-feedback">
+                      {{ testValidationErrors.course }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Тема</label>
+                    <select 
+                      v-model="testForm.theme" 
+                      class="form-select"
+                      :disabled="!testForm.course"
+                    >
+                      <option value="">Выберите тему (необязательно)</option>
+                      <option v-for="theme in getThemesByCourse(testForm.course)" :key="theme.id" :value="theme.id">
+                        {{ theme.name }}
+                      </option>
+                    </select>
+                    <div class="form-text">Если тема не выбрана, тест будет относиться ко всему курсу</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Тип теста</label>
+                    <select v-model="testForm.type" class="form-select">
+                      <option value="close">Закрытые вопросы</option>
+                      <option value="open">Открытые вопросы</option>
+                      <option value="game">Игровой формат</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Длительность (мин)</label>
+                    <input 
+                      v-model="testForm.duration_minutes" 
+                      type="number" 
+                      class="form-control"
+                      min="1"
+                      placeholder="60"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Проходной балл (%)</label>
+                    <input 
+                      v-model="testForm.passing_score" 
+                      type="number" 
+                      class="form-control"
+                      min="0"
+                      max="100"
+                      placeholder="70"
+                    />
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Максимум попыток</label>
+                    <input 
+                      v-model="testForm.max_attempts" 
+                      type="number" 
+                      class="form-control"
+                      min="1"
+                      placeholder="1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input 
+                      v-model="testForm.show_correct_answers" 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      id="showCorrectAnswers"
+                    />
+                    <label class="form-check-label" for="showCorrectAnswers">
+                      Показывать правильные ответы
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input 
+                      v-model="testForm.randomize_questions" 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      id="randomizeQuestions"
+                    />
+                    <label class="form-check-label" for="randomizeQuestions">
+                      Перемешивать вопросы
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button 
+              type="button" 
+              class="btn btn-secondary" 
+              @click="closeTestModal"
+              :disabled="isSubmitting"
+            >
+              Отмена
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-info" 
+              @click="saveTest"
+              :disabled="isSubmitting"
+            >
+              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              {{ isSubmitting ? 'Создание...' : 'Создать тест' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showTestModal" class="modal-backdrop fade show"></div>
+
+    <!-- Модальное окно создания задания -->
+    <div class="modal fade" :class="{ 'show d-block': showAssignmentModal }" tabindex="-1" v-if="showAssignmentModal">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title d-flex align-items-center gap-2">
+              <ClipboardList :size="20" class="text-warning" />
+              Создать задание
+            </h5>
+            <button type="button" class="btn-close" @click="closeAssignmentModal"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="saveAssignment">
+              <div class="mb-3">
+                <label class="form-label">Название задания *</label>
+                <input 
+                  v-model="assignmentForm.title" 
+                  type="text" 
+                  class="form-control" 
+                  :class="{ 'is-invalid': assignmentValidationErrors.title }"
+                  required
+                  placeholder="Введите название задания"
+                />
+                <div v-if="assignmentValidationErrors.title" class="invalid-feedback">
+                  {{ assignmentValidationErrors.title }}
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label">Описание</label>
+                <textarea 
+                  v-model="assignmentForm.description" 
+                  class="form-control" 
+                  rows="4"
+                  placeholder="Подробное описание задания"
+                ></textarea>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Курс *</label>
+                    <select 
+                      v-model="assignmentForm.course" 
+                      @change="onAssignmentCourseChange"
+                      class="form-select"
+                      :class="{ 'is-invalid': assignmentValidationErrors.course }"
+                      required
+                    >
+                      <option value="">Выберите курс</option>
+                      <option v-for="course in courses" :key="course.id" :value="course.id">
+                        {{ course.name }}
+                      </option>
+                    </select>
+                    <div v-if="assignmentValidationErrors.course" class="invalid-feedback">
+                      {{ assignmentValidationErrors.course }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Тема</label>
+                    <select 
+                      v-model="assignmentForm.theme" 
+                      class="form-select"
+                      :disabled="!assignmentForm.course"
+                    >
+                      <option value="">Выберите тему (необязательно)</option>
+                      <option v-for="theme in getThemesByCourse(assignmentForm.course)" :key="theme.id" :value="theme.id">
+                        {{ theme.name }}
+                      </option>
+                    </select>
+                    <div class="form-text">Если тема не выбрана, задание будет относиться ко всему курсу</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Крайний срок</label>
+                    <input 
+                      v-model="assignmentForm.deadline" 
+                      type="datetime-local" 
+                      class="form-control"
+                    />
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Максимальная оценка</label>
+                    <input 
+                      v-model="assignmentForm.max_grade" 
+                      type="number" 
+                      class="form-control"
+                      min="1"
+                      placeholder="100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Тип подачи</label>
+                    <select v-model="assignmentForm.submission_type" class="form-select">
+                      <option value="file">Файл</option>
+                      <option value="text">Текст</option>
+                      <option value="both">Файл и текст</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Максимальный размер файла (MB)</label>
+                    <input 
+                      v-model="assignmentForm.max_file_size" 
+                      type="number" 
+                      class="form-control"
+                      min="1"
+                      placeholder="10"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="form-check">
+                  <input 
+                    v-model="assignmentForm.allow_late_submissions" 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    id="allowLateSubmissions"
+                  />
+                  <label class="form-check-label" for="allowLateSubmissions">
+                    Разрешить поздние отправки
+                  </label>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button 
+              type="button" 
+              class="btn btn-secondary" 
+              @click="closeAssignmentModal"
+              :disabled="isSubmitting"
+            >
+              Отмена
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-warning" 
+              @click="saveAssignment"
+              :disabled="isSubmitting"
+            >
+              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              {{ isSubmitting ? 'Создание...' : 'Создать задание' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showAssignmentModal" class="modal-backdrop fade show"></div>
+
+    <!-- Модальное окно создания форума -->
+    <div class="modal fade" :class="{ 'show d-block': showForumModal }" tabindex="-1" v-if="showForumModal">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title d-flex align-items-center gap-2">
+              <MessageSquare :size="20" class="text-secondary" />
+              Создать форум
+            </h5>
+            <button type="button" class="btn-close" @click="closeForumModal"></button>
+          </div>
+          <div class="modal-body">
+                         <form @submit.prevent="saveForum">
+              <div class="mb-3">
+                <label class="form-label">Название форума *</label>
+                <input 
+                  v-model="forumForm.name" 
+                  type="text" 
+                  class="form-control" 
+                  :class="{ 'is-invalid': forumValidationErrors.name }"
+                  required
+                  placeholder="Введите название форума"
+                />
+                <div v-if="forumValidationErrors.name" class="invalid-feedback">
+                  {{ forumValidationErrors.name }}
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label">Описание</label>
+                <textarea 
+                  v-model="forumForm.description" 
+                  class="form-control" 
+                  rows="3"
+                  placeholder="Описание форума"
+                ></textarea>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Курс *</label>
+                    <select 
+                      v-model="forumForm.subject" 
+                      class="form-select"
+                      :class="{ 'is-invalid': forumValidationErrors.subject }"
+                      required
+                    >
+                      <option value="">Выберите курс</option>
+                      <option v-for="course in courses" :key="course.id" :value="course.id">
+                        {{ course.name }}
+                      </option>
+                    </select>
+                    <div v-if="forumValidationErrors.subject" class="invalid-feedback">
+                      {{ forumValidationErrors.subject }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Тип форума</label>
+                    <select v-model="forumForm.forum_type" class="form-select">
+                      <option value="general">Общий</option>
+                      <option value="q_and_a">Вопросы и ответы</option>
+                      <option value="single_discussion">Одна дискуссия</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input 
+                      v-model="forumForm.is_moderated" 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      id="isModerated"
+                    />
+                    <label class="form-check-label" for="isModerated">
+                      Модерируемый форум
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input 
+                      v-model="forumForm.allow_anonymous" 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      id="allowAnonymous"
+                    />
+                    <label class="form-check-label" for="allowAnonymous">
+                      Разрешить анонимные сообщения
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button 
+              type="button" 
+              class="btn btn-secondary" 
+              @click="closeForumModal"
+              :disabled="isSubmitting"
+            >
+              Отмена
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-secondary" 
+                             @click="saveForum"
+              :disabled="isSubmitting"
+            >
+              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              {{ isSubmitting ? 'Создание...' : 'Создать форум' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showForumModal" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { 
-  Plus, Search, Edit, Trash2, Copy, Eye, EyeOff, MoreVertical,
+  Plus, Search, Edit, Trash2, Copy, EyeOff, MoreVertical,
   BookOpen, FolderOpen, Hash, Video, FileText, Link, 
-  MessageSquare, Calendar, Award, TestTube, ChevronDown
+  MessageSquare, Calendar, Award, TestTube, ChevronDown,
+  FileCheck, ClipboardList, Eye
 } from 'lucide-vue-next'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
 import RoleGuard from '../components/RoleGuard.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import CourseImagePlaceholder from '../components/CourseImagePlaceholder.vue'
 import { globalUserRole } from '../composables/useUserRole'
+import { useConfirmDialog } from '../composables/useConfirmDialog'
 import { 
   showSuccess, 
   showError, 
@@ -953,6 +1998,10 @@ import {
 const courses = ref([])
 const themes = ref([])
 const lessons = ref([])
+const forums = ref([])
+
+const categories = ref([])
+const courseFormats = ref([])
 const loading = ref(true)
 const selectedCourseId = ref('')
 const searchQuery = ref('')
@@ -962,6 +2011,11 @@ const showThemeModal = ref(false)
 const showLessonModal = ref(false)
 const showEditThemeModal = ref(false)
 const showEditLessonModal = ref(false)
+const showCourseModal = ref(false)
+const showEditCourseModal = ref(false)
+const showTestModal = ref(false)
+const showAssignmentModal = ref(false)
+const showForumModal = ref(false)
 
 const themeForm = ref({
   name: '',
@@ -976,6 +2030,7 @@ const lessonForm = ref({
   name: '',
   description: '',
   lessontype: 'L',
+  course: null,
   theme: null,
   sort_order: 0,
   is_visible: true,
@@ -985,12 +2040,85 @@ const lessonForm = ref({
   content: ''
 })
 
+const courseForm = ref({
+  name: '',
+  description: '',
+  summary: '',
+  category: null,
+  course_format: null,
+  start_date: '',
+  end_date: '',
+  enrollment_key: '',
+  max_enrollment: null,
+  is_self_enrollment: true,
+  is_published: false,
+  image: null // Поле для загрузки изображения
+})
+
+const testForm = ref({
+  name: '',
+  title: '',
+  description: '',
+  course: null,
+  theme: null,
+  lesson: null,
+  type: 'close',
+  duration_minutes: 60,
+  passing_score: 70,
+  max_attempts: 1,
+  show_correct_answers: false,
+  randomize_questions: false,
+  available_from: '',
+  available_until: '',
+  is_active: true
+})
+
+const assignmentForm = ref({
+  title: '',
+  description: '',
+  course: null,
+  theme: null,
+  lesson: null,
+  deadline: '',
+  max_grade: 100,
+  allow_late_submissions: false,
+  submission_type: 'file',
+  max_file_size: 10485760, // 10MB
+})
+
+const forumForm = ref({
+  name: '',
+  description: '',
+  forum_type: 'general',
+  subject: null,
+  is_moderated: false,
+  allow_anonymous: false
+})
+
 const editingTheme = ref(null)
 const editingLesson = ref(null)
+const editingCourse = ref(null)
 
 const themeValidationErrors = ref({})
 const lessonValidationErrors = ref({})
+const courseValidationErrors = ref({})
+const testValidationErrors = ref({})
+const assignmentValidationErrors = ref({})
+const forumValidationErrors = ref({})
 const isSubmitting = ref(false)
+
+// Состояние раскрытых тем
+const expandedThemes = ref(new Set())
+
+// Композабл для модального окна подтверждения удаления
+const {
+  showConfirmDialog,
+  confirmDialogData,
+  dialogLoading,
+  openConfirmDialog,
+  closeConfirmDialog,
+  handleConfirmDialog
+} = useConfirmDialog()
 
 const lessonTypes = [
   { value: 'L', label: 'Лекция', icon: FileText },
@@ -1046,23 +2174,17 @@ const filteredLessons = computed(() => {
 })
 
 const groupedData = computed(() => {
-  console.log('🔄 Пересчет groupedData')
-  console.log('📚 Курсы:', courses.value.length, courses.value.map(c => ({id: c.id, name: c.name})))
-  console.log('📂 Темы:', themes.value.length, themes.value.map(t => ({id: t.id, name: t.name, subject: t.subject})))
-  console.log('📖 Уроки:', lessons.value.length)
-  console.log('🔍 Выбранный курс:', selectedCourseId.value)
-  
   const courseGroups = {}
   
   // Создаем группы для всех курсов или только выбранного
   courses.value.forEach(course => {
-    if (!selectedCourseId.value || course.id.toString() === selectedCourseId.value.toString()) {
+    if (!selectedCourseId.value || parseInt(course.id) === parseInt(selectedCourseId.value)) {
       courseGroups[course.id] = {
         course,
         themes: [],
         totalLessons: 0
       }
-      console.log(`➕ Добавлена группа для курса: ${course.name} (ID: ${course.id})`)
+  
     }
   })
 
@@ -1073,39 +2195,40 @@ const groupedData = computed(() => {
     if (typeof courseId === 'object' && courseId?.id) {
       courseId = courseId.id
     }
-    courseId = String(courseId) // Приводим к строке для сравнения
-    
-    console.log(`📂 Обрабатываем тему: ${theme.name} для курса ID: ${courseId}`)
+          courseId = parseInt(courseId) // Приводим к числу для сравнения
     
     if (courseGroups[courseId]) {
       courseGroups[courseId].themes.push({
         ...theme,
         lessons: []
       })
-      console.log(`✅ Тема "${theme.name}" добавлена в курс ID: ${courseId}`)
-    } else {
-      console.log(`❌ Курс ID: ${courseId} не найден в courseGroups`, Object.keys(courseGroups))
     }
   })
 
   // Добавляем уроки в темы
   filteredLessons.value.forEach(lesson => {
-    const theme = themes.value.find(t => t.id === lesson.theme)
+    // Находим тему по ID
+    let themeId = lesson.theme
+    if (typeof themeId === 'object' && themeId?.id) {
+      themeId = themeId.id
+    }
+    themeId = parseInt(themeId)
+    
+    const theme = themes.value.find(t => parseInt(t.id) === themeId)
     if (theme) {
       // Извлекаем ID курса из темы
       let courseId = theme.subject
       if (typeof courseId === 'object' && courseId?.id) {
         courseId = courseId.id
       }
-      courseId = String(courseId)
+      courseId = parseInt(courseId)
       
       const courseGroup = courseGroups[courseId]
       if (courseGroup) {
-        const themeInGroup = courseGroup.themes.find(t => t.id === theme.id)
+        const themeInGroup = courseGroup.themes.find(t => parseInt(t.id) === themeId)
         if (themeInGroup) {
           themeInGroup.lessons.push(lesson)
           courseGroup.totalLessons++
-          console.log(`📖 Урок "${lesson.name}" добавлен в тему "${theme.name}"`)
         }
       }
     }
@@ -1119,38 +2242,38 @@ const groupedData = computed(() => {
     })
   })
 
-  const result = Object.values(courseGroups)
-  console.log('📊 Итоговый результат groupedData:', result)
-  
-  return result
+      return Object.values(courseGroups)
 })
 
 async function fetchData() {
   try {
     loading.value = true
     
-    const [coursesResponse, themesResponse, lessonsResponse] = await Promise.all([
+    const [coursesResponse, themesResponse, lessonsResponse, forumsResponse, categoriesResponse, formatsResponse] = await Promise.all([
       apiClient.get(endpoints.lms.subjects),
       apiClient.get(endpoints.lms.themes),
-      apiClient.get(endpoints.lms.lessons)
+      apiClient.get(endpoints.lms.lessons),
+      apiClient.get(endpoints.lms.forums).catch(() => ({ data: [] })),
+      apiClient.get(endpoints.lms.categories).catch(() => ({ data: [] })),
+      apiClient.get(endpoints.lms.courseFormats).catch(() => ({ data: [] }))
     ])
     
     // Обрабатываем данные из API
     courses.value = coursesResponse.data?.results || coursesResponse.data || []
     themes.value = themesResponse.data?.results || themesResponse.data || []
     lessons.value = lessonsResponse.data?.results || lessonsResponse.data || []
+    forums.value = forumsResponse.data?.results || forumsResponse.data || []
+    categories.value = categoriesResponse.data?.results || categoriesResponse.data || []
+    courseFormats.value = formatsResponse.data?.results || formatsResponse.data || []
     
-    console.log('Данные загружены из API')
-    console.log('Загружено данных:')
-    console.log('Курсы:', courses.value.length, '(' + courses.value.length + ')', courses.value)
-    console.log('Темы:', themes.value.length)
-    console.log('Уроки:', lessons.value.length)
+
     
-    // Отладка: показываем структуру первой темы
-    if (themes.value.length > 0) {
-      console.log('🔍 Структура первой темы:', themes.value[0])
-      console.log('🔍 Поле subject первой темы:', themes.value[0].subject, typeof themes.value[0].subject)
-    }
+    // Раскрываем первую тему каждого курса
+    groupedData.value.forEach(courseGroup => {
+      if (courseGroup.themes.length > 0) {
+        expandedThemes.value.add(courseGroup.themes[0].id)
+      }
+    })
     
   } catch (error) {
     console.error('Ошибка загрузки данных:', error)
@@ -1158,12 +2281,13 @@ async function fetchData() {
     courses.value = []
     themes.value = []
     lessons.value = []
+    forums.value = []
+    categories.value = []
+    courseFormats.value = []
   } finally {
     loading.value = false
   }
 }
-
-
 
 function onCourseChange() {
   // Данные уже фильтруются через computed свойства
@@ -1279,8 +2403,7 @@ async function saveTheme() {
       delete data.description
     }
 
-    console.log('Отправляемые данные темы:', data)
-    console.log('Доступные курсы:', courses.value.map(c => ({id: c.id, name: c.name})))
+
 
     // Отправляем данные в API
     let response
@@ -1304,17 +2427,14 @@ async function saveTheme() {
     
     if (error.response?.data) {
       const errorData = error.response.data
-      console.log('Детальные ошибки валидации:', errorData)
       
       if (typeof errorData === 'object') {
         // Обрабатываем ошибки валидации
         Object.keys(errorData).forEach(field => {
           if (Array.isArray(errorData[field])) {
             themeValidationErrors.value[field] = errorData[field].join(', ')
-            console.log(`Ошибка в поле ${field}:`, errorData[field])
           } else {
             themeValidationErrors.value[field] = errorData[field]
-            console.log(`Ошибка в поле ${field}:`, errorData[field])
           }
         })
         
@@ -1334,18 +2454,44 @@ async function saveTheme() {
   }
 }
 
-async function deleteTheme(theme) {
-  if (!confirm(`Вы уверены, что хотите удалить тему "${theme.name}"? Все уроки в этой теме также будут удалены.`)) {
-    return
+function deleteTheme(theme) {
+  let message = `Вы уверены, что хотите удалить тему "${theme.name}"?`
+  
+  // Подсчитываем количество уроков в теме
+  const lessonsInTheme = lessons.value.filter(lesson => {
+    let lessonThemeId = lesson.theme
+    if (typeof lessonThemeId === 'object' && lessonThemeId?.id) {
+      lessonThemeId = lessonThemeId.id
+    }
+    return parseInt(lessonThemeId) === parseInt(theme.id)
+  })
+  
+  if (lessonsInTheme.length > 0) {
+    message += `\n\n⚠️ ВНИМАНИЕ: В этой теме ${lessonsInTheme.length} урок(ов). Они также будут удалены навсегда!`
   }
+  
+  message += '\n\nЭто действие нельзя отменить.'
 
+  openConfirmDialog({
+    title: 'Удаление темы',
+    message: message,
+    confirmText: 'Удалить',
+    onConfirm: () => confirmDeleteTheme(theme)
+  })
+}
+
+async function confirmDeleteTheme(theme) {
   try {
+    dialogLoading.value = true
     await apiClient.delete(`${endpoints.lms.themes}${theme.id}/`)
-    await fetchData()
     showSuccess('Тема успешно удалена')
+    await fetchData()
+    closeConfirmDialog()
   } catch (error) {
     console.error('Ошибка удаления темы:', error)
     showError('Ошибка при удалении темы')
+  } finally {
+    dialogLoading.value = false
   }
 }
 
@@ -1382,6 +2528,7 @@ function resetLessonForm() {
     name: '',
     description: '',
     lessontype: 'L',
+    course: selectedCourseId.value || null,
     theme: null,
     sort_order: 0,
     is_visible: true,
@@ -1407,6 +2554,11 @@ async function saveLesson() {
 
     if (!lessonForm.value.name.trim()) {
       lessonValidationErrors.value.name = 'Название урока обязательно'
+      return
+    }
+
+    if (!lessonForm.value.course) {
+      lessonValidationErrors.value.course = 'Выберите курс'
       return
     }
 
@@ -1449,15 +2601,9 @@ async function saveLesson() {
 
   } catch (error) {
     console.error('Ошибка сохранения урока:', error)
-    console.error('Статус ошибки:', error.response?.status)
-    console.error('Данные ошибки:', error.response?.data)
-    console.error('URL запроса:', error.config?.url)
-    console.error('Метод запроса:', error.config?.method)
-    console.error('Данные запроса:', error.config?.data)
     
     if (error.response?.data) {
       const errorData = error.response.data
-      console.log('Детальные ошибки валидации урока:', errorData)
       
       if (typeof errorData === 'object') {
         // Обрабатываем ошибки валидации
@@ -1485,48 +2631,109 @@ async function saveLesson() {
   }
 }
 
-async function deleteLesson(lesson) {
-  if (!confirm(`Вы уверены, что хотите удалить урок "${lesson.name}"?`)) {
-    return
-  }
+function deleteLesson(lesson) {
+  let message = `Вы уверены, что хотите удалить урок "${lesson.name}"?`
+  message += '\n\nЭто действие нельзя отменить.'
 
+  openConfirmDialog({
+    title: 'Удаление урока',
+    message: message,
+    confirmText: 'Удалить',
+    onConfirm: () => confirmDeleteLesson(lesson)
+  })
+}
+
+async function confirmDeleteLesson(lesson) {
   try {
+    dialogLoading.value = true
     await apiClient.delete(`${endpoints.lms.lessons}${lesson.id}/`)
-    await fetchData()
     showSuccess('Урок успешно удален')
+    await fetchData()
+    closeConfirmDialog()
   } catch (error) {
     console.error('Ошибка удаления урока:', error)
     showError('Ошибка при удалении урока')
+  } finally {
+    dialogLoading.value = false
   }
 }
 
 function viewLesson(lesson) {
-  console.log('Просмотр урока:', lesson)
   showWarning('Просмотр урока будет реализован в следующей версии')
 }
 
 async function duplicateLesson(lesson) {
   try {
+    // Извлекаем ID темы (может быть объектом или числом)
+    let themeId = lesson.theme
+    if (typeof themeId === 'object' && themeId?.id) {
+      themeId = themeId.id
+    }
+    
+    // Определяем базовое название урока (убираем предыдущие номера копий)
+    let baseName = lesson.name
+    const copyRegex = /\s*\(копия\s*\d*\)$/
+    if (copyRegex.test(baseName)) {
+      baseName = baseName.replace(copyRegex, '')
+    }
+    
+    // Находим все уроки в той же теме с похожими названиями
+    const lessonsInTheme = lessons.value.filter(l => {
+      let lessonThemeId = l.theme
+      if (typeof lessonThemeId === 'object' && lessonThemeId?.id) {
+        lessonThemeId = lessonThemeId.id
+      }
+      return parseInt(lessonThemeId) === parseInt(themeId)
+    })
+    
+    // Находим все существующие копии этого урока
+    const existingCopies = lessonsInTheme.filter(l => {
+      return l.name === baseName || l.name.startsWith(`${baseName} (копия`)
+    })
+    
+    // Определяем номер для новой копии
+    let copyNumber = 1
+    const copyNumbers = existingCopies
+      .map(l => {
+        const match = l.name.match(/\(копия\s*(\d+)\)$/)
+        return match ? parseInt(match[1]) : 0
+      })
+      .filter(num => num > 0)
+    
+    if (copyNumbers.length > 0) {
+      copyNumber = Math.max(...copyNumbers) + 1
+    }
+    
+    // Формируем название новой копии
+    const copyName = `${baseName} (копия ${copyNumber})`
+    
     // Создаем копию урока через API
     const duplicateData = {
-      name: `${lesson.name} (копия)`,
-      description: lesson.description,
+      name: copyName,
+      description: lesson.description || '',
       lessontype: lesson.lessontype,
-      theme: lesson.theme,
+      theme: parseInt(themeId),
       sort_order: (lesson.sort_order || 0) + 1,
-      is_visible: lesson.is_visible,
-      completion_required: lesson.completion_required,
-      availability_start: lesson.availability_start,
-      availability_end: lesson.availability_end,
-      content: lesson.content
+      is_visible: lesson.is_visible !== undefined ? lesson.is_visible : true,
+      completion_required: lesson.completion_required !== undefined ? lesson.completion_required : false,
+      availability_start: lesson.availability_start || null,
+      availability_end: lesson.availability_end || null,
+      content: lesson.content || ''
     }
+    
+
     
     await apiClient.post(endpoints.lms.lessons, duplicateData)
     await fetchData()
-    showSuccess(`Урок "${lesson.name}" успешно скопирован`)
+    showSuccess(`Урок "${lesson.name}" успешно скопирован как "${copyName}"`)
   } catch (error) {
     console.error('Ошибка дублирования урока:', error)
+    if (error.response?.status === 400 && error.response.data) {
+      console.error('Детали ошибки:', error.response.data)
+      showError(`Ошибка при копировании урока: ${JSON.stringify(error.response.data)}`)
+    } else {
     showError('Ошибка при копировании урока')
+    }
   }
 }
 
@@ -1547,9 +2754,7 @@ async function toggleLessonVisibility(lesson) {
   }
 }
 
-function editCourse(course) {
-  showWarning('Функция редактирования курса будет реализована в каталоге курсов')
-}
+
 
 const availableThemes = computed(() => {
   // Показываем все темы с указанием курса
@@ -1564,21 +2769,874 @@ const availableThemes = computed(() => {
 
 
 
-onMounted(fetchData)
+// Функция для управления раскрытием тем
+function toggleTheme(themeId) {
+  if (expandedThemes.value.has(themeId)) {
+    expandedThemes.value.delete(themeId)
+  } else {
+    expandedThemes.value.add(themeId)
+  }
+}
+
+function isThemeExpanded(themeId) {
+  return expandedThemes.value.has(themeId)
+}
+
+// Функции для управления курсами
+function createCourse() {
+  resetCourseForm()
+  showCourseModal.value = true
+}
+
+function editCourse(course) {
+  editingCourse.value = course
+  courseForm.value = {
+    name: course.name,
+    description: course.description || '',
+    summary: course.summary || '',
+    category: course.category?.id || course.category || null,
+    course_format: course.course_format?.id || course.course_format || null,
+    start_date: course.start_date ? new Date(course.start_date).toISOString().slice(0, 10) : '',
+    end_date: course.end_date ? new Date(course.end_date).toISOString().slice(0, 10) : '',
+    enrollment_key: course.enrollment_key || '',
+    max_enrollment: course.max_enrollment || null,
+    is_self_enrollment: course.is_self_enrollment !== undefined ? course.is_self_enrollment : true,
+    is_published: course.is_published || false
+  }
+  showEditCourseModal.value = true
+}
+
+function handleImageUpload(event) {
+  const file = event.target.files[0]
+  if (file) {
+    // Проверка размера файла (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showError('Размер изображения не должен превышать 5MB')
+      event.target.value = ''
+      return
+    }
+    
+    // Проверка типа файла
+    if (!file.type.startsWith('image/')) {
+      showError('Пожалуйста, выберите файл изображения')
+      event.target.value = ''
+      return
+    }
+    
+    courseForm.value.image = file
+  }
+}
+
+function resetCourseForm() {
+  courseForm.value = {
+    name: '',
+    description: '',
+    summary: '',
+    category: null,
+    course_format: null,
+    start_date: '',
+    end_date: '',
+    enrollment_key: '',
+    max_enrollment: null,
+    is_self_enrollment: true,
+    is_published: false,
+    image: null
+  }
+  courseValidationErrors.value = {}
+  editingCourse.value = null
+}
+
+function closeCourseModal() {
+  showCourseModal.value = false
+  showEditCourseModal.value = false
+  editingCourse.value = null
+  resetCourseForm()
+}
+
+async function saveCourse() {
+  try {
+    isSubmitting.value = true
+    courseValidationErrors.value = {}
+
+    // Детальная валидация как в каталоге
+    const errors = {}
+    
+    // Валидация названия
+    if (!courseForm.value.name || !courseForm.value.name.trim()) {
+      errors.name = 'Название курса обязательно для заполнения'
+    } else if (courseForm.value.name.trim().length < 3) {
+      errors.name = 'Название курса должно содержать минимум 3 символа'
+    } else if (courseForm.value.name.trim().length > 100) {
+      errors.name = 'Название курса не должно превышать 100 символов'
+    }
+    
+    // Валидация описания
+    if (!courseForm.value.description || !courseForm.value.description.trim()) {
+      errors.description = 'Описание курса обязательно для заполнения'
+    } else if (courseForm.value.description.trim().length < 10) {
+      errors.description = 'Описание курса должно содержать минимум 10 символов'
+    }
+
+    // Валидация краткого описания
+    if (courseForm.value.summary && courseForm.value.summary.length > 500) {
+      errors.summary = 'Краткое описание не должно превышать 500 символов'
+    }
+
+    // Валидация дат
+    if (courseForm.value.start_date || courseForm.value.end_date) {
+      if (courseForm.value.start_date && courseForm.value.end_date) {
+        const startDate = new Date(courseForm.value.start_date)
+        const endDate = new Date(courseForm.value.end_date)
+        
+        if (isNaN(startDate.getTime())) {
+          errors.start_date = 'Некорректная дата начала'
+        }
+        if (isNaN(endDate.getTime())) {
+          errors.end_date = 'Некорректная дата окончания'
+        }
+        
+        if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+          if (startDate >= endDate) {
+            errors.start_date = 'Дата начала должна быть раньше даты окончания'
+            errors.end_date = 'Дата окончания должна быть позже даты начала'
+          }
+        }
+      }
+    }
+
+    // Валидация макс студентов
+    if (courseForm.value.max_enrollment !== null && courseForm.value.max_enrollment !== undefined && courseForm.value.max_enrollment !== '') {
+      if (isNaN(Number(courseForm.value.max_enrollment)) || Number(courseForm.value.max_enrollment) < 1) {
+        errors.max_enrollment = 'Максимум студентов должен быть положительным числом'
+      }
+    }
+
+    // Валидация ключа записи
+    if (courseForm.value.enrollment_key && courseForm.value.enrollment_key.length > 50) {
+      errors.enrollment_key = 'Ключ записи не должен превышать 50 символов'
+    }
+
+    // Валидация формата курса
+    if (!courseForm.value.course_format) {
+      errors.course_format = 'Выберите формат курса'
+    }
+
+    // Если есть ошибки валидации, показываем их
+    if (Object.keys(errors).length > 0) {
+      courseValidationErrors.value = errors
+      showError('Пожалуйста, исправьте ошибки в форме')
+      return
+    }
+
+    let dataToSend
+
+    // Если есть изображение, используем FormData
+    if (courseForm.value.image) {
+      dataToSend = new FormData()
+      dataToSend.append('name', courseForm.value.name.trim())
+      dataToSend.append('description', courseForm.value.description.trim())
+      dataToSend.append('summary', courseForm.value.summary?.trim() || '')
+      
+      if (courseForm.value.category) {
+        dataToSend.append('category', courseForm.value.category)
+      }
+      
+      dataToSend.append('course_format', courseForm.value.course_format)
+      
+      if (courseForm.value.start_date) {
+        dataToSend.append('start_date', courseForm.value.start_date)
+      }
+      if (courseForm.value.end_date) {
+        dataToSend.append('end_date', courseForm.value.end_date)
+      }
+      if (courseForm.value.enrollment_key?.trim()) {
+        dataToSend.append('enrollment_key', courseForm.value.enrollment_key.trim())
+      }
+      if (courseForm.value.max_enrollment) {
+        dataToSend.append('max_enrollment', courseForm.value.max_enrollment)
+      }
+      
+      dataToSend.append('is_self_enrollment', Boolean(courseForm.value.is_self_enrollment))
+      dataToSend.append('is_published', Boolean(courseForm.value.is_published))
+      dataToSend.append('image', courseForm.value.image)
+    } else {
+      // Обычные данные без изображения
+      dataToSend = {
+        name: courseForm.value.name.trim(),
+        description: courseForm.value.description.trim(),
+        summary: courseForm.value.summary?.trim() || '',
+        category: courseForm.value.category || null,
+        course_format: courseForm.value.course_format,
+        start_date: courseForm.value.start_date || null,
+        end_date: courseForm.value.end_date || null,
+        enrollment_key: courseForm.value.enrollment_key?.trim() || '',
+        max_enrollment: courseForm.value.max_enrollment || null,
+        is_self_enrollment: Boolean(courseForm.value.is_self_enrollment),
+        is_published: Boolean(courseForm.value.is_published)
+      }
+
+      // Убираем пустые даты
+      if (!dataToSend.start_date) {
+        delete dataToSend.start_date
+      }
+      if (!dataToSend.end_date) {
+        delete dataToSend.end_date
+      }
+    }
+
+    // Отправляем данные в API
+    let response
+    if (editingCourse.value) {
+      response = await apiClient.put(`${endpoints.lms.subjects}${editingCourse.value.id}/`, dataToSend)
+    } else {
+      response = await apiClient.post(endpoints.lms.subjects, dataToSend)
+    }
+
+    showSuccess(editingCourse.value ? 'Курс успешно обновлен' : 'Курс успешно создан')
+    await fetchData()
+    closeCourseModal()
+
+  } catch (error) {
+    console.error('Ошибка сохранения курса:', error)
+    
+    if (error.response?.status === 400 && error.response.data) {
+      const serverErrors = {}
+      const errorData = error.response.data
+      
+      // Обрабатываем ошибки полей
+      Object.keys(errorData).forEach(field => {
+        if (Array.isArray(errorData[field])) {
+          serverErrors[field] = errorData[field][0]
+        } else if (typeof errorData[field] === 'string') {
+          serverErrors[field] = errorData[field]
+        } else {
+          serverErrors[field] = 'Некорректное значение поля'
+        }
+      })
+      
+      courseValidationErrors.value = serverErrors
+      
+      const errorCount = Object.keys(serverErrors).length
+      showError(`Найдено ${errorCount} ошибок в форме. Пожалуйста, исправьте их.`)
+    } else {
+      showError('Ошибка при сохранении курса')
+    }
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+function deleteCourse(course) {
+  // Подсчитываем количество тем и уроков в курсе
+  const themesInCourse = themes.value.filter(theme => {
+    let subjectId = theme.subject
+    if (typeof subjectId === 'object' && subjectId?.id) {
+      subjectId = subjectId.id
+    }
+    return parseInt(subjectId) === parseInt(course.id)
+  })
+  
+  const lessonsCount = themesInCourse.reduce((count, theme) => {
+    const lessonsInTheme = lessons.value.filter(lesson => {
+      let lessonThemeId = lesson.theme
+      if (typeof lessonThemeId === 'object' && lessonThemeId?.id) {
+        lessonThemeId = lessonThemeId.id
+      }
+      return parseInt(lessonThemeId) === parseInt(theme.id)
+    })
+    return count + lessonsInTheme.length
+  }, 0)
+  
+  let message = `Вы уверены, что хотите удалить курс "${course.name}"?`
+  
+  if (themesInCourse.length > 0) {
+    message += `\n\n⚠️ ВНИМАНИЕ: В этом курсе ${themesInCourse.length} тем(ы) и ${lessonsCount} урок(ов). Все данные будут удалены навсегда!`
+  }
+  
+  message += '\n\nЭто действие нельзя отменить.'
+
+  openConfirmDialog({
+    title: 'Удаление курса',
+    message: message,
+    confirmText: 'Удалить',
+    onConfirm: () => confirmDeleteCourse(course)
+  })
+}
+
+async function confirmDeleteCourse(course) {
+  try {
+    dialogLoading.value = true
+    await apiClient.delete(`${endpoints.lms.subjects}${course.id}/`)
+    showSuccess('Курс успешно удален')
+    await fetchData()
+    closeConfirmDialog()
+  } catch (error) {
+    console.error('Ошибка удаления курса:', error)
+    showError('Ошибка при удалении курса')
+  } finally {
+    dialogLoading.value = false
+  }
+}
+
+// Функции для работы с тестами
+function openTestModal() {
+  resetTestForm()
+  showTestModal.value = true
+}
+
+function createTest(theme) {
+  resetTestForm()
+  // Получаем ID курса из темы
+  let courseId = theme.subject
+  if (typeof courseId === 'object' && courseId?.id) {
+    courseId = courseId.id
+  }
+  testForm.value.course = courseId
+  testForm.value.theme = theme.id
+  showTestModal.value = true
+}
+
+function resetTestForm() {
+  testForm.value = {
+    name: '',
+    title: '',
+    description: '',
+    course: selectedCourseId.value || null,
+    theme: null,
+    lesson: null,
+    type: 'close',
+    duration_minutes: 60,
+    passing_score: 70,
+    max_attempts: 1,
+    show_correct_answers: false,
+    randomize_questions: false,
+    available_from: '',
+    available_until: '',
+    is_active: true
+  }
+  testValidationErrors.value = {}
+}
+
+function closeTestModal() {
+  showTestModal.value = false
+  resetTestForm()
+}
+
+async function saveTest() {
+  try {
+    isSubmitting.value = true
+    testValidationErrors.value = {}
+
+    if (!testForm.value.name.trim()) {
+      testValidationErrors.value.name = 'Название теста обязательно'
+      return
+    }
+
+    if (!testForm.value.title.trim()) {
+      testValidationErrors.value.title = 'Заголовок теста обязателен'
+      return
+    }
+
+    if (!testForm.value.course) {
+      testValidationErrors.value.course = 'Выберите курс'
+      return
+    }
+
+    const data = {
+      name: testForm.value.name.trim(),
+      title: testForm.value.title.trim(),
+      description: testForm.value.description?.trim() || null,
+      course: parseInt(testForm.value.course),
+      type: testForm.value.type,
+      duration_minutes: parseInt(testForm.value.duration_minutes) || 60,
+      passing_score: parseInt(testForm.value.passing_score) || 70,
+      max_attempts: parseInt(testForm.value.max_attempts) || 1,
+      show_correct_answers: Boolean(testForm.value.show_correct_answers),
+      randomize_questions: Boolean(testForm.value.randomize_questions),
+      available_from: testForm.value.available_from || null,
+      available_until: testForm.value.available_until || null,
+      is_active: Boolean(testForm.value.is_active)
+    }
+
+    // Добавляем theme только если она выбрана
+    if (testForm.value.theme) {
+      data.theme = parseInt(testForm.value.theme)
+    }
+
+    // Добавляем lesson только если он выбран  
+    if (testForm.value.lesson) {
+      data.lesson = testForm.value.lesson
+    }
+
+    // Удаляем пустые поля
+    Object.keys(data).forEach(key => {
+      if (data[key] === null || data[key] === '' || data[key] === undefined) {
+        delete data[key]
+      }
+    })
+
+    await apiClient.post(endpoints.lms.tests, data)
+    showSuccess('Тест успешно создан')
+    closeTestModal()
+    await fetchData() // Обновляем данные
+
+  } catch (error) {
+    console.error('Ошибка создания теста:', error)
+    
+    if (error.response?.data) {
+      const errorData = error.response.data
+      
+      if (typeof errorData === 'object') {
+        // Обрабатываем ошибки валидации
+        Object.keys(errorData).forEach(field => {
+          if (Array.isArray(errorData[field])) {
+            testValidationErrors.value[field] = errorData[field].join(', ')
+          } else {
+            testValidationErrors.value[field] = errorData[field]
+          }
+        })
+        
+        // Показываем все ошибки пользователю
+        const errorMessages = Object.entries(testValidationErrors.value).map(([field, message]) => `${field}: ${message}`)
+        if (errorMessages.length > 0) {
+          showError(`Ошибки валидации теста:\n${errorMessages.join('\n')}`)
+        }
+      } else {
+        showError(`Ошибка API: ${errorData}`)
+      }
+    } else {
+      showError('Ошибка соединения с сервером')
+    }
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// Функции для работы с заданиями
+function openAssignmentModal() {
+  resetAssignmentForm()
+  showAssignmentModal.value = true
+}
+
+function createAssignment(theme) {
+  resetAssignmentForm()
+  // Получаем ID курса из темы
+  let courseId = theme.subject
+  if (typeof courseId === 'object' && courseId?.id) {
+    courseId = courseId.id
+  }
+  assignmentForm.value.course = courseId
+  assignmentForm.value.theme = theme.id
+  showAssignmentModal.value = true
+}
+
+function resetAssignmentForm() {
+  assignmentForm.value = {
+    title: '',
+    description: '',
+    course: selectedCourseId.value || null,
+    theme: null,
+    lesson: null,
+    deadline: '',
+    max_grade: 100,
+    allow_late_submissions: false,
+    submission_type: 'file',
+    max_file_size: 10485760
+  }
+  assignmentValidationErrors.value = {}
+}
+
+function closeAssignmentModal() {
+  showAssignmentModal.value = false
+  resetAssignmentForm()
+}
+
+async function saveAssignment() {
+  try {
+    isSubmitting.value = true
+    assignmentValidationErrors.value = {}
+
+    if (!assignmentForm.value.title.trim()) {
+      assignmentValidationErrors.value.title = 'Название задания обязательно'
+      return
+    }
+
+    if (!assignmentForm.value.course) {
+      assignmentValidationErrors.value.course = 'Выберите курс'
+      return
+    }
+
+    const data = {
+      title: assignmentForm.value.title.trim(),
+      description: assignmentForm.value.description?.trim() || null,
+      course: parseInt(assignmentForm.value.course),
+      max_grade: parseInt(assignmentForm.value.max_grade) || 100,
+      allow_late_submissions: Boolean(assignmentForm.value.allow_late_submissions),
+      submission_type: assignmentForm.value.submission_type,
+      max_file_size: parseInt(assignmentForm.value.max_file_size) || 10485760
+    }
+
+    // Добавляем theme только если она выбрана
+    if (assignmentForm.value.theme) {
+      data.theme = parseInt(assignmentForm.value.theme)
+    }
+
+    // Добавляем lesson только если он выбран
+    if (assignmentForm.value.lesson) {
+      data.lesson = assignmentForm.value.lesson
+    }
+
+    // Добавляем deadline только если он указан
+    if (assignmentForm.value.deadline && assignmentForm.value.deadline.trim()) {
+      data.deadline = assignmentForm.value.deadline.trim()
+    }
+
+    // Удаляем пустые поля
+    Object.keys(data).forEach(key => {
+      if (data[key] === null || data[key] === '' || data[key] === undefined) {
+        delete data[key]
+      }
+    })
+
+    await apiClient.post(endpoints.lms.assignments, data)
+    showSuccess('Задание успешно создано')
+    closeAssignmentModal()
+
+  } catch (error) {
+    console.error('Ошибка создания задания:', error)
+    
+    if (error.response?.data) {
+      const errorData = error.response.data
+      
+      if (typeof errorData === 'object') {
+        // Обрабатываем ошибки валидации
+        Object.keys(errorData).forEach(field => {
+          if (Array.isArray(errorData[field])) {
+            assignmentValidationErrors.value[field] = errorData[field].join(', ')
+          } else {
+            assignmentValidationErrors.value[field] = errorData[field]
+          }
+        })
+        
+        // Показываем все ошибки пользователю
+        const errorMessages = Object.entries(assignmentValidationErrors.value).map(([field, message]) => `${field}: ${message}`)
+        if (errorMessages.length > 0) {
+          showError(`Ошибки валидации задания:\n${errorMessages.join('\n')}`)
+        }
+      } else {
+        showError(`Ошибка API: ${errorData}`)
+      }
+    } else {
+      showError('Ошибка соединения с сервером')
+    }
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// Функции для работы с форумами
+function openForumModal() {
+  resetForumForm()
+  showForumModal.value = true
+}
+
+function resetForumForm() {
+  forumForm.value = {
+    name: '',
+    description: '',
+    forum_type: 'general',
+    subject: selectedCourseId.value || null,
+    is_moderated: false,
+    allow_anonymous: false
+  }
+  forumValidationErrors.value = {}
+}
+
+function closeForumModal() {
+  showForumModal.value = false
+  resetForumForm()
+}
+
+async function saveForum() {
+  try {
+    isSubmitting.value = true
+    forumValidationErrors.value = {}
+
+    if (!forumForm.value.name.trim()) {
+      forumValidationErrors.value.name = 'Название форума обязательно'
+      return
+    }
+
+    if (!forumForm.value.subject) {
+      forumValidationErrors.value.subject = 'Выберите курс'
+      return
+    }
+
+    const data = {
+      name: forumForm.value.name.trim(),
+      description: forumForm.value.description?.trim() || '',
+      forum_type: forumForm.value.forum_type,
+      subject: parseInt(forumForm.value.subject),
+      is_moderated: Boolean(forumForm.value.is_moderated),
+      allow_anonymous: Boolean(forumForm.value.allow_anonymous)
+    }
+
+    await apiClient.post(endpoints.lms.forums, data)
+    showSuccess('Форум успешно создан')
+    closeForumModal()
+    await fetchData() // Обновляем данные
+
+  } catch (error) {
+    console.error('Ошибка создания форума:', error)
+    showError('Ошибка при создании форума')
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+function getForumsByCourse(courseId) {
+  return forums.value.filter(forum => {
+    let forumCourseId = forum.subject
+    if (typeof forumCourseId === 'object' && forumCourseId?.id) {
+      forumCourseId = forumCourseId.id
+    }
+    return parseInt(forumCourseId) === parseInt(courseId)
+  })
+}
+
+function createForum(course) {
+  resetForumForm()
+  forumForm.value.subject = course.id
+  showForumModal.value = true
+}
+
+
+
+function editForum(forum) {
+  // Заполняем форму данными форума для редактирования
+  let subjectId = forum.subject
+  if (typeof subjectId === 'object' && subjectId?.id) {
+    subjectId = subjectId.id
+  }
+  
+  forumForm.value = {
+    name: forum.name,
+    description: forum.description,
+    forum_type: forum.forum_type,
+    subject: subjectId,
+    is_moderated: forum.is_moderated,
+    allow_anonymous: forum.allow_anonymous
+  }
+  showForumModal.value = true
+}
+
+function deleteForum(forum) {
+  let message = `Вы уверены, что хотите удалить форум "${forum.name}"?`
+  message += '\n\nЭто действие нельзя отменить.'
+
+  openConfirmDialog({
+    title: 'Удаление форума',
+    message: message,
+    confirmText: 'Удалить',
+    onConfirm: () => confirmDeleteForum(forum)
+  })
+}
+
+async function confirmDeleteForum(forum) {
+  try {
+    dialogLoading.value = true
+    await apiClient.delete(`${endpoints.lms.forums}${forum.id}/`)
+    showSuccess('Форум успешно удален')
+    await fetchData()
+    closeConfirmDialog()
+  } catch (error) {
+    console.error('Ошибка удаления форума:', error)
+    showError('Ошибка при удалении форума')
+  } finally {
+    dialogLoading.value = false
+  }
+}
+
+function getForumTypeName(type) {
+  const forumTypes = {
+    'general': 'Общий',
+    'discussion': 'Обсуждение',
+    'qa': 'Вопросы и ответы',
+    'news': 'Новости',
+    'announcement': 'Объявления'
+  }
+  return forumTypes[type] || 'Неизвестный тип'
+}
+
+// Функции для работы с курсами и темами
+function getThemesByCourse(courseId) {
+  if (!courseId) return []
+  return themes.value.filter(theme => {
+    let themeCourseId = theme.subject
+    if (typeof themeCourseId === 'object' && themeCourseId?.id) {
+      themeCourseId = themeCourseId.id
+    }
+    return parseInt(themeCourseId) === parseInt(courseId)
+  })
+}
+
+
+
+function onTestCourseChange() {
+  // Сбрасываем выбранную тему при изменении курса
+  testForm.value.theme = null
+}
+
+function onAssignmentCourseChange() {
+  // Сбрасываем выбранную тему при изменении курса
+  assignmentForm.value.theme = null
+}
+
+function onLessonCourseChange() {
+  // Сбрасываем выбранную тему при изменении курса
+  lessonForm.value.theme = null
+}
+
+// Обработка открытия/закрытия dropdown для правильного z-index
+onMounted(() => {
+  fetchData()
+  
+  // Добавляем обработчики для dropdown
+  nextTick(() => {
+    document.addEventListener('shown.bs.dropdown', (event) => {
+      const lessonCard = event.target.closest('.lesson-card')
+      const forumCard = event.target.closest('.forum-card')
+      
+      if (lessonCard) {
+        lessonCard.classList.add('dropdown-open')
+      }
+      if (forumCard) {
+        forumCard.classList.add('dropdown-open')
+      }
+    })
+    
+    document.addEventListener('hidden.bs.dropdown', (event) => {
+      const lessonCard = event.target.closest('.lesson-card')
+      const forumCard = event.target.closest('.forum-card')
+      
+      if (lessonCard) {
+        lessonCard.classList.remove('dropdown-open')
+      }
+      if (forumCard) {
+        forumCard.classList.remove('dropdown-open')
+      }
+    })
+  })
+})
 </script>
 
 <style scoped>
 .course-group {
   border-left: 4px solid var(--bs-primary);
+  position: relative;
+  z-index: auto;
+}
+
+/* Стили для изображений курсов */
+.course-image img {
+  border: 2px solid #dee2e6;
+  transition: transform 0.2s ease;
+}
+
+.course-image img:hover {
+  transform: scale(1.1);
+}
+
+.course-image-placeholder {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #dee2e6;
 }
 
 .lesson-card {
   transition: box-shadow 0.2s, transform 0.2s;
+  position: relative;
+  z-index: 1;
 }
 
 .lesson-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
+}
+
+/* Убираем transform и повышаем z-index для карточки с открытым dropdown */
+.lesson-card:has(.dropdown.show) {
+  z-index: 10005 !important;
+  transform: none !important;
+}
+
+/* Альтернативный селектор для браузеров без поддержки :has() */
+.lesson-card.dropdown-open {
+  z-index: 10005 !important;
+  transform: none !important;
+}
+
+/* Исправление z-index для выпадающих меню уроков */
+.lesson-card .dropdown {
+  position: relative;
+  z-index: 9999;
+}
+
+.lesson-card .dropdown-menu {
+  position: absolute !important;
+  z-index: 10000 !important;
+  right: 0;
+  left: auto;
+  min-width: 160px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.lesson-card .dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.lesson-card .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Обеспечиваем, что открытое меню находится поверх всех карточек */
+.lesson-card .dropdown.show {
+  z-index: 10001;
+}
+
+.lesson-card .dropdown.show .dropdown-menu {
+  z-index: 10002 !important;
+}
+
+/* Глобальные правила для всех dropdown в карточках */
+.card .dropdown-menu {
+  z-index: 10000 !important;
+  position: absolute !important;
+}
+
+.row .dropdown-menu {
+  z-index: 10000 !important;
+  position: absolute !important;
+}
+
+/* Переопределяем Bootstrap стили */
+.dropdown-menu.show {
+  z-index: 10000 !important;
+  position: absolute !important;
+}
+
+/* Убираем transform для всех карточек когда любой dropdown открыт */
+.accordion-body:has(.dropdown.show) .lesson-card {
+  transform: none !important;
+}
+
+/* Альтернативное решение - выключаем hover эффекты когда dropdown открыт */
+body:has(.dropdown.show) .lesson-card:hover {
+  transform: none !important;
 }
 
 .accordion-button:not(.collapsed) {
@@ -1618,6 +3676,11 @@ onMounted(fetchData)
   max-width: 800px;
 }
 
+.modal-dialog-xxl {
+  max-width: 1400px;
+  width: 80vw;
+}
+
 /* Анимации карточек */
 .stats-card {
   transition: all 0.3s ease;
@@ -1653,7 +3716,7 @@ onMounted(fetchData)
   border: 1px solid rgba(0, 0, 0, 0.125);
   margin-bottom: 0.5rem;
   border-radius: 0.375rem;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .accordion-button {
@@ -1669,6 +3732,7 @@ onMounted(fetchData)
 .accordion-body {
   padding: 1rem 1.25rem;
   background-color: #fafafa;
+  overflow: visible;
 }
 
 /* Стили для статистики */
@@ -1701,4 +3765,60 @@ onMounted(fetchData)
 .lesson-type-URL { background-color: #20c997; }
 .lesson-type-C { background-color: #ffc107; }
 .lesson-type-FILE { background-color: #6c757d; }
+
+/* Стили для форумов */
+.forum-card {
+  transition: box-shadow 0.2s, transform 0.2s;
+  border-left: 4px solid #6c757d;
+  position: relative;
+  z-index: 1;
+}
+
+.forum-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.forum-meta {
+  font-size: 0.8rem;
+}
+
+/* Убираем transform и повышаем z-index для карточки форума с открытым dropdown */
+.forum-card:has(.dropdown.show) {
+  z-index: 10005 !important;
+  transform: none !important;
+}
+
+/* Альтернативный селектор для браузеров без поддержки :has() */
+.forum-card.dropdown-open {
+  z-index: 10005 !important;
+  transform: none !important;
+}
+
+/* Исправление z-index для выпадающих меню форумов */
+.forum-card .dropdown {
+  position: relative;
+  z-index: 9999;
+}
+
+.forum-card .dropdown-menu {
+  position: absolute !important;
+  z-index: 10000 !important;
+  right: 0;
+  left: auto;
+  min-width: 160px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.forum-card .dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.forum-card .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
 </style> 

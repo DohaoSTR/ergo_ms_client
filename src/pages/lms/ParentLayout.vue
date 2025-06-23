@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { GraduationCap, BookOpen, Users, ClipboardList, FileCheck, MessageSquare, Award, Calendar, ChartBar, Settings, User } from 'lucide-vue-next'
+import { GraduationCap, BookOpen, FileCheck, Award, Calendar, ChartBar, Settings, User } from 'lucide-vue-next'
 
 import NavigationButtons from '@/components/NavigationButtons.vue'
 import RoleSwitcher from './components/RoleSwitcher.vue'
@@ -20,20 +20,17 @@ const navigationButtons = computed(() => {
   const baseButtons = [
     { icon: ChartBar, title: 'Дашборд', link: 'LMSDashboard', roles: ['student', 'teacher', 'admin'] },
     { icon: GraduationCap, title: 'Каталог', link: 'LMSCatalog', roles: ['student', 'teacher', 'admin', 'guest'] },
-    { icon: MessageSquare, title: 'Форумы', link: 'LMSForums', roles: ['student', 'teacher', 'admin'] },
     { icon: Calendar, title: 'Календарь', link: 'LMSCalendar', roles: ['student', 'teacher', 'admin'] },
     { icon: Award, title: 'Достижения', link: 'LMSBadges', roles: ['student', 'teacher', 'admin'] }
   ]
 
   const studentButtons = [
     { icon: BookOpen, title: 'Мои курсы', link: 'LMSCourses', roles: ['student'] },
-    { icon: ClipboardList, title: 'Задания', link: 'LMSAssignments', roles: ['student'] },
-    { icon: FileCheck, title: 'Тесты', link: 'LMSTests', roles: ['student'] },
     { icon: FileCheck, title: 'Оценки', link: 'LMSGrades', roles: ['student'] }
   ]
 
   const teacherButtons = [
-    { icon: Settings, title: 'Преподавание', link: 'LMSTeaching', roles: ['teacher', 'admin'] }
+    { icon: Settings, title: 'Управление материалами', link: 'LMSLessonsManagement', roles: ['teacher', 'admin'] }
   ]
 
   let allButtons = [...baseButtons]

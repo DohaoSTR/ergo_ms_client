@@ -49,14 +49,42 @@ export default {
   justify-content: center;
   color: #6c757d;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+/* Красивый градиент для маленьких плейсхолдеров */
+.course-image-placeholder[style*="40px"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  border-radius: 8px;
 }
 
 .placeholder-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 20px;
+  gap: 4px;
+  padding: 8px;
+}
+
+/* Для маленьких размеров показываем только текст */
+.course-image-placeholder[style*="40px"] .placeholder-content {
+  padding: 4px;
+  gap: 0;
+}
+
+.course-image-placeholder[style*="40px"] .placeholder-icon {
+  display: none;
+}
+
+.course-image-placeholder[style*="40px"] .placeholder-text {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 1;
+  color: white;
 }
 
 .placeholder-icon {
@@ -70,5 +98,11 @@ export default {
   font-weight: 500;
   text-align: center;
   opacity: 0.7;
+}
+
+/* Для больших размеров (по умолчанию) */
+.course-image-placeholder:not([style*="40px"]) .placeholder-content {
+  padding: 20px;
+  gap: 8px;
 }
 </style> 
