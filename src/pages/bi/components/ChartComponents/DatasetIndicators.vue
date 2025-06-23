@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { Type, CircleAlert, Calendar, Hash, CheckCircle } from 'lucide-vue-next'
+import { Type, CircleAlert, Calendar, Hash, CheckCircle, MapPin, Globe } from 'lucide-vue-next'
 
 const props = defineProps({
   dataset: Object,
@@ -31,9 +31,15 @@ const props = defineProps({
 
 const typeIcon = {
   string: Type,
+  integer: Hash,
+  float: Hash,
   number: Hash,
   date: Calendar,
-  boolean: CheckCircle
+  'date&time': Calendar,
+  bool: CheckCircle,
+  boolean: CheckCircle,
+  geopoint: MapPin,
+  geopolygon: Globe,
 }
 </script>
 

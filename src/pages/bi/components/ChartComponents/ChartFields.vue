@@ -1,10 +1,10 @@
 <template>
   <div class="chart-fields-modal">
     <div class="search-box">
-      <input v-model="search" type="text" class="form-control form-control-sm" placeholder="Поиск..."/>
+      <input v-model="search" type="text" class="form-control form-control-sm" placeholder="Поиск..." />
     </div>
     <ul class="fields-list">
-        <b>Показатели:</b>
+      <b>Показатели:</b>
       <li v-for="f in availableFields" :key="f.id" class="field-item" :class="{ selected: isSelected(f) }" @click="!isSelected(f) && selectField(f)">
         <span class="field-icon">
           <component :is="typeIcon[f.type] || Type" size="16" />
@@ -19,47 +19,29 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { Type, Hash, Calendar, CheckCircle } from 'lucide-vue-next'
-import chartService from '@/js/api/services/bi/chartService.js'
+import { ref, computed } from 'vue'
+import { Type, Hash, Calendar, CheckCircle, Globe, MapPin } from 'lucide-vue-next'
 
-const props = defineProps({ fields: { type: Array, default: () => [] }, selected: { type: Array, default: () => [] }, allowedTypes: { type: Array, default: () => null } })
+// !!! Типы данных берем только из props.fields !!!
+const props = defineProps({
+  fields: { type: Array, default: () => [] },
+  selected: { type: Array, default: () => [] },
+  allowedTypes: { type: Array, default: () => null }
+})
 const emit = defineEmits(['select'])
-const fields = ref([])
 const search = ref('')
 
 const typeIcon = {
-  string : Type,
-  number : Hash,
-  date   : Calendar,
+  string: Type,
+  integer: Hash,
+  float: Hash,
+  number: Hash,
+  date: Calendar,
+  'date&time': Calendar,
+  bool: CheckCircle,
   boolean: CheckCircle,
-}
-
-// Загружаем показатели при изменении датасета
-watch(
-  () => props.dataset?.id,
-  id => { id ? fetchColumns(id) : fields.value = [] },
-  { immediate: true }
-)
-
-async function fetchColumns(datasetId) {
-  try {
-    const { data } = await chartService.getColumns(datasetId)
-    // data.columns = [{name, type, pg_type}]
-    if (Array.isArray(data?.columns)) {
-      fields.value = data.columns
-        .filter(col => col.is_indicator) // если приходит признак "показатель"
-        .map((c, i) => ({
-          id   : 'col_' + i,
-          name : c.name || c,
-          type : c.type || 'string',
-        }))
-    } else {
-      fields.value = []
-    }
-  } catch {
-    fields.value = []
-  }
+  geopoint: MapPin,
+  geopolygon: Globe,
 }
 
 const availableFields = computed(() =>
