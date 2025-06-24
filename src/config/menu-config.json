@@ -853,24 +853,24 @@
         },
         {
           "path": "LMSLessonsManagement",
-          "name": "Управление материалами",
+          "name": "Управление курсами",
           "route": {
             "path": "lessons-management",
             "component": "@/pages/lms/LessonsManagement/LessonsManagementView.vue",
             "meta": {
-              "title": "Управление материалами",
+              "title": "Управление курсами",
               "requiresAuth": true
             }
           }
         },
         {
           "path": "LMSCategoriesAndFormats",
-          "name": "Категории и форматы",
+          "name": "Структура курсов",
           "route": {
             "path": "categories-and-formats",
             "component": "@/pages/lms/CategoriesAndFormats/CategoriesAndFormatsView.vue",
             "meta": {
-              "title": "Категории и форматы",
+              "title": "Структура курсов",
               "requiresAuth": true
             }
           }

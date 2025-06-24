@@ -1,4 +1,5 @@
 import router from '@/js/routers.js'
+import '@/js/utils/authGuard.js' // Подключаем защиту аутентификации
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'

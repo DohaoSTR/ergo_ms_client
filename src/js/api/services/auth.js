@@ -16,6 +16,12 @@ export const authService = {
             Cookies.set('refresh', response.data.refresh, { expires: thirtyMinutesInDays });
             Cookies.set('userId', response.data.user_id, { expires: thirtyMinutesInDays }); 
 
+            // Запускаем проверку токена после успешной авторизации
+            if (typeof window !== 'undefined') {
+                import('@/js/utils/authGuard.js').then(({ authGuard }) => {
+                    authGuard.startTokenValidation();
+                });
+            }
         }
         
         return response;
@@ -59,6 +65,10 @@ export const authService = {
             const response = await apiClient.get(endpoints.auth.protected);
             return response.success;
         } catch (error) {
+            // Если токен недействителен (401), очищаем все cookies
+            if (error.response?.status === 401) {
+                this.logout();
+            }
             return false;
         }
     },
@@ -67,5 +77,12 @@ export const authService = {
         Cookies.remove('token');
         Cookies.remove('refresh');
         Cookies.remove('userId'); 
+        
+        // Останавливаем проверку токена
+        if (typeof window !== 'undefined') {
+            import('@/js/utils/authGuard.js').then(({ authGuard }) => {
+                authGuard.stopTokenValidation();
+            });
+        }
     }
 }; 

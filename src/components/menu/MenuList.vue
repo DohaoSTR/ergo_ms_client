@@ -1,5 +1,3 @@
-
-
 <script setup>
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
@@ -25,9 +23,11 @@ const props = defineProps({
 watch(
   () => props.isVisible,
   (newValue) => {
-    
     if (!newValue) {
       isHovering.value = true
+    } else {
+      // Пересчитываем ширину когда меню становится видимым
+      initializeMenuWidth()
     }
   },
 )
@@ -38,9 +38,97 @@ const emit = defineEmits(['left-padding', 'open-datasets', 'open-sidebar', 'rese
 // Состояние меню
 const isCollapsed = ref(false)
 const isHovering = ref(true)
+const menuWidth = ref(260) // Добавляем реактивную ширину меню
+const minMenuWidth = 260 // Минимальная ширина
+const maxMenuWidth = 400 // Максимальная ширина
+
+// Функция для расчета оптимальной ширины меню
+const calculateOptimalWidth = () => {
+  // Проверяем, что мы находимся в браузере
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return minMenuWidth
+  }
+  
+  // Создаем временный элемент для измерения текста
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+  context.font = '14px system-ui, -apple-system, sans-serif' // Шрифт как в CSS
+  
+  let maxWidth = 0
+  
+  // Проверяем ширину названия сайта
+  const siteNameWidth = context.measureText(siteName.value || 'ERGO MS').width + 80 // +80px для иконки и отступов
+  maxWidth = Math.max(maxWidth, siteNameWidth)
+  
+  // Проверяем все секции меню
+  if (menuSections.value && Array.isArray(menuSections.value)) {
+    menuSections.value.forEach(section => {
+    if (!section || !section.title) return
+    
+    // Ширина основного пункта меню
+    const titleWidth = context.measureText(section.title).width + 100 // +100px для иконки, отступов и стрелки
+    maxWidth = Math.max(maxWidth, titleWidth)
+    
+    // Ширина подпунктов
+    if (section.list && Array.isArray(section.list)) {
+      section.list.forEach(item => {
+        if (!item || !item.name) return
+        const itemWidth = context.measureText(item.name).width + 120 // +120px для отступов и точки
+        maxWidth = Math.max(maxWidth, itemWidth)
+      })
+    }
+  })
+  }
+  
+  // Проверяем разделители
+  if (menuSections.value && Array.isArray(menuSections.value)) {
+    for (let i = 0; i < menuSections.value.length; i++) {
+      if (shouldShowSeparator(i)) {
+        const separatorText = getSeparator(i)
+        if (separatorText) {
+          const separatorWidth = context.measureText(separatorText).width + 80
+          maxWidth = Math.max(maxWidth, separatorWidth)
+        }
+      }
+    }
+  }
+  
+  // Ограничиваем ширину в разумных пределах
+  return Math.min(Math.max(maxWidth, minMenuWidth), maxMenuWidth)
+}
+
 const toggleMenu = () => {
   isCollapsed.value = !isCollapsed.value
-  emit('left-padding', isCollapsed.value ? '120px' : '280px')
+  const padding = isCollapsed.value ? '120px' : `${menuWidth.value + 40}px`
+  emit('left-padding', padding)
+}
+
+// Первоначальная установка ширины
+const initializeMenuWidth = () => {
+  if (typeof window !== 'undefined') {
+    updateMenuWidth()
+    // Устанавливаем правильный padding при инициализации
+    setTimeout(() => {
+      if (!isCollapsed.value) {
+        emit('left-padding', `${menuWidth.value + 40}px`)
+      }
+    }, 200)
+  }
+}
+
+// Обновляем ширину при изменении содержимого
+const updateMenuWidth = () => {
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      const newWidth = calculateOptimalWidth()
+      if (newWidth !== menuWidth.value) {
+        menuWidth.value = newWidth
+        if (!isCollapsed.value) {
+          emit('left-padding', `${newWidth + 40}px`)
+        }
+      }
+    }, 100)
+  }
 }
 
 const handleMouseEnter = () => {
@@ -61,9 +149,11 @@ watch(
       preventAutoOpen.value = false
       return
     }
-    for (let i of menuSections.value) {
-      if (i.routeName === newMatched[0].name) {
-        openGroupRouteName.value = i.routeName
+    if (menuSections.value && Array.isArray(menuSections.value)) {
+      for (let i of menuSections.value) {
+        if (i.routeName === newMatched[0].name) {
+          openGroupRouteName.value = i.routeName
+        }
       }
     }
   },
@@ -104,6 +194,9 @@ onMounted(async()=>{
   else if (!checkadm.access_to_category){
     AdminPanelMenuSection.list.splice(0,1)
   }
+  
+  // Рассчитываем оптимальную ширину после загрузки данных
+  initializeMenuWidth()
 }
 )
 
@@ -150,6 +243,10 @@ const hasSeparator = (index) => {
 
 const siteName = ref('...')
 
+// Следим за изменениями в меню для пересчета ширины
+watch(menuSections, updateMenuWidth, { deep: true })
+watch(siteName, updateMenuWidth)
+
 onMounted(async () => {
   try {
     const res = await apiClient.get(endpoints.settings.lastSettings)
@@ -163,6 +260,9 @@ onMounted(async () => {
     // Тихо устанавливаем значение по умолчанию без логирования ошибки
     siteName.value = 'ERGO MS'
   }
+  
+  // Обновляем ширину после загрузки названия сайта
+  initializeMenuWidth()
 })
 
 </script>
@@ -171,6 +271,7 @@ onMounted(async () => {
   <aside
     class="side-menu card p-0"
     :class="{ collapsed: isCollapsed, hovering: isHovering, 'is-hidden': !isVisible }"
+    :style="{ '--menu-width': `${menuWidth}px` }"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
   >
@@ -220,7 +321,7 @@ onMounted(async () => {
 // Меню
 .side-menu {
   position: fixed;
-  inline-size: 260px;
+  inline-size: var(--menu-width, 260px);
   padding: $padding-external;
   height: 100dvh;
 
@@ -238,7 +339,7 @@ onMounted(async () => {
   }
 
   &.hovering {
-    width: 260px;
+    width: var(--menu-width, 260px);
   }
 }
 

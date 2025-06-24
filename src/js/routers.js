@@ -60,6 +60,10 @@ router.beforeEach(async (to, from, next) => {
   try {
     // 1) нужна авторизация?
     if (to.meta.requiresAuth && !(await runCheckToken())) {
+      // Очищаем токены при неудачной проверке
+      import('./api/manager').then(({ apiClient }) => {
+        apiClient.logout()
+      })
       return next({ name: 'StartPage' })
     }
 
@@ -72,6 +76,10 @@ router.beforeEach(async (to, from, next) => {
     next()
   } catch (err) {
     console.error('Router guard error:', err)
+    // При ошибке также очищаем токены
+    import('./api/manager').then(({ apiClient }) => {
+      apiClient.logout()
+    })
     next({ name: 'StartPage' })
   }
 })

@@ -243,8 +243,7 @@ function routeClick(event) {
               <div class="nav-icon icon-flex"><Dot :size="20" /></div>
               <div
                 v-if="showFull"
-                class="d-inline-block text-truncate side-subtitle__name"
-                style="max-width: 9.375rem"
+                class="d-inline-block side-subtitle__name"
                 :title="item.name"
               >
                 {{ item.name }}
@@ -274,8 +273,7 @@ function routeClick(event) {
                 <div class="nav-icon icon-flex"><Dot :size="20" /></div>
                 <div
                   v-if="showFull"
-                  class="d-inline-block text-truncate side-subtitle__name"
-                  style="max-width: 9.375rem"
+                  class="d-inline-block side-subtitle__name"
                   :title="item.name"
                 >
                   {{ item.name }}
@@ -295,8 +293,7 @@ function routeClick(event) {
                 <div class="nav-icon icon-flex"><Dot :size="20" /></div>
                 <div
                   v-if="showFull"
-                  class="d-inline-block text-truncate side-subtitle__name"
-                  style="max-width: 9.375rem"
+                  class="d-inline-block side-subtitle__name"
                   :title="item.name"
                 >
                   {{ item.name }}
@@ -323,7 +320,9 @@ function routeClick(event) {
   text-decoration: none;
 
   &__label {
-    @include flex-row-gap($padding-internal, center, space-between);
+    @include flex-row-gap($padding-internal, center);
+    flex: 1;
+    min-width: 0; // Позволяет flex элементам сжиматься ниже их естественной ширины
   }
 }
 
@@ -358,6 +357,13 @@ function routeClick(event) {
 
 .side-title__name {
   white-space: nowrap;
+}
+
+.side-subtitle__name {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+  flex: 1;
 }
 
 .nav-icon svg {

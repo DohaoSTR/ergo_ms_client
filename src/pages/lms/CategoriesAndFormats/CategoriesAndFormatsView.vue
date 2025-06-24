@@ -4,8 +4,8 @@
       <!-- Заголовок -->
       <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
-          <h1 class="h3 mb-2 text-gray-800">Управление категориями и форматами</h1>
-          <p class="text-muted">Создание и управление категориями курсов и форматами обучения</p>
+          <h1 class="h3 mb-2 text-gray-800">Управление структурой курсов</h1>
+          <p class="text-muted">Управление категориями курсов и форматами обучения</p>
         </div>
       </div>
 
@@ -56,76 +56,61 @@
               </button>
             </div>
             <div class="card-body">
+              <!-- Поиск и фильтры для категорий -->
+              <div class="row mb-4">
+                <div class="col-md-4">
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <Search :size="16" />
+                    </span>
+                    <input
+                      v-model="categorySearchQuery"
+                      type="text"
+                      class="form-control"
+                      placeholder="Поиск категории..."
+                    />
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <select v-model="categoryVisibilityFilter" class="form-select">
+                    <option value="">Все категории</option>
+                    <option value="visible">Только видимые</option>
+                    <option value="hidden">Только скрытые</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <select v-model="categorySortBy" class="form-select">
+                    <option value="name">Сортировать по названию</option>
+                    <option value="sort_order">Сортировать по порядку</option>
+                    <option value="courses_count">Сортировать по кол-ву курсов</option>
+                  </select>
+                </div>
+              </div>
+
               <div v-if="loading" class="text-center py-4">
                 <div class="spinner-border" role="status">
                   <span class="visually-hidden">Загрузка...</span>
                 </div>
               </div>
               
-              <div v-else-if="categories.length === 0" class="text-center py-4 text-muted">
+              <div v-else-if="filteredCategories.length === 0" class="text-center py-4 text-muted">
                 <FolderPlus :size="48" class="mb-3 opacity-50" />
-                <p>Пока нет созданных категорий</p>
+                <p v-if="categorySearchQuery || categoryVisibilityFilter">Категории не найдены по заданным критериям</p>
+                <p v-else>Пока нет созданных категорий</p>
               </div>
               
-              <div v-else class="table-responsive">
-                <table class="table table-hover">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Название</th>
-                      <th>Описание</th>
-                      <th>Родительская</th>
-                      <th>Курсов</th>
-                      <th>Статус</th>
-                      <th>Действия</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="category in categories" :key="category.id">
-                      <td>
-                        <strong>{{ category.name }}</strong>
-                      </td>
-                      <td>
-                        <span class="text-muted">{{ category.description || 'Нет описания' }}</span>
-                      </td>
-                      <td>
-                        <span v-if="category.parent" class="badge bg-light text-dark">
-                          {{ getParentCategoryName(category.parent) }}
-                        </span>
-                        <span v-else class="text-muted">—</span>
-                      </td>
-                      <td>
-                        <span class="badge bg-info">{{ category.courses_count || 0 }}</span>
-                      </td>
-                      <td>
-                        <span 
-                          class="badge" 
-                          :class="category.is_visible ? 'bg-success' : 'bg-secondary'"
-                        >
-                          {{ category.is_visible ? 'Видимая' : 'Скрытая' }}
-                        </span>
-                      </td>
-                      <td>
-                        <div class="btn-group">
-                          <button 
-                            class="btn btn-sm btn-outline-primary"
-                            @click="editCategory(category)"
-                            title="Редактировать"
-                          >
-                            <Edit :size="14" />
-                          </button>
-                          <button 
-                            class="btn btn-sm btn-outline-danger"
-                            @click="deleteCategory(category)"
-                            :disabled="category.courses_count > 0"
-                            title="Удалить"
-                          >
-                            <Trash2 :size="14" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <!-- Древовидное отображение категорий -->
+              <div v-else class="category-tree">
+                <CategoryTreeItem
+                  v-for="category in categoryTree"
+                  :key="category.id"
+                  :category="category"
+                  :categories="categories"
+                  :filteredCategories="filteredCategories"
+                  :searchQuery="categorySearchQuery"
+                  @edit="editCategory"
+                  @delete="deleteCategory"
+                />
               </div>
             </div>
           </div>
@@ -152,15 +137,46 @@
               </button>
             </div>
             <div class="card-body">
+              <!-- Поиск и фильтры для форматов -->
+              <div class="row mb-4">
+                <div class="col-md-4">
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <Search :size="16" />
+                    </span>
+                    <input
+                      v-model="formatSearchQuery"
+                      type="text"
+                      class="form-control"
+                      placeholder="Поиск формата..."
+                    />
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <select v-model="formatActiveFilter" class="form-select">
+                    <option value="">Все форматы</option>
+                    <option value="active">Только активные</option>
+                    <option value="inactive">Только неактивные</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <select v-model="formatSortBy" class="form-select">
+                    <option value="name">Сортировать по названию</option>
+                    <option value="courses_count">Сортировать по кол-ву курсов</option>
+                  </select>
+                </div>
+              </div>
+
               <div v-if="loading" class="text-center py-4">
                 <div class="spinner-border" role="status">
                   <span class="visually-hidden">Загрузка...</span>
                 </div>
               </div>
               
-              <div v-else-if="courseFormats.length === 0" class="text-center py-4 text-muted">
+              <div v-else-if="filteredFormats.length === 0" class="text-center py-4 text-muted">
                 <Tag :size="48" class="mb-3 opacity-50" />
-                <p>Пока нет созданных форматов</p>
+                <p v-if="formatSearchQuery || formatActiveFilter">Форматы не найдены по заданным критериям</p>
+                <p v-else>Пока нет созданных форматов</p>
               </div>
               
               <div v-else class="table-responsive">
@@ -175,7 +191,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="format in courseFormats" :key="format.id">
+                    <tr v-for="format in filteredFormats" :key="format.id">
                       <td>
                         <strong>{{ format.name }}</strong>
                       </td>
@@ -205,7 +221,6 @@
                           <button 
                             class="btn btn-sm btn-outline-danger"
                             @click="deleteFormat(format)"
-                            :disabled="format.courses_count > 0"
                             title="Удалить"
                           >
                             <Trash2 :size="14" />
@@ -260,6 +275,31 @@
                 <div v-if="categoryValidationErrors.description" class="invalid-feedback">
                   {{ categoryValidationErrors.description }}
                 </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Родительская категория</label>
+              <select v-model="categoryForm.parent" class="form-select">
+                <option :value="null">Без родительской категории</option>
+                <option 
+                  v-for="category in categories" 
+                  :key="category.id" 
+                  :value="category.id"
+                >
+                  {{ category.parent ? '↳ ' : '' }}{{ category.name }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Порядок сортировки</label>
+              <input 
+                v-model="categoryForm.sort_order" 
+                type="number" 
+                class="form-control"
+                placeholder="0"
+              />
+              <div class="form-text">Чем меньше число, тем выше в списке</div>
             </div>
             
             <div class="mb-3">
@@ -569,31 +609,80 @@
     </div>
     <div v-if="showEditFormatModal" class="modal-backdrop fade show"></div>
 
-    <!-- Красивый диалог подтверждения -->
-    <ConfirmDialog
-      :show="showConfirmDialog"
-      :title="confirmDialogData.title"
-      :message="confirmDialogData.message"
-      :loading="dialogLoading"
-      @confirm="handleConfirmDialog"
-      @cancel="closeConfirmDialog"
-      @close="closeConfirmDialog"
-    />
+    <!-- Модальное окно подтверждения удаления -->
+    <div class="modal fade" :class="{ 'show d-block': showDeleteConfirmModal }" tabindex="-1" v-if="showDeleteConfirmModal">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <AlertTriangle :size="20" class="text-danger me-2" />
+              Подтверждение удаления
+            </h5>
+            <button type="button" class="btn-close" @click="closeDeleteConfirmModal"></button>
+          </div>
+          <div class="modal-body">
+            <p v-if="itemToDelete?.type === 'category'">
+              Вы действительно хотите удалить категорию <strong>"{{ itemToDelete?.item?.name }}"</strong>?
+              <span v-if="hasChildCategories" class="text-danger">
+                <br><br>
+                <AlertTriangle :size="16" class="me-1" />
+                Внимание! У этой категории есть подкатегории, которые также будут удалены.
+              </span>
+              <span v-if="itemToDelete?.item?.courses_count > 0" class="text-danger">
+                <br><br>
+                <AlertTriangle :size="16" class="me-1" />
+                В данной категории есть {{ itemToDelete.item.courses_count }} курс(ов).
+              </span>
+            </p>
+            <p v-else>
+              Вы действительно хотите удалить формат <strong>"{{ itemToDelete?.item?.name }}"</strong>?
+              <span v-if="itemToDelete?.item?.courses_count > 0" class="text-danger">
+                <br><br>
+                <AlertTriangle :size="16" class="me-1" />
+                Данный формат используется в {{ itemToDelete.item.courses_count }} курсе(ах).
+              </span>
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeDeleteConfirmModal">
+              Отмена
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-danger"
+              :disabled="isDeleting"
+              @click="confirmDelete"
+            >
+              <span v-if="isDeleting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              Удалить
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Затемнение фона при открытых модальных окнах -->
+    <div 
+      class="modal-backdrop fade show" 
+      v-if="showCreateCategoryModal || showEditCategoryModal || showCreateFormatModal || showEditFormatModal || showDeleteConfirmModal"
+    ></div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { FolderPlus, Tag, Plus, Edit, Trash2 } from 'lucide-vue-next'
+import { ref, onMounted, watch, computed } from 'vue'
+import { FolderPlus, Tag, Plus, Edit, Trash2, Search, AlertTriangle } from 'lucide-vue-next'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
 import RoleGuard from '../components/RoleGuard.vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import CategoryTreeItem from './CategoryTreeItem.vue'
 import { 
   showSuccess, 
   showError, 
   showWarning,
   handleApiError,
+  showValidationError,
+  showSaveSuccess,
   showDeleteSuccess
 } from '@/js/utils/notifications'
 
@@ -608,6 +697,7 @@ const showCreateCategoryModal = ref(false)
 const showCreateFormatModal = ref(false)
 const showEditCategoryModal = ref(false)
 const showEditFormatModal = ref(false)
+const showDeleteConfirmModal = ref(false)
 
 // Состояния редактирования
 const editingCategory = ref(null)
@@ -643,6 +733,138 @@ const categoryValidationErrors = ref({})
 const formatValidationErrors = ref({})
 const isCategorySubmitting = ref(false)
 const isFormatSubmitting = ref(false)
+
+// Поиск и фильтры
+const categorySearchQuery = ref('')
+const categoryVisibilityFilter = ref('')
+const categorySortBy = ref('name')
+const formatSearchQuery = ref('')
+const formatActiveFilter = ref('')
+const formatSortBy = ref('name')
+
+// Состояние для модального окна подтверждения удаления
+const itemToDelete = ref(null)
+const isDeleting = ref(false)
+
+// Вычисляемые свойства для фильтрации и сортировки
+const filteredCategories = computed(() => {
+  let filtered = [...categories.value]
+
+  // Применяем фильтр по видимости
+  if (categoryVisibilityFilter.value) {
+    const isVisible = categoryVisibilityFilter.value === 'visible'
+    filtered = filtered.filter(category => {
+      // Если категория соответствует фильтру видимости
+      if (category.is_visible === isVisible) {
+        return true
+      }
+      
+      // Проверяем родительские категории
+      if (category.parent) {
+        let parent = categories.value.find(c => c.id === category.parent)
+        while (parent) {
+          if (parent.is_visible === isVisible) {
+            return true
+          }
+          parent = categories.value.find(c => c.id === parent.parent)
+        }
+      }
+      
+      // Проверяем дочерние категории
+      const hasVisibleChildren = categories.value.some(c => 
+        c.parent === category.id && c.is_visible === isVisible
+      )
+      return hasVisibleChildren
+    })
+  }
+
+  // Применяем поиск
+  if (categorySearchQuery.value) {
+    const query = categorySearchQuery.value.toLowerCase()
+    filtered = filtered.filter(category => {
+      const matchesSearch = 
+        category.name.toLowerCase().includes(query) ||
+        (category.description && category.description.toLowerCase().includes(query))
+      
+      // Включаем родителей найденных категорий
+      if (matchesSearch && category.parent) {
+        let parent = category
+        while (parent.parent) {
+          parent = categories.value.find(c => c.id === parent.parent)
+          if (parent) filtered.push(parent)
+        }
+      }
+      
+      return matchesSearch
+    })
+    
+    // Удаляем дубликаты
+    filtered = [...new Set(filtered)]
+  }
+
+  // Сортировка
+  filtered.sort((a, b) => {
+    switch (categorySortBy.value) {
+      case 'name':
+        return a.name.localeCompare(b.name)
+      case 'sort_order':
+        return (a.sort_order || 0) - (b.sort_order || 0)
+      case 'courses_count':
+        return (b.courses_count || 0) - (a.courses_count || 0)
+      default:
+        return 0
+    }
+  })
+
+  return filtered
+})
+
+// Построение дерева категорий
+const categoryTree = computed(() => {
+  // Получаем только корневые категории (без родителей) из отфильтрованного списка
+  return filteredCategories.value.filter(c => !c.parent || !filteredCategories.value.find(fc => fc.id === c.parent))
+})
+
+// Вычисляемые свойства для форматов
+const filteredFormats = computed(() => {
+  let filtered = courseFormats.value
+
+  // Поиск
+  if (formatSearchQuery.value) {
+    const query = formatSearchQuery.value.toLowerCase()
+    filtered = filtered.filter(format =>
+      format.name.toLowerCase().includes(query) ||
+      (format.description && format.description.toLowerCase().includes(query))
+    )
+  }
+
+  // Фильтр по активности
+  if (formatActiveFilter.value === 'active') {
+    filtered = filtered.filter(format => format.is_active)
+  } else if (formatActiveFilter.value === 'inactive') {
+    filtered = filtered.filter(format => !format.is_active)
+  }
+
+  // Сортировка
+  filtered.sort((a, b) => {
+    switch (formatSortBy.value) {
+      case 'name':
+        return a.name.localeCompare(b.name)
+      case 'courses_count':
+        return (b.courses_count || 0) - (a.courses_count || 0)
+      default:
+        return 0
+    }
+  })
+
+  return filtered
+})
+
+// Проверка наличия подкатегорий
+const hasChildCategories = computed(() => {
+  if (itemToDelete.value?.type !== 'category') return false
+  return categories.value.some(c => c.parent === itemToDelete.value.item.id)
+})
 
 // Валидация в реальном времени
 watch(() => categoryForm.value.name, (newName) => {
@@ -889,36 +1111,8 @@ async function updateCategory() {
 }
 
 function deleteCategory(category) {
-  let message = `Вы уверены, что хотите удалить категорию "${category.name}"?`
-  
-  if (category.courses_count > 0) {
-    message += `\n\n⚠️ ВНИМАНИЕ: В этой категории ${category.courses_count} курс(ов). Они также будут удалены навсегда!`
-  }
-  
-  message += '\n\nЭто действие нельзя отменить.'
-
-  confirmDialogData.value = {
-    title: 'Удаление категории',
-    message: message,
-    confirmText: 'Удалить',
-    onConfirm: () => confirmDeleteCategory(category)
-  }
-  showConfirmDialog.value = true
-}
-
-async function confirmDeleteCategory(category) {
-  try {
-    dialogLoading.value = true
-    await apiClient.delete(`${endpoints.lms.categories}${category.id}/`)
-    showDeleteSuccess('Категория удалена')
-    await fetchCategories()
-    closeConfirmDialog()
-  } catch (error) {
-    console.error('Ошибка удаления категории:', error)
-    handleApiError(error, 'Ошибка при удалении категории')
-  } finally {
-    dialogLoading.value = false
-  }
+  itemToDelete.value = { type: 'category', item: category }
+  showDeleteConfirmModal.value = true
 }
 
 // Управление форматами
@@ -1054,60 +1248,35 @@ async function updateFormat() {
 }
 
 function deleteFormat(format) {
-  let message = `Вы уверены, что хотите удалить формат "${format.name}"?`
-  
-  if (format.courses_count > 0) {
-    message += `\n\n⚠️ ВНИМАНИЕ: Этот формат используется в ${format.courses_count} курс(ах). Они также будут удалены навсегда!`
-  }
-  
-  message += '\n\nЭто действие нельзя отменить.'
-
-  confirmDialogData.value = {
-    title: 'Удаление формата',
-    message: message,
-    confirmText: 'Удалить',
-    onConfirm: () => confirmDeleteFormat(format)
-  }
-  showConfirmDialog.value = true
+  itemToDelete.value = { type: 'format', item: format }
+  showDeleteConfirmModal.value = true
 }
 
-async function confirmDeleteFormat(format) {
+// Функции для работы с модальным окном удаления
+function closeDeleteConfirmModal() {
+  showDeleteConfirmModal.value = false
+  itemToDelete.value = null
+  isDeleting.value = false
+}
+
+async function confirmDelete() {
+  if (!itemToDelete.value) return
+
+  isDeleting.value = true
   try {
-    dialogLoading.value = true
-    await apiClient.delete(`${endpoints.lms.courseFormats}${format.id}/`)
-    showDeleteSuccess('Формат удалён')
-    await fetchCourseFormats()
-    closeConfirmDialog()
+    if (itemToDelete.value.type === 'category') {
+      await deleteCategoryRequest(itemToDelete.value.item.id)
+      await fetchCategories()
+    } else {
+      await deleteFormatRequest(itemToDelete.value.item.id)
+      await fetchCourseFormats()
+    }
+    closeDeleteConfirmModal()
   } catch (error) {
-    console.error('Ошибка удаления формата:', error)
-    handleApiError(error, 'Ошибка при удалении формата')
+    console.error('Error deleting item:', error)
   } finally {
-    dialogLoading.value = false
+    isDeleting.value = false
   }
-}
-
-// Диалоги подтверждения
-function handleConfirmDialog() {
-  if (confirmDialogData.value.onConfirm) {
-    confirmDialogData.value.onConfirm()
-  }
-}
-
-function closeConfirmDialog() {
-  showConfirmDialog.value = false
-  dialogLoading.value = false
-  confirmDialogData.value = {
-    title: '',
-    message: '',
-    confirmText: 'Удалить',
-    onConfirm: null
-  }
-}
-
-// Вспомогательные функции
-function getParentCategoryName(parentId) {
-  const parent = categories.value.find(c => c.id === parentId)
-  return parent ? parent.name : 'Неизвестная'
 }
 
 // Инициализация
@@ -1117,6 +1286,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Стили для древовидного отображения */
+.category-tree {
+  padding: 1rem 0;
+}
+
 .nav-tabs .nav-link {
   border: none;
   border-bottom: 3px solid transparent;
@@ -1134,5 +1308,18 @@ onMounted(() => {
 
 .badge {
   font-size: 0.75rem;
+}
+
+/* Стили для модального окна подтверждения */
+.modal-dialog-centered {
+  display: flex;
+  align-items: center;
+  min-height: calc(100% - 1rem);
+}
+
+@media (min-width: 576px) {
+  .modal-dialog-centered {
+    min-height: calc(100% - 3.5rem);
+  }
 }
 </style>

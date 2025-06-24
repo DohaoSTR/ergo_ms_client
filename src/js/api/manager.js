@@ -13,6 +13,32 @@ class ApiClient {
                 'Content-Type': 'application/json',
             },
         });
+
+        // Добавляем перехватчик ответов для автоматического logout при истечении токена
+        this.client.interceptors.response.use(
+            (response) => {
+                // Возвращаем успешные ответы как есть
+                return response;
+            },
+            (error) => {
+                // Проверяем, является ли ошибка 401 (Unauthorized)
+                if (error.response?.status === 401) {
+                    // Очищаем токены и данные пользователя
+                    this.logout();
+                    
+                    // Перенаправляем на стартовую страницу
+                    if (typeof window !== 'undefined' && window.location) {
+                        // Проверяем, не находимся ли мы уже на стартовой странице
+                        if (!window.location.pathname.includes('/start') && !window.location.pathname.includes('/login')) {
+                            window.location.href = '/start';
+                        }
+                    }
+                }
+                
+                // Возвращаем ошибку для дальнейшей обработки
+                return Promise.reject(error);
+            }
+        );
     }
 
     // Основные методы запросов
