@@ -193,5 +193,9 @@ export function useUserRole() {
 // Глобальный экземпляр для использования через приложение
 export const globalUserRole = useUserRole()
 
-// Автоматически загружаем роли при инициализации
-globalUserRole.loadUserRoles() 
+// Автоматически загружаем роли при инициализации, но только один раз
+let rolesLoaded = false
+if (!rolesLoaded) {
+  rolesLoaded = true
+  globalUserRole.loadUserRoles()
+} 
