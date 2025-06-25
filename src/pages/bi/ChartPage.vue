@@ -65,8 +65,7 @@
                     </div>
                     <div v-for="f in selectedFields[setting.key]" :key="f.id" class="selected-field">
                         <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
-                            <span class="field-icon" :class="f.source"
-                                :style="{ color: f.source === 'indicator' ? 'var(--color-accent)' : '#7496bb' }">
+                            <span class="field-icon" :class="f.source">
                                 <component :is="typeIcon[f.type] || Type" size="16" />
                             </span>
                             {{ f.name }}
@@ -104,28 +103,26 @@
 
 
     <transition name="fade-slide" appear>
-        <div v-if="isDatasetTooltipVisible" class="tooltip-panel"
-            :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px', position: 'fixed', zIndex: 1000 }"
-            ref="tooltipRef">
-            <DatasetTooltip v-if="isDatasetTooltipVisible" :selectedDataset="selectedDataset"
-                @select="handleSelectDataset" ref="tooltipRef" />
+        <div v-if="isDatasetTooltipVisible" class="tooltip-panel" :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px', position: 'fixed', zIndex: 1000 }" ref="tooltipRef">
+            <DatasetTooltip v-if="isDatasetTooltipVisible" :selectedDataset="selectedDataset" :datasets="datasets" :isLoading="datasetsLoading" @select="handleSelectDataset" ref="tooltipRef"/>
         </div>
     </transition>
     <transition name="fade-slide" appear>
         <div v-if="isFieldsModalVisible" class="tooltip-panel-fields"
             :style="{ left: fieldsModalPosition.x + 'px', top: fieldsModalPosition.y + 'px', position: 'fixed', zIndex: 1000 }"
             ref="fieldsModalRef">
-            <ChartFields :fields="indicators" :selected="selectedForModal" :allowed-types="currentAllowedTypes"
-                @select="handleFieldSelect" />
+            <ChartFields :fields="indicators" :selected="selectedForModal" :allowed-types="currentAllowedTypes" @select="handleFieldSelect" />
         </div>
     </transition>
-    <ChartNameDialog v-if="isSaveModalVisible" :visible="isSaveModalVisible" v-model="chartName"
-        @update:visible="isSaveModalVisible = $event" @saved="onChartNameSaved" />
+    <ChartNameDialog v-if="isSaveModalVisible" :visible="isSaveModalVisible" v-model="chartName" @update:visible="isSaveModalVisible = $event" @saved="onChartNameSaved" />
 </template>
 
 <script setup>
-import { ChartPie, Maximize, Type, Plus, Ellipsis, Database, Hash, Calendar, CheckCircle, X } from 'lucide-vue-next'
-import { ref, nextTick, onMounted, onBeforeUnmount, watch, computed } from 'vue'
+import { ChartPie, Maximize, Type, Plus, Ellipsis, Database, Hash, Calendar, CheckCircle, X, MapPin, Globe } from 'lucide-vue-next'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
+
+import { apiClient } from '@/js/api/manager'
+import { endpoints } from '@/js/api/endpoints'
 
 import DatasetTooltip from '@/pages/bi/components/ChartComponents/DatasetsTooltip.vue'
 import DatasetIndicators from '@/pages/bi/components/ChartComponents/DatasetIndicators.vue'
@@ -171,6 +168,9 @@ const isEditMode = computed(() => !!route.params.id)
 const chartData = ref({})
 const chartName = ref('Новая диаграмма')
 
+const datasets = ref([])
+const datasetsLoading = ref(false)
+
 const settingTypes = computed(() =>
     chartSettingsConfig[selectedChartType.value] || []
 )
@@ -180,10 +180,15 @@ const selectedFields = ref({})
 watch(chartData, d => { chartName.value = d?.name || 'Новая диаграмма' }, { immediate: true })
 
 const typeIcon = {
-    string: Type,
-    number: Hash,
-    date: Calendar,
-    boolean: CheckCircle
+  string: Type,
+  integer: Hash,
+  float: Hash,
+  date: Calendar,
+  'date&time': Calendar,
+  bool: CheckCircle,
+  boolean: CheckCircle,
+  geopoint: MapPin,
+  geopolygon: Globe,
 }
 
 const chartRequiredFieldsFilled = computed(() => {
@@ -264,7 +269,12 @@ async function fetchChartIfEditing() {
         selectedFields.value = { ...(data.params ?? {}) }
 
         if (dsObj?.id) {
-            const { data: rows } = await chartService.getRows(dsObj.id)
+            const { data: columnsResp } = await chartService.getColumns(dsObj.id)
+            indicators.value = columnsResp.columns || []
+        }
+
+        if (chartId.value) { 
+            const { data: rows } = await chartService.getDatasetRowsAgg(dsObj.id, selectedFields.value)
             datasetRows.value = rows
         }
         originalChart.value = {
@@ -299,13 +309,16 @@ function openFieldsModal(event, settingKey) {
 }
 
 function openDatasetTooltip(event) {
-    const rect = buttonRef.value.getBoundingClientRect()
-    tooltipPosition.value = {
-        x: rect.left,
-        y: rect.bottom + 6
-    }
-    isDatasetTooltipVisible.value = true
-    nextTick(() => { })
+  const rect = buttonRef.value.getBoundingClientRect()
+  let x = rect.left
+  let y = rect.bottom + 6
+  const maxX = window.innerWidth - 380 // ~ширина тултипа + отступ
+  const maxY = window.innerHeight - 240 // ~высота тултипа + отступ
+  if (x > maxX) x = maxX
+  if (y > maxY) y = maxY
+  tooltipPosition.value = { x, y }
+  isDatasetTooltipVisible.value = true
+  fetchDatasetsOnce()
 }
 
 function closeDatasetTooltip() {
@@ -313,11 +326,16 @@ function closeDatasetTooltip() {
 }
 
 async function handleSelectDataset(ds) {
-    console.log('handleSelectDataset', ds?.id)
+    selectedFields.value = { y: [], x: [], color: [], sort: [], labels: [], filters: [] }
     selectedDataset.value = ds
     closeDatasetTooltip()
     if (ds?.id) {
-        const { data } = await chartService.getDatasetRows(ds.id)
+        // 1. Получаем список колонок (объекты с name/type)
+        const { data: columnsResp } = await chartService.getColumns(ds.id)
+        // 2. Кладём в indicators (именно сюда смотрит твой UI)
+        indicators.value = columnsResp.columns || []
+        // 3. Загружаем агрегированные строки
+        const { data } = await chartService.getDatasetRowsAgg(ds.id, selectedFields.value)
         datasetRows.value = data
     }
 }
@@ -357,33 +375,37 @@ function removeField(field, type) {
 }
 
 watch(
-    () => selectedDataset.value?.id,
-    async id => {
-        console.log('selectedDataset id changed', id)
-        if (!isEditMode.value) {
-            selectedChartType.value = ''
-            selectedFields.value = {
-                y: [], x: [], color: [], sort: [], labels: [], filters: []
-            }
-        }
-        datasetRows.value = []
-        indicators.value = []
-
-        if (id) {
-            const [{ data: cols }, { data: rows }] = await Promise.all([
-                chartService.getColumns(id),
-                chartService.getDatasetRows(id)
-            ])
-            indicators.value = (cols.columns || []).map((c, i) => ({
-                id: 'col_' + i,
-                name: c.name || c,
-                type: c.type || 'string',
-                source: 'indicator'
-            }))
-            datasetRows.value = rows
-        }
-    }
+  () => selectedChartType.value,
+  (newVal, oldVal) => {
+    if (oldVal && newVal !== oldVal) selectedFields.value = {}
+  }
 )
+
+watch(
+  selectedFields,
+  async v => {
+    if (selectedDataset.value?.id) {
+      const { data } = await chartService.getDatasetRowsAgg(
+        selectedDataset.value.id, v
+      )
+      datasetRows.value = data
+    }
+  },
+  { deep: true }
+)
+
+async function fetchDatasetsOnce() {
+  if (datasets.value.length || datasetsLoading.value) return
+  datasetsLoading.value = true
+  try {
+    const { data } = await apiClient.get(endpoints.bi.DatasetsList)
+    datasets.value = Array.isArray(data) ? data : (data.results || [])
+  } catch (err) {
+    console.error('Ошибка загрузки датасетов:', err)
+  } finally {
+    datasetsLoading.value = false
+  }
+}
 
 const isChartDirty = computed(() => {
     if (!isEditMode.value) return true
@@ -599,15 +621,20 @@ onBeforeUnmount(() => {
     flex-direction: column;
     top: 300px;
     left: 385px;
-    width: 416px;
-    height: 436px;
+    width: min(360px, 90vw);
+    min-width: 220px;
+    max-width: 98vw;
+    min-height: 160px;
+    max-height: min(436px, 80vh);
     background-color: var(--color-primary-background);
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+    border-radius: 12px;
+    box-shadow: 0 0 16px 0 #000a;
     z-index: 100;
     padding: 1rem;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     color: var(--color-primary-text);
+    transition: box-shadow 0.18s, width 0.2s, max-height 0.2s;
 }
 
 .tooltip-panel-fields {
@@ -657,7 +684,7 @@ onBeforeUnmount(() => {
     color: var(--color-accent);
 }
 
-.field-icon.indicator {
+.field-icon {
     color: var(--color-accent);
 }
 </style>

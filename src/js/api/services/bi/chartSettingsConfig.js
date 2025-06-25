@@ -11,8 +11,8 @@ export const chartSettingsConfig = {
     { key: 'filters', label: 'Фильтры', icon: Filter, allowedTypes: ['string', 'integer', 'float', 'date', 'date&time', 'bool', 'geopoint', 'geopolygon'] }
   ],
   bar: [
-    { key: 'x', label: 'X', icon: MoveRight, allowedTypes: ['string', 'date', 'date&time'] },
-    { key: 'y', label: 'Y', icon: MoveUp, allowedTypes: ['integer', 'float'] },
+    { key: 'x', label: 'X', icon: MoveRight, allowedTypes: ['string', 'date', 'date&time', 'integer', 'float'] },
+    { key: 'y', label: 'Y', icon: MoveUp, allowedTypes: ['string', 'date', 'date&time', 'integer', 'float'] },
     { key: 'color', label: 'Цвета', icon: PaintBucket, allowedTypes: ['string', 'integer', 'float', 'date', 'date&time', 'bool', 'geopoint', 'geopolygon'] },
     { key: 'sort', label: 'Сортировка', icon: ArrowDownWideNarrow, allowedTypes: ['string', 'integer', 'float', 'date', 'date&time', 'bool'] },
     { key: 'labels', label: 'Подписи', icon: Type, allowedTypes: ['string'] },
@@ -35,8 +35,8 @@ export const chartSettingsConfig = {
     { key: 'filters', label: 'Фильтры', icon: Filter, allowedTypes: ['string', 'integer', 'float', 'bool'] }
   ],
   scatter: [
-    { key: 'x', label: 'X', icon: MoveRight, allowedTypes: ['integer', 'float'] },
-    { key: 'y', label: 'Y', icon: MoveUp, allowedTypes: ['integer', 'float'] },
+    { key: 'x', label: 'X', icon: MoveRight, allowedTypes: ['string', 'date&time', 'integer', 'float'] },
+    { key: 'y', label: 'Y', icon: MoveUp, allowedTypes: ['string', 'date&time', 'integer', 'float'] },
     { key: 'dots', label: 'Точки', icon: Ellipsis, allowedTypes: ['integer', 'float'] },
     { key: 'sizeDots', label: 'Размер точек', icon: Maximize, allowedTypes: ['integer', 'float'] },
     { key: 'color', label: 'Цвета', icon: PaintBucket, allowedTypes: ['string', 'integer', 'float', 'bool'] },

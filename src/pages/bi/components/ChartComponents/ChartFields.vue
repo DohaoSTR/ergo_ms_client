@@ -51,7 +51,7 @@ const availableFields = computed(() =>
 )
 
 function isSelected(field) {
-  return props.selected.some(sel => sel.id === field.id)
+  return props.selected.some(f => f.name === field.name)
 }
 
 function selectField(field) {

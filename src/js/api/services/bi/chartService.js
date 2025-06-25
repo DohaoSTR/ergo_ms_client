@@ -22,5 +22,8 @@ export default {
   },
   updateChart(id, payload) {
     return apiClient.put(`/bi_analysis/bi_charts/${id}/`, { ...payload, params: payload.params ?? payload.settings });
+  },
+  getDatasetRowsAgg(datasetId, fields) {
+    return apiClient.post(`/bi_analysis/bi_datasets/${datasetId}/rows-agg/`, { fields })
   }
 }

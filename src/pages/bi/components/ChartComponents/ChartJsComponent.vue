@@ -1,16 +1,12 @@
 <script setup>
 import { Pie, Bar, Line, Doughnut, Scatter, Radar } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  ArcElement, BarElement, LineElement, CategoryScale, LinearScale,
-  Tooltip, Legend, PointElement, RadialLinearScale
-} from 'chart.js'
+import { Chart as ChartJS, ArcElement, BarElement, LineElement, CategoryScale, LinearScale, Tooltip, Legend, PointElement, RadialLinearScale } from 'chart.js'
 import { computed } from 'vue'
+import {
+  getPieData, getBarData, getLineData, getRadarData, getScatterData
+} from '@/pages/bi/components/ChartComponents/js/chartDataTransform.js'
 
-ChartJS.register(
-  ArcElement, BarElement, LineElement, CategoryScale, LinearScale,
-  Tooltip, Legend, PointElement, RadialLinearScale
-)
+ChartJS.register(ArcElement, BarElement, LineElement, CategoryScale, LinearScale, Tooltip, Legend, PointElement, RadialLinearScale)
 
 const props = defineProps({
   type:   { type: String, default: 'bar' },
@@ -19,18 +15,6 @@ const props = defineProps({
   dataset:{ type: Array,  default: () => [] }
 })
 
-const palette = [
-  '#41B883', '#00D8FF', '#DD1B16', '#f4b942', '#e35bcb',
-  '#9288f8', '#f88d51', '#34a853', '#ea4335'
-]
-
-// Универсальная функция получения массива значений из dataset по имени поля
-function getColumn(field){
-  if(!field) return []
-  return props.dataset.map(row => row?.[field.name])
-}
-
-// Универсальный выбор нужных полей для любого типа графика
 function findField(keys, many=false) {
   for (const k of keys) {
     if (props.fields[k] && props.fields[k].length)
@@ -42,108 +26,218 @@ function findField(keys, many=false) {
 const chartData = computed(() => {
   if (!props.dataset.length) return { labels: [], datasets: [] }
 
-  // Универсальные ключи для разных графиков
-  // Для pie/doughnut
-  const labelFieldPie = findField(['category', 'labels', 'x'])
-  const valueFieldPie = findField(['indicators', 'y'])
-  // Для bar/line
-  const xFieldBar = findField(['x'])
-  const yFieldsBar = findField(['y'], true)
-  // Для radar
-  const labelFieldRadar = findField(['category', 'labels', 'x'])
-  const valueFieldsRadar = findField(['indicators', 'y'], true)
-  // Для scatter
-  const xFieldScatter = findField(['x'])
-  const yFieldScatter = findField(['y'])
-  // Для heatmap (будет пусто, если не реализовывать)
-  
-  if (['pie','doughnut'].includes(props.type)) {
-  if (!labelFieldPie || !valueFieldPie) return { labels: [], datasets: [] }
-  return {
-    labels: getColumn(labelFieldPie),
-    datasets: [{
-      label: valueFieldPie.name,
-      data : getColumn(valueFieldPie).map(Number),
-      backgroundColor: palette
-    }]
+  if (props.type === 'line') {
+    // поля, разрешающие мультивыбор
+    const xFields     = findField(['x'],  true)
+    const yFields     = findField(['y'],  true)
+    const y2Fields    = findField(['y2'], true)
+
+    const colorField  = findField(['color', 'colors'])
+    const sortFields  = props.fields?.sort ?? []
+    const labelField  = findField(['labels', 'label'])   // одно поле подписи
+    const filters     = props.fields?.filters ?? []
+
+    return getLineData(
+      props.dataset,    // строки
+      xFields,          // массив X
+      yFields,          // массив Y
+      y2Fields,         // массив Y2
+      colorField,       // «цвет»
+      sortFields,       // сортировка
+      labelField,       // подписи
+      filters           // фильтры
+    )
   }
+
+  if (props.type === 'bar') {
+  const xField     = findField(['x'],    true)
+  const yField     = findField(['y'],    true)
+  const colorField = findField(['color', 'colors'])
+  const filters = props.fields?.filters ?? []
+  const labelFields = findField(['labels', 'label'], true)
+  const sort = props.fields?.sort ?? null
+  return getBarData(
+    props.dataset,
+    xField,
+    yField,
+    colorField,
+    {
+      filters,
+      labelFields,
+      sort
+    }
+  )
 }
 
-  if (['bar','line'].includes(props.type)) {
-  if (!xFieldBar || !yFieldsBar.length) return { labels: [], datasets: [] }
-  const labels = getColumn(xFieldBar)
-  const isNumeric = arr => arr.some(val => typeof val === 'number' && !isNaN(val) && val !== null)
-  const datasets = yFieldsBar
-    .map((y, i) => ({
-      label: y.name,
-      data : getColumn(y).map(Number),
-      backgroundColor: palette[i % palette.length],
-      borderColor:     palette[i % palette.length],
-      fill: false,
-      yAxisID: i === 1 ? 'y2' : 'y'
-    }))
-    .filter(ds => isNumeric(ds.data))
+  if (props.type === 'pie' || props.type === 'doughnut') {
+  const categoryFields = findField(['category','categories','x','labels'], true)
+  const valueFields    = findField(['indicators','values','y'], true)
+  const colorFields    = findField(['color','colors'], true)
 
-  return {
-    labels,
-    datasets
-  }
+  return getPieData(
+    props.dataset,
+    categoryFields,
+    valueFields,
+    colorFields,
+    props.fields?.sort    ?? [],
+    props.fields?.filters ?? [],
+  )
 }
+
+  if (props.type === 'scatter' || props.type === 'bubble') {
+    const data = getScatterData(
+      props.dataset,
+      findField(['x'],       true),
+      findField(['y'],       true),
+      findField(['points'],  true),
+      findField(['size'],    true),
+      findField(['color'],   true),
+      props.fields?.sort    ?? [],
+      props.fields?.filters ?? [],
+    )
+
+    // Явно добавляем подписи и заголовки осей, если они есть
+    const options = {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {}
+    }
+    if (data.meta?.xLabels) {
+      options.scales.x = {
+        type: 'category',
+        labels: data.meta.xLabels,
+        title: { display: true, text: findField(['x'])?.label || 'X' }
+      }
+    }
+    if (data.meta?.yLabels) {
+      options.scales.y = {
+        type: 'category',
+        labels: data.meta.yLabels,
+        title: { display: true, text: findField(['y'])?.label || 'Y' }
+      }
+    }
+
+    return { ...data, ...options }
+  }
 
   if (props.type === 'radar') {
-  if (!labelFieldRadar || !valueFieldsRadar.length) return { labels: [], datasets: [] }
-  const labels = getColumn(labelFieldRadar)
-  const isNumeric = arr => arr.some(val => typeof val === 'number' && !isNaN(val) && val !== null)
-  const datasets = valueFieldsRadar
-    .map((v, i) => ({
-      label: v.name,
-      data : getColumn(v).map(Number),
-      backgroundColor: palette[i % palette.length] + '44',
-      borderColor: palette[i % palette.length],
-      fill: true
-    }))
-    .filter(ds => isNumeric(ds.data))
+  const categoryField = findField(['category', 'labels', 'x'])
+  const valueFields   = findField(['indicators', 'y'], true)
+  const colorField    = findField(['color', 'colors'])
+  const sortFields    = props.fields?.sort    ?? []
+  const filters       = props.fields?.filters ?? []
 
-  return {
-    labels,
-    datasets
-  }
+  return getRadarData(
+    props.dataset,
+    categoryField,
+    valueFields,
+    colorField,
+    filters,
+    sortFields,
+  )
 }
 
-  if (props.type === 'scatter') {
-    if (!xFieldScatter || !yFieldScatter) return { labels: [], datasets: [] }
-    return {
-      datasets: [{
-        label: yFieldScatter.name,
-        data: props.dataset.map(row => ({
-          x: +row[xFieldScatter.name],
-          y: +row[yFieldScatter.name]
-        })),
-        backgroundColor: palette[0]
-      }]
-    }
+  if (props.type === 'heatmap') {
+    const xField = findField(['x'])
+    const yField = findField(['y'])
+    const valueField = findField(['value', 'y2', 'indicator'])
+    const colorField = findField(['color', 'colors'])
+    return getHeatmapData(props.dataset, xField, yField, valueField, colorField)
   }
 
   return { labels: [], datasets: [] }
 })
 
-const chartOptions = {
-  responsive: true,
-  plugins: {
-    legend: { position: 'bottom' }
-  },
-  scales: {
-    y: {
-      type: 'linear',
-      position: 'left'
-    },
-    y2: {
-      type: 'linear',
-      position: 'right',
-      grid: { drawOnChartArea: false }
-    }
+const chartOptions = computed(() => {
+  // findField(['y'], true) вернет массив всех Y (включая Y2, если выбран)
+  const yFields = findField(['y'], true)
+  const hasY2 = Array.isArray(yFields) && yFields.length > 1
+
+  switch (props.type) {
+    case 'line':
+      return {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        scales: hasY2
+          ? {
+              y: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: 'Y' },
+                beginAtZero: true
+              },
+              y2: {
+                type: 'linear',
+                position: 'right',
+                grid: { drawOnChartArea: false },
+                title: { display: true, text: 'Y2' },
+                beginAtZero: true
+              }
+            }
+          : {
+              y: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: 'Y' },
+                beginAtZero: true
+              }
+            }
+      }
+
+    case 'bar':
+      // Только одна ось Y
+      return {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            position: 'left',
+            beginAtZero: true,
+            title: { display: true, text: 'Y' }
+          }
+        }
+      }
+
+    case 'pie':
+    case 'doughnut':
+      // Для круговых графиков оси не нужны
+      return {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { mode: 'index', intersect: false }
+        }
+      }
+
+    default:
+      // По умолчанию одна ось
+      return {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            position: 'left',
+            beginAtZero: true
+          }
+        }
+      }
   }
-}
+})
 </script>
 
 <template>
@@ -156,4 +250,4 @@ const chartOptions = {
   <div v-else>Неподдерживаемый тип графика</div>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss"></style>

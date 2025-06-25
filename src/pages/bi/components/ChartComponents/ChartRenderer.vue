@@ -20,7 +20,7 @@ watch(() => props.engine, e => {
 })
 watch(localEngine, e => emit('update:engine', e))
 
-const supportedByApex    = ['line','bar','pie','donut','area','scatter','radar','heatmap']
+const supportedByApex    = ['line','bar','area','radar','heatmap']
 const supportedByChartJs = ['line','bar','pie','doughnut','scatter','radar']
 
 const chartTypeMap = { 1:'line',2:'bar',3:'pie',4:'doughnut',5:'scatter',6:'radar',7:'heatmap' }
