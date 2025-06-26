@@ -58,35 +58,46 @@ const validateForm = () => {
   )
 }
 
+const route = useRoute();
+
 // Обработка формы
 const submitForm = async () => {
   if (validateForm()) {
     loggedIn.value = true
     successMessage.value = ''
 
-    const registrationResult = await registration(
-      form.name, 
-      form.login, 
-      form.email, 
-      form.password,
-    )
+    const url_id = route.query.url_id;
+    try {
+        const registrationResult = await registration(
+        form.name, 
+        form.login, 
+        form.email, 
+        form.password,
+        url_id,
+        )
 
-    if (registrationResult.success === true)
-    {
-      router.push({ name: 'Login' })
+
+      if (registrationResult.success === true)
+      {
+        router.push({ name: 'Login' })
+      }
+      else
+      {
+        const validationErrors = validateRegistrationMethod(registrationResult.errors)
+
+        errors.name = validationErrors.name;
+        errors.login = validationErrors.login;
+        errors.email = validationErrors.email;
+        errors.password = validationErrors.password;
+        errors.passwordConfirm = validationErrors.passwordConfirm;
+
+        loggedIn.value = false;
+      } 
     }
-    else
-    {
-      const validationErrors = validateRegistrationMethod(registrationResult.errors)
-
-      errors.name = validationErrors.name;
-      errors.login = validationErrors.login;
-      errors.email = validationErrors.email;
-      errors.password = validationErrors.password;
-      errors.passwordConfirm = validationErrors.passwordConfirm;
-
-      loggedIn.value = false;
-    } 
+    catch
+      {
+      console.error('Registration error:', error);
+    }
   }
 }
 </script>
