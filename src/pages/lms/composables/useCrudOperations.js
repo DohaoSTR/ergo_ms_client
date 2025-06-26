@@ -1,16 +1,11 @@
-import { apiClient } from '@/js/api/manager'
-import { endpoints } from '@/js/api/endpoints'
+import { lmsService } from '@/js/api/services/lmsService'
 import { showSuccess, showError } from '@/js/utils/notifications'
 
 export function useCrudOperations() {
   
   async function createCourse(formData, validationErrors) {
     try {
-      const response = await apiClient.post(endpoints.lms.subjects, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+      const response = await lmsService.createCourse(formData)
       
       const courseName = formData.get ? formData.get('name') : formData.name || 'Новый курс'
       showSuccess(`Курс "${courseName}" успешно создан`)
@@ -47,11 +42,7 @@ export function useCrudOperations() {
 
   async function updateCourse(courseId, formData, validationErrors) {
     try {
-      const response = await apiClient.put(`${endpoints.lms.subjects}${courseId}/`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+      const response = await lmsService.updateCourse(courseId, formData)
       showSuccess('Курс успешно обновлен')
       return response
     } catch (error) {
@@ -62,7 +53,7 @@ export function useCrudOperations() {
 
   async function deleteCourse(courseId) {
     try {
-      await apiClient.delete(`${endpoints.lms.subjects}${courseId}/`)
+      await lmsService.deleteCourse(courseId)
       showSuccess('Курс успешно удален')
     } catch (error) {
       console.error('Ошибка удаления курса:', error)
@@ -83,9 +74,8 @@ export function useCrudOperations() {
   async function createTheme(data, validationErrors) {
     try {
       console.log('Создание темы с данными:', data)
-      console.log('Endpoint для тем:', endpoints.lms.themes)
       
-      const response = await apiClient.post(endpoints.lms.themes, data)
+      const response = await lmsService.createTheme(data)
       console.log('Ответ сервера при создании темы:', response.data)
       
       showSuccess(`Тема "${data.name}" успешно создана`)
@@ -118,7 +108,7 @@ export function useCrudOperations() {
 
   async function updateTheme(themeId, data, validationErrors) {
     try {
-      const response = await apiClient.put(`${endpoints.lms.themes}${themeId}/`, data)
+      const response = await lmsService.updateTheme(themeId, data)
       showSuccess(`Тема "${data.name}" успешно обновлена`)
       return response
     } catch (error) {
@@ -149,7 +139,7 @@ export function useCrudOperations() {
 
   async function deleteTheme(themeId) {
     try {
-      await apiClient.delete(`${endpoints.lms.themes}${themeId}/`)
+      await lmsService.deleteTheme(themeId)
       showSuccess('Тема успешно удалена')
     } catch (error) {
       console.error('Ошибка удаления темы:', error)
@@ -169,7 +159,7 @@ export function useCrudOperations() {
 
   async function createLesson(data, validationErrors) {
     try {
-      const response = await apiClient.post(endpoints.lms.lessons, data)
+      const response = await lmsService.createLesson(data)
       showSuccess(`Урок "${data.name}" успешно создан`)
       return response
     } catch (error) {
@@ -210,7 +200,7 @@ export function useCrudOperations() {
 
   async function updateLesson(lessonId, data, validationErrors) {
     try {
-      const response = await apiClient.put(`${endpoints.lms.lessons}${lessonId}/`, data)
+      const response = await lmsService.updateLesson(lessonId, data)
       showSuccess('Урок успешно обновлен')
       return response
     } catch (error) {
@@ -221,7 +211,7 @@ export function useCrudOperations() {
 
   async function deleteLesson(lessonId) {
     try {
-      await apiClient.delete(`${endpoints.lms.lessons}${lessonId}/`)
+      await lmsService.deleteLesson(lessonId)
       showSuccess('Урок успешно удален')
     } catch (error) {
       console.error('Ошибка удаления урока:', error)
@@ -241,33 +231,15 @@ export function useCrudOperations() {
 
   async function duplicateLesson(lesson) {
     try {
-      let themeId = lesson.theme
-      if (typeof themeId === 'object' && themeId?.id) {
-        themeId = themeId.id
-      }
+      await lmsService.duplicateLesson(lesson)
       
       let baseName = lesson.name
       const copyRegex = /\s*\(копия\s*\d*\)$/
       if (copyRegex.test(baseName)) {
         baseName = baseName.replace(copyRegex, '')
       }
-      
       const copyName = `${baseName} (копия)`
       
-      const duplicateData = {
-        name: copyName,
-        description: lesson.description || '',
-        lessontype: lesson.lessontype,
-        theme: parseInt(themeId),
-        sort_order: (lesson.sort_order || 0) + 1,
-        is_visible: lesson.is_visible !== undefined ? lesson.is_visible : true,
-        completion_required: lesson.completion_required !== undefined ? lesson.completion_required : false,
-        availability_start: lesson.availability_start || null,
-        availability_end: lesson.availability_end || null,
-        content: lesson.content || ''
-      }
-      
-      await apiClient.post(endpoints.lms.lessons, duplicateData)
       showSuccess(`Урок "${lesson.name}" успешно скопирован как "${copyName}"`)
     } catch (error) {
       console.error('Ошибка дублирования урока:', error)
@@ -278,12 +250,7 @@ export function useCrudOperations() {
 
   async function toggleLessonVisibility(lesson) {
     try {
-      const updateData = {
-        ...lesson,
-        is_visible: !lesson.is_visible
-      }
-      
-      await apiClient.put(`${endpoints.lms.lessons}${lesson.id}/`, updateData)
+      await lmsService.toggleLessonVisibility(lesson)
       showSuccess(`Урок "${lesson.name}" ${lesson.is_visible ? 'скрыт' : 'показан'}`)
     } catch (error) {
       console.error('Ошибка изменения видимости урока:', error)
@@ -297,20 +264,7 @@ export function useCrudOperations() {
     try {
       console.log('🔍 Создание теста с данными:', data)
       
-      // Подготавливаем данные теста с правильными полями API
-      const testData = {
-        ...data
-      }
-      
-      // Переименовываем поле course в subject для API
-      if (testData.course) {
-        testData.subject = testData.course
-        delete testData.course
-      }
-      
-      console.log('📤 Отправляем данные теста на сервер:', testData)
-      
-      const response = await apiClient.post(endpoints.lms.tests, testData)
+      const response = await lmsService.createTest(data)
       showSuccess(`Тест "${data.name}" успешно создан`)
       return response
     } catch (error) {
@@ -352,7 +306,7 @@ export function useCrudOperations() {
 
   async function updateTest(testId, data, validationErrors) {
     try {
-      const response = await apiClient.put(`${endpoints.lms.tests}${testId}/`, data)
+      const response = await lmsService.updateTest(testId, data)
       showSuccess('Тест успешно обновлен')
       return response
     } catch (error) {
@@ -363,7 +317,7 @@ export function useCrudOperations() {
 
   async function deleteTest(testId) {
     try {
-      await apiClient.delete(`${endpoints.lms.tests}${testId}/`)
+      await lmsService.deleteTest(testId)
       showSuccess('Тест успешно удален')
     } catch (error) {
       console.error('Ошибка удаления теста:', error)
@@ -374,40 +328,15 @@ export function useCrudOperations() {
 
   async function duplicateTest(test) {
     try {
+      await lmsService.duplicateTest(test)
+      
       let baseName = test.name || test.title
       const copyRegex = /\s*\(копия\s*\d*\)$/
       if (copyRegex.test(baseName)) {
         baseName = baseName.replace(copyRegex, '')
       }
-      
       const copyName = `${baseName} (копия)`
       
-      const duplicateData = {
-        name: copyName,
-        title: test.title ? `${test.title} (копия)` : copyName,
-        description: test.description || '',
-        type: test.type || 'C',
-        duration_minutes: test.duration_minutes || 60,
-        passing_score: test.passing_score || 70,
-        max_attempts: test.max_attempts || 1,
-        show_correct_answers: test.show_correct_answers !== undefined ? test.show_correct_answers : false,
-        randomize_questions: test.randomize_questions !== undefined ? test.randomize_questions : false,
-        available_from: null, // Копия будет неактивна по умолчанию
-        available_until: null,
-        is_active: false, // Копия неактивна по умолчанию
-        subject: test.subject?.id || test.subject,
-        theme: test.theme?.id || test.theme,
-        lesson: test.lesson?.id || test.lesson
-      }
-
-      // Убираем поля с null значениями
-      Object.keys(duplicateData).forEach(key => {
-        if (duplicateData[key] === null || duplicateData[key] === undefined) {
-          delete duplicateData[key]
-        }
-      })
-      
-      await apiClient.post(endpoints.lms.tests, duplicateData)
       showSuccess(`Тест "${baseName}" успешно скопирован как "${copyName}"`)
     } catch (error) {
       console.error('Ошибка дублирования теста:', error)
@@ -421,20 +350,7 @@ export function useCrudOperations() {
     try {
       console.log('🔍 Создание задания с данными:', data)
       
-      // Подготавливаем данные задания с правильными полями API
-      const assignmentData = {
-        ...data
-      }
-      
-      // Переименовываем поле course в subject для API
-      if (assignmentData.course) {
-        assignmentData.subject = assignmentData.course
-        delete assignmentData.course
-      }
-      
-      console.log('📤 Отправляем данные задания на сервер:', assignmentData)
-      
-      const response = await apiClient.post(endpoints.lms.assignments, assignmentData)
+      const response = await lmsService.createAssignment(data)
       showSuccess(`Задание "${data.title}" успешно создано`)
       return response
     } catch (error) {
@@ -476,7 +392,7 @@ export function useCrudOperations() {
 
   async function updateAssignment(assignmentId, data, validationErrors) {
     try {
-      const response = await apiClient.put(`${endpoints.lms.assignments}${assignmentId}/`, data)
+      const response = await lmsService.updateAssignment(assignmentId, data)
       showSuccess('Задание успешно обновлено')
       return response
     } catch (error) {
@@ -487,7 +403,7 @@ export function useCrudOperations() {
 
   async function deleteAssignment(assignmentId) {
     try {
-      await apiClient.delete(`${endpoints.lms.assignments}${assignmentId}/`)
+      await lmsService.deleteAssignment(assignmentId)
       showSuccess('Задание успешно удалено')
     } catch (error) {
       console.error('Ошибка удаления задания:', error)
@@ -499,7 +415,7 @@ export function useCrudOperations() {
   // Операции с форумами
   async function createForum(data, validationErrors) {
     try {
-      const response = await apiClient.post(endpoints.lms.forums, data)
+      const response = await lmsService.createForum(data)
       showSuccess(`Форум "${data.name}" успешно создан`)
       return response
     } catch (error) {
@@ -536,7 +452,7 @@ export function useCrudOperations() {
 
   async function updateForum(forumId, data, validationErrors) {
     try {
-      const response = await apiClient.put(`${endpoints.lms.forums}${forumId}/`, data)
+      const response = await lmsService.updateForum(forumId, data)
       showSuccess('Форум успешно обновлен')
       return response
     } catch (error) {
@@ -547,7 +463,7 @@ export function useCrudOperations() {
 
   async function deleteForum(forumId) {
     try {
-      await apiClient.delete(`${endpoints.lms.forums}${forumId}/`)
+      await lmsService.deleteForum(forumId)
       showSuccess('Форум успешно удален')
     } catch (error) {
       console.error('Ошибка удаления форума:', error)
@@ -648,11 +564,7 @@ export function useCrudOperations() {
   // Операции с ресурсами
   async function createResource(formData, validationErrors) {
     try {
-      const response = await apiClient.post(endpoints.lms.resources, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+      const response = await lmsService.createResource(formData)
       
       const resourceName = formData.get ? formData.get('name') : formData.name || 'Новый ресурс'
       showSuccess(`Ресурс "${resourceName}" успешно создан`)
@@ -709,11 +621,7 @@ export function useCrudOperations() {
 
   async function updateResource(resourceId, formData, validationErrors) {
     try {
-      const response = await apiClient.put(`${endpoints.lms.resources}${resourceId}/`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+      const response = await lmsService.updateResource(resourceId, formData)
       showSuccess('Ресурс успешно обновлен')
       return response
     } catch (error) {
@@ -724,7 +632,7 @@ export function useCrudOperations() {
 
   async function deleteResource(resourceId) {
     try {
-      await apiClient.delete(`${endpoints.lms.resources}${resourceId}/`)
+      await lmsService.deleteResource(resourceId)
       showSuccess('Ресурс успешно удален')
     } catch (error) {
       console.error('Ошибка удаления ресурса:', error)
@@ -742,27 +650,7 @@ export function useCrudOperations() {
 
   async function toggleResourceVisibility(resource) {
     try {
-      const updateData = new FormData()
-      updateData.append('name', resource.name)
-      updateData.append('description', resource.description || '')
-      updateData.append('is_visible', !resource.is_visible)
-      updateData.append('sort_order', resource.sort_order || 0)
-      
-      if (resource.subject) {
-        updateData.append('subject', resource.subject)
-      }
-      if (resource.theme) {
-        updateData.append('theme', resource.theme)
-      }
-      if (resource.lesson) {
-        updateData.append('lesson', resource.lesson)
-      }
-      
-      await apiClient.put(`${endpoints.lms.resources}${resource.id}/`, updateData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+      await lmsService.toggleResourceVisibility(resource)
       showSuccess(`Ресурс "${resource.name}" ${resource.is_visible ? 'скрыт' : 'показан'}`)
     } catch (error) {
       console.error('Ошибка изменения видимости ресурса:', error)

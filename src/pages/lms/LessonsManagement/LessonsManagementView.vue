@@ -81,6 +81,7 @@
         @reorderLessons="handleReorderLessons"
         @reorderTests="handleReorderTests"
         @reorderAssignments="handleReorderAssignments"
+        @reorderLessonItems="handleReorderLessonItems"
       />
 
       <!-- Модальные окна -->
@@ -208,12 +209,24 @@ import { useLessonsData } from '../composables/useLessonsData'
 import { useCrudOperations } from '../composables/useCrudOperations'
 import { useConfirmDialog } from '../composables/useConfirmDialog'
 import { useFormManagement } from '../composables/useFormManagement'
-import { showSuccess, showError } from '@/js/utils/notifications'
+import { useLessonItems } from './composables/useLessonItems'
+
+// Простые функции для уведомлений (временно)
+const showSuccess = (message) => {
+  console.log('✅ Успех:', message)
+  // TODO: Заменить на настоящую систему уведомлений
+}
+
+const showError = (message) => {
+  console.error('❌ Ошибка:', message)
+  // TODO: Заменить на настоящую систему уведомлений
+}
 
 // Инициализация композаблов
 const lessonsData = useLessonsData()
 const crudOperations = useCrudOperations()
 const confirmDialog = useConfirmDialog()
+const lessonItems = useLessonItems()
 
 // Состояние раскрытых тем
 const expandedThemes = ref(new Set())
@@ -903,6 +916,28 @@ function handleReorderAssignments(data) {
       lessonsData.updateAssignmentOrder(data.lessonId, data.assignmentIds)
       showSuccess('Порядок заданий обновлен')
     }
+  }
+}
+
+// Обработка изменения порядка элементов урока
+async function handleReorderLessonItems(data) {
+  console.log('🔄 Обработка изменения порядка элементов урока:', data)
+  
+  try {
+    // Используем композабл useLessonItems для изменения порядка
+    const result = await lessonItems.reorderItems(data)
+    
+    if (result.success) {
+      console.log('✅ Порядок элементов урока успешно изменен')
+      showSuccess('Порядок элементов урока обновлен')
+      // Обновляем данные для корректного отображения
+      await lessonsData.fetchData()
+    }
+  } catch (error) {
+    console.error('❌ Ошибка при изменении порядка элементов урока:', error)
+    showError('Ошибка при изменении порядка элементов урока')
+    // Обновляем данные для восстановления порядка
+    await lessonsData.fetchData()
   }
 }
 

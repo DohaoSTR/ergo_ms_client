@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue'
-import { apiClient } from '@/js/api/manager'
-import { endpoints } from '@/js/api/endpoints'
+import { lmsService } from '@/js/api/services/lmsService'
 import { useNotifications } from './useNotifications'
 
 const { showError, showSuccess } = useNotifications()
@@ -10,168 +9,395 @@ export function useApi() {
   const error = ref(null)
   const data = ref(null)
 
-  // Универсальный метод для API запросов
-  async function apiCall(method, url, payload = null, options = {}) {
-    try {
-      loading.value = true
-      error.value = null
-      
-      let response
-      switch (method.toLowerCase()) {
-        case 'get':
-          response = await apiClient.get(url, options)
-          break
-        case 'post':
-          response = await apiClient.post(url, payload, options)
-          break
-        case 'put':
-          response = await apiClient.put(url, payload, options)
-          break
-        case 'patch':
-          response = await apiClient.patch(url, payload, options)
-          break
-        case 'delete':
-          response = await apiClient.delete(url, options)
-          break
-        default:
-          throw new Error(`Неподдерживаемый HTTP метод: ${method}`)
-      }
 
-      if (response.success !== false) {
-        data.value = response.data
-        return response
-      } else {
-        throw new Error(response.message || 'API error')
-      }
-    } catch (err) {
-      error.value = err.message || 'Произошла ошибка'
-      console.error('API Error:', err)
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
 
-  // Специализированные методы для LMS
+  // Обертка для LMS сервиса с обработкой состояния загрузки
   const lmsApi = {
+    // Получение всех данных
+    async fetchAllLessonsData() {
+      loading.value = true
+      try {
+        const result = await lmsService.fetchAllLessonsData()
+        data.value = result
+        return { data: result }
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
     // Курсы
-    async getCourses() {
-      return apiCall('get', endpoints.lms.subjects)
-    },
-
-    async getCourse(id) {
-      return apiCall('get', `${endpoints.lms.subjects}${id}/`)
-    },
-
     async createCourse(courseData) {
-      const response = await apiCall('post', endpoints.lms.subjects, courseData)
-      showSuccess('Курс успешно создан')
-      return response
+      loading.value = true
+      try {
+        const response = await lmsService.createCourse(courseData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
     async updateCourse(id, courseData) {
-      const response = await apiCall('patch', `${endpoints.lms.subjects}${id}/`, courseData)
-      showSuccess('Курс успешно обновлен')
-      return response
+      loading.value = true
+      try {
+        const response = await lmsService.updateCourse(id, courseData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
     async deleteCourse(id) {
-      const response = await apiCall('delete', `${endpoints.lms.subjects}${id}/`)
-      showSuccess('Курс успешно удален')
-      return response
-    },
-
-    // Записи на курсы
-    async getEnrollments() {
-      return apiCall('get', endpoints.lms.enrollments)
-    },
-
-    async enrollInCourse(courseId) {
-      const response = await apiCall('post', `${endpoints.lms.subjects}${courseId}/enroll/`)
-      showSuccess('Вы успешно записались на курс')
-      return response
-    },
-
-    async unenrollFromCourse(courseId) {
-      const response = await apiCall('delete', `${endpoints.lms.subjects}${courseId}/unenroll/`)
-      showSuccess('Вы отписались от курса')
-      return response
-    },
-
-    // Избранное
-    async addToFavorites(courseId) {
-      const response = await apiCall('post', `${endpoints.lms.subjects}${courseId}/favorite/`)
-      return response
-    },
-
-    async removeFromFavorites(courseId) {
-      const response = await apiCall('delete', `${endpoints.lms.subjects}${courseId}/favorite/`)
-      return response
-    },
-
-    async getFavorites() {
-      return apiCall('get', endpoints.lms.favorites || `${endpoints.lms.subjects}favorites/`)
+      loading.value = true
+      try {
+        const response = await lmsService.deleteCourse(id)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
     // Темы
-    async getThemes(courseId = null) {
-      const url = courseId ? `${endpoints.lms.themes}?subject=${courseId}` : endpoints.lms.themes
-      return apiCall('get', url)
-    },
-
     async createTheme(themeData) {
-      const response = await apiCall('post', endpoints.lms.themes, themeData)
-      showSuccess('Тема успешно создана')
-      return response
+      loading.value = true
+      try {
+        const response = await lmsService.createTheme(themeData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
     async updateTheme(id, themeData) {
-      const response = await apiCall('patch', `${endpoints.lms.themes}${id}/`, themeData)
-      showSuccess('Тема успешно обновлена')
-      return response
+      loading.value = true
+      try {
+        const response = await lmsService.updateTheme(id, themeData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
     async deleteTheme(id) {
-      const response = await apiCall('delete', `${endpoints.lms.themes}${id}/`)
-      showSuccess('Тема успешно удалена')
-      return response
+      loading.value = true
+      try {
+        const response = await lmsService.deleteTheme(id)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
     // Уроки
-    async getLessons(themeId = null) {
-      const url = themeId ? `${endpoints.lms.lessons}?theme=${themeId}` : endpoints.lms.lessons
-      return apiCall('get', url)
-    },
-
     async createLesson(lessonData) {
-      const response = await apiCall('post', endpoints.lms.lessons, lessonData)
-      showSuccess('Урок успешно создан')
-      return response
+      loading.value = true
+      try {
+        const response = await lmsService.createLesson(lessonData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
     async updateLesson(id, lessonData) {
-      const response = await apiCall('patch', `${endpoints.lms.lessons}${id}/`, lessonData)
-      showSuccess('Урок успешно обновлен')
-      return response
+      loading.value = true
+      try {
+        const response = await lmsService.updateLesson(id, lessonData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
     async deleteLesson(id) {
-      const response = await apiCall('delete', `${endpoints.lms.lessons}${id}/`)
-      showSuccess('Урок успешно удален')
-      return response
+      loading.value = true
+      try {
+        const response = await lmsService.deleteLesson(id)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
-    // Статистика
-    async getStudentStats() {
-      return apiCall('get', endpoints.lms.studentStats)
+    async duplicateLesson(lesson) {
+      loading.value = true
+      try {
+        const response = await lmsService.duplicateLesson(lesson)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
-    async getTeacherStats() {
-      return apiCall('get', endpoints.lms.teacherStats)
+    async toggleLessonVisibility(lesson) {
+      loading.value = true
+      try {
+        const response = await lmsService.toggleLessonVisibility(lesson)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     },
 
-    async getDashboardData() {
-      return apiCall('get', endpoints.lms.dashboard)
+    // Тесты
+    async createTest(testData) {
+      loading.value = true
+      try {
+        const response = await lmsService.createTest(testData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async updateTest(id, testData) {
+      loading.value = true
+      try {
+        const response = await lmsService.updateTest(id, testData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async deleteTest(id) {
+      loading.value = true
+      try {
+        const response = await lmsService.deleteTest(id)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async duplicateTest(test) {
+      loading.value = true
+      try {
+        const response = await lmsService.duplicateTest(test)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    // Задания
+    async createAssignment(assignmentData) {
+      loading.value = true
+      try {
+        const response = await lmsService.createAssignment(assignmentData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async updateAssignment(id, assignmentData) {
+      loading.value = true
+      try {
+        const response = await lmsService.updateAssignment(id, assignmentData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async deleteAssignment(id) {
+      loading.value = true
+      try {
+        const response = await lmsService.deleteAssignment(id)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    // Форумы
+    async createForum(forumData) {
+      loading.value = true
+      try {
+        const response = await lmsService.createForum(forumData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async updateForum(id, forumData) {
+      loading.value = true
+      try {
+        const response = await lmsService.updateForum(id, forumData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async deleteForum(id) {
+      loading.value = true
+      try {
+        const response = await lmsService.deleteForum(id)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    // Ресурсы
+    async createResource(resourceData) {
+      loading.value = true
+      try {
+        const response = await lmsService.createResource(resourceData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async updateResource(id, resourceData) {
+      loading.value = true
+      try {
+        const response = await lmsService.updateResource(id, resourceData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async deleteResource(id) {
+      loading.value = true
+      try {
+        const response = await lmsService.deleteResource(id)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async toggleResourceVisibility(resource) {
+      loading.value = true
+      try {
+        const response = await lmsService.toggleResourceVisibility(resource)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    // Элементы урока
+    async getLessonItems(lessonId) {
+      loading.value = true
+      try {
+        const response = await lmsService.getLessonItems(lessonId)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async reorderLessonItems(reorderData) {
+      loading.value = true
+      try {
+        const response = await lmsService.reorderLessonItems(reorderData)
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
+    },
+
+    async migrateLessonItems() {
+      loading.value = true
+      try {
+        const response = await lmsService.migrateLessonItems()
+        return response
+      } catch (err) {
+        error.value = err.message || 'Произошла ошибка'
+        throw err
+      } finally {
+        loading.value = false
+      }
     }
   }
 
@@ -182,7 +408,6 @@ export function useApi() {
     data: computed(() => data.value),
 
     // Методы
-    apiCall,
     lmsApi,
 
     // Утилиты
@@ -191,54 +416,30 @@ export function useApi() {
   }
 }
 
-// Глобальные вспомогательные функции
+// Упрощенная функция для быстрого доступа к LMS API
 export function useLmsData() {
   const { lmsApi, loading, error } = useApi()
 
-  // Часто используемые данные с кэшированием
-  const coursesCache = ref(null)
-  const themesCache = ref(new Map())
-  const lessonsCache = ref(new Map())
+  // Кэш для данных (можно расширить при необходимости)
+  const dataCache = ref(null)
 
-  async function getCachedCourses(forceRefresh = false) {
-    if (!coursesCache.value || forceRefresh) {
-      const response = await lmsApi.getCourses()
-      coursesCache.value = response.data.results || response.data || []
+  async function getCachedAllData(forceRefresh = false) {
+    if (!dataCache.value || forceRefresh) {
+      const response = await lmsApi.fetchAllLessonsData()
+      dataCache.value = response.data
     }
-    return coursesCache.value
-  }
-
-  async function getCachedThemes(courseId, forceRefresh = false) {
-    const cacheKey = courseId || 'all'
-    if (!themesCache.value.has(cacheKey) || forceRefresh) {
-      const response = await lmsApi.getThemes(courseId)
-      themesCache.value.set(cacheKey, response.data.results || response.data || [])
-    }
-    return themesCache.value.get(cacheKey)
-  }
-
-  async function getCachedLessons(themeId, forceRefresh = false) {
-    const cacheKey = themeId || 'all'
-    if (!lessonsCache.value.has(cacheKey) || forceRefresh) {
-      const response = await lmsApi.getLessons(themeId)
-      lessonsCache.value.set(cacheKey, response.data.results || response.data || [])
-    }
-    return lessonsCache.value.get(cacheKey)
+    return dataCache.value
   }
 
   function invalidateCache() {
-    coursesCache.value = null
-    themesCache.value.clear()
-    lessonsCache.value.clear()
+    dataCache.value = null
   }
 
   return {
     lmsApi,
     loading,
     error,
-    getCachedCourses,
-    getCachedThemes,
-    getCachedLessons,
+    getCachedAllData,
     invalidateCache
   }
 } 

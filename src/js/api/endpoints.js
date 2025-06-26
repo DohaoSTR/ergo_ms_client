@@ -263,7 +263,12 @@ export const endpoints = {
         // Аналитика
         studentStats: 'lms/analytics/student/',
         teacherStats: 'lms/analytics/teacher/',
-        dashboard: 'lms/analytics/dashboard/'
+        dashboard: 'lms/analytics/dashboard/',
+        
+        // Элементы урока
+        lessonItems: 'lms/lesson-items/by-lesson/',
+        reorderLessonItems: 'lms/lesson-items/reorder/',
+        migrateLessonItems: 'lms/lesson-items/migrate/'
     },
     userAvatars: {
         list: 'settings/user-avatars/',

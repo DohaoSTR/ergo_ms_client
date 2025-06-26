@@ -261,249 +261,23 @@
 
                           <!-- Содержимое урока - теперь условно отображаемое -->
                           <div v-show="isLessonExpanded(lesson.id)" class="card-body">
-                            <!-- Тесты урока -->
-                            <div class="mb-4">
-                              <h6 class="d-flex align-items-center gap-2 mb-3">
-                                <FileCheck :size="16" />
-                                Тесты
-                                <span class="badge bg-info">{{ getLessonTests(lesson.id).length }}</span>
-                              </h6>
-                              
-                              <div v-if="getLessonTests(lesson.id).length === 0" class="text-center py-2 bg-light rounded">
-                                <FileCheck :size="20" class="text-muted mb-1" />
-                                <p class="text-muted small mb-0">Нет тестов</p>
-                              </div>
-                              
-                              <draggable 
-                                :list="getLessonTests(lesson.id)" 
-                                group="tests"
-                                :animation="300"
-                                @end="onTestEnd($event, lesson.id)"
-                                @start="onTestStart"
-                                item-key="id"
-                                tag="div"
-                                class="row test-sortable"
-                                handle=".test-drag-handle"
-                                :disabled="false"
-                                ghost-class="sortable-ghost"
-                                chosen-class="sortable-chosen"
-                                drag-class="sortable-drag"
-                              >
-                                <template #item="{ element: test }">
-                                  <div class="col-md-6 mb-3 test-draggable-item" :data-test-id="test.id">
-                                    <div class="card border-info h-100">
-                                      <div class="card-body p-3">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                          <div class="test-drag-handle d-flex align-items-center me-2">
-                                            <GripVertical :size="12" class="text-muted" />
-                                          </div>
-                                          <div class="flex-grow-1">
-                                            <h6 class="card-title mb-1">{{ test.title || test.name }}</h6>
-                                            <small class="text-muted d-block">{{ getTestTypeLabel(test.type) }}</small>
-                                            <div class="mt-2">
-                                              <span class="badge bg-info small me-1">{{ test.duration_minutes }}мин</span>
-                                              <span class="badge bg-secondary small me-1">{{ test.passing_score }}%</span>
-                                              <span class="badge bg-primary small">{{ test.questions_count || 0 }} вопросов</span>
-                                            </div>
-                                            <div v-if="test.description" class="mt-2">
-                                              <small class="text-muted">{{ test.description.substring(0, 80) }}{{ test.description.length > 80 ? '...' : '' }}</small>
-                                            </div>
-                                          </div>
-                                          <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                                              <MoreVertical :size="12" />
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                              <li>
-                                                <a class="dropdown-item" href="#" @click.prevent="$emit('openQuestionManagement', test)">
-                                                  <HelpCircle :size="12" class="me-2" />
-                                                  Управление вопросами
-                                                </a>
-                                              </li>
-                                              <li><hr class="dropdown-divider"></li>
-                                              <li>
-                                                <a class="dropdown-item" href="#" @click.prevent="$emit('editTest', test)">
-                                                  <Edit :size="12" class="me-2" />
-                                                  Редактировать тест
-                                                </a>
-                                              </li>
-                                              <li>
-                                                <a class="dropdown-item" href="#" @click.prevent="$emit('duplicateTest', test)">
-                                                  <Copy :size="12" class="me-2" />
-                                                  Дублировать
-                                                </a>
-                                              </li>
-                                              <li><hr class="dropdown-divider"></li>
-                                              <li>
-                                                <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('deleteTest', test)">
-                                                  <Trash2 :size="12" class="me-2" />
-                                                  Удалить
-                                                </a>
-                                              </li>
-                                            </ul>
-                                          </div>
-                                        </div>
-                                        
-                                        <!-- Кнопка быстрого управления вопросами -->
-                                        <div class="mt-2">
-                                          <button 
-                                            class="btn btn-outline-primary btn-sm w-100"
-                                            @click="$emit('openQuestionManagement', test)"
-                                          >
-                                            <HelpCircle :size="14" class="me-1" />
-                                            Управление вопросами
-                                          </button>
-                                        </div>
-                                        
-                                        <!-- Статус теста -->
-                                        <div class="mt-2 d-flex justify-content-between align-items-center">
-                                          <div>
-                                            <span v-if="test.is_active" class="badge bg-success small">Активен</span>
-                                            <span v-else class="badge bg-secondary small">Неактивен</span>
-                                          </div>
-                                          <small class="text-muted">
-                                            {{ test.max_attempts }} {{ getPluralForm(test.max_attempts, 'попытка', 'попытки', 'попыток') }}
-                                          </small>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </template>
-                              </draggable>
-                            </div>
-
-                            <!-- Задания урока -->
-                            <div class="mb-4">
-                              <h6 class="d-flex align-items-center gap-2 mb-3">
-                                <ClipboardList :size="16" />
-                                Задания
-                                <span class="badge bg-warning">{{ getLessonAssignments(lesson.id).length }}</span>
-                              </h6>
-                              
-                              <div v-if="getLessonAssignments(lesson.id).length === 0" class="text-center py-2 bg-light rounded">
-                                <ClipboardList :size="20" class="text-muted mb-1" />
-                                <p class="text-muted small mb-0">Нет заданий</p>
-                              </div>
-                              
-                              <draggable 
-                                :list="getLessonAssignments(lesson.id)" 
-                                group="assignments"
-                                :animation="300"
-                                @end="onAssignmentEnd($event, lesson.id)"
-                                @start="onAssignmentStart"
-                                item-key="id"
-                                tag="div"
-                                class="row assignment-sortable"
-                                handle=".assignment-drag-handle"
-                                :disabled="false"
-                                ghost-class="sortable-ghost"
-                                chosen-class="sortable-chosen"
-                                drag-class="sortable-drag"
-                              >
-                                <template #item="{ element: assignment }">
-                                  <div class="col-md-4 mb-2 assignment-draggable-item" :data-assignment-id="assignment.id">
-                                    <div class="card border-warning">
-                                      <div class="card-body p-3">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                          <div class="assignment-drag-handle d-flex align-items-center me-2">
-                                            <GripVertical :size="12" class="text-muted" />
-                                          </div>
-                                          <div class="flex-grow-1">
-                                            <h6 class="card-title mb-1">{{ assignment.title }}</h6>
-                                            <small class="text-muted">{{ assignment.submission_type }}</small>
-                                            <div class="mt-1">
-                                              <span class="badge bg-warning small">{{ assignment.max_grade }} баллов</span>
-                                              <span v-if="assignment.deadline" class="badge bg-secondary small">
-                                                {{ formatDate(assignment.deadline) }}
-                                              </span>
-                                            </div>
-                                          </div>
-                                          <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                                              <MoreVertical :size="12" />
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                              <li>
-                                                <a class="dropdown-item" href="#" @click.prevent="$emit('editAssignment', assignment)">
-                                                  <Edit :size="12" class="me-2" />
-                                                  Редактировать
-                                                </a>
-                                              </li>
-                                              <li><hr class="dropdown-divider"></li>
-                                              <li>
-                                                <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('deleteAssignment', assignment)">
-                                                  <Trash2 :size="12" class="me-2" />
-                                                  Удалить
-                                                </a>
-                                              </li>
-                                            </ul>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </template>
-                              </draggable>
-                            </div>
-
-                            <!-- Ресурсы урока -->
-                            <div>
-                              <h6 class="d-flex align-items-center gap-2 mb-3">
-                                <Upload :size="16" />
-                                Ресурсы
-                                <span class="badge bg-success">{{ getLessonResources(lesson.id).length }}</span>
-                              </h6>
-                              
-                              <div v-if="getLessonResources(lesson.id).length === 0" class="text-center py-2 bg-light rounded">
-                                <Upload :size="20" class="text-muted mb-1" />
-                                <p class="text-muted small mb-0">Нет ресурсов</p>
-                              </div>
-                              
-                              <div v-else class="row">
-                                <div v-for="resource in getLessonResources(lesson.id)" :key="resource.id" class="col-md-4 mb-2">
-                                  <div class="card border-success">
-                                    <div class="card-body p-3">
-                                      <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                          <h6 class="card-title mb-1">{{ resource.name }}</h6>
-                                          <small class="text-muted">{{ resource.file_type }}</small>
-                                          <div class="mt-1">
-                                            <span class="badge bg-success small">{{ resource.file_size_formatted }}</span>
-                                            <span class="badge bg-secondary small">{{ resource.download_count }} скачиваний</span>
-                                          </div>
-                                        </div>
-                                        <div class="dropdown">
-                                          <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                                            <MoreVertical :size="12" />
-                                          </button>
-                                          <ul class="dropdown-menu">
-                                            <li>
-                                              <a class="dropdown-item" href="#" @click.prevent="$emit('editResource', resource)">
-                                                <Edit :size="12" class="me-2" />
-                                                Редактировать
-                                              </a>
-                                            </li>
-                                            <li>
-                                              <a class="dropdown-item" href="#" @click.prevent="downloadResource(resource)">
-                                                <Download :size="12" class="me-2" />
-                                                Скачать
-                                              </a>
-                                            </li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                              <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('deleteResource', resource)">
-                                                <Trash2 :size="12" class="me-2" />
-                                                Удалить
-                                              </a>
-                                            </li>
-                                          </ul>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
+                            <!-- Новый компонент для управления элементами урока -->
+                            <LessonItems
+                              :lesson-id="lesson.id"
+                              :items="getLessonItems(lesson.id)"
+                              @reorder="handleLessonItemsReorder"
+                              @create-test="() => $emit('createTest', null, lesson)"
+                              @create-assignment="() => $emit('createAssignment', null, lesson)"
+                              @create-resource="() => $emit('createResource', lesson)"
+                              @edit-test="$emit('editTest', $event)"
+                              @edit-assignment="$emit('editAssignment', $event)"
+                              @edit-resource="$emit('editResource', $event)"
+                              @delete-test="$emit('deleteTest', $event)"
+                              @delete-assignment="$emit('deleteAssignment', $event)"
+                              @delete-resource="$emit('deleteResource', $event)"
+                              @open-question-management="$emit('openQuestionManagement', $event)"
+                              @duplicate-test="$emit('duplicateTest', $event)"
+                            />
                           </div>
                             </div>
                           </div>
@@ -597,6 +371,7 @@ import {
 } from 'lucide-vue-next'
 import draggable from 'vuedraggable'
 import CourseImagePlaceholder from '../../components/CourseImagePlaceholder.vue'
+import LessonItems from './LessonItems.vue'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
 import { computed } from 'vue'
@@ -645,7 +420,8 @@ const emit = defineEmits([
   'reorderThemes',
   'reorderLessons',
   'reorderTests',
-  'reorderAssignments'
+  'reorderAssignments',
+  'reorderLessonItems'
 ])
 
 const lessonTypes = [
@@ -1034,6 +810,59 @@ function onTestStart(evt) {
 function onAssignmentStart(evt) {
   console.log('🔄 Начало перетаскивания задания')
   return true
+}
+
+// Методы для работы с элементами урока (новая унифицированная система)
+function getLessonItems(lessonId) {
+  // Собираем все элементы урока в единый массив
+  const items = []
+  
+  // Добавляем тесты
+  const tests = getLessonTests(lessonId)
+  tests.forEach((test, index) => {
+    items.push({
+      id: `test_${test.id}`,
+      item_type: 'test',
+      sort_order: test.sort_order || index,
+      content: test,
+      display_name: test.title || test.name
+    })
+  })
+  
+  // Добавляем задания
+  const assignments = getLessonAssignments(lessonId)
+  assignments.forEach((assignment, index) => {
+    items.push({
+      id: `assignment_${assignment.id}`,
+      item_type: 'assignment',
+      sort_order: assignment.sort_order || index + 1000, // Offset to avoid conflicts
+      content: assignment,
+      display_name: assignment.title
+    })
+  })
+  
+  // Добавляем ресурсы
+  const resources = getLessonResources(lessonId)
+  resources.forEach((resource, index) => {
+    items.push({
+      id: `resource_${resource.id}`,
+      item_type: 'resource',
+      sort_order: resource.sort_order || index + 2000, // Offset to avoid conflicts
+      content: resource,
+      display_name: resource.name
+    })
+  })
+  
+  // Сортируем по sort_order
+  return items.sort((a, b) => a.sort_order - b.sort_order)
+}
+
+// Обработка изменения порядка элементов урока
+async function handleLessonItemsReorder(reorderData) {
+  console.log('🔄 Изменение порядка элементов урока в MainContent:', reorderData)
+  
+  // Просто передаем событие родительскому компоненту
+  emit('reorderLessonItems', reorderData)
 }
 
 

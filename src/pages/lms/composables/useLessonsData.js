@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue'
-import { apiClient } from '@/js/api/manager'
-import { endpoints } from '@/js/api/endpoints'
+import { lmsService } from '@/js/api/services/lmsService'
 import { showError } from '@/js/utils/notifications'
 
 export function useLessonsData() {
@@ -176,37 +175,17 @@ export function useLessonsData() {
     try {
       loading.value = true
       
-      const [
-        coursesResponse, 
-        themesResponse, 
-        lessonsResponse, 
-        forumsResponse, 
-        testsResponse,
-        assignmentsResponse,
-        resourcesResponse,
-        categoriesResponse, 
-        formatsResponse
-      ] = await Promise.all([
-        apiClient.get(endpoints.lms.subjects),
-        apiClient.get(endpoints.lms.themes),
-        apiClient.get(endpoints.lms.lessons),
-        apiClient.get(endpoints.lms.forums).catch(() => ({ data: [] })),
-        apiClient.get(endpoints.lms.tests).catch(() => ({ data: [] })),
-        apiClient.get(endpoints.lms.assignments).catch(() => ({ data: [] })),
-        apiClient.get(endpoints.lms.resources).catch(() => ({ data: [] })),
-        apiClient.get(endpoints.lms.categories).catch(() => ({ data: [] })),
-        apiClient.get(endpoints.lms.courseFormats).catch(() => ({ data: [] }))
-      ])
+      const data = await lmsService.fetchAllLessonsData()
       
-      courses.value = coursesResponse.data?.results || coursesResponse.data || []
-      themes.value = themesResponse.data?.results || themesResponse.data || []
-      lessons.value = lessonsResponse.data?.results || lessonsResponse.data || []
-      forums.value = forumsResponse.data?.results || forumsResponse.data || []
-      tests.value = testsResponse.data?.results || testsResponse.data || []
-      assignments.value = assignmentsResponse.data?.results || assignmentsResponse.data || []
-      resources.value = resourcesResponse.data?.results || resourcesResponse.data || []
-      categories.value = categoriesResponse.data?.results || categoriesResponse.data || []
-      courseFormats.value = formatsResponse.data?.results || formatsResponse.data || []
+      courses.value = data.courses
+      themes.value = data.themes
+      lessons.value = data.lessons
+      forums.value = data.forums
+      tests.value = data.tests
+      assignments.value = data.assignments
+      resources.value = data.resources
+      categories.value = data.categories
+      courseFormats.value = data.courseFormats
       
     } catch (error) {
       console.error('Ошибка загрузки данных:', error)
