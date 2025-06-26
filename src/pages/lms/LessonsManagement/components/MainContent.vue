@@ -274,44 +274,102 @@
                                 <p class="text-muted small mb-0">Нет тестов</p>
                               </div>
                               
-                              <div v-else class="row">
-                                <div v-for="test in getLessonTests(lesson.id)" :key="test.id" class="col-md-4 mb-2">
-                                  <div class="card border-info">
-                                    <div class="card-body p-3">
-                                      <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                          <h6 class="card-title mb-1">{{ test.name }}</h6>
-                                          <small class="text-muted">{{ test.type_display || test.type }}</small>
-                                          <div class="mt-1">
-                                            <span class="badge bg-info small">{{ test.duration_minutes }}мин</span>
-                                            <span class="badge bg-secondary small">{{ test.passing_score }}%</span>
+                              <draggable 
+                                :list="getLessonTests(lesson.id)" 
+                                group="tests"
+                                :animation="300"
+                                @end="onTestEnd($event, lesson.id)"
+                                @start="onTestStart"
+                                item-key="id"
+                                tag="div"
+                                class="row test-sortable"
+                                handle=".test-drag-handle"
+                                :disabled="false"
+                                ghost-class="sortable-ghost"
+                                chosen-class="sortable-chosen"
+                                drag-class="sortable-drag"
+                              >
+                                <template #item="{ element: test }">
+                                  <div class="col-md-6 mb-3 test-draggable-item" :data-test-id="test.id">
+                                    <div class="card border-info h-100">
+                                      <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                          <div class="test-drag-handle d-flex align-items-center me-2">
+                                            <GripVertical :size="12" class="text-muted" />
+                                          </div>
+                                          <div class="flex-grow-1">
+                                            <h6 class="card-title mb-1">{{ test.title || test.name }}</h6>
+                                            <small class="text-muted d-block">{{ getTestTypeLabel(test.type) }}</small>
+                                            <div class="mt-2">
+                                              <span class="badge bg-info small me-1">{{ test.duration_minutes }}мин</span>
+                                              <span class="badge bg-secondary small me-1">{{ test.passing_score }}%</span>
+                                              <span class="badge bg-primary small">{{ test.questions_count || 0 }} вопросов</span>
+                                            </div>
+                                            <div v-if="test.description" class="mt-2">
+                                              <small class="text-muted">{{ test.description.substring(0, 80) }}{{ test.description.length > 80 ? '...' : '' }}</small>
+                                            </div>
+                                          </div>
+                                          <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                                              <MoreVertical :size="12" />
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                              <li>
+                                                <a class="dropdown-item" href="#" @click.prevent="$emit('openQuestionManagement', test)">
+                                                  <HelpCircle :size="12" class="me-2" />
+                                                  Управление вопросами
+                                                </a>
+                                              </li>
+                                              <li><hr class="dropdown-divider"></li>
+                                              <li>
+                                                <a class="dropdown-item" href="#" @click.prevent="$emit('editTest', test)">
+                                                  <Edit :size="12" class="me-2" />
+                                                  Редактировать тест
+                                                </a>
+                                              </li>
+                                              <li>
+                                                <a class="dropdown-item" href="#" @click.prevent="$emit('duplicateTest', test)">
+                                                  <Copy :size="12" class="me-2" />
+                                                  Дублировать
+                                                </a>
+                                              </li>
+                                              <li><hr class="dropdown-divider"></li>
+                                              <li>
+                                                <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('deleteTest', test)">
+                                                  <Trash2 :size="12" class="me-2" />
+                                                  Удалить
+                                                </a>
+                                              </li>
+                                            </ul>
                                           </div>
                                         </div>
-                                        <div class="dropdown">
-                                          <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                                            <MoreVertical :size="12" />
+                                        
+                                        <!-- Кнопка быстрого управления вопросами -->
+                                        <div class="mt-2">
+                                          <button 
+                                            class="btn btn-outline-primary btn-sm w-100"
+                                            @click="$emit('openQuestionManagement', test)"
+                                          >
+                                            <HelpCircle :size="14" class="me-1" />
+                                            Управление вопросами
                                           </button>
-                                          <ul class="dropdown-menu">
-                                            <li>
-                                              <a class="dropdown-item" href="#" @click.prevent="$emit('editTest', test)">
-                                                <Edit :size="12" class="me-2" />
-                                                Редактировать
-                                              </a>
-                                            </li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                              <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('deleteTest', test)">
-                                                <Trash2 :size="12" class="me-2" />
-                                                Удалить
-                                              </a>
-                                            </li>
-                                          </ul>
+                                        </div>
+                                        
+                                        <!-- Статус теста -->
+                                        <div class="mt-2 d-flex justify-content-between align-items-center">
+                                          <div>
+                                            <span v-if="test.is_active" class="badge bg-success small">Активен</span>
+                                            <span v-else class="badge bg-secondary small">Неактивен</span>
+                                          </div>
+                                          <small class="text-muted">
+                                            {{ test.max_attempts }} {{ getPluralForm(test.max_attempts, 'попытка', 'попытки', 'попыток') }}
+                                          </small>
                                         </div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
-                              </div>
+                                </template>
+                              </draggable>
                             </div>
 
                             <!-- Задания урока -->
@@ -327,46 +385,65 @@
                                 <p class="text-muted small mb-0">Нет заданий</p>
                               </div>
                               
-                              <div v-else class="row">
-                                <div v-for="assignment in getLessonAssignments(lesson.id)" :key="assignment.id" class="col-md-4 mb-2">
-                                  <div class="card border-warning">
-                                    <div class="card-body p-3">
-                                      <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                          <h6 class="card-title mb-1">{{ assignment.title }}</h6>
-                                          <small class="text-muted">{{ assignment.submission_type }}</small>
-                                          <div class="mt-1">
-                                            <span class="badge bg-warning small">{{ assignment.max_grade }} баллов</span>
-                                            <span v-if="assignment.deadline" class="badge bg-secondary small">
-                                              {{ formatDate(assignment.deadline) }}
-                                            </span>
+                              <draggable 
+                                :list="getLessonAssignments(lesson.id)" 
+                                group="assignments"
+                                :animation="300"
+                                @end="onAssignmentEnd($event, lesson.id)"
+                                @start="onAssignmentStart"
+                                item-key="id"
+                                tag="div"
+                                class="row assignment-sortable"
+                                handle=".assignment-drag-handle"
+                                :disabled="false"
+                                ghost-class="sortable-ghost"
+                                chosen-class="sortable-chosen"
+                                drag-class="sortable-drag"
+                              >
+                                <template #item="{ element: assignment }">
+                                  <div class="col-md-4 mb-2 assignment-draggable-item" :data-assignment-id="assignment.id">
+                                    <div class="card border-warning">
+                                      <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                          <div class="assignment-drag-handle d-flex align-items-center me-2">
+                                            <GripVertical :size="12" class="text-muted" />
                                           </div>
-                                        </div>
-                                        <div class="dropdown">
-                                          <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                                            <MoreVertical :size="12" />
-                                          </button>
-                                          <ul class="dropdown-menu">
-                                            <li>
-                                              <a class="dropdown-item" href="#" @click.prevent="$emit('editAssignment', assignment)">
-                                                <Edit :size="12" class="me-2" />
-                                                Редактировать
-                                              </a>
-                                            </li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                              <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('deleteAssignment', assignment)">
-                                                <Trash2 :size="12" class="me-2" />
-                                                Удалить
-                                              </a>
-                                            </li>
-                                          </ul>
+                                          <div class="flex-grow-1">
+                                            <h6 class="card-title mb-1">{{ assignment.title }}</h6>
+                                            <small class="text-muted">{{ assignment.submission_type }}</small>
+                                            <div class="mt-1">
+                                              <span class="badge bg-warning small">{{ assignment.max_grade }} баллов</span>
+                                              <span v-if="assignment.deadline" class="badge bg-secondary small">
+                                                {{ formatDate(assignment.deadline) }}
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                                              <MoreVertical :size="12" />
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                              <li>
+                                                <a class="dropdown-item" href="#" @click.prevent="$emit('editAssignment', assignment)">
+                                                  <Edit :size="12" class="me-2" />
+                                                  Редактировать
+                                                </a>
+                                              </li>
+                                              <li><hr class="dropdown-divider"></li>
+                                              <li>
+                                                <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('deleteAssignment', assignment)">
+                                                  <Trash2 :size="12" class="me-2" />
+                                                  Удалить
+                                                </a>
+                                              </li>
+                                            </ul>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
-                              </div>
+                                </template>
+                              </draggable>
                             </div>
 
                             <!-- Ресурсы урока -->
@@ -515,7 +592,8 @@ import {
   Plus, Edit, Trash2, Copy, EyeOff, MoreVertical,
   BookOpen, FolderOpen, Hash, Video, FileText, Link, 
   MessageSquare, Calendar, Award, TestTube,
-  FileCheck, ClipboardList, Eye, GripVertical, Upload, Download
+  FileCheck, ClipboardList, Eye, GripVertical, Upload, Download,
+  HelpCircle
 } from 'lucide-vue-next'
 import draggable from 'vuedraggable'
 import CourseImagePlaceholder from '../../components/CourseImagePlaceholder.vue'
@@ -550,6 +628,8 @@ const emit = defineEmits([
   'createTest',
   'editTest',
   'deleteTest',
+  'duplicateTest',
+  'openQuestionManagement',
   'createAssignment',
   'editAssignment',
   'deleteAssignment',
@@ -563,7 +643,9 @@ const emit = defineEmits([
   'toggleCourse',
   'toggleLesson',
   'reorderThemes',
-  'reorderLessons'
+  'reorderLessons',
+  'reorderTests',
+  'reorderAssignments'
 ])
 
 const lessonTypes = [
@@ -596,6 +678,34 @@ function getForumTypeName(type) {
     'announcement': 'Объявления'
   }
   return forumTypes[type] || 'Неизвестный тип'
+}
+
+function getTestTypeLabel(type) {
+  const testTypes = {
+    'C': 'Закрытые вопросы',
+    'O': 'Открытые вопросы',
+    'G': 'Игровой формат'
+  }
+  return testTypes[type] || 'Неизвестный тип'
+}
+
+function getPluralForm(count, singular, few, many) {
+  const lastDigit = count % 10
+  const lastTwoDigits = count % 100
+  
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return many
+  }
+  
+  if (lastDigit === 1) {
+    return singular
+  }
+  
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return few
+  }
+  
+  return many
 }
 
 function isThemeExpanded(themeId) {
@@ -811,6 +921,122 @@ function onLessonStart(evt) {
 }
 
 
+
+// Обработка окончания перетаскивания тестов
+async function onTestEnd(evt, lessonId) {
+  console.log('🔄 Событие окончания перетаскивания тестов:', evt)
+  
+  // Проверяем, произошло ли реальное перемещение
+  if (evt.oldIndex === evt.newIndex) {
+    console.log('🔄 Элемент не был перемещен')
+    return
+  }
+
+  console.log('🔄 Тест перемещен в уроке:', { 
+    lessonId, 
+    oldIndex: evt.oldIndex, 
+    newIndex: evt.newIndex 
+  })
+
+  // Получаем актуальный список тестов урока в новом порядке
+  const lessonTests = getLessonTests(lessonId)
+  
+  // Создаем новый массив с правильным порядком
+  const reorderedTests = [...lessonTests]
+  const [movedTest] = reorderedTests.splice(evt.oldIndex, 1)
+  reorderedTests.splice(evt.newIndex, 0, movedTest)
+  
+  const testIds = reorderedTests.map(test => test.id)
+  
+  console.log('📋 Новый порядок тестов:', testIds)
+
+  try {
+    // Отправляем запрос на сервер для изменения порядка тестов
+    const response = await apiClient.post('lms/api/tests/reorder_tests/', {
+      test_ids: testIds,
+      context: { lesson_id: lessonId }
+    })
+
+    console.log('✅ Порядок тестов успешно обновлен на сервере:', response.data)
+    
+    // Уведомляем родительский компонент об успешном изменении
+    emit('reorderTests', { lessonId, testIds, success: true })
+    
+  } catch (error) {
+    console.error('❌ Ошибка при сохранении порядка тестов:', error)
+    
+    // В случае ошибки уведомляем родителя
+    emit('reorderTests', { lessonId, error: true })
+    
+    // Показываем уведомление об ошибке
+    console.error('Не удалось сохранить новый порядок тестов. Попробуйте еще раз.')
+  }
+}
+
+// Обработка окончания перетаскивания заданий
+async function onAssignmentEnd(evt, lessonId) {
+  console.log('🔄 Событие окончания перетаскивания заданий:', evt)
+  
+  // Проверяем, произошло ли реальное перемещение
+  if (evt.oldIndex === evt.newIndex) {
+    console.log('🔄 Элемент не был перемещен')
+    return
+  }
+
+  console.log('🔄 Задание перемещено в уроке:', { 
+    lessonId, 
+    oldIndex: evt.oldIndex, 
+    newIndex: evt.newIndex 
+  })
+
+  // Получаем актуальный список заданий урока в новом порядке
+  const lessonAssignments = getLessonAssignments(lessonId)
+  
+  // Создаем новый массив с правильным порядком
+  const reorderedAssignments = [...lessonAssignments]
+  const [movedAssignment] = reorderedAssignments.splice(evt.oldIndex, 1)
+  reorderedAssignments.splice(evt.newIndex, 0, movedAssignment)
+  
+  const assignmentIds = reorderedAssignments.map(assignment => assignment.id)
+  
+  console.log('📋 Новый порядок заданий:', assignmentIds)
+
+  try {
+    // Отправляем запрос на сервер для изменения порядка заданий
+    const response = await apiClient.post('lms/api/assignments/reorder_assignments/', {
+      assignment_ids: assignmentIds,
+      context: { lesson_id: lessonId }
+    })
+
+    console.log('✅ Порядок заданий успешно обновлен на сервере:', response.data)
+    
+    // Уведомляем родительский компонент об успешном изменении
+    emit('reorderAssignments', { lessonId, assignmentIds, success: true })
+    
+  } catch (error) {
+    console.error('❌ Ошибка при сохранении порядка заданий:', error)
+    
+    // В случае ошибки уведомляем родителя
+    emit('reorderAssignments', { lessonId, error: true })
+    
+    // Показываем уведомление об ошибке
+    console.error('Не удалось сохранить новый порядок заданий. Попробуйте еще раз.')
+  }
+}
+
+// Проверка возможности начала перетаскивания теста
+function onTestStart(evt) {
+  console.log('🔄 Начало перетаскивания теста')
+  return true
+}
+
+// Проверка возможности начала перетаскивания задания
+function onAssignmentStart(evt) {
+  console.log('🔄 Начало перетаскивания задания')
+  return true
+}
+
+
 </script>
 
 <style scoped>
@@ -985,6 +1211,120 @@ function onLessonStart(evt) {
 }
 
 .lesson-sortable .sortable-drag {
+  transform: rotate(1deg) scale(1.01) !important;
+  opacity: 0.95 !important;
+  transition: none !important;
+}
+
+/* Drag and Drop стили для тестов */
+.test-sortable {
+  min-height: 20px;
+}
+
+.test-draggable-item {
+  cursor: move;
+  transition: all 0.12s ease-out;
+  position: relative;
+  will-change: transform;
+}
+
+.test-draggable-item:hover {
+  background-color: rgba(13, 202, 240, 0.05);
+  border-radius: 0.375rem;
+}
+
+.test-drag-handle {
+  cursor: grab;
+  transition: all 0.12s ease-out;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  will-change: transform, color, background-color;
+}
+
+.test-drag-handle:hover {
+  transform: scale(1.1);
+  background-color: rgba(13, 202, 240, 0.1);
+  color: #0dcaf0 !important;
+}
+
+.test-drag-handle:active {
+  cursor: grabbing;
+}
+
+.test-sortable .sortable-ghost {
+  opacity: 0.4;
+  background-color: rgba(13, 202, 240, 0.1) !important;
+  border: 2px dashed #0dcaf0 !important;
+  border-radius: 0.375rem;
+  transition: none !important;
+}
+
+.test-sortable .sortable-chosen {
+  transform: scale(1.02) !important;
+  box-shadow: 0 8px 25px rgba(13, 202, 240, 0.25) !important;
+  z-index: 1000 !important;
+  border-radius: 0.375rem;
+  transition: none !important;
+}
+
+.test-sortable .sortable-drag {
+  transform: rotate(1deg) scale(1.01) !important;
+  opacity: 0.95 !important;
+  transition: none !important;
+}
+
+/* Drag and Drop стили для заданий */
+.assignment-sortable {
+  min-height: 20px;
+}
+
+.assignment-draggable-item {
+  cursor: move;
+  transition: all 0.12s ease-out;
+  position: relative;
+  will-change: transform;
+}
+
+.assignment-draggable-item:hover {
+  background-color: rgba(255, 193, 7, 0.05);
+  border-radius: 0.375rem;
+}
+
+.assignment-drag-handle {
+  cursor: grab;
+  transition: all 0.12s ease-out;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  will-change: transform, color, background-color;
+}
+
+.assignment-drag-handle:hover {
+  transform: scale(1.1);
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #ffc107 !important;
+}
+
+.assignment-drag-handle:active {
+  cursor: grabbing;
+}
+
+.assignment-sortable .sortable-ghost {
+  opacity: 0.4;
+  background-color: rgba(255, 193, 7, 0.1) !important;
+  border: 2px dashed #ffc107 !important;
+  border-radius: 0.375rem;
+  transition: none !important;
+}
+
+.assignment-sortable .sortable-chosen {
+  transform: scale(1.02) !important;
+  box-shadow: 0 8px 25px rgba(255, 193, 7, 0.25) !important;
+  z-index: 1000 !important;
+  border-radius: 0.375rem;
+  transition: none !important;
+}
+
+.assignment-sortable .sortable-drag {
   transform: rotate(1deg) scale(1.01) !important;
   opacity: 0.95 !important;
   transition: none !important;

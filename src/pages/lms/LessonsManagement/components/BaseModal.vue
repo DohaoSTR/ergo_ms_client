@@ -19,7 +19,7 @@
             @click="$emit('close')"
             :disabled="loading"
           >
-            Отмена
+            {{ cancelText }}
           </button>
           <button
             type="button"
@@ -65,6 +65,10 @@ const props = defineProps({
   confirmText: {
     type: String,
     default: 'Сохранить'
+  },
+  cancelText: {
+    type: String,
+    default: 'Отмена'
   },
   confirmVariant: {
     type: String,

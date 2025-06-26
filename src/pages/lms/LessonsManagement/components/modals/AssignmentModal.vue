@@ -300,10 +300,10 @@ function handleSave() {
     allow_late_submissions: Boolean(form.value.allow_late_submissions),
     submission_type: form.value.submission_type || 'file',
     max_file_size: (form.value.max_file_size_mb || 10) * 1024 * 1024,
-    // Привязка к сущностям
-    course: form.value.course,
-    theme: form.value.theme,
-    lesson: form.value.lesson
+    // Привязка к сущностям (используем правильные имена полей из API)
+    subject: form.value.course || null,
+    theme: form.value.theme || null,
+    lesson: form.value.lesson || null
   }
 
   emit('save', assignmentData, validationErrors)

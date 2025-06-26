@@ -249,14 +249,51 @@
           </label>
         </div>
       </div>
+
+      <!-- Управление вопросами для существующих тестов -->
+      <div v-if="editing && testData?.id" class="mb-3">
+        <hr class="my-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="mb-1">Вопросы теста</h6>
+            <small class="text-muted">Управление вопросами и их содержимым</small>
+          </div>
+          <button 
+            type="button" 
+            class="btn btn-outline-primary"
+            @click="openQuestionManagement"
+          >
+            <Settings :size="16" class="me-1" />
+            Управление вопросами
+          </button>
+        </div>
+      </div>
+
+      <!-- Сохранить и управлять вопросами для новых тестов -->
+      <div v-else-if="!editing" class="mb-3">
+        <div class="alert alert-info py-2">
+          <Info :size="16" class="me-2" />
+          <small>После создания теста вы сможете добавить вопросы</small>
+        </div>
+      </div>
     </form>
+
+    <!-- Модальное окно управления вопросами -->
+    <QuestionManagementModal
+      :show="showQuestionManagement"
+      :test-data="currentTestData"
+      :loading="questionManagementLoading"
+      @close="closeQuestionManagement"
+      @save="handleQuestionManagementSave"
+    />
   </BaseModal>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { FileCheck } from 'lucide-vue-next'
+import { FileCheck, Settings, Info } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
+import QuestionManagementModal from './QuestionManagementModal.vue'
 
 const props = defineProps({
   show: Boolean,
@@ -289,6 +326,9 @@ const form = ref({
 })
 
 const validationErrors = ref({})
+const showQuestionManagement = ref(false)
+const questionManagementLoading = ref(false)
+const currentTestData = ref(null)
 
 const filteredThemes = computed(() => {
   if (!form.value.course || !props.themes) return []
@@ -319,6 +359,23 @@ function onCourseChange() {
 
 function onThemeChange() {
   form.value.lesson = null
+}
+
+// Управление вопросами
+function openQuestionManagement() {
+  currentTestData.value = { ...props.testData }
+  showQuestionManagement.value = true
+}
+
+function closeQuestionManagement() {
+  showQuestionManagement.value = false
+  currentTestData.value = null
+}
+
+function handleQuestionManagementSave(data) {
+  // Здесь можно обработать сохранение вопросов
+  console.log('Сохранение вопросов:', data)
+  closeQuestionManagement()
 }
 
 function resetForm() {
@@ -390,10 +447,10 @@ function handleSave() {
     available_from: form.value.available_from || null,
     available_until: form.value.available_until || null,
     is_active: Boolean(form.value.is_active),
-    // Привязка к сущностям
-    course: form.value.course,
-    theme: form.value.theme,
-    lesson: form.value.lesson
+    // Привязка к сущностям (используем правильные имена полей из API)
+    subject: form.value.course || null,
+    theme: form.value.theme || null,
+    lesson: form.value.lesson || null
   }
 
   emit('save', testData, validationErrors)

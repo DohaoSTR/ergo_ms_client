@@ -63,6 +63,8 @@
         @createTest="openTestModal"
         @editTest="editTest"
         @deleteTest="deleteTest"
+        @duplicateTest="duplicateTest"
+        @openQuestionManagement="openQuestionManagement"
         @createAssignment="openAssignmentModal"
         @editAssignment="editAssignment"
         @deleteAssignment="deleteAssignment"
@@ -77,6 +79,8 @@
         @toggleLesson="toggleLesson"
         @reorderThemes="handleReorderThemes"
         @reorderLessons="handleReorderLessons"
+        @reorderTests="handleReorderTests"
+        @reorderAssignments="handleReorderAssignments"
       />
 
       <!-- Модальные окна -->
@@ -158,6 +162,14 @@
         @save="saveResource"
       />
 
+      <QuestionManagementModal
+        :show="questionManagementModal.showModal.value"
+        :test-data="questionManagementModal.formData.value"
+        :loading="questionManagementModal.isSubmitting.value"
+        @close="questionManagementModal.closeModal"
+        @save="handleQuestionManagementSave"
+      />
+
       <!-- Модальное окно подтверждения удаления -->
       <ConfirmDialog
         :show="confirmDialog.showConfirmDialog.value"
@@ -186,6 +198,7 @@ import TestModal from './components/modals/TestModal.vue'
 import AssignmentModal from './components/modals/AssignmentModal.vue'
 import ForumModal from './components/modals/ForumModal.vue'
 import ResourceModal from './components/modals/ResourceModal.vue'
+import QuestionManagementModal from './components/modals/QuestionManagementModal.vue'
 import FiltersSection from './components/FiltersSection.vue'
 import StatsSection from './components/StatsSection.vue'
 import MainContent from './components/MainContent.vue'
@@ -195,6 +208,7 @@ import { useLessonsData } from '../composables/useLessonsData'
 import { useCrudOperations } from '../composables/useCrudOperations'
 import { useConfirmDialog } from '../composables/useConfirmDialog'
 import { useFormManagement } from '../composables/useFormManagement'
+import { showSuccess, showError } from '@/js/utils/notifications'
 
 // Инициализация композаблов
 const lessonsData = useLessonsData()
@@ -218,6 +232,7 @@ const testModal = useFormManagement()
 const assignmentModal = useFormManagement()
 const forumModal = useFormManagement()
 const resourceModal = useFormManagement()
+const questionManagementModal = useFormManagement()
 
 // Методы для курсов
 function openCourseModal() {
@@ -640,6 +655,44 @@ function deleteTest(test) {
   })
 }
 
+async function duplicateTest(test) {
+  try {
+    await crudOperations.duplicateTest(test)
+    await lessonsData.fetchData()
+  } catch (error) {
+    // Ошибки обрабатываются в useCrudOperations
+  }
+}
+
+function openQuestionManagement(test) {
+  questionManagementModal.formData.value = test
+  questionManagementModal.editingItem.value = false
+  questionManagementModal.openModal()
+}
+
+async function handleQuestionManagementSave(data) {
+  try {
+    questionManagementModal.isSubmitting.value = true
+    
+    // Здесь можно реализовать сохранение вопросов через API
+    console.log('Сохранение вопросов для теста:', data.testData?.title, 'Количество вопросов:', data.questions?.length)
+    
+    // Эмуляция задержки API
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    questionManagementModal.closeModal()
+    showSuccess(`Сохранено ${data.questions?.length || 0} вопросов для теста "${data.testData?.title}"`)
+    
+    // await lessonsData.fetchData() // Обновляем данные при необходимости
+    
+  } catch (error) {
+    console.error('Ошибка при сохранении вопросов:', error)
+    showError('Ошибка при сохранении вопросов')
+  } finally {
+    questionManagementModal.isSubmitting.value = false
+  }
+}
+
 // Методы для заданий
 function openAssignmentModal(theme = null, lesson = null) {
   let courseId = null
@@ -808,6 +861,48 @@ function handleReorderLessons(data) {
     
     // Можно показать уведомление об успехе
     // toast.success('Порядок уроков обновлен')
+  }
+}
+
+// Обработка изменения порядка тестов
+function handleReorderTests(data) {
+  console.log('🔄 Обработка изменения порядка тестов:', data)
+  
+  if (data.error) {
+    // Если произошла ошибка, обновляем данные для восстановления порядка
+    console.log('❌ Ошибка при изменении порядка тестов, обновляем данные...')
+    lessonsData.fetchData()
+  } else {
+    // Успешное изменение порядка
+    console.log('✅ Порядок тестов успешно изменен:', data.testIds)
+    
+    if (data.success) {
+      console.log('🎉 Порядок тестов сохранен успешно!')
+      // Обновляем исходные данные для корректного отображения
+      lessonsData.updateTestOrder(data.lessonId, data.testIds)
+      showSuccess('Порядок тестов обновлен')
+    }
+  }
+}
+
+// Обработка изменения порядка заданий
+function handleReorderAssignments(data) {
+  console.log('🔄 Обработка изменения порядка заданий:', data)
+  
+  if (data.error) {
+    // Если произошла ошибка, обновляем данные для восстановления порядка
+    console.log('❌ Ошибка при изменении порядка заданий, обновляем данные...')
+    lessonsData.fetchData()
+  } else {
+    // Успешное изменение порядка
+    console.log('✅ Порядок заданий успешно изменен:', data.assignmentIds)
+    
+    if (data.success) {
+      console.log('🎉 Порядок заданий сохранен успешно!')
+      // Обновляем исходные данные для корректного отображения
+      lessonsData.updateAssignmentOrder(data.lessonId, data.assignmentIds)
+      showSuccess('Порядок заданий обновлен')
+    }
   }
 }
 

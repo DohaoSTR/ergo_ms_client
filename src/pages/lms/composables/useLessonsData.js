@@ -280,41 +280,191 @@ export function useLessonsData() {
 
   function getTestsByCourse(courseId) {
     return tests.value.filter(test => {
-      let testCourseId = test.course
-      if (typeof testCourseId === 'object' && testCourseId?.id) {
-        testCourseId = testCourseId.id
+      // Проверяем прямую привязку к курсу
+      if (test.subject) {
+        let testCourseId = test.subject
+        if (typeof testCourseId === 'object' && testCourseId?.id) {
+          testCourseId = testCourseId.id
+        }
+        if (parseInt(testCourseId) === parseInt(courseId)) {
+          return true
+        }
       }
-      return parseInt(testCourseId) === parseInt(courseId)
+      
+      // Проверяем привязку через тему
+      if (test.theme) {
+        let testThemeId = test.theme
+        if (typeof testThemeId === 'object' && testThemeId?.id) {
+          testThemeId = testThemeId.id
+        }
+        const theme = themes.value.find(t => parseInt(t.id) === parseInt(testThemeId))
+        if (theme) {
+          let themeCourseId = theme.subject
+          if (typeof themeCourseId === 'object' && themeCourseId?.id) {
+            themeCourseId = themeCourseId.id
+          }
+          if (parseInt(themeCourseId) === parseInt(courseId)) {
+            return true
+          }
+        }
+      }
+      
+      // Проверяем привязку через урок
+      if (test.lesson) {
+        let testLessonId = test.lesson
+        if (typeof testLessonId === 'object' && testLessonId?.id) {
+          testLessonId = testLessonId.id
+        }
+        const lesson = lessons.value.find(l => parseInt(l.id) === parseInt(testLessonId))
+        if (lesson) {
+          let lessonThemeId = lesson.theme
+          if (typeof lessonThemeId === 'object' && lessonThemeId?.id) {
+            lessonThemeId = lessonThemeId.id
+          }
+          const theme = themes.value.find(t => parseInt(t.id) === parseInt(lessonThemeId))
+          if (theme) {
+            let themeCourseId = theme.subject
+            if (typeof themeCourseId === 'object' && themeCourseId?.id) {
+              themeCourseId = themeCourseId.id
+            }
+            if (parseInt(themeCourseId) === parseInt(courseId)) {
+              return true
+            }
+          }
+        }
+      }
+      
+      return false
     })
   }
 
   function getAssignmentsByCourse(courseId) {
     return assignments.value.filter(assignment => {
-      let assignmentCourseId = assignment.course
-      if (typeof assignmentCourseId === 'object' && assignmentCourseId?.id) {
-        assignmentCourseId = assignmentCourseId.id
+      // Проверяем прямую привязку к курсу
+      if (assignment.subject) {
+        let assignmentCourseId = assignment.subject
+        if (typeof assignmentCourseId === 'object' && assignmentCourseId?.id) {
+          assignmentCourseId = assignmentCourseId.id
+        }
+        if (parseInt(assignmentCourseId) === parseInt(courseId)) {
+          return true
+        }
       }
-      return parseInt(assignmentCourseId) === parseInt(courseId)
+      
+      // Проверяем привязку через тему
+      if (assignment.theme) {
+        let assignmentThemeId = assignment.theme
+        if (typeof assignmentThemeId === 'object' && assignmentThemeId?.id) {
+          assignmentThemeId = assignmentThemeId.id
+        }
+        const theme = themes.value.find(t => parseInt(t.id) === parseInt(assignmentThemeId))
+        if (theme) {
+          let themeCourseId = theme.subject
+          if (typeof themeCourseId === 'object' && themeCourseId?.id) {
+            themeCourseId = themeCourseId.id
+          }
+          if (parseInt(themeCourseId) === parseInt(courseId)) {
+            return true
+          }
+        }
+      }
+      
+      // Проверяем привязку через урок
+      if (assignment.lesson) {
+        let assignmentLessonId = assignment.lesson
+        if (typeof assignmentLessonId === 'object' && assignmentLessonId?.id) {
+          assignmentLessonId = assignmentLessonId.id
+        }
+        const lesson = lessons.value.find(l => parseInt(l.id) === parseInt(assignmentLessonId))
+        if (lesson) {
+          let lessonThemeId = lesson.theme
+          if (typeof lessonThemeId === 'object' && lessonThemeId?.id) {
+            lessonThemeId = lessonThemeId.id
+          }
+          const theme = themes.value.find(t => parseInt(t.id) === parseInt(lessonThemeId))
+          if (theme) {
+            let themeCourseId = theme.subject
+            if (typeof themeCourseId === 'object' && themeCourseId?.id) {
+              themeCourseId = themeCourseId.id
+            }
+            if (parseInt(themeCourseId) === parseInt(courseId)) {
+              return true
+            }
+          }
+        }
+      }
+      
+      return false
     })
   }
 
   function getTestsByTheme(themeId) {
     return tests.value.filter(test => {
-      let testThemeId = test.theme
-      if (typeof testThemeId === 'object' && testThemeId?.id) {
-        testThemeId = testThemeId.id
+      // Проверяем прямую привязку к теме
+      if (test.theme) {
+        let testThemeId = test.theme
+        if (typeof testThemeId === 'object' && testThemeId?.id) {
+          testThemeId = testThemeId.id
+        }
+        if (parseInt(testThemeId) === parseInt(themeId)) {
+          return true
+        }
       }
-      return parseInt(testThemeId) === parseInt(themeId)
+      
+      // Проверяем привязку через урок в этой теме
+      if (test.lesson) {
+        let testLessonId = test.lesson
+        if (typeof testLessonId === 'object' && testLessonId?.id) {
+          testLessonId = testLessonId.id
+        }
+        const lesson = lessons.value.find(l => parseInt(l.id) === parseInt(testLessonId))
+        if (lesson) {
+          let lessonThemeId = lesson.theme
+          if (typeof lessonThemeId === 'object' && lessonThemeId?.id) {
+            lessonThemeId = lessonThemeId.id
+          }
+          if (parseInt(lessonThemeId) === parseInt(themeId)) {
+            return true
+          }
+        }
+      }
+      
+      return false
     })
   }
 
   function getAssignmentsByTheme(themeId) {
     return assignments.value.filter(assignment => {
-      let assignmentThemeId = assignment.theme
-      if (typeof assignmentThemeId === 'object' && assignmentThemeId?.id) {
-        assignmentThemeId = assignmentThemeId.id
+      // Проверяем прямую привязку к теме
+      if (assignment.theme) {
+        let assignmentThemeId = assignment.theme
+        if (typeof assignmentThemeId === 'object' && assignmentThemeId?.id) {
+          assignmentThemeId = assignmentThemeId.id
+        }
+        if (parseInt(assignmentThemeId) === parseInt(themeId)) {
+          return true
+        }
       }
-      return parseInt(assignmentThemeId) === parseInt(themeId)
+      
+      // Проверяем привязку через урок в этой теме
+      if (assignment.lesson) {
+        let assignmentLessonId = assignment.lesson
+        if (typeof assignmentLessonId === 'object' && assignmentLessonId?.id) {
+          assignmentLessonId = assignmentLessonId.id
+        }
+        const lesson = lessons.value.find(l => parseInt(l.id) === parseInt(assignmentLessonId))
+        if (lesson) {
+          let lessonThemeId = lesson.theme
+          if (typeof lessonThemeId === 'object' && lessonThemeId?.id) {
+            lessonThemeId = lessonThemeId.id
+          }
+          if (parseInt(lessonThemeId) === parseInt(themeId)) {
+            return true
+          }
+        }
+      }
+      
+      return false
     })
   }
 
@@ -333,6 +483,32 @@ export function useLessonsData() {
     
     console.log('✅ Порядок тем обновлен в исходных данных')
     console.log('🔍 Новое состояние тем:', themes.value.map(t => ({ id: t.id, name: t.name, sort_order: t.sort_order })))
+  }
+
+  function getTestsByLesson(lessonId) {
+    return tests.value.filter(test => {
+      if (test.lesson) {
+        let testLessonId = test.lesson
+        if (typeof testLessonId === 'object' && testLessonId?.id) {
+          testLessonId = testLessonId.id
+        }
+        return parseInt(testLessonId) === parseInt(lessonId)
+      }
+      return false
+    }).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+  }
+
+  function getAssignmentsByLesson(lessonId) {
+    return assignments.value.filter(assignment => {
+      if (assignment.lesson) {
+        let assignmentLessonId = assignment.lesson
+        if (typeof assignmentLessonId === 'object' && assignmentLessonId?.id) {
+          assignmentLessonId = assignmentLessonId.id
+        }
+        return parseInt(assignmentLessonId) === parseInt(lessonId)
+      }
+      return false
+    }).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
   }
 
   function updateLessonOrder(themeId, lessonIds) {
@@ -362,6 +538,64 @@ export function useLessonsData() {
       }
       return parseInt(lessonThemeId) === parseInt(themeId)
     }).map(l => ({ id: l.id, name: l.name, sort_order: l.sort_order })))
+  }
+
+  function updateTestOrder(lessonId, testIds) {
+    console.log('🔄 Обновление порядка тестов в исходных данных:', { lessonId, testIds })
+    console.log('🔍 Текущее состояние тестов урока:', tests.value.filter(t => {
+      let testLessonId = t.lesson
+      if (typeof testLessonId === 'object' && testLessonId?.id) {
+        testLessonId = testLessonId.id
+      }
+      return parseInt(testLessonId) === parseInt(lessonId)
+    }).map(t => ({ id: t.id, name: t.name || t.title, sort_order: t.sort_order })))
+    
+    // Обновляем sort_order в исходном массиве tests
+    testIds.forEach((testId, index) => {
+      const test = tests.value.find(t => t.id === testId)
+      if (test) {
+        test.sort_order = index + 1
+        console.log(`📝 Обновлен sort_order исходного теста "${test.name || test.title}": ${test.sort_order}`)
+      }
+    })
+    
+    console.log('✅ Порядок тестов обновлен в исходных данных')
+    console.log('🔍 Новое состояние тестов урока:', tests.value.filter(t => {
+      let testLessonId = t.lesson
+      if (typeof testLessonId === 'object' && testLessonId?.id) {
+        testLessonId = testLessonId.id
+      }
+      return parseInt(testLessonId) === parseInt(lessonId)
+    }).map(t => ({ id: t.id, name: t.name || t.title, sort_order: t.sort_order })))
+  }
+
+  function updateAssignmentOrder(lessonId, assignmentIds) {
+    console.log('🔄 Обновление порядка заданий в исходных данных:', { lessonId, assignmentIds })
+    console.log('🔍 Текущее состояние заданий урока:', assignments.value.filter(a => {
+      let assignmentLessonId = a.lesson
+      if (typeof assignmentLessonId === 'object' && assignmentLessonId?.id) {
+        assignmentLessonId = assignmentLessonId.id
+      }
+      return parseInt(assignmentLessonId) === parseInt(lessonId)
+    }).map(a => ({ id: a.id, title: a.title, sort_order: a.sort_order })))
+    
+    // Обновляем sort_order в исходном массиве assignments
+    assignmentIds.forEach((assignmentId, index) => {
+      const assignment = assignments.value.find(a => a.id === assignmentId)
+      if (assignment) {
+        assignment.sort_order = index + 1
+        console.log(`📝 Обновлен sort_order исходного задания "${assignment.title}": ${assignment.sort_order}`)
+      }
+    })
+    
+    console.log('✅ Порядок заданий обновлен в исходных данных')
+    console.log('🔍 Новое состояние заданий урока:', assignments.value.filter(a => {
+      let assignmentLessonId = a.lesson
+      if (typeof assignmentLessonId === 'object' && assignmentLessonId?.id) {
+        assignmentLessonId = assignmentLessonId.id
+      }
+      return parseInt(assignmentLessonId) === parseInt(lessonId)
+    }).map(a => ({ id: a.id, title: a.title, sort_order: a.sort_order })))
   }
   
   return {
@@ -401,7 +635,11 @@ export function useLessonsData() {
     getAssignmentsByCourse,
     getTestsByTheme,
     getAssignmentsByTheme,
+    getTestsByLesson,
+    getAssignmentsByLesson,
     updateThemeOrder,
-    updateLessonOrder
+    updateLessonOrder,
+    updateTestOrder,
+    updateAssignmentOrder
   }
 } 

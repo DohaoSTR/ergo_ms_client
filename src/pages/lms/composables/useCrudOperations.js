@@ -295,33 +295,20 @@ export function useCrudOperations() {
   // Операции с тестами
   async function createTest(data, validationErrors) {
     try {
-      // Сначала создаем урок для теста, если указана тема
-      let lessonId = null
-      if (data.theme) {
-        const lessonData = {
-          name: `Урок для теста: ${data.name}`,
-          description: `Автоматически созданный урок для теста "${data.name}"`,
-          theme: parseInt(data.theme),
-          lessontype: 'Q', // Тип урока - тест
-          content: '',
-          is_visible: true,
-          completion_required: false,
-          sort_order: 0
-        }
-        
-        const lessonResponse = await apiClient.post(endpoints.lms.lessons, lessonData)
-        lessonId = lessonResponse.data.id
-      }
+      console.log('🔍 Создание теста с данными:', data)
       
-      // Подготавливаем данные теста
+      // Подготавливаем данные теста с правильными полями API
       const testData = {
-        ...data,
-        lesson: lessonId
+        ...data
       }
       
-      // Убираем поля которые не нужны API
-      delete testData.course
-      delete testData.theme
+      // Переименовываем поле course в subject для API
+      if (testData.course) {
+        testData.subject = testData.course
+        delete testData.course
+      }
+      
+      console.log('📤 Отправляем данные теста на сервер:', testData)
       
       const response = await apiClient.post(endpoints.lms.tests, testData)
       showSuccess(`Тест "${data.name}" успешно создан`)
@@ -385,36 +372,67 @@ export function useCrudOperations() {
     }
   }
 
+  async function duplicateTest(test) {
+    try {
+      let baseName = test.name || test.title
+      const copyRegex = /\s*\(копия\s*\d*\)$/
+      if (copyRegex.test(baseName)) {
+        baseName = baseName.replace(copyRegex, '')
+      }
+      
+      const copyName = `${baseName} (копия)`
+      
+      const duplicateData = {
+        name: copyName,
+        title: test.title ? `${test.title} (копия)` : copyName,
+        description: test.description || '',
+        type: test.type || 'C',
+        duration_minutes: test.duration_minutes || 60,
+        passing_score: test.passing_score || 70,
+        max_attempts: test.max_attempts || 1,
+        show_correct_answers: test.show_correct_answers !== undefined ? test.show_correct_answers : false,
+        randomize_questions: test.randomize_questions !== undefined ? test.randomize_questions : false,
+        available_from: null, // Копия будет неактивна по умолчанию
+        available_until: null,
+        is_active: false, // Копия неактивна по умолчанию
+        subject: test.subject?.id || test.subject,
+        theme: test.theme?.id || test.theme,
+        lesson: test.lesson?.id || test.lesson
+      }
+
+      // Убираем поля с null значениями
+      Object.keys(duplicateData).forEach(key => {
+        if (duplicateData[key] === null || duplicateData[key] === undefined) {
+          delete duplicateData[key]
+        }
+      })
+      
+      await apiClient.post(endpoints.lms.tests, duplicateData)
+      showSuccess(`Тест "${baseName}" успешно скопирован как "${copyName}"`)
+    } catch (error) {
+      console.error('Ошибка дублирования теста:', error)
+      showError('Ошибка при копировании теста')
+      throw error
+    }
+  }
+
   // Операции с заданиями
   async function createAssignment(data, validationErrors) {
     try {
-      // Сначала создаем урок для задания, если указана тема
-      let lessonId = null
-      if (data.theme) {
-        const lessonData = {
-          name: `Урок для задания: ${data.title}`,
-          description: `Автоматически созданный урок для задания "${data.title}"`,
-          theme: parseInt(data.theme),
-          lessontype: 'A', // Тип урока - задание
-          content: '',
-          is_visible: true,
-          completion_required: false,
-          sort_order: 0
-        }
-        
-        const lessonResponse = await apiClient.post(endpoints.lms.lessons, lessonData)
-        lessonId = lessonResponse.data.id
-      }
+      console.log('🔍 Создание задания с данными:', data)
       
-      // Подготавливаем данные задания
+      // Подготавливаем данные задания с правильными полями API
       const assignmentData = {
-        ...data,
-        lesson: lessonId
+        ...data
       }
       
-      // Убираем поля которые не нужны API
-      delete assignmentData.course
-      delete assignmentData.theme
+      // Переименовываем поле course в subject для API
+      if (assignmentData.course) {
+        assignmentData.subject = assignmentData.course
+        delete assignmentData.course
+      }
+      
+      console.log('📤 Отправляем данные задания на сервер:', assignmentData)
       
       const response = await apiClient.post(endpoints.lms.assignments, assignmentData)
       showSuccess(`Задание "${data.title}" успешно создано`)
@@ -775,6 +793,7 @@ export function useCrudOperations() {
     createTest,
     updateTest,
     deleteTest,
+    duplicateTest,
     
     // Задания
     createAssignment,
