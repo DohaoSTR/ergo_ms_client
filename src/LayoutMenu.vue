@@ -1,15 +1,15 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { isDatasetSidebarOpen, currentSidebarPage } from '@/js/bi/useSidebarStore'
 import MenuList from '@/components/menu/MenuList.vue'
 import TheHeader from '@/components/header/TheHeader.vue'
+
+import StorageSidebar from '@/pages/bi/components/StorageSidebar.vue'
 
 const leftPadding = ref('280px')
 const isMenuVisible = ref(window.innerWidth >= 1200)
 const isMenuToggledManually = ref(false)
 const isOverlayVisible = ref(false)
-
-const isDatasetSidebarOpen = ref(false)
-const currentSidebarPage = ref('datasets')
 
 function updateMenuVisibility() {
   if (window.innerWidth >= 1200) {
@@ -38,13 +38,18 @@ function leftToggle(val) {
   leftPadding.value = val
 }
 
-function openSidebarWithPage(pageName) {
-  currentSidebarPage.value = pageName
+function openSidebarWithPage(page) {
+  currentSidebarPage.value   = page
   isDatasetSidebarOpen.value = true
+}
+
+function openSidebarFromMenu(page) {
+  openSidebarWithPage(page)
 }
 
 function closeSidebar() {
   isDatasetSidebarOpen.value = false
+  currentSidebarPage.value   = ''
 }
 
 onMounted(() => {
@@ -56,10 +61,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateMenuVisibility)
 })
-
-function openSidebarFromMenu(pageName) {
-  openSidebarWithPage(pageName)
-}
 </script>
 
 <template>
@@ -82,32 +83,7 @@ function openSidebarFromMenu(pageName) {
   </div>
 
   <div @click="closeMenu" class="layout-overlay" :class="{ active: isOverlayVisible }" />
-
-  <div id="datasetSidebar" class="offcanvas offcanvas-start" :class="{ show: isDatasetSidebarOpen }" :style="{ visibility: isDatasetSidebarOpen ? 'visible' : 'hidden', width: '768px', left: '260px' }" tabindex="-1">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title">
-        {{
-          currentSidebarPage === 'datasets'
-            ? 'Датасеты'
-            : currentSidebarPage === 'connections'
-              ? 'Подключения'
-              : currentSidebarPage === 'charts'
-                ? 'Чарты'
-                : 'Раздел'
-        }}
-      </h5>
-      <button type="button" class="btn-close btn-close-white" @click="closeSidebar" aria-label="Закрыть" />
-    </div>
-    <!--div class="offcanvas-body p-0">
-      <component
-        :is="{
-          datasets: DatasetListPage,
-          connections: ConnectionListPage,
-          charts: ChartListPage
-        }[currentSidebarPage] || null"
-      />
-    </div-->
-  </div>
+  <StorageSidebar :isDatasetSidebarOpen="isDatasetSidebarOpen" :currentPage="currentSidebarPage" @close="closeSidebar"/>
 </template>
 
 <style scoped lang="scss">

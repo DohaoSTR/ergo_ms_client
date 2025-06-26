@@ -65,6 +65,40 @@ export const typeOptions = [
     return aggregationOptionsMap[type] || [{ value: 'none', label: 'Нет' }];
   }
 
+export function getTypeOptionsForField(field) {
+  const values = field.values || []
+
+  if (!values.length) return typeOptions
+
+  // Только целые
+  if (values.every(v => /^-?\d+$/.test(String(v).trim()))) {
+    return typeOptions.filter(t => ['integer', 'string'].includes(t.value))
+  }
+
+  // Числа с точкой (и целые тоже подойдут)
+  if (values.every(v => !isNaN(Number(v)))) {
+    return typeOptions.filter(t => ['float', 'integer', 'string'].includes(t.value))
+  }
+
+  // Boolean
+  if (values.every(v => ['true','false',true,false,1,0].includes(v))) {
+    return typeOptions.filter(t => ['bool', 'integer', 'string'].includes(t.value))
+  }
+
+  // Только даты (yyyy-mm-dd, без времени)
+  if (values.every(v => /^\d{4}-\d{2}-\d{2}$/.test(String(v).trim()))) {
+    return typeOptions.filter(t => ['date', 'string'].includes(t.value))
+  }
+
+  // Дата и время ("date&time"), всё что распарсилось, но не попало под yyyy-mm-dd
+  if (values.every(v => !isNaN(Date.parse(v)))) {
+    return typeOptions.filter(t => ['date&time', 'date', 'string'].includes(t.value))
+  }
+
+  // По умолчанию только строка (и bool)
+  return typeOptions.filter(t => ['string', 'bool'].includes(t.value))
+}
+
 export const aggregationColorMap = {
   count:    'agg-select agg-primary',
   ucount:   'agg-select agg-info',

@@ -36,23 +36,23 @@
     justify-content: center;
     align-items: center;
     transition: background 0.2s;
-    border: 1px solid #4c4b51;
+    border: 1px solid var(--color-border);
   }
   
    .card:hover {
-     background-color: #333;
+     background-color: var(--color-hover-background);
    }
   
   .card-icon {
     width: 56px;
     height: 56px;
     margin-bottom: 8px;
-    color: #fff;
+    color: var(--color-primary-text);
   }
   
   .card_title {
     font-size: 14px;
-    color: #fff;
+    color: var(--color-primary-text);
   }
 
   .a_link{

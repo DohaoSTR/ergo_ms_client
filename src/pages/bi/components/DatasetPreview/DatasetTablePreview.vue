@@ -4,15 +4,21 @@
       <div class="title-label" style="font-weight: bold; margin-right:2rem">Предпросмотр</div>
       <div class="title-input">
         <div class="input-label-left">Количество строк:</div>
-        <input type="text" v-model="limitInput" class="form-control form-control-sm"/>
+        <input type="number" v-model.number="localLimit" class="form-control form-control-sm" min="1" max="1000"/>
         <div class="input-label-right">не больше 1000</div>
       </div>
     </div>
-    <div v-if="loading" class="preview-loading">
-      <div class="spinner">Загружаем данные…</div>
-    </div>
-    <div v-else class="main-grid">
-      <Vue3Datatable :columns="datatableColumns" :rows="tableRows" :loading="props.loading" :page-size="props.limit" skin="table table-hover" noDataContent="Нет данных"/>
+    <div class="main-grid" style="position: relative;">
+      <Vue3Datatable
+        :columns="datatableColumns"
+        :rows="visibleRows"
+        :loading="props.loading"
+        :is-preview-visible="isPreviewVisible"
+        :page-size="limit"
+        skin="table table-hover"
+        :selectRowOnClick="false"
+        noDataContent="Нет данных"
+      />
     </div>
   </div>
 </template>
@@ -24,16 +30,48 @@ import Vue3Datatable from '@bhplugin/vue3-datatable'
 const props = defineProps({
   cols: Array,
   rows: Array,
-  loading: Boolean,
   limit: Number,
-  fields: Array
+  fields: Array,
+  isPreviewVisible: Boolean,
+  datasetId: Number
 })
 
-const loading = ref(false)
+const localLimit = ref(props.limit ?? 10)
+watch(() => props.limit, v => {
+  if (localLimit.value !== v) localLimit.value = v
+})
+
+const emit = defineEmits(['update:limit'])
+
+function clamp(val) {
+  const n = Number(val) || 1
+  return Math.max(1, Math.min(1000, n))
+}
+
+watch(localLimit, v => {
+  emit('update:limit', clamp(v))
+})
 
 const nameMap = computed(() =>
   Object.fromEntries((props.fields || []).map(f => [f.source_column, f.name]))
 )
+
+const datatableColumns = computed(() =>
+  props.cols.map(col => ({
+    title: nameMap.value[col] || col,
+    field: toField(nameMap.value[col] || col),
+    sortable: true,
+  }))
+)
+
+const tableRows = computed(() => {
+  const fields = props.cols.map(toField)
+  return props.rows.map(rowArr =>
+    fields.reduce((obj, field, idx) => ({ ...obj, [field]: rowArr[idx] }), {})
+  )
+})
+
+const visibleRows = computed(() => tableRows.value)
 
 function toField(str) {
   const map = {
@@ -46,77 +84,9 @@ function toField(str) {
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
 }
-
-// 2. computed
-const datatableColumns = computed(() =>
-  props.cols.map((col) => ({
-    title: nameMap.value[col] || col,
-    field: toField(nameMap.value[col] || col),
-    sortable: true,
-  }))
-)
-
-const tableRows = computed(() => {
-  const fields = props.cols.map(toField)
-  return props.rows.map(rowArr =>
-    fields.reduce((obj, field, idx) => {
-      obj[field] = rowArr[idx]
-      return obj
-    }, {})
-  )
-})
-
-const limitInput = ref(String(props.limit))
-const limit      = ref(props.limit)
-
-watch(() => props.limit, v => {
-  limit.value = v
-  limitInput.value = String(v)
-})
-
-watch(limitInput, val => {
-  const num = parseInt(val.replace(/\D/g,'')) || props.limit
-  limit.value      = Math.min(1000, Math.max(1, num))
-  limitInput.value = String(limit.value)
-})
 </script>
 
 <style scoped lang="scss">
-.preview-loading {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #888;
-  font-size: 1.1rem;
-  font-style: italic;
-}
-
-.loading-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.4);
-  z-index: 10;
-}
-
-/* сам спиннер */
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* подправим контейнер чтобы позиционировался относительно */
 .preview-main {
   position: relative;
   height: 100%;
@@ -156,6 +126,7 @@ input {
   min-height: 0;
   overflow-y: auto;
   overflow-x: auto;
+  position: relative;
 }
 
 :deep(.vue3-datatable__table-wrapper) {
@@ -172,10 +143,10 @@ input {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #1e1e1e;
-  border-top: 1px solid #444;
+  background-color: var(--color-primary-background);
+  border-top: 1px solid var(--color-border);
   font-size: 14px;
-  color: #ccc;
+  color: var(--color-secondary-text);
 }
 
 :deep(.bh-pagination) {
@@ -188,21 +159,21 @@ input {
 
 :deep(.bh-page-item) {
   padding: 4px 10px;
-  background: #2a2a2a;
-  color: #ccc;
-  border: 1px solid #555;
+  background: var(--color-primary-background);
+  color: var(--color-secondary-text);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 :deep(.bh-page-item:hover) {
-  background: #444;
+  background: var(--color-hover-background);
 }
 
 :deep(.bh-page-active) {
   background: #007bff;
-  color: white;
+  color: var(--color-primary-text);
   border-color: #007bff;
 }
 

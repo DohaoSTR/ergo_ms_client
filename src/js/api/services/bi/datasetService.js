@@ -15,15 +15,25 @@ export default {
     return apiClient.get(BASE, params)
   },
   createDataset(payload) {
-    // POST /api/bi_analysis/bi_datasets/
     return apiClient.post(BASE, payload)
+  },
+  joinTable({ datasetId, stagingName, leftColumn, rightColumn, joinType }) {
+    return apiClient.post(
+      `/bi_analysis/bi_datasets/${datasetId}/auto-join/`,
+      {
+        staging_name: stagingName,
+        left_column : leftColumn,
+        right_column: rightColumn,
+        join_type   : joinType || 'INNER JOIN',
+      },
+    );
   },
   getDataset(id) {
     // GET /api/bi_analysis/bi_datasets/{id}/
     return apiClient.get(`${BASE}${id}/`)
   },
   updateDataset(id, payload) {
-    return apiClient.patch(`${BASE}${id}/`, payload)
+    return apiClient.patch(`/bi_analysis/bi_datasets/${id}/`, payload)
   },
   deleteDataset(id) {
     return apiClient.delete(`${BASE}${id}/`)
@@ -35,7 +45,10 @@ export default {
     )
   },
 
-  // ===== Rename columns (fields) =====
+  patchDataset (id, payload) {
+    return apiClient.patch(`bi_analysis/bi_datasets/${id}/`, payload)
+  },
+
   renameColumns(datasetId, renames) {
     // PATCH /api/bi_analysis/bi_datasets/{id}/rename_columns/
     return apiClient.patch(`${BASE}${datasetId}/rename_columns/`, { renames });
@@ -73,5 +86,53 @@ export default {
   deleteFile(id) {
     // DELETE /api/bi_analysis/bi_datasets/upload/{id}/
     return apiClient.delete(`${UPLOAD}${id}/`)
+  },
+  removeRelation({ datasetId, rightTableId }) {
+  return apiClient.post(
+    `bi_analysis/bi_datasets/${datasetId}/remove-relation/`,
+    { right_table_id: rightTableId }
+  )
+},
+
+  addTableToDataset(datasetId, fileId) {
+    return apiClient.post(`${BASE}${datasetId}/add-table/`, { file_id: fileId });
+  },
+
+  updateDataset (id, payload) {
+    return apiClient.patch(`bi_analysis/bi_datasets/${id}/`, payload)
+  },
+
+  // ===== AUTO-JOIN API =====
+  getStagingTables(connectionId) {
+    // GET /bi_analysis/bi_datasets/connection/{connectionId}/tables/
+    return apiClient.get(`${BASE}connection/${connectionId}/tables/`)
+  },
+
+  createFromStaging(connectionId, tableName) {
+    // POST /bi_analysis/bi_datasets/create-from-table/
+    return apiClient.post(`${BASE}create-from-table/`, {
+      connection_id: connectionId,
+      table_name: tableName,
+    })
+  },
+
+  joinStagingTable(datasetId, tableName) {
+    // POST /bi_analysis/bi_datasets/join-table/
+    return apiClient.post(`${BASE}join-table/`, {
+      dataset_id: datasetId,
+      table_name: tableName,
+    })
+  },
+  createFromFile(connectionId, fileId) {
+    return apiClient.post('/bi_analysis/bi_datasets/create-from-table/', {
+        connection_id: connectionId,
+        file_id: fileId,
+    })
+  },
+  draftPreview(draft) {
+    return apiClient.post('/bi_analysis/bi_datasets/draft_preview/', draft)
+  },
+  addRelation({ datasetId, ...rest }) {
+    return apiClient.post(`/bi_analysis/bi_datasets/${datasetId}/add-relation/`, rest)
   }
 }

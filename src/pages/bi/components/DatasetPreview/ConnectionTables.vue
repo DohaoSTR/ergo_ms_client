@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useFileList } from '@/pages/bi/components/js/useFileList'
 import { useDbTablesList } from '@/pages/bi/components/js/useDbTablesList'
 import { Table } from 'lucide-vue-next'
@@ -30,7 +30,7 @@ import { Table } from 'lucide-vue-next'
 const props = defineProps({
   connectionId: Number,
   connectionType: String,
-  linkedTables: {
+  selectedTables: {
     type: Array,
     default: () => []
   }
@@ -65,17 +65,37 @@ const {
 )
 
 function handleDragStart(file, event) {
+  if (!event.dataTransfer) return; // игнорировать некорректные вызовы
   event.dataTransfer.setData('application/json', JSON.stringify(file))
 }
 
-function getTableKey(table) {
-  return `${table.schema || ''}::${table.table || ''}::${table.name || ''}`
+function isLinked(item) {
+  const result = props.selectedTables.some(tbl => {
+    if (item.file_id || tbl.file_id) {
+      const cmp = String(tbl.file_id) === String(item.id)
+      if (cmp) {
+        console.log('[isLinked] file_id совпал:', { tbl, item })
+      }
+      return cmp
+    }
+    if (item.table_name || tbl.table_name) {
+      const cmp = tbl.table_name === item.table_name
+      if (cmp) {
+        console.log('[isLinked] table_name совпал:', { tbl, item })
+      }
+      return cmp
+    }
+    return false
+  })
+  if (result) {
+    console.log('[isLinked] TRUE для:', item)
+  }
+  return result
 }
 
-function isLinked(file) {
-  const fileKey = getTableKey(file)
-  return props.linkedTables.some(t => getTableKey(t) === fileKey)
-}
+onMounted(() => {
+  console.log('ConnectionTables selectedTables:', props.selectedTables)
+})
 
 watch(() => props.connectionId, async (id) => {
   if (!id) return
@@ -101,7 +121,7 @@ watch(() => props.connectionId, async (id) => {
 
 .section-title {
     font-weight: bold;
-    color: #e0e0e0;
+    color: var(--color-secondary-text);
     margin-bottom: 10px;
 }
 
@@ -131,27 +151,27 @@ watch(() => props.connectionId, async (id) => {
 
   &:hover,
   :deep(.linked) {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--color-hover-background);
   }
 }
 
 .table-item.linked {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-background);
 }
 
 .icon {
     width: 16px;
     height: 16px;
-    color: #aaa;
+    color: var(--color-secondary-text);
 
     &.red {
-        color: #e53935;
+        color: var(--color-accent);
     }
 }
 
 .table-name {
     font-size: 14px;
-    color: #ddd;
+    color: var(--color-primary-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -161,7 +181,7 @@ watch(() => props.connectionId, async (id) => {
     padding: 12px;
     text-align: center;
     font-size: 14px;
-    color: #777;
+    color: var(--color-primary-text);
 }
 
 .loading {
@@ -171,7 +191,7 @@ watch(() => props.connectionId, async (id) => {
 
 .skeleton-icon,
 .skeleton-text {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: var(--color-primary-background);
     border-radius: 4px;
     animation: shimmer 1.3s infinite ease-in-out;
 }

@@ -66,14 +66,14 @@
 
 .table-row-label{
     flex: 0 0 150px;
-    color: #fff;
+    color: var(--color-primary-text);
     font-size: 0.9rem;
 }
 
 .table-row-select {
   background: transparent !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,255,255,0.3) !important;
+  color: var(--color-primary-text) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: 5px !important;
   padding: 0.25rem 0.5rem !important;
   transition: background-color 0.2s ease, border-color 0.2s ease !important;
@@ -82,8 +82,8 @@
 
 .table-row-select:hover,
 .table-row-select:focus {
-  background-color: rgba(255,255,255,0.1) !important;
-  border-color: rgba(255,255,255,0.5) !important;
+  background-color: var(--color-hover-background) !important;
+  border-color: var(--color-border) !important;
   outline: none !important;
 }
 

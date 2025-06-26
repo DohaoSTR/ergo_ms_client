@@ -88,6 +88,6 @@ const syntax = {
 
 .list-item-hover:hover,
 .list-item-hover.active {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--color-hover-background);
 }
 </style>

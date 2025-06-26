@@ -15,7 +15,7 @@ const triggerSidebar = () => {
 </script>
 
 <template>
-  <div class="d-flex flex-column align-items-center justify-content-center text-white text-center">
+  <div class="d-flex flex-column align-items-center justify-content-center text-center">
     <component class="mb-4 text-secondary-emphasis" :is="icon" :size="35" />
     <h5 class="mb-3">{{ title }}</h5>
     <p class="mb-4">{{ description }}</p>

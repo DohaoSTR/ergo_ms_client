@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router'
 import SimpleTableDataSet from '@/pages/bi/components/SimpleTableDataSet.vue'
 
 const connections = ref([])
+const loading = ref(false)
 const search = ref('')
 const sort = ref('new')
 
@@ -17,6 +18,7 @@ const cols = [
 ]
 
 const fetchConnections = async () => {
+  loading.value = true
   const response = await apiClient.get(endpoints.bi.ConnectionsList)
 
   if (Array.isArray(response.data)) {
@@ -26,11 +28,13 @@ const fetchConnections = async () => {
       connector_type_display: item.connector_type_display || item.connector_type || '—',
       created_at: item.created_at,
       config: item.config,
-      owner: item.owner
+      owner: item.owner,
+      type: 'connection'
     }))
   } else {
     console.error('Ошибка: ответ от API не является массивом', response)
   }
+  loading.value = false
 }
 
 watch(isDatasetSidebarOpen, (newVal) => {
@@ -70,11 +74,16 @@ const goToCreateConnection = async () => {
   await router.push('/bi/connections/new')
 }
 
+function handleDeleteRow(row) {
+  const idx = connections.value.findIndex(u => u.id === row.id)
+  if (idx !== -1) connections.value.splice(idx, 1)
+}
+
 onMounted(fetchConnections)
 </script>
 
 <template>
-  <div class="fixed top-0 right-0 w-full sm:w-[540px] h-full bg-zinc-900 text-white z-50 shadow-xl border-l border-zinc-700 flex flex-col" style="padding-left: 1rem; padding-right: 1rem;">
+  <div class="fixed top-0 right-0 w-full sm:w-[540px] h-full bg-zinc-900 z-50 shadow-xl border-l border-zinc-700 flex flex-col" style="padding-left: 1rem; padding-right: 1rem;">
     <div class="space-y-4 flex-1 overflow-auto">
       <div class="flex gap-3" style="display: flex; flex-wrap: nowrap; margin-top: 1rem;">
         <input class="form-control" placeholder="Поиск..." style="width: 20.5rem;" v-model="search" />
@@ -87,8 +96,26 @@ onMounted(fetchConnections)
         <button type="button" class="btn btn-primary" style="width: 12.5rem;" @click="goToCreateConnection">Создать подключение</button>
       </div>
       <div style="margin-top: 1rem;">
-        <SimpleTableDataSet :cols="cols" :users="transformedData" :isDatasetSidebarOpen="isDatasetSidebarOpen" />
+        <div v-if="loading" class="loader-center">
+          <span class="loader"></span>
+        </div>
+        <SimpleTableDataSet :cols="cols" :users="transformedData" :isDatasetSidebarOpen="isDatasetSidebarOpen" :currentPage="'connections'" @delete-row="handleDeleteRow"/>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped lang="scss">
+  .loader-center {
+  min-height: 240px;
+  display: flex; align-items: center; justify-content: center;
+}
+.loader {
+  border: 4px solid var(--color-border);
+  border-top: 4px solid var(--color-accent);
+  border-radius: 50%;
+  width: 42px; height: 42px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+</style>

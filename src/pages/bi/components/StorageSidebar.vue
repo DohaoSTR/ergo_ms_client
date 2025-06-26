@@ -1,12 +1,12 @@
 <script setup>
 import { computed } from 'vue'
-import { isDatasetSidebarOpen } from '@/js/bi/useSidebarStore'
 import DatasetListPage from '@/pages/bi/DatasetListPage.vue'
 import ConnectionListPage from '@/pages/bi/ConnectionListPage.vue'
 import ChartListPage from '@/pages/bi/ChartListPage.vue'
 
-const props = defineProps({
-  currentPage: String
+defineProps({
+  isDatasetSidebarOpen: Boolean,
+  currentPage:          String
 })
 
 const emit = defineEmits(['close'])
@@ -22,18 +22,29 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
 
 <template>
   <div
-    class="storage-sidebar"
+    class="offcanvas offcanvas-start"
     :class="{ show: isDatasetSidebarOpen }"
-    :style="{ visibility: isDatasetSidebarOpen ? 'visible' : 'hidden' }"
+    :style="{ visibility: isDatasetSidebarOpen ? 'visible' : 'hidden', width: '768px', left: '260px' }"
+    tabindex="-1"
   >
-    <div class="header d-flex justify-content-between align-items-center p-3">
-      <h5 class="m-0">{{ title }}</h5>
-      <button class="btn-close btn-close-white" @click="isDatasetSidebarOpen = false" />
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title">
+        {{ currentPage === 'datasets' ? 'Датасеты'
+            : currentPage === 'connections' ? 'Подключения'
+            : currentPage === 'charts' ? 'Чарты'
+            : 'Раздел' }}
+      </h5>
+      <button type="button" class="btn-close" @click="$emit('close')" aria-label="Закрыть" />
     </div>
-    <div class="body p-3">
-      <DatasetListPage v-if="currentPage === 'datasets'" />
-      <ConnectionListPage v-else-if="currentPage === 'connections'" />
-      <ChartListPage v-else-if="currentPage === 'charts'" />
+
+    <div class="offcanvas-body p-0" style="overflow-y: hidden;">
+      <component
+        :is="{
+          datasets:    DatasetListPage,
+          connections: ConnectionListPage,
+          charts:      ChartListPage
+        }[ currentPage ]"
+      />
     </div>
   </div>
 </template>
@@ -52,7 +63,7 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
 }
 
 .banner-content {
-  color: white;
+  color: var(--color-primary-background);
   padding-left: 30px;
   max-width: 560px;
 }
@@ -61,24 +72,37 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
   padding: 20px;
   display: flex;
   flex-direction: column;
-  background-color: #18181a;
+  background-color: var(--color-primary-background);
   border-radius: 15px;
 }
 
 .storage-sidebar {
   position: fixed;
   top: 0;
-  left: 260px; // смещение от левого сайдбара
+  left: 260px;
   width: 768px;
   height: 100vh;
-  background-color: #18181a;
+  background-color: var(--color-primary-background);
   z-index: 1050;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-  transform: translateX(-100%); // изначально спрятана за левым краем
+  transform: translateX(-100%);
   transition: transform 0.3s ease-in-out;
 
   &.show {
-    transform: translateX(0); // появляется, двигаясь вправо
+    transform: translateX(0);
   }
+
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  flex: 0 0 auto;
+}
+
+.body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
 }
 </style>

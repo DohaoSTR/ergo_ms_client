@@ -175,6 +175,10 @@ async function previewTxtLocally(file) {
   errorState.value = null
 
   try {
+    // Проверяем MIME type на всякий случай
+    if (!file.type.startsWith('text/') && !file.name.endsWith('.txt')) {
+      throw new Error('Файл не является текстовым (.txt)')
+    }
     const text = await file.text()
     const lines = text.split(/\r?\n/).filter(line => line.trim() !== '')
     const sep = delimiter.value === '\\t' ? '\t' : delimiter.value
@@ -191,7 +195,7 @@ async function previewTxtLocally(file) {
 
     rawData.value = parsed
   } catch (err) {
-    errorState.value = 'Ошибка чтения файла: ' + err.message
+    errorState.value = 'Ошибка чтения txt-файла: ' + err.message
     rawData.value = []
   } finally {
     isLoading.value = false
@@ -253,7 +257,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   justify-content: center;
   flex-direction: column;
   padding: 1rem;
-  color: #fff;
+  color: var(--color-primary-text);
   font-size: 0.9rem;
 }
 
@@ -268,7 +272,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .spinner {
   width: 48px;
   height: 48px;
-  border: 5px solid #4e5058;
+  border: 5px solid var(--color-border);
   border-top: 5px solid #10b981;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -283,16 +287,16 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .error-message {
   text-align: center;
   padding: 2rem;
-  border: 1px solid #ef4444;
-  background: rgba(255, 0, 0, 0.05);
-  color: #f87171;
+  border: 1px solid var(--color-accent);
+  background: var(--color-primary-background);
+  color: var(--color-accent);
   border-radius: 12px;
   margin-top: 1rem;
 }
 
 .csv-table th span {
   font-weight: bold;
-  color: #ffffff;
+  color: var(--color-primary-text);
   letter-spacing: 0.3px;
 }
 
@@ -322,15 +326,15 @@ min-width: 120px;
 
 .toggle-group {
 display: inline-flex;
-border: 1px solid #4e5058;
+border: 1px solid var(--color-border);
 border-radius: 6px;
 overflow: hidden;
 }
 
 .toggle-group button {
 padding: 4px 10px;
-background: #2e2f35;
-color: #fff;
+background: var(--color-primary-background);
+color: var(--color-primary-text);
 border: none;
 cursor: pointer;
 transition: background 0.2s;
@@ -338,11 +342,11 @@ font-weight: 500;
 }
 
 .toggle-group button:not(:last-child) {
-border-right: 1px solid #4e5058;
+border-right: 1px solid var(--color-border);
 }
 
 .toggle-group button.active {
-background: #4e5058;
+background: var(--color-hover-background);
 }
 
 .header_col {
@@ -364,19 +368,19 @@ background: #4e5058;
 .csv-table th,
 .csv-table td {
   padding: 6px 12px;
-  border: 1px solid #4e5058;
-  background-color: #2e2f35;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-primary-background);
 }
 
 .csv-table th {
-  background-color: #3b3d44;
+  background-color: var(--color-primary-background);
   font-weight: bold;
   text-align: left;
   position: relative;
 }
 
 .csv-table tr:hover td {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-background);
 }
 
 .col-header {
@@ -389,24 +393,24 @@ background: #4e5058;
   position: relative;
   cursor: pointer;
   font-size: 0.8rem;
-  background: #2e2f35;
-  border: 1px solid #4e5058;
+  background: var(--color-primary-background);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 2px 5px;
-  color: #b5bac1;
+  color: var(--color-secondary-text);
   transition: background 0.2s ease;
 }
 
 .type-button-wrapper:hover {
-  background-color: #3b3d44;
+  background-color: var(--color-hover-background);
 }
 
 .type-menu {
   position: absolute;
   top: 100%;
   left: 0;
-  background-color: #2e2f35;
-  border: 1px solid #4e5058;
+  background-color: var(--color-primary-background);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   z-index: 10;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -417,18 +421,18 @@ background: #4e5058;
 .type-option {
   padding: 6px 10px;
   font-size: 0.85rem;
-  color: #e4e4e7;
+  color: var(--color-primary-text);
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .type-option:hover {
-  background-color: rgba(255, 255, 255, 0.07);
+  background-color: var(--color-hover-background);
 }
 
 .type-option.active {
-  background-color: #4e5058;
-  color: #fff;
+  background-color: var(--color-hover-background);
+  color: var(--color-primary-text);
 }
 
 .code{

@@ -172,7 +172,7 @@ const pane2Style = computed(() => ({
 }
 
 .editor-placeholder {
-  color: #ccc;
+  color: var(--color-secondary-text);
 }
 
 .fields-list {
@@ -192,11 +192,11 @@ const pane2Style = computed(() => ({
   margin-bottom: 2px;
 
   &:hover {
-    background: rgba(66, 133, 244, 0.13);
+    background: var(--color-hover-background);
   }
 
   &:active {
-    background: rgba(66, 133, 244, 0.18);
+    background: var(--color-hover-background);
   }
 }
 

@@ -9,7 +9,7 @@
                 </div>
                 <div class="skeleton-date"></div>
             </li>
-            <li v-for="item in filteredUsers" :key="item.id" class="connection-item" v-show="!isLoading" @click="emit('select', item)">
+            <li v-for="item in filteredUsers" :key="item.id" class="connection-item" :class="{ selected: isSelected(item) }" v-show="!isLoading" @click="emit('select', item)">
                 <div class="connection-left">
                     <img :src="getIconComponent(item)?.src" class="icon" @mouseenter="onIconHover($event, getIconComponent(item)?.tooltip)" @mouseleave="hideTooltip"/>
                     <span class="connection-name">{{ item.name }}</span>
@@ -35,6 +35,14 @@ import FileIcon from '@/assets/bi/icons/folder_windows_style.svg'
 import { apiClient } from '@/js/api/manager.js'
 
 const emit = defineEmits(['select'])
+
+const props = defineProps({
+  selectedConnection: Object
+})
+
+function isSelected (row) {
+    return props.selectedConnection && String(row.id) === String(props.selectedConnection.id)
+}
 
 const users = ref([])
 const filter = ref('')
@@ -91,7 +99,7 @@ function hideTooltip() {
 <style scoped lang="scss">
 .connection-list {
     list-style: none;
-    max-height: 400px;
+    max-height: 355px;
     overflow-y: auto;
     padding: 0;
     margin: 0;
@@ -107,8 +115,13 @@ function hideTooltip() {
     transition: background 0.2s ease;
 
     &:hover {
-        background-color: #3a3a3d;
+        background-color: var(--color-hover-background);
     }
+}
+
+.connection-item.selected {
+  background-color: var(--color-hover-background);
+  border: 1.5px solid #198754;
 }
 
 .connection-left {
@@ -118,13 +131,13 @@ function hideTooltip() {
 }
 
 .connection-name {
-    color: #eee;
+    color: var(--color-primary-text);
     font-size: 14px;
 }
 
 .connection-date {
     font-size: 13px;
-    color: #aaa;
+    color: var(--color-secondary-text);
 }
 
 .icon {
@@ -135,7 +148,7 @@ function hideTooltip() {
 .no-data {
     padding: 12px;
     text-align: center;
-    color: #777;
+    color: var(--color-primary-text);
 }
 
 .loading-placeholder {
@@ -146,14 +159,14 @@ function hideTooltip() {
 .skeleton-icon {
     width: 18px;
     height: 18px;
-    background-color: #444;
+    background-color: var(--color-secondary-text);
     border-radius: 4px;
 }
 
 .skeleton-text {
     width: 100px;
     height: 14px;
-    background-color: #444;
+    background-color: var(--color-secondary-text);
     border-radius: 4px;
     margin-left: 8px;
 }
@@ -161,7 +174,7 @@ function hideTooltip() {
 .skeleton-date {
     width: 60px;
     height: 12px;
-    background-color: #444;
+    background-color: var(--color-secondary-text);
     border-radius: 4px;
 }
 
@@ -180,8 +193,8 @@ function hideTooltip() {
 .tooltip-fixed {
   position: fixed;
   transform: translateX(-50%);
-  background-color: #2a2a2a;
-  color: #fff;
+  background-color: var(--color-primary-background);
+  color: var(--color-primary-text);
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 12px;
