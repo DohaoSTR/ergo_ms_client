@@ -55,21 +55,6 @@
           {{ errors.description }}
         </div>
       </div>
-
-      <div class="mb-3">
-        <label class="form-label">Порядок сортировки</label>
-        <input 
-          v-model="form.sort_order" 
-          type="number" 
-          class="form-control"
-          :class="{ 'is-invalid': errors.sort_order }"
-          placeholder="0"
-        />
-        <div v-if="errors.sort_order" class="invalid-feedback">
-          {{ errors.sort_order }}
-        </div>
-        <div class="form-text">Чем меньше число, тем выше в списке</div>
-      </div>
       
       <div class="mb-3">
         <div class="form-check">
@@ -122,7 +107,6 @@ const form = ref({
   name: '',
   description: '',
   subject: null,
-  sort_order: 0,
   is_visible: true,
   completion_required: false
 })
@@ -134,6 +118,10 @@ watch(() => props.show, (newVal) => {
     resetForm()
     if (props.editing && props.themeData) {
       fillForm(props.themeData)
+    } else if (props.themeData && props.themeData.subject) {
+      // Устанавливаем курс для новой темы
+      form.value.subject = props.themeData.subject
+      console.log('Установлен курс для новой темы:', props.themeData.subject)
     }
   }
 })
@@ -143,7 +131,6 @@ function resetForm() {
     name: '',
     description: '',
     subject: null,
-    sort_order: 0,
     is_visible: true,
     completion_required: false
   }
@@ -161,7 +148,6 @@ function fillForm(data) {
     name: data.name || '',
     description: data.description || '',
     subject: subjectId,
-    sort_order: data.sort_order || 0,
     is_visible: data.is_visible !== undefined ? data.is_visible : true,
     completion_required: data.completion_required || false
   }
@@ -178,6 +164,9 @@ function validate() {
     newErrors.subject = 'Выберите курс'
   }
 
+  console.log('Валидация формы темы:', form.value)
+  console.log('Ошибки валидации:', newErrors)
+
   errors.value = newErrors
   return Object.keys(newErrors).length === 0
 }
@@ -192,10 +181,11 @@ function handleSave() {
     name: form.value.name.trim(),
     description: form.value.description?.trim() || '',
     subject: parseInt(form.value.subject),
-    sort_order: parseInt(form.value.sort_order) || 0,
     is_visible: Boolean(form.value.is_visible),
     completion_required: Boolean(form.value.completion_required)
   }
+
+  // sort_order будет автоматически назначен на сервере
 
   emit('save', data, errors)
 }

@@ -1247,6 +1247,29 @@ async function updateFormat() {
   }
 }
 
+// API функции для удаления
+async function deleteCategoryRequest(categoryId) {
+  try {
+    await apiClient.delete(`${endpoints.lms.categories}${categoryId}/`)
+    showSuccess('Категория успешно удалена')
+  } catch (error) {
+    console.error('Ошибка удаления категории:', error)
+    handleApiError(error, 'Ошибка при удалении категории')
+    throw error
+  }
+}
+
+async function deleteFormatRequest(formatId) {
+  try {
+    await apiClient.delete(`${endpoints.lms.courseFormats}${formatId}/`)
+    showSuccess('Формат курса успешно удален')
+  } catch (error) {
+    console.error('Ошибка удаления формата:', error)
+    handleApiError(error, 'Ошибка при удалении формата')
+    throw error
+  }
+}
+
 function deleteFormat(format) {
   itemToDelete.value = { type: 'format', item: format }
   showDeleteConfirmModal.value = true

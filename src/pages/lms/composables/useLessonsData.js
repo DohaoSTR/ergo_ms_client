@@ -10,6 +10,7 @@ export function useLessonsData() {
   const forums = ref([])
   const tests = ref([])
   const assignments = ref([])
+  const resources = ref([])
   const categories = ref([])
   const courseFormats = ref([])
   const loading = ref(true)
@@ -29,7 +30,8 @@ export function useLessonsData() {
     totalLessons: lessons.value.length,
     visibleLessons: lessons.value.filter(l => l.is_visible).length,
     totalTests: tests.value.length,
-    totalAssignments: assignments.value.length
+    totalAssignments: assignments.value.length,
+    totalResources: resources.value.length
   }))
   
   const filteredLessons = computed(() => {
@@ -181,6 +183,7 @@ export function useLessonsData() {
         forumsResponse, 
         testsResponse,
         assignmentsResponse,
+        resourcesResponse,
         categoriesResponse, 
         formatsResponse
       ] = await Promise.all([
@@ -190,6 +193,7 @@ export function useLessonsData() {
         apiClient.get(endpoints.lms.forums).catch(() => ({ data: [] })),
         apiClient.get(endpoints.lms.tests).catch(() => ({ data: [] })),
         apiClient.get(endpoints.lms.assignments).catch(() => ({ data: [] })),
+        apiClient.get(endpoints.lms.resources).catch(() => ({ data: [] })),
         apiClient.get(endpoints.lms.categories).catch(() => ({ data: [] })),
         apiClient.get(endpoints.lms.courseFormats).catch(() => ({ data: [] }))
       ])
@@ -200,6 +204,7 @@ export function useLessonsData() {
       forums.value = forumsResponse.data?.results || forumsResponse.data || []
       tests.value = testsResponse.data?.results || testsResponse.data || []
       assignments.value = assignmentsResponse.data?.results || assignmentsResponse.data || []
+      resources.value = resourcesResponse.data?.results || resourcesResponse.data || []
       categories.value = categoriesResponse.data?.results || categoriesResponse.data || []
       courseFormats.value = formatsResponse.data?.results || formatsResponse.data || []
       
@@ -211,6 +216,7 @@ export function useLessonsData() {
       forums.value = []
       tests.value = []
       assignments.value = []
+      resources.value = []
       categories.value = []
       courseFormats.value = []
     } finally {
@@ -311,6 +317,52 @@ export function useLessonsData() {
       return parseInt(assignmentThemeId) === parseInt(themeId)
     })
   }
+
+  function updateThemeOrder(themeIds) {
+    console.log('🔄 Обновление порядка тем в исходных данных:', themeIds)
+    console.log('🔍 Текущее состояние тем:', themes.value.map(t => ({ id: t.id, name: t.name, sort_order: t.sort_order })))
+    
+    // Обновляем sort_order в исходном массиве themes
+    themeIds.forEach((themeId, index) => {
+      const theme = themes.value.find(t => t.id === themeId)
+      if (theme) {
+        theme.sort_order = index + 1
+        console.log(`📝 Обновлен sort_order исходной темы "${theme.name}": ${theme.sort_order}`)
+      }
+    })
+    
+    console.log('✅ Порядок тем обновлен в исходных данных')
+    console.log('🔍 Новое состояние тем:', themes.value.map(t => ({ id: t.id, name: t.name, sort_order: t.sort_order })))
+  }
+
+  function updateLessonOrder(themeId, lessonIds) {
+    console.log('🔄 Обновление порядка уроков в исходных данных:', { themeId, lessonIds })
+    console.log('🔍 Текущее состояние уроков темы:', lessons.value.filter(l => {
+      let lessonThemeId = l.theme
+      if (typeof lessonThemeId === 'object' && lessonThemeId?.id) {
+        lessonThemeId = lessonThemeId.id
+      }
+      return parseInt(lessonThemeId) === parseInt(themeId)
+    }).map(l => ({ id: l.id, name: l.name, sort_order: l.sort_order })))
+    
+    // Обновляем sort_order в исходном массиве lessons
+    lessonIds.forEach((lessonId, index) => {
+      const lesson = lessons.value.find(l => l.id === lessonId)
+      if (lesson) {
+        lesson.sort_order = index + 1
+        console.log(`📝 Обновлен sort_order исходного урока "${lesson.name}": ${lesson.sort_order}`)
+      }
+    })
+    
+    console.log('✅ Порядок уроков обновлен в исходных данных')
+    console.log('🔍 Новое состояние уроков темы:', lessons.value.filter(l => {
+      let lessonThemeId = l.theme
+      if (typeof lessonThemeId === 'object' && lessonThemeId?.id) {
+        lessonThemeId = lessonThemeId.id
+      }
+      return parseInt(lessonThemeId) === parseInt(themeId)
+    }).map(l => ({ id: l.id, name: l.name, sort_order: l.sort_order })))
+  }
   
   return {
     // Данные
@@ -320,6 +372,7 @@ export function useLessonsData() {
     forums,
     tests,
     assignments,
+    resources,
     categories,
     courseFormats,
     loading,
@@ -347,6 +400,8 @@ export function useLessonsData() {
     getTestsByCourse,
     getAssignmentsByCourse,
     getTestsByTheme,
-    getAssignmentsByTheme
+    getAssignmentsByTheme,
+    updateThemeOrder,
+    updateLessonOrder
   }
 } 

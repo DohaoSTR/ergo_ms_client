@@ -38,7 +38,7 @@
       </div>
 
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <div class="mb-3">
             <label class="form-label">Курс *</label>
             <select 
@@ -58,11 +58,12 @@
             </div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
           <div class="mb-3">
             <label class="form-label">Тема</label>
             <select 
               v-model="form.theme" 
+              @change="onThemeChange"
               class="form-select"
               :disabled="!form.course"
             >
@@ -74,29 +75,55 @@
             <div class="form-text">Если тема не выбрана, задание будет относиться ко всему курсу</div>
           </div>
         </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label">Урок</label>
+            <select 
+              v-model="form.lesson" 
+              class="form-select"
+              :disabled="!form.theme"
+            >
+              <option value="">Выберите урок (необязательно)</option>
+              <option v-for="lesson in filteredLessons" :key="lesson.id" :value="lesson.id">
+                {{ lesson.name }}
+              </option>
+            </select>
+            <div class="form-text">Если урок не выбран, задание будет относиться к теме</div>
+          </div>
+        </div>
       </div>
 
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <label class="form-label">Крайний срок</label>
+            <label class="form-label">Крайний срок *</label>
             <input 
               v-model="form.deadline" 
-              type="datetime-local" 
+              type="date" 
               class="form-control"
+              :class="{ 'is-invalid': validationErrors.deadline }"
+              required
             />
+            <div v-if="validationErrors.deadline" class="invalid-feedback">
+              {{ validationErrors.deadline }}
+            </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="mb-3">
-            <label class="form-label">Максимальная оценка</label>
+            <label class="form-label">Максимальная оценка *</label>
             <input 
               v-model="form.max_grade" 
               type="number" 
               class="form-control"
+              :class="{ 'is-invalid': validationErrors.max_grade }"
               min="1"
+              required
               placeholder="100"
             />
+            <div v-if="validationErrors.max_grade" class="invalid-feedback">
+              {{ validationErrors.max_grade }}
+            </div>
           </div>
         </div>
       </div>
@@ -168,6 +195,7 @@ const props = defineProps({
   assignmentData: Object,
   courses: Array,
   themes: Array,
+  lessons: Array,
   loading: Boolean
 })
 
@@ -178,6 +206,7 @@ const form = ref({
   description: '',
   course: null,
   theme: null,
+  lesson: null,
   deadline: '',
   max_grade: 100,
   allow_late_submissions: false,
@@ -199,8 +228,24 @@ const filteredThemes = computed(() => {
   })
 })
 
+const filteredLessons = computed(() => {
+  if (!form.value.theme || !props.lessons) return []
+  return props.lessons.filter(lesson => {
+    let lessonTheme = lesson.theme
+    if (typeof lessonTheme === 'object' && lessonTheme?.id) {
+      lessonTheme = lessonTheme.id
+    }
+    return parseInt(lessonTheme) === parseInt(form.value.theme)
+  })
+})
+
 function onCourseChange() {
   form.value.theme = null
+  form.value.lesson = null
+}
+
+function onThemeChange() {
+  form.value.lesson = null
 }
 
 function resetForm() {
@@ -209,6 +254,7 @@ function resetForm() {
     description: '',
     course: null,
     theme: null,
+    lesson: null,
     deadline: '',
     max_grade: 100,
     allow_late_submissions: false,
@@ -231,6 +277,14 @@ function handleSave() {
   if (!form.value.course) {
     errors.course = 'Выберите курс'
   }
+  
+  if (!form.value.deadline?.trim()) {
+    errors.deadline = 'Крайний срок обязателен'
+  }
+  
+  if (!form.value.max_grade || form.value.max_grade < 1) {
+    errors.max_grade = 'Максимальная оценка должна быть больше 0'
+  }
 
   if (Object.keys(errors).length > 0) {
     validationErrors.value = errors
@@ -246,9 +300,10 @@ function handleSave() {
     allow_late_submissions: Boolean(form.value.allow_late_submissions),
     submission_type: form.value.submission_type || 'file',
     max_file_size: (form.value.max_file_size_mb || 10) * 1024 * 1024,
-    // Привязка к теме через курс и тему
+    // Привязка к сущностям
     course: form.value.course,
-    theme: form.value.theme
+    theme: form.value.theme,
+    lesson: form.value.lesson
   }
 
   emit('save', assignmentData, validationErrors)
@@ -260,9 +315,10 @@ watch(() => props.assignmentData, (newData) => {
       form.value = {
         title: newData.title || '',
         description: newData.description || '',
-        course: newData.course || null,
-        theme: newData.theme || null,
-        deadline: newData.deadline ? new Date(newData.deadline).toISOString().slice(0, 16) : '',
+        course: newData.subject?.id || newData.course || null,
+        theme: newData.theme?.id || newData.theme || null,
+        lesson: newData.lesson?.id || newData.lesson || null,
+        deadline: newData.deadline ? new Date(newData.deadline).toISOString().slice(0, 10) : '',
         max_grade: newData.max_grade || 100,
         allow_late_submissions: newData.allow_late_submissions || false,
         submission_type: newData.submission_type || 'file',
@@ -276,6 +332,7 @@ watch(() => props.assignmentData, (newData) => {
         description: '',
         course: newData.course || null,
         theme: newData.theme || null,
+        lesson: newData.lesson || null,
         deadline: '',
         max_grade: 100,
         allow_late_submissions: false,

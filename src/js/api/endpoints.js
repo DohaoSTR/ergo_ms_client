@@ -207,12 +207,19 @@ export const endpoints = {
         // Темы курсов
         themes: 'lms/api/themes/',
         reorderLessons: id => `lms/themes/${id}/reorder-lessons/`,
+        reorderThemes: 'lms/themes/reorder-themes/',
         
         // Уроки
         lessons: 'lms/api/lessons/',
         duplicateLesson: id => `lms/lessons/${id}/duplicate/`,
         toggleLessonVisibility: id => `lms/lessons/${id}/toggle-visibility/`,
         lessonsByCourse: 'lms/lessons/by-course/',
+        
+        // Ресурсы
+        resources: 'lms/api/resources/',
+        downloadResource: id => `lms/resources/${id}/download/`,
+        toggleResourceVisibility: id => `lms/resources/${id}/toggle-visibility/`,
+        resourcesByContext: 'lms/resources/by-context/',
         
         // Записи на курсы
         enroll: id => `lms/subjects/${id}/enroll/`,

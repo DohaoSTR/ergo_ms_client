@@ -52,7 +52,9 @@ class ApiClient {
             const response = await this.client.get(endpoint, config);
             return this.handleResponse(response);
         } catch (error) {
-            return this.handleError(error);
+            const errorInfo = this.handleError(error);
+            // Пробрасываем ошибку дальше для обработки в composables
+            throw error;
         }
     }
 
@@ -76,7 +78,9 @@ class ApiClient {
             const response = await this.client.post(endpoint, data, config);
             return this.handleResponse(response);
         } catch (error) {
-            return this.handleError(error);
+            const errorInfo = this.handleError(error);
+            // Пробрасываем ошибку дальше для обработки в composables
+            throw error;
         }
     }
 
@@ -100,7 +104,9 @@ class ApiClient {
             const response = await this.client.put(endpoint, data, config);
             return this.handleResponse(response);
         } catch (error) {
-            return this.handleError(error);
+            const errorInfo = this.handleError(error);
+            // Пробрасываем ошибку дальше для обработки в composables
+            throw error;
         }
     }
 
@@ -114,7 +120,9 @@ class ApiClient {
             const r = await this.client.patch(endpoint, data, cfg)
             return this.handleResponse(r)
         } catch (e) {
-            return this.handleError(e)
+            const errorInfo = this.handleError(e)
+            // Пробрасываем ошибку дальше для обработки в composables
+            throw e
         }
     }
 
@@ -128,7 +136,9 @@ class ApiClient {
             const response = await this.client.delete(endpoint, config);
             return this.handleResponse(response);
         } catch (error) {
-            return this.handleError(error);
+            const errorInfo = this.handleError(error);
+            // Пробрасываем ошибку дальше для обработки в composables
+            throw error;
         }
     }
 

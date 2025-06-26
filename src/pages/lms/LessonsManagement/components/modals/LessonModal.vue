@@ -18,6 +18,7 @@
       <div class="mb-3">
         <label class="form-label">Название урока *</label>
         <input 
+          ref="nameInput"
           v-model="form.name" 
           type="text" 
           class="form-control" 
@@ -46,40 +47,19 @@
       <!-- Тип урока и содержание -->
       <h6 class="mb-3 border-bottom pb-2 mt-4">Тип урока и содержание</h6>
       
-      <div class="row">
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label">Тип урока *</label>
-            <select 
-              v-model="form.lessontype" 
-              class="form-select"
-              :class="{ 'is-invalid': errors.lessontype }"
-            >
-              <option v-for="type in lessonTypes" :key="type.value" :value="type.value">
-                {{ type.label }}
-              </option>
-            </select>
-            <div v-if="errors.lessontype" class="invalid-feedback">
-              {{ errors.lessontype }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label">Порядок сортировки</label>
-            <input 
-              v-model="form.sort_order" 
-              type="number" 
-              min="0"
-              class="form-control" 
-              :class="{ 'is-invalid': errors.sort_order }"
-              placeholder="0"
-            />
-            <div v-if="errors.sort_order" class="invalid-feedback">
-              {{ errors.sort_order }}
-            </div>
-          </div>
+      <div class="mb-3">
+        <label class="form-label">Тип урока *</label>
+        <select 
+          v-model="form.lessontype" 
+          class="form-select"
+          :class="{ 'is-invalid': errors.lessontype }"
+        >
+          <option v-for="type in lessonTypes" :key="type.value" :value="type.value">
+            {{ type.label }}
+          </option>
+        </select>
+        <div v-if="errors.lessontype" class="invalid-feedback">
+          {{ errors.lessontype }}
         </div>
       </div>
 
@@ -250,7 +230,6 @@ const form = ref({
   lessontype: 'L',
   course: null,
   theme: null,
-  sort_order: 0,
   is_visible: true,
   completion_required: false,
   availability_start: '',
@@ -259,6 +238,7 @@ const form = ref({
 })
 
 const errors = ref({})
+const nameInput = ref(null)
 
 const availableThemes = computed(() => {
   if (!form.value.course) return []
@@ -276,7 +256,18 @@ watch(() => props.show, (newVal) => {
     resetForm()
     if (props.editing && props.lessonData) {
       fillForm(props.lessonData)
+    } else if (!props.editing && props.lessonData) {
+      // При создании нового урока с предзаполненными данными
+      console.log('📝 Предзаполнение формы создания урока:', props.lessonData)
+      fillFormForCreation(props.lessonData)
     }
+    
+    // Фокусируемся на поле названия после небольшой задержки
+    setTimeout(() => {
+      if (nameInput.value) {
+        nameInput.value.focus()
+      }
+    }, 300)
   }
 })
 
@@ -287,7 +278,6 @@ function resetForm() {
     lessontype: 'L',
     course: null,
     theme: null,
-    sort_order: 0,
     is_visible: true,
     completion_required: false,
     availability_start: '',
@@ -311,13 +301,32 @@ function fillForm(data) {
     lessontype: data.lessontype || 'L',
     course: courseId,
     theme: data.theme?.id || data.theme,
-    sort_order: data.sort_order || 0,
     is_visible: data.is_visible !== undefined ? data.is_visible : true,
     completion_required: data.completion_required || false,
     availability_start: data.availability_start ? new Date(data.availability_start).toISOString().slice(0, 16) : '',
     availability_end: data.availability_end ? new Date(data.availability_end).toISOString().slice(0, 16) : '',
     content: data.content || ''
   }
+}
+
+function fillFormForCreation(data) {
+  // Заполняем форму для создания нового урока с предзаполненными данными
+  console.log('🔄 Предзаполнение данных для создания урока:', data)
+  
+  form.value = {
+    name: data.name || '',
+    description: data.description || '',
+    lessontype: data.lessontype || 'L',
+    course: data.course || null,
+    theme: data.theme || null,
+    is_visible: data.is_visible !== undefined ? data.is_visible : true,
+    completion_required: data.completion_required || false,
+    availability_start: data.availability_start || '',
+    availability_end: data.availability_end || '',
+    content: data.content || ''
+  }
+  
+  console.log('✅ Форма предзаполнена:', form.value)
 }
 
 function onCourseChange() {
@@ -372,7 +381,6 @@ function handleSave() {
     description: form.value.description?.trim() || '',
     lessontype: form.value.lessontype,
     theme: parseInt(form.value.theme),
-    sort_order: parseInt(form.value.sort_order) || 0,
     is_visible: Boolean(form.value.is_visible),
     completion_required: Boolean(form.value.completion_required),
     availability_start: form.value.availability_start || null,

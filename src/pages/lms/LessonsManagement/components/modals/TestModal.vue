@@ -58,7 +58,7 @@
       </div>
 
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <div class="mb-3">
             <label class="form-label">Курс *</label>
             <select 
@@ -78,11 +78,12 @@
             </div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
           <div class="mb-3">
             <label class="form-label">Тема</label>
             <select 
               v-model="form.theme" 
+              @change="onThemeChange"
               class="form-select"
               :disabled="!form.course"
             >
@@ -94,29 +95,53 @@
             <div class="form-text">Если тема не выбрана, тест будет относиться ко всему курсу</div>
           </div>
         </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label">Урок</label>
+            <select 
+              v-model="form.lesson" 
+              class="form-select"
+              :disabled="!form.theme"
+            >
+              <option value="">Выберите урок (необязательно)</option>
+              <option v-for="lesson in filteredLessons" :key="lesson.id" :value="lesson.id">
+                {{ lesson.name }}
+              </option>
+            </select>
+            <div class="form-text">Если урок не выбран, тест будет относиться к теме</div>
+          </div>
+        </div>
       </div>
 
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <label class="form-label">Тип теста</label>
-            <select v-model="form.type" class="form-select">
-              <option value="close">Закрытые вопросы</option>
-              <option value="open">Открытые вопросы</option>
-              <option value="game">Игровой формат</option>
+            <label class="form-label">Тип теста *</label>
+            <select v-model="form.type" class="form-select" :class="{ 'is-invalid': validationErrors.type }" required>
+              <option value="C">Закрытые вопросы</option>
+              <option value="O">Открытые вопросы</option>
+              <option value="G">Игровой формат</option>
             </select>
+            <div v-if="validationErrors.type" class="invalid-feedback">
+              {{ validationErrors.type }}
+            </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="mb-3">
-            <label class="form-label">Длительность (мин)</label>
+            <label class="form-label">Длительность (мин) *</label>
             <input 
               v-model="form.duration_minutes" 
               type="number" 
               class="form-control"
+              :class="{ 'is-invalid': validationErrors.duration_minutes }"
               min="1"
+              required
               placeholder="60"
             />
+            <div v-if="validationErrors.duration_minutes" class="invalid-feedback">
+              {{ validationErrors.duration_minutes }}
+            </div>
           </div>
         </div>
       </div>
@@ -124,27 +149,37 @@
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <label class="form-label">Проходной балл (%)</label>
+            <label class="form-label">Проходной балл (%) *</label>
             <input 
               v-model="form.passing_score" 
               type="number" 
               class="form-control"
+              :class="{ 'is-invalid': validationErrors.passing_score }"
               min="0"
               max="100"
+              required
               placeholder="70"
             />
+            <div v-if="validationErrors.passing_score" class="invalid-feedback">
+              {{ validationErrors.passing_score }}
+            </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="mb-3">
-            <label class="form-label">Максимум попыток</label>
+            <label class="form-label">Максимум попыток *</label>
             <input 
               v-model="form.max_attempts" 
               type="number" 
               class="form-control"
+              :class="{ 'is-invalid': validationErrors.max_attempts }"
               min="1"
+              required
               placeholder="1"
             />
+            <div v-if="validationErrors.max_attempts" class="invalid-feedback">
+              {{ validationErrors.max_attempts }}
+            </div>
           </div>
         </div>
       </div>
@@ -229,6 +264,7 @@ const props = defineProps({
   testData: Object,
   courses: Array,
   themes: Array,
+  lessons: Array,
   loading: Boolean
 })
 
@@ -240,7 +276,8 @@ const form = ref({
   description: '',
   course: null,
   theme: null,
-  type: 'close',
+  lesson: null,
+  type: 'C',
   duration_minutes: 60,
   passing_score: 70,
   max_attempts: 1,
@@ -264,8 +301,24 @@ const filteredThemes = computed(() => {
   })
 })
 
+const filteredLessons = computed(() => {
+  if (!form.value.theme || !props.lessons) return []
+  return props.lessons.filter(lesson => {
+    let lessonTheme = lesson.theme
+    if (typeof lessonTheme === 'object' && lessonTheme?.id) {
+      lessonTheme = lessonTheme.id
+    }
+    return parseInt(lessonTheme) === parseInt(form.value.theme)
+  })
+})
+
 function onCourseChange() {
   form.value.theme = null
+  form.value.lesson = null
+}
+
+function onThemeChange() {
+  form.value.lesson = null
 }
 
 function resetForm() {
@@ -275,7 +328,8 @@ function resetForm() {
     description: '',
     course: null,
     theme: null,
-    type: 'close',
+    lesson: null,
+    type: 'C',
     duration_minutes: 60,
     passing_score: 70,
     max_attempts: 1,
@@ -304,6 +358,18 @@ function handleSave() {
   if (!form.value.course) {
     errors.course = 'Выберите курс'
   }
+  
+  if (!form.value.duration_minutes || form.value.duration_minutes < 1) {
+    errors.duration_minutes = 'Длительность должна быть больше 0'
+  }
+  
+  if (form.value.passing_score === null || form.value.passing_score === undefined || form.value.passing_score < 0 || form.value.passing_score > 100) {
+    errors.passing_score = 'Проходной балл должен быть от 0 до 100'
+  }
+  
+  if (!form.value.max_attempts || form.value.max_attempts < 1) {
+    errors.max_attempts = 'Максимум попыток должен быть больше 0'
+  }
 
   if (Object.keys(errors).length > 0) {
     validationErrors.value = errors
@@ -315,7 +381,7 @@ function handleSave() {
     name: form.value.name?.trim(),
     title: form.value.title?.trim(),
     description: form.value.description?.trim() || 'Описание теста',
-    type: form.value.type || 'close',
+    type: form.value.type || 'C',
     duration_minutes: form.value.duration_minutes || 60,
     passing_score: form.value.passing_score || 70,
     max_attempts: form.value.max_attempts || 1,
@@ -324,9 +390,10 @@ function handleSave() {
     available_from: form.value.available_from || null,
     available_until: form.value.available_until || null,
     is_active: Boolean(form.value.is_active),
-    // Привязка к теме через курс и тему
+    // Привязка к сущностям
     course: form.value.course,
-    theme: form.value.theme
+    theme: form.value.theme,
+    lesson: form.value.lesson
   }
 
   emit('save', testData, validationErrors)
@@ -339,9 +406,10 @@ watch(() => props.testData, (newData) => {
         name: newData.name || '',
         title: newData.title || '',
         description: newData.description || '',
-        course: newData.course || null,
-        theme: newData.theme || null,
-        type: newData.type || 'close',
+        course: newData.subject?.id || newData.course || null,
+        theme: newData.theme?.id || newData.theme || null,
+        lesson: newData.lesson?.id || newData.lesson || null,
+        type: newData.type || 'C',
         duration_minutes: newData.duration_minutes || 60,
         passing_score: newData.passing_score || 70,
         max_attempts: newData.max_attempts || 1,
@@ -359,7 +427,8 @@ watch(() => props.testData, (newData) => {
         description: '',
         course: newData.course || null,
         theme: newData.theme || null,
-        type: 'close',
+        lesson: newData.lesson || null,
+        type: 'C',
         duration_minutes: 60,
         passing_score: 70,
         max_attempts: 1,

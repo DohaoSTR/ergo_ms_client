@@ -43,9 +43,12 @@
         :loading="lessonsData.loading.value"
         :groupedData="lessonsData.groupedData.value"
         :expandedThemes="expandedThemes"
+        :expandedCourses="expandedCourses"
+        :expandedLessons="expandedLessons"
         :forums="lessonsData.forums.value"
         :tests="lessonsData.tests.value"
         :assignments="lessonsData.assignments.value"
+        :resources="lessonsData.resources.value"
         @createCourse="openCourseModal"
         @editCourse="editCourse"
         @deleteCourse="deleteCourse"
@@ -63,10 +66,17 @@
         @createAssignment="openAssignmentModal"
         @editAssignment="editAssignment"
         @deleteAssignment="deleteAssignment"
+        @createResource="openResourceModal"
+        @editResource="editResource"
+        @deleteResource="deleteResource"
         @createForum="openForumModal"
         @editForum="editForum"
         @deleteForum="deleteForum"
         @toggleTheme="toggleTheme"
+        @toggleCourse="toggleCourse"
+        @toggleLesson="toggleLesson"
+        @reorderThemes="handleReorderThemes"
+        @reorderLessons="handleReorderLessons"
       />
 
       <!-- Модальные окна -->
@@ -108,6 +118,7 @@
         :testData="testModal.formData.value"
         :courses="lessonsData.courses.value"
         :themes="lessonsData.themes.value"
+        :lessons="lessonsData.lessons.value"
         :loading="testModal.isSubmitting.value"
         @close="testModal.closeModal"
         @save="saveTest"
@@ -119,6 +130,7 @@
         :assignmentData="assignmentModal.formData.value"
         :courses="lessonsData.courses.value"
         :themes="lessonsData.themes.value"
+        :lessons="lessonsData.lessons.value"
         :loading="assignmentModal.isSubmitting.value"
         @close="assignmentModal.closeModal"
         @save="saveAssignment"
@@ -132,6 +144,18 @@
         :loading="forumModal.isSubmitting.value"
         @close="forumModal.closeModal"
         @save="saveForum"
+      />
+
+      <ResourceModal
+        :show="resourceModal.showModal.value"
+        :editing="resourceModal.editingItem.value"
+        :resourceData="resourceModal.formData.value"
+        :courses="lessonsData.courses.value"
+        :themes="lessonsData.themes.value"
+        :lessons="lessonsData.lessons.value"
+        :loading="resourceModal.isSubmitting.value"
+        @close="resourceModal.closeModal"
+        @save="saveResource"
       />
 
       <!-- Модальное окно подтверждения удаления -->
@@ -161,6 +185,7 @@ import LessonModal from './components/modals/LessonModal.vue'
 import TestModal from './components/modals/TestModal.vue'
 import AssignmentModal from './components/modals/AssignmentModal.vue'
 import ForumModal from './components/modals/ForumModal.vue'
+import ResourceModal from './components/modals/ResourceModal.vue'
 import FiltersSection from './components/FiltersSection.vue'
 import StatsSection from './components/StatsSection.vue'
 import MainContent from './components/MainContent.vue'
@@ -179,6 +204,12 @@ const confirmDialog = useConfirmDialog()
 // Состояние раскрытых тем
 const expandedThemes = ref(new Set())
 
+// Состояние раскрытых курсов
+const expandedCourses = ref(new Set())
+
+// Состояние раскрытых уроков
+const expandedLessons = ref(new Set())
+
 // Модальные окна
 const courseModal = useFormManagement()
 const themeModal = useFormManagement()
@@ -186,6 +217,7 @@ const lessonModal = useFormManagement()
 const testModal = useFormManagement()
 const assignmentModal = useFormManagement()
 const forumModal = useFormManagement()
+const resourceModal = useFormManagement()
 
 // Методы для курсов
 function openCourseModal() {
@@ -263,7 +295,16 @@ function deleteCourse(course) {
 
 // Методы для тем
 function openThemeModal(course = null) {
-  themeModal.formData.value = course ? { subject: course.id } : {}
+  console.log('openThemeModal вызван с курсом:', course)
+  
+  // Если курс передан, устанавливаем его ID
+  let initialData = {}
+  if (course && course.id) {
+    initialData.subject = parseInt(course.id)
+    console.log('Установлен subject для новой темы:', initialData.subject)
+  }
+  
+  themeModal.formData.value = initialData
   themeModal.editingItem.value = false
   themeModal.openModal()
 }
@@ -326,18 +367,34 @@ function deleteTheme(theme) {
 
 // Методы для уроков
 function openLessonModal(theme = null) {
+  console.log('🔍 Открытие модального окна урока с темой:', theme)
+  
   let courseId = null
   if (theme) {
     courseId = theme.subject
     if (typeof courseId === 'object' && courseId?.id) {
       courseId = courseId.id
     }
+    console.log('📋 Извлеченный ID курса:', courseId)
+    console.log('📋 ID темы:', theme.id)
   }
   
-  lessonModal.formData.value = theme ? { 
-    course: courseId, 
-    theme: theme.id 
-  } : {}
+  // Подготавливаем данные для формы урока с предзаполненными полями
+  const formData = theme ? { 
+    course: parseInt(courseId), 
+    theme: parseInt(theme.id),
+    // Устанавливаем видимость по умолчанию
+    is_visible: true,
+    // По умолчанию тип урока - лекция
+    lessontype: 'L'
+  } : {
+    is_visible: true,
+    lessontype: 'L'
+  }
+  
+  console.log('📝 Данные формы для создания урока:', formData)
+  
+  lessonModal.formData.value = formData
   lessonModal.editingItem.value = false
   lessonModal.openModal()
 }
@@ -400,6 +457,84 @@ async function toggleLessonVisibility(lesson) {
   }
 }
 
+// Методы для ресурсов
+function openResourceModal(lesson = null, theme = null) {
+  let courseId = null
+  let themeId = null
+  
+  if (lesson) {
+    // Если передан урок, получаем тему и курс из урока
+    themeId = lesson.theme
+    if (typeof themeId === 'object' && themeId?.id) {
+      themeId = themeId.id
+    }
+    
+    // Находим тему для получения курса
+    const themeObj = lessonsData.themes.value.find(t => t.id === themeId)
+    if (themeObj) {
+      courseId = themeObj.subject
+      if (typeof courseId === 'object' && courseId?.id) {
+        courseId = courseId.id
+      }
+    }
+  } else if (theme) {
+    // Если передана тема
+    themeId = theme.id
+    courseId = theme.subject
+    if (typeof courseId === 'object' && courseId?.id) {
+      courseId = courseId.id
+    }
+  }
+  
+  resourceModal.formData.value = { 
+    course: courseId,
+    theme: themeId,
+    lesson: lesson?.id || null
+  }
+  resourceModal.editingItem.value = false
+  resourceModal.openModal()
+}
+
+function editResource(resource) {
+  resourceModal.formData.value = resource
+  resourceModal.editingItem.value = true
+  resourceModal.openModal()
+}
+
+async function saveResource(data, errors) {
+  resourceModal.isSubmitting.value = true
+  try {
+    if (resourceModal.editingItem.value) {
+      await crudOperations.updateResource(resourceModal.formData.value.id, data, errors)
+    } else {
+      await crudOperations.createResource(data, errors)
+    }
+    await lessonsData.fetchData()
+    resourceModal.closeModal()
+  } catch (error) {
+    // Ошибки обрабатываются в useCrudOperations
+  } finally {
+    resourceModal.isSubmitting.value = false
+  }
+}
+
+function deleteResource(resource) {
+  confirmDialog.openConfirmDialog({
+    title: 'Удаление ресурса',
+    message: `Вы уверены, что хотите удалить ресурс "${resource.name}"?\n\nЭто действие нельзя отменить.`,
+    confirmText: 'Удалить',
+    onConfirm: async () => {
+      try {
+        await crudOperations.deleteResource(resource.id)
+        await lessonsData.fetchData()
+        confirmDialog.closeConfirmDialog()
+      } catch (error) {
+        // Ошибки обрабатываются в useCrudOperations
+      }
+    }
+  })
+}
+
 // Управление раскрытием тем
 function toggleTheme(themeId) {
   if (expandedThemes.value.has(themeId)) {
@@ -409,20 +544,58 @@ function toggleTheme(themeId) {
   }
 }
 
+// Управление раскрытием курсов
+function toggleCourse(courseId) {
+  if (expandedCourses.value.has(courseId)) {
+    expandedCourses.value.delete(courseId)
+  } else {
+    expandedCourses.value.add(courseId)
+  }
+}
+
+// Управление раскрытием уроков
+function toggleLesson(lessonId) {
+  if (expandedLessons.value.has(lessonId)) {
+    expandedLessons.value.delete(lessonId)
+  } else {
+    expandedLessons.value.add(lessonId)
+  }
+}
+
 // Методы для тестов
-function openTestModal(theme = null) {
+function openTestModal(theme = null, lesson = null) {
   let courseId = null
-  if (theme) {
+  let themeId = null
+  
+  if (lesson) {
+    // Если передан урок, получаем тему и курс из урока
+    themeId = lesson.theme
+    if (typeof themeId === 'object' && themeId?.id) {
+      themeId = themeId.id
+    }
+    
+    // Находим тему для получения курса
+    const themeObj = lessonsData.themes.value.find(t => t.id === themeId)
+    if (themeObj) {
+      courseId = themeObj.subject
+      if (typeof courseId === 'object' && courseId?.id) {
+        courseId = courseId.id
+      }
+    }
+  } else if (theme) {
+    // Если передана тема
+    themeId = theme.id
     courseId = theme.subject
     if (typeof courseId === 'object' && courseId?.id) {
       courseId = courseId.id
     }
   }
   
-  testModal.formData.value = theme ? { 
-    course: courseId, 
-    theme: theme.id 
-  } : {}
+  testModal.formData.value = { 
+    course: courseId,
+    theme: themeId,
+    lesson: lesson?.id || null
+  }
   testModal.editingItem.value = false
   testModal.openModal()
 }
@@ -468,19 +641,39 @@ function deleteTest(test) {
 }
 
 // Методы для заданий
-function openAssignmentModal(theme = null) {
+function openAssignmentModal(theme = null, lesson = null) {
   let courseId = null
-  if (theme) {
+  let themeId = null
+  
+  if (lesson) {
+    // Если передан урок, получаем тему и курс из урока
+    themeId = lesson.theme
+    if (typeof themeId === 'object' && themeId?.id) {
+      themeId = themeId.id
+    }
+    
+    // Находим тему для получения курса
+    const themeObj = lessonsData.themes.value.find(t => t.id === themeId)
+    if (themeObj) {
+      courseId = themeObj.subject
+      if (typeof courseId === 'object' && courseId?.id) {
+        courseId = courseId.id
+      }
+    }
+  } else if (theme) {
+    // Если передана тема
+    themeId = theme.id
     courseId = theme.subject
     if (typeof courseId === 'object' && courseId?.id) {
       courseId = courseId.id
     }
   }
   
-  assignmentModal.formData.value = theme ? { 
-    course: courseId, 
-    theme: theme.id 
-  } : {}
+  assignmentModal.formData.value = { 
+    course: courseId,
+    theme: themeId,
+    lesson: lesson?.id || null
+  }
   assignmentModal.editingItem.value = false
   assignmentModal.openModal()
 }
@@ -572,14 +765,72 @@ function deleteForum(forum) {
   })
 }
 
+// Обработка изменения порядка тем
+function handleReorderThemes(data) {
+  console.log('🔄 Обработка изменения порядка тем:', data)
+  
+  if (data.error) {
+    // Если произошла ошибка, обновляем данные для восстановления порядка
+    console.log('❌ Ошибка при изменении порядка, обновляем данные...')
+    lessonsData.fetchData()
+  } else {
+    // Успешное изменение порядка
+    console.log('✅ Порядок тем успешно изменен:', data.themeIds)
+    
+    if (data.success) {
+      console.log('🎉 Порядок тем сохранен успешно!')
+      // Обновляем исходные данные для корректного отображения
+      lessonsData.updateThemeOrder(data.themeIds)
+    }
+    
+    // Можно показать уведомление об успехе
+    // toast.success('Порядок тем обновлен')
+  }
+}
+
+// Обработка изменения порядка уроков
+function handleReorderLessons(data) {
+  console.log('🔄 Обработка изменения порядка уроков:', data)
+  
+  if (data.error) {
+    // Если произошла ошибка, обновляем данные для восстановления порядка
+    console.log('❌ Ошибка при изменении порядка уроков, обновляем данные...')
+    lessonsData.fetchData()
+  } else {
+    // Успешное изменение порядка
+    console.log('✅ Порядок уроков успешно изменен:', data.lessonIds)
+    
+    if (data.success) {
+      console.log('🎉 Порядок уроков сохранен успешно!')
+      // Обновляем исходные данные для корректного отображения
+      lessonsData.updateLessonOrder(data.themeId, data.lessonIds)
+    }
+    
+    // Можно показать уведомление об успехе
+    // toast.success('Порядок уроков обновлен')
+  }
+}
+
 // Инициализация
 onMounted(async () => {
   await lessonsData.fetchData()
   
-  // Раскрываем первую тему каждого курса
-  lessonsData.groupedData.value.forEach(courseGroup => {
+  // Раскрываем первый курс, первую тему каждого курса и первый урок каждой темы
+  lessonsData.groupedData.value.forEach((courseGroup, courseIndex) => {
+    // Раскрываем первый курс
+    if (courseIndex === 0) {
+      expandedCourses.value.add(courseGroup.course.id)
+    }
+    
+    // Раскрываем первую тему каждого курса
     if (courseGroup.themes.length > 0) {
-      expandedThemes.value.add(courseGroup.themes[0].id)
+      const firstTheme = courseGroup.themes[0]
+      expandedThemes.value.add(firstTheme.id)
+      
+      // Раскрываем первый урок первой темы первого курса
+      if (courseIndex === 0 && firstTheme.lessons && firstTheme.lessons.length > 0) {
+        expandedLessons.value.add(firstTheme.lessons[0].id)
+      }
     }
   })
 })
