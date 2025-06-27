@@ -43,6 +43,7 @@ import {
   Square,
   Puzzle,
   CreditCard,
+  Landmark,
 } from 'lucide-vue-next'
 
 /**
@@ -83,6 +84,7 @@ export const iconMapping = {
   Square,
   Puzzle,
   CreditCard,
+  Landmark,
 }
 
 /**

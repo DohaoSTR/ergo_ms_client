@@ -809,6 +809,57 @@
           }
         }
       ]
+    },
+    {
+      "icon": "Landmark",
+      "routeName": "ErgoCityStruct",
+      "title": "Эргокаркас города",
+      "route": {
+        "path": "/ergo-city-struct",
+        "component": "@/pages/cityAnalyze/ParentLayout.vue",
+        "redirect": "MapUpload",
+        "meta": {
+          "requiresAuth": true
+        }
+      },
+      "list": [
+        {
+          "path": "MapUpload",
+          "name": "Загрузка карт",
+          "route": {
+            "path": "/ergo-city-struct/map-upload",
+            "component": "@/pages/cityAnalyze/mapUpload/ParentLayout.vue",
+            "meta": {
+              "title": "Индикаторы",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "MyUploads",
+          "name": "Мои загрузки",
+          "route": {
+            "path": "/ergo-city-struct/uploads",
+            "component": "@/pages/cityAnalyze/myUploads/ParentLayout.vue",
+            "meta": {
+              "title": "Мои загрузки",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "MyTasks",
+          "name": "Мои задачи",
+          "route": {
+            "path": "/ergo-city-struct/tasks",
+            "component": "@/pages/cityAnalyze/task/TaskPage.vue",
+            "meta": {
+              "title": "Мои задачи",
+              "requiresAuth": true
+            }
+          }
+        }
+      ]
     }
   ]
 } 

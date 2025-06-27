@@ -32,9 +32,6 @@ const isMenuVisible = ref(window.innerWidth >= 1200)
 const isMenuToggledManually = ref(false)
 const isOverlayVisible = ref(false)
 
-const isDatasetSidebarOpen = ref(false)
-const currentSidebarPage = ref('')
-
 function updateMenuVisibility() {
   if (window.innerWidth >= 1200) {
     isMenuVisible.value = true

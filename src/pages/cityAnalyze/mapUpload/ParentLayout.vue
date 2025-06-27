@@ -1,5 +1,5 @@
 <script setup>
-import MapUpload from '@/pages/cityAnalyze/mapUpload/MapUpload.vue';
+    import MapUpload from '@/pages/cityAnalyze/mapUpload/MapUpload.vue';
 </script>
 
 <template>
