@@ -43,8 +43,15 @@ const menuButton = ref(null)
 const menuDropdown = ref(null)
 
 const tooltipLabel = computed(() => {
-  const ext = props.file.file_type?.toLowerCase() || 'неизвестный'
-  return `Файл формата .${ext}`
+  let ext = props.file.file_type?.toLowerCase()
+  if (!ext && props.file.name) {
+    const m = props.file.name.match(/\.(\w+)$/)
+    if (m) ext = m[1].toLowerCase()
+  }
+  if (ext === 'csv' || ext === 'xlsx' || ext === 'xls' || ext === 'txt') {
+    return `Файл формата .${ext}`
+  }
+  return 'Файл неизвестного формата'
 })
 
 function onIconHover(event) {
@@ -55,7 +62,11 @@ function onIconLeave() {
 }
 
 const iconPath = computed(() => {
-  const ext = props.file.file_type?.toLowerCase()
+  let ext = props.file.file_type?.toLowerCase()
+  if (!ext && props.file.name) {
+    const m = props.file.name.match(/\.(\w+)$/)
+    if (m) ext = m[1].toLowerCase()
+  }
   switch (ext) {
     case 'csv': return new URL('@/assets/bi/icons/csv.svg', import.meta.url).href
     case 'xlsx':
@@ -114,10 +125,10 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   position: relative;
 }
 .file-item:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-background);
 }
 .file-item.active {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--color-hover-background);
 }
 
 .file-content {
@@ -146,11 +157,12 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--color-primary-text);
 }
 
 .file-subtext {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-secondary-text);
   margin-top: 2px;
 }
 
@@ -168,13 +180,17 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   cursor: pointer;
 }
 .file-menu:hover {
-  background-color: rgba(255, 255, 255, 0.07);
+  background-color: var(--color-hover-background);
 }
 
 .menu-icon {
   width: 18px;
   height: 18px;
-  color: #b5bac1;
+  color: var(--color-secondary-text);
+}
+
+.menu-icon:hover{
+  color: var(--color-primary-text);
 }
 
 .relative {
@@ -185,8 +201,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   position: absolute;
   top: 28px;
   right: 0;
-  background-color: #2e2f35;
-  border: 1px solid #4e5058;
+  background-color: var(--color-primary-background);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   z-index: 10;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
@@ -197,15 +213,15 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .menu-item {
   padding: 6px 10px;
   font-size: 0.85rem;
-  color: #e4e4e7;
+  color: var(--color-primary-text);
   cursor: pointer;
   transition: background 0.15s ease;
   line-height: 1.2;
 }
 .menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-background);
 }
 .menu-item.danger {
-  color: #f87171;
+  color: var(--color-accent);
 }
 </style>

@@ -30,7 +30,7 @@ const props = defineProps({
   selectedTables: { type: Array, default: () => [] },
   relations:      { type: Array, default: () => [] }
 })
-const emit = defineEmits(['update:selectedTables', 'update:relations'])
+const emit = defineEmits(['update:selectedTables', 'update:relations', 'drop-table'])
 
 const container = ref(null)
 const { findEdge, updateEdgeData, removeNodes } = useVueFlow()
@@ -49,7 +49,7 @@ watch(
         id: key,
         type: 'tableNode',
         position: existing?.position || { x: 150, y: idx * 100 + 50 },
-        data: { label: tbl.name || key, primary: idx === 0 },
+        data: { label: tbl.display_name || tbl.alias || tbl.name || tbl.table_ref || key, primary: idx === 0 },
         draggable: idx !== 0
       }
     })
@@ -126,18 +126,20 @@ function removeNode(id) {
 }
 
 function onExternalDrop(evt) {
+  if (!evt.dataTransfer) return
   const raw = evt.dataTransfer.getData('application/json')
   if (!raw) return
 
   const table = JSON.parse(raw)
   const key   = String(table.id ?? `${table.schema}.${table.table}`)
 
+  // Проверка на дубликаты
   if (props.selectedTables.some(
     t => String(t.id ?? `${t.schema}.${t.table}`) === key
   )) return
 
+  // Формируем новые таблицы и связи
   const newTables = [...props.selectedTables, table]
-
   let newRelations = [...props.relations]
   if (newTables.length > 1) {
     const source = String(newTables[0].id)
@@ -146,10 +148,12 @@ function onExternalDrop(evt) {
       { source, target: key, joinType: 'inner' }
     ]
   }
-
+  emit('drop-table', table)
   emit('update:selectedTables', newTables)
   emit('update:relations',     newRelations)
 }
+
+
 </script>
 
 <style scoped>

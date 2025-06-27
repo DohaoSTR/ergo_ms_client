@@ -43,7 +43,7 @@
         <header class="file_area_header">
             <div class="file_area_header_label"><Waypoints /><h4>{{ connectionName || '...' }}</h4></div>
             <div class="file_area_header_buttons">
-                <button type="button" class="btn btn-outline-secondary">Создать датасет</button>
+                <button type="button" class="btn btn-secondary">Создать датасет</button>
                 <button type="button" v-if="showSaveChangesButton" class="btn btn-success" @click="saveChanges">Сохранить изменения</button>
             </div>
         </header>
@@ -184,8 +184,8 @@ watch(() => route.params.pk || route.params.connectionId, async (newPk) => {
 
 .tooltip {
     position: absolute;
-    background: #2e2f35;
-    color: #fff;
+    background: var(--color-primary-background);
+    color: var(--color-primary-text);
     padding: 6px 10px;
     border-radius: 6px;
     font-size: 0.85rem;
@@ -206,14 +206,13 @@ watch(() => route.params.pk || route.params.connectionId, async (newPk) => {
 html,
 body {
     height: 100%;
-    font-family: sans-serif;
-    color: #fff;
+    color: var(--color-primary-text);
 }
 
 .layout {
     display: grid;
     border-radius: 12px;
-    border: 1px solid #4c4b51;
+    border: 1px solid var(--color-border);
     grid-template-columns: 260px 1fr;
     grid-template-rows: 56px 1fr;
     grid-template-areas:
@@ -227,20 +226,21 @@ body {
     grid-area: sidebar;
     background-color: transparent;
     padding: 1rem;
+    background-color: var(--color-primary-background);
     border-top-left-radius: 12px;
 }
 
 .file_area_header {
     position: relative;
     grid-area: header;
-    background-color: #313338;
+    background-color: var(--color-primary-background);
     display: flex;
     gap: 20px;
     height: 61px;
     align-items: center;
     padding: 0 1rem;
     border-top-right-radius: 12px;
-    border-bottom: 1px solid #4e5058;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .file_area_header_buttons {
@@ -252,7 +252,7 @@ body {
 
 .file_area {
     grid-area: chat;
-    background-color: #313338;
+    background-color: var(--color-secondary-background);
     padding: 1rem;
     overflow-y: auto;
 }
@@ -273,13 +273,13 @@ body {
 }
 
 .icon-button:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--color-hover-background);
 }
 
 .icon {
     width: 18px;
     height: 18px;
-    color: #fff;
+    color: var(--color-primary-text);
 }
 
 .icon_name {
@@ -303,7 +303,7 @@ body {
     font-size: 1.2rem;
     margin-inline: -1rem;
     padding-inline: 1rem;
-    border-bottom: 1px solid #4e5058;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .name_container {
@@ -317,7 +317,7 @@ body {
     list-style: none;
     line-height: 1.8;
     font-size: 0.95rem;
-    color: #b5bac1;
+    color: var(--color-secondary-text);
     padding-top: 5px;
 }
 
@@ -334,7 +334,7 @@ body {
     left: 0;
     right: 0;
     height: 1px;
-    background-color: #4e5058;
+    background-color: var(--color-border);
 }
 
 .btn-outline-danger {
@@ -359,7 +359,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--color-primary-text);
 }
 
 .btn-outline-success {
@@ -371,14 +371,14 @@ body {
     justify-content: center;
 }
 
-.btn-outline-secondary {
+.btn-secondary {
     width: 10rem;
     height: 2rem;
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--color-primary-text);
 }
 
 .file_area_header_label{

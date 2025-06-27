@@ -23,7 +23,7 @@
         <div class="tables-list">
             <div v-if="!selectedConnection" class="tables-list-empty">Добавьте подключение, чтобы отобразить список таблиц</div>
             <div v-else>
-                <ConnectionTables :connection-id="selectedConnection.id" :connection-type="selectedConnection.connector_type" :linked-tables="selectedTables"/>
+                <ConnectionTables :connection-id="selectedConnection.id" :connection-type="selectedConnection.connector_type" :selected-tables="selectedTables"/>
             </div>
         </div>
     </div>

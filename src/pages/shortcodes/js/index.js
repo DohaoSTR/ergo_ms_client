@@ -19,7 +19,7 @@ export const componentMap = {
   Heading: HeadingBlock,
   Image: ImageBlock,
   Grid: GridSectionBlock,
-  PageCardBlock: PageCardBlock,
+  PageCard: PageCardBlock,
   Text: TextBlock,
 }
 

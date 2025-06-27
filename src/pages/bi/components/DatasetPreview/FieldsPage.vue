@@ -17,9 +17,9 @@
           <td>{{ idx + 1 }}</td>
           <td>
             <input v-model="f.name" @input="updateField(idx, 'name', f.name)"
-              class="form-control form-control-sm text-white" placeholder="Имя…" />
+              class="form-control form-control-sm" placeholder="Имя…" />
           </td>
-          <td>
+          <td style="max-width: 250px;">
             <span v-if="f.expression">
               <button class="source-btn" @click="onSourceClick(f)">
                 <SquareFunction />
@@ -28,7 +28,7 @@
             <span v-else>
               <button class="source-btn" @click="onSourceClick(f)">
                 <template v-if="f.source">
-                  {{ tableLabel(f.source?.table) }}.{{ f.source?.column }}
+                  {{ getFieldSourceLabel(f) }}
                 </template>
                 <template v-else>
                   Нет источника
@@ -36,12 +36,18 @@
               </button>
             </span>
           </td>
-          <td>{{ f.type }}</td>
           <td>
-            <AggSelect v-model="f.aggregation" :options="getAggregationOptions(f.type)" :aggregationColorMap="aggregationColorMap" />
+            <select v-model="f.type" class="form-select form-select">
+              <option v-for="typeOption in getTypeOptionsForField(f)" :key="typeOption.value" :value="typeOption.value">
+                {{ typeOption.label }}
+              </option>
+            </select>
+          </td>
+          <td style="max-width: 100px;">
+            <AggSelect :modelValue="f.aggregation" @update:modelValue="val => updateField(idx, 'aggregation', val)" :options="getAggregationOptions(f.type)" :aggregationColorMap="aggregationColorMap"/>
           </td>
           <td>
-            <input v-model="f.description" class="form-control form-control-sm text-white" placeholder="Описание…" />
+            <input v-model="f.description" class="form-control form-control-sm" placeholder="Описание…" />
           </td>
           <td>
             <button class="btn btn-sm btn-outline-danger rounded" @click="removeField(idx)">Удалить</button>
@@ -60,10 +66,9 @@ import datasetService from '@/js/api/services/bi/datasetService'
 import { SquareFunction } from 'lucide-vue-next';
 
 import {
-  typeOptions,
+  getTypeOptionsForField,
   getAggregationOptions,
-  aggregationColorMap,
-  aggregationOptionsMap
+  aggregationColorMap
 } from '@/pages/bi/components/DatasetPreview/js/DatasetPreviewFieldOptions.js'
 
 const showModal = ref(false)
@@ -78,16 +83,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['edit-field', 'add-field', 'update:fields', 'removeTable'])
-
-const tableLabel = (tableKey) => {
-  if (!tableKey) return 'Нет источника';
-  const tbl = props.tables.find(t => String(t.id) === String(tableKey));
-  if (tbl) return tbl.name || tbl.table || tbl.id;
-  const byName = props.tables.find(t => t.name === tableKey || t.table === tableKey);
-  if (byName) return byName.name || byName.table;
-  if (typeof tableKey === 'string' && tableKey.startsWith('expr')) return 'Вычисляемое поле';
-  return tableKey;
-};
 
 function updateField(idx, key, value) {
   const newFields = props.fields.map((f, i) => i === idx ? { ...f, [key]: value } : f);
@@ -104,16 +99,15 @@ function onSourceClick(field) {
   emit('edit-field', field)
 }
 
-function onSourceSave(newSource) {
-  if (!selectedField.value) return
-  const idx = props.fields.findIndex(f => f.id === selectedField.value.id)
-  if (idx !== -1) {
-    const updatedFields = props.fields.map((f, i) => i === idx
-      ? { ...f, source: newSource, source_column: newSource.column }
-      : f)
-    emit('update:fields', updatedFields)
+function getFieldSourceLabel(field) {
+  const tbl = props.tables.find(
+    t => String(t.id) === String(field.source_table)
+  )
+  if (tbl) return `${tbl.display_name || tbl.name || tbl.table}.${field.name}`;
+  if (field.source && field.source.table) {
+    return `${field.source.table}.${field.source.column || field.name}`;
   }
-  showModal.value = false
+  return field.name;
 }
 </script>
 
@@ -128,11 +122,11 @@ function onSourceSave(newSource) {
 }
 
 :deep(.table thead th) {
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 0.5px solid var(--color-border);
 }
 
 :deep(.table-hover tbody tr:hover) {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-background);
 }
 
 :deep(input.form-control),
@@ -149,7 +143,7 @@ function onSourceSave(newSource) {
 :deep(select.form-select:hover),
 :deep(input.form-control:focus),
 :deep(select.form-select:focus) {
-  background-color: rgba(255, 255, 255, 0.15) !important;
+  background-color: var(--color-hover-background) !important;
   border-radius: 12px !important;
   outline: none !important;
   box-shadow: none !important;
@@ -180,7 +174,7 @@ function onSourceSave(newSource) {
 
 .source-btn:hover,
 .source-btn:focus {
-  background-color: rgba(255, 255, 255, 0.15) !important;
+  background-color: var(--color-hover-background) !important;
   border-radius: 12px !important;
   outline: none !important;
 }
