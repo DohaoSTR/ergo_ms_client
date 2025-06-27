@@ -57,7 +57,7 @@
     >
       <template #item="{ element: item }">
         <div class="lesson-item-card mb-3" :data-item-id="item.id">
-          <div class="card" :class="getItemCardClass(item)">
+          <div class="card" :class="getItemCardClass(item)" style="position: relative; z-index: 1;">
             <div class="card-body p-3">
               <div class="d-flex align-items-start gap-3">
                 <!-- Drag handle -->
@@ -426,5 +426,10 @@ const downloadResource = (resource) => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.dropdown-menu {
+  position: absolute !important;
+  z-index: 2000 !important;
 }
 </style> 

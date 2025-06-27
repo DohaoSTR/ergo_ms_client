@@ -305,7 +305,7 @@ const props = defineProps({
   loading: Boolean
 })
 
-const emit = defineEmits(['close', 'save'])
+const emit = defineEmits(['close', 'save', 'save-questions'])
 
 const form = ref({
   name: '',
@@ -373,8 +373,7 @@ function closeQuestionManagement() {
 }
 
 function handleQuestionManagementSave(data) {
-  // Здесь можно обработать сохранение вопросов
-  console.log('Сохранение вопросов:', data)
+  emit('save-questions', data)
   closeQuestionManagement()
 }
 

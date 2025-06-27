@@ -285,40 +285,7 @@ export class LmsService {
    * @returns {Promise<Object>} Ответ сервера
    */
   async duplicateTest(test) {
-    let baseName = test.name || test.title
-    const copyRegex = /\s*\(копия\s*\d*\)$/
-    if (copyRegex.test(baseName)) {
-      baseName = baseName.replace(copyRegex, '')
-    }
-    
-    const copyName = `${baseName} (копия)`
-    
-    const duplicateData = {
-      name: copyName,
-      title: test.title ? `${test.title} (копия)` : copyName,
-      description: test.description || '',
-      type: test.type || 'C',
-      duration_minutes: test.duration_minutes || 60,
-      passing_score: test.passing_score || 70,
-      max_attempts: test.max_attempts || 1,
-      show_correct_answers: test.show_correct_answers !== undefined ? test.show_correct_answers : false,
-      randomize_questions: test.randomize_questions !== undefined ? test.randomize_questions : false,
-      available_from: null, // Копия будет неактивна по умолчанию
-      available_until: null,
-      is_active: false, // Копия неактивна по умолчанию
-      subject: test.subject?.id || test.subject,
-      theme: test.theme?.id || test.theme,
-      lesson: test.lesson?.id || test.lesson
-    }
-
-    // Убираем поля с null значениями
-    Object.keys(duplicateData).forEach(key => {
-      if (duplicateData[key] === null || duplicateData[key] === undefined) {
-        delete duplicateData[key]
-      }
-    })
-    
-    return await apiClient.post(endpoints.lms.tests, duplicateData)
+    return await apiClient.post(`${endpoints.lms.tests}${test.id}/duplicate/`)
   }
 
   // =============== ОПЕРАЦИИ С ЗАДАНИЯМИ ===============

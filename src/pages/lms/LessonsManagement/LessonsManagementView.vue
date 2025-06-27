@@ -127,6 +127,7 @@
         :loading="testModal.isSubmitting.value"
         @close="testModal.closeModal"
         @save="saveTest"
+        @save-questions="handleQuestionManagementSave"
       />
 
       <AssignmentModal
@@ -686,18 +687,13 @@ function openQuestionManagement(test) {
 async function handleQuestionManagementSave(data) {
   try {
     questionManagementModal.isSubmitting.value = true
-    
     // Здесь можно реализовать сохранение вопросов через API
     console.log('Сохранение вопросов для теста:', data.testData?.title, 'Количество вопросов:', data.questions?.length)
-    
     // Эмуляция задержки API
     await new Promise(resolve => setTimeout(resolve, 500))
-    
     questionManagementModal.closeModal()
     showSuccess(`Сохранено ${data.questions?.length || 0} вопросов для теста "${data.testData?.title}"`)
-    
-    // await lessonsData.fetchData() // Обновляем данные при необходимости
-    
+    await lessonsData.fetchData() // Обновляем данные сразу после сохранения
   } catch (error) {
     console.error('Ошибка при сохранении вопросов:', error)
     showError('Ошибка при сохранении вопросов')

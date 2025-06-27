@@ -111,6 +111,17 @@
       @close="closeQuestionModal"
       @save="saveQuestion"
     />
+
+    <ConfirmDialog
+      :show="confirmDialog.showConfirmDialog.value"
+      :title="confirmDialog.confirmDialogData.value.title"
+      :message="confirmDialog.confirmDialogData.value.message"
+      :confirmText="confirmDialog.confirmDialogData.value.confirmText"
+      :loading="confirmDialog.dialogLoading.value"
+      @confirm="confirmDialog.handleConfirmDialog"
+      @cancel="confirmDialog.closeConfirmDialog"
+      @close="confirmDialog.closeConfirmDialog"
+    />
   </BaseModal>
 </template>
 
@@ -121,6 +132,8 @@ import BaseModal from '../BaseModal.vue'
 import QuestionModal from './QuestionModal.vue'
 import { showSuccess, showError } from '@/js/utils/notifications'
 import { questionsApi } from '@/js/questionsApi'
+import { useConfirmDialog } from '@/pages/lms/composables/useConfirmDialog'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const props = defineProps({
   show: Boolean,
@@ -131,9 +144,13 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save'])
 
 const questions = ref([])
+const newQuestions = ref([])
+const updatedQuestions = ref([])
+const deletedQuestions = ref([])
 const showQuestionModal = ref(false)
 const editingQuestion = ref(null)
 const questionLoading = ref(false)
+const confirmDialog = useConfirmDialog()
 
 // Методы для работы с типами вопросов
 function getQuestionTypeLabel(type) {
@@ -175,70 +192,51 @@ function closeQuestionModal() {
   editingQuestion.value = null
 }
 
-async function saveQuestion(questionData) {
-  try {
-    questionLoading.value = true
-    
-    // Подготавливаем данные для API
-    const apiData = {
-      test: props.testData.id,
-      text: questionData.text,
-      type: questionData.type,
-      points: questionData.points || 1,
-      explanation: questionData.explanation || '',
-      difficulty: questionData.difficulty || 'medium'
-    }
-
-    // Добавляем correctanswer только для открытых вопросов
-    if (questionData.type === 'O') {
-      apiData.correctanswer = questionData.correctanswer || ''
-    }
-
-    // Добавляем ответы только для закрытых вопросов
-    if (['S', 'M', 'TF'].includes(questionData.type)) {
-      apiData.answers = questionData.answers || []
-    }
-    
-    if (editingQuestion.value) {
-      // Редактирование существующего вопроса
-      const updatedQuestion = await questionsApi.updateQuestion(editingQuestion.value.id, apiData)
-      const index = questions.value.findIndex(q => q.id === editingQuestion.value.id)
-      if (index !== -1) {
-        questions.value[index] = updatedQuestion
+function saveQuestion(questionData) {
+  // Если редактируем существующий вопрос
+  if (editingQuestion.value && editingQuestion.value.id) {
+    const index = questions.value.findIndex(q => q.id === editingQuestion.value.id)
+    if (index !== -1) {
+      questions.value[index] = { ...editingQuestion.value, ...questionData }
+      // Добавляем в updatedQuestions, если не новый
+      if (!newQuestions.value.find(q => q === questions.value[index])) {
+        if (!updatedQuestions.value.find(q => q.id === editingQuestion.value.id)) {
+          updatedQuestions.value.push(questions.value[index])
+        }
       }
-      showSuccess('Вопрос обновлен')
-    } else {
-      // Добавление нового вопроса
-      const createdQuestion = await questionsApi.createQuestion(apiData)
-      questions.value.push(createdQuestion)
-      showSuccess('Вопрос добавлен')
     }
-    
-    closeQuestionModal()
-  } catch (error) {
-    console.error('Ошибка сохранения вопроса:', error)
-    if (error.response?.data) {
-      const errorMessages = Object.values(error.response.data).flat()
-      showError(errorMessages.join(', '))
-    } else {
-      showError('Ошибка при сохранении вопроса')
-    }
-  } finally {
-    questionLoading.value = false
+  } else {
+    // Новый вопрос (ещё нет id)
+    const tempId = `new-${Date.now()}-${Math.random()}`
+    const newQ = { ...questionData, id: tempId }
+    questions.value.push(newQ)
+    newQuestions.value.push(newQ)
   }
+  closeQuestionModal()
 }
 
-async function deleteQuestion(question, index) {
-  if (confirm('Вы действительно хотите удалить этот вопрос?')) {
-    try {
-      await questionsApi.deleteQuestion(question.id)
+function deleteQuestion(question, index) {
+  confirmDialog.openConfirmDialog({
+    title: 'Удаление вопроса',
+    message: 'Вы действительно хотите удалить этот вопрос?',
+    confirmText: 'Удалить',
+    onConfirm: () => {
+      // Если вопрос новый (ещё не был сохранён в БД)
+      if (question.id && typeof question.id === 'string' && question.id.startsWith('new-')) {
+        // Просто убираем из локального массива
+        const nqIndex = newQuestions.value.findIndex(q => q.id === question.id)
+        if (nqIndex !== -1) newQuestions.value.splice(nqIndex, 1)
+      } else {
+        // Помечаем на удаление
+        deletedQuestions.value.push(question)
+        // Если был в updatedQuestions, убираем
+        const uqIndex = updatedQuestions.value.findIndex(q => q.id === question.id)
+        if (uqIndex !== -1) updatedQuestions.value.splice(uqIndex, 1)
+      }
       questions.value.splice(index, 1)
-      showSuccess('Вопрос удален')
-    } catch (error) {
-      console.error('Ошибка удаления вопроса:', error)
-      showError('Ошибка при удалении вопроса')
+      confirmDialog.closeConfirmDialog()
     }
-  }
+  })
 }
 
 // Наблюдаем за изменениями testData для загрузки вопросов
@@ -254,21 +252,61 @@ async function loadQuestions(testId) {
   try {
     const questionsData = await questionsApi.getQuestionsByTest(testId)
     questions.value = questionsData || []
+    newQuestions.value = []
+    updatedQuestions.value = []
+    deletedQuestions.value = []
     console.log('Загружены вопросы:', questions.value)
   } catch (error) {
     console.error('Ошибка загрузки вопросов:', error)
     showError('Ошибка при загрузке вопросов')
     questions.value = []
+    newQuestions.value = []
+    updatedQuestions.value = []
+    deletedQuestions.value = []
   }
 }
 
 // Сохранение всех вопросов
-function handleSave() {
-  showSuccess(`Тест обновлен. Всего вопросов: ${questions.value.length}`)
-  emit('save', {
-    testData: props.testData,
-    questions: questions.value
-  })
+async function handleSave() {
+  questionLoading.value = true
+  try {
+    // Удаляем вопросы
+    for (const q of deletedQuestions.value) {
+      await questionsApi.deleteQuestion(q.id)
+    }
+    // Обновляем вопросы (только с реальным id)
+    for (const q of updatedQuestions.value) {
+      if (typeof q.id === 'string' && q.id.startsWith('new-')) continue;
+      await questionsApi.updateQuestion(q.id, q)
+    }
+    // Создаём новые вопросы
+    for (const q of newQuestions.value) {
+      const apiData = { ...q }
+      delete apiData.id
+      apiData.test = props.testData.id // обязательно указываем тест
+      // Оставляем correctanswer только для открытых вопросов
+      if (apiData.type !== 'O') {
+        delete apiData.correctanswer
+      }
+      console.log('POST question payload:', apiData)
+      await questionsApi.createQuestion(apiData)
+    }
+    showSuccess(`Тест обновлен. Всего вопросов: ${questions.value.length}`)
+    // После успешного сохранения — обновляем список вопросов с сервера
+    await loadQuestions(props.testData.id)
+    emit('save', {
+      testData: props.testData,
+      questions: questions.value
+    })
+    // Очищаем локальные массивы изменений
+    newQuestions.value = []
+    updatedQuestions.value = []
+    deletedQuestions.value = []
+  } catch (error) {
+    showError('Ошибка при сохранении изменений')
+  } finally {
+    questionLoading.value = false
+  }
 }
 
 // Закрытие без сохранения
