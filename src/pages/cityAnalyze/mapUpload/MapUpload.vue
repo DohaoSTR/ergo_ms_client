@@ -217,7 +217,7 @@ export default {
                 const token = Cookies.get('token');
 
                 // Отправка на сервер
-                const response = await fetch('http://127.0.0.1:8000/api/cities_expansion/geoanalyzer/upload_maps', {
+                const response = await fetch('http://localhost:8000/api/cities_expansion/geoanalyzer/upload_maps', {
                     method: 'POST',
                     body: formData,
                     headers: {

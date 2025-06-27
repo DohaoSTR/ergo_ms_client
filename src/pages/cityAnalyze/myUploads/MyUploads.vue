@@ -12,7 +12,7 @@ const fetchGroups = async () => {
   try {
     group_info = {}
     const token = Cookies.get('token');
-    const response = await fetch('http://127.0.0.1:8000/api/cities_expansion/get_my_groups/', {
+    const response = await fetch('http://localhost:8000/api/cities_expansion/get_my_groups/', {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -46,7 +46,7 @@ const preloadImages = async () => {
       for (const file of group.files) {
         if (file.name.match(/\.(jpeg|jpg|gif|png)$/)) {
           try {
-            const response = await fetch(`http://127.0.0.1:8000/api/cities_expansion/get_file/?id=${file.id}`, {
+            const response = await fetch(`http://localhost:8000/api/cities_expansion/get_file/?id=${file.id}`, {
               headers: {
                 Authorization: `Bearer ${token}`
               }
@@ -73,7 +73,7 @@ const deleteGroup = async (id) => {
       throw new Error('Необходим ID группы.');
     }
 
-    const response = await fetch(`http://127.0.0.1:8000/api/cities_expansion/delete_group/${id}`, {
+    const response = await fetch(`http://localhost:8000/api/cities_expansion/delete_group/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -103,7 +103,7 @@ const startAnalysis = async (groupId) => {
     const kValue = group?.kValue || 2;
 
     const response = await fetch(
-      `http://127.0.0.1:8000/api/cities_expansion/geoanalyzer/perform_analysis?group_id=${groupId}&k=${kValue}`,
+      `http://localhost:8000/api/cities_expansion/geoanalyzer/perform_analysis?group_id=${groupId}&k=${kValue}`,
       {
         method: 'GET',
         headers: {

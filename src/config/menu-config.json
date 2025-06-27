@@ -258,19 +258,76 @@
       },
       "list": [
         {
-          "name": "Датасеты",
-          "page": "datasets",
-          "isOffcanvas": true
+          "path": "StorageList",
+          "name": "StorageList",
+          "route": {
+            "path": "/bi/storagelist",
+            "component": "@/pages/bi/StorageListPage.vue",
+            "meta": {
+              "title": "Главная",
+              "requiresAuth": true
+            }
+          }
         },
         {
-          "name": "Подключения",
-          "page": "connections",
-          "isOffcanvas": true
+          "path": "BIStorage",
+          "name": "BIStorage",
+          "route": {
+            "path": "/bi/storage",
+            "component": "@/pages/bi/DatasetListPage.vue",
+            "meta": {
+              "title": "Главная",
+              "requiresAuth": true
+            }
+          }
         },
         {
-          "name": "Чарты",
-          "page": "charts",
-          "isOffcanvas": true
+          "path": "NewConnection",
+          "name": "NewConnection",
+          "route": {
+            "path": "/bi/connections/new",
+            "component": "@/pages/bi/NewConnection.vue",
+            "meta": {
+              "title": "Главная",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "NewFile",
+          "name": "NewFile",
+          "route": {
+            "path": "/bi/connections/new/file",
+            "component": "@/pages/bi/NewFile.vue",
+            "meta": {
+              "title": "Главная",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "ClickHouse",
+          "name": "ClickHouse",
+          "route": {
+            "path": "/bi/connections/new/clickhouse",
+            "component": "@/pages/bi/components/db-settings/ClickHouse.vue",
+            "meta": {
+              "title": "Главная",
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "MySQL",
+          "name": "MySQL",
+          "route": {
+            "path": "/bi/connections/new/mysql",
+            "component": "@/pages/bi/components/db-settings/MySQL.vue",
+            "meta": {
+              "title": "Главная",
+              "requiresAuth": true
+            }
+          }
         }
       ]
     },
