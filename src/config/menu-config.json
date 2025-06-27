@@ -3,7 +3,7 @@
     {
       "icon": "CircleUserRound",
       "routeName": "User",
-      "title": "Аккаунт",
+      "title": "Личный кабинет",
       "route": {
         "path": "/user",
         "component": "@/pages/user/ParentLayout.vue",
@@ -25,11 +25,22 @@
           }
         },
         { 
-          "path": "Teams", 
-          "name": "Команды",
+          "path": "AccountSettings", 
+          "name": "Настройки профиля",
           "route": {
-            "path": "teams",
-            "component": "@/pages/user/teams/ParentLayout.vue",
+            "path": "account",
+            "component": "@/pages/settings/account/ParentLayout.vue",
+            "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        { 
+          "path": "SecuritySettings", 
+          "name": "Безопасность",
+          "route": {
+            "path": "security",
+            "component": "@/pages/settings/security/ParentLayout.vue",
             "meta": {
               "requiresAuth": true
             }
@@ -67,62 +78,41 @@
               "requiresAuth": true
             }
           }
-        },
-        { 
-          "path": "Connections", 
-          "name": "Связи",
-          "route": {
-            "path": "connections",
-            "component": "@/pages/user/connections/ParentLayout.vue",
-            "meta": {
-              "requiresAuth": true
-            }
-          }
         }
       ]
     },
     {
       "icon": "UserCog",
       "routeName": "Settings",
-      "title": "Настройки",
+      "title": "Настройки сайта",
       "route": {
         "path": "/settings",
         "component": "@/pages/settings/ParentLayout.vue",
-        "redirect": "AccountSettings",
+        "redirect": "SiteSettings",
         "meta": {
           "requiresAuth": true
         }
       },
       "list": [
         { 
-          "path": "AccountSettings", 
-          "name": "Аккаунт",
-          "route": {
-            "path": "account",
-            "component": "@/pages/settings/account/ParentLayout.vue",
-            "meta": {
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
-          "path": "SecuritySettings", 
-          "name": "Безопасность",
-          "route": {
-            "path": "security",
-            "component": "@/pages/settings/security/ParentLayout.vue",
-            "meta": {
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
           "path": "SiteSettings", 
-          "name": "Настройки сайта",
+          "name": "Общие настройки",
           "route": {
             "path": "site-settings",
             "component": "@/pages/settings/siteSettings/ParentLayout.vue",
             "meta": {
+              "requiresAuth": true
+            }
+          }
+        },
+        {
+          "path": "FileManager",
+          "name": "Управление файлами",
+          "route": {
+            "path": "filemanager",
+            "component": "@/pages/controlFiles/FileManager.vue",
+            "meta": {
+              "title": "Файлы",
               "requiresAuth": true
             }
           }
@@ -154,32 +144,19 @@
       }
     },
     {
-      "icon": "Map",
-      "routeName": "Maps",
-      "title": "Карты",
+      "icon": "Calendar",
+      "routeName": "Calendar",
+      "title": "Календарь задач",
       "route": {
-        "path": "/maps",
-        "component": "@/pages/maps/ParentLayout.vue",
+        "path": "/calendar",
+        "component": "@/pages/calendar/ParentLayout.vue",
         "meta": {
-          "title": "Карты",
+          "title": "Календарь задач",
           "requiresAuth": true
         }
       }
     },
     {
-      "icon": "Calendar",
-      "routeName": "Calendar",
-      "title": "Календарь",
-      "route": {
-        "path": "/calendar",
-        "component": "@/pages/calendar/ParentLayout.vue",
-        "meta": {
-          "title": "Календарь",
-          "requiresAuth": true
-        }
-      }
-    },
-        {
       "icon": "Grid2x2",
       "routeName": "Kanban",
       "title": "Канбан-доска",
@@ -192,7 +169,7 @@
         }
       }
     },
-        {
+    {
       "icon": "KeySquare",
       "routeName": "AdminPanel",
       "title": "Админ-панель",
@@ -268,19 +245,7 @@
         }
       ]
     },
-        {
-      "icon": "Video",
-      "routeName": "Watermarked-Video",
-      "title": "Видео с вотермаркой",
-      "route": {
-        "path": "/watermarked-video",
-        "component": "@/pages/WatermarkVideo/ParentLayout.vue",
-        "meta": {
-          "requiresAuth": true
-        }
-      }
-    },
-        {
+    {
       "icon": "ChartSpline",
       "routeName": "BI",
       "title": "BI",
@@ -310,7 +275,6 @@
       ]
     },
     {
-
       "icon": "Braces",
       "routeName": "Shortcodes",
       "title": "Редактор страниц",
@@ -463,7 +427,6 @@
       ]
     },
     {
-
       "icon": "ChartBarStacked",
       "routeName": "ExpertSystem",
       "title": "Анализ вакансий",
@@ -611,7 +574,6 @@
       ]
     },
     {
-
       "icon": "Code2",
       "routeName": "AssetsAnalyse",
       "title": "Анализ курсов активов",
@@ -624,35 +586,6 @@
       }
     },
     {
-
-      "icon": "Files",
-      "routeName": "Files",
-      "title": "Файлы",
-      "route": {
-        "path": "/files",
-        "component": "@/pages/controlFiles/ParentLayout.vue",
-        "redirect": "FileManager",
-        "meta": {
-          "requiresAuth": true
-        }
-      },
-      "list": [
-        {
-          "path": "FileManager",
-          "name": "Обзор файлов",
-          "route": {
-            "path": "filemanager",
-            "component": "@/pages/controlFiles/FileManager.vue",
-            "meta": {
-              "title": "Файлы",
-              "requiresAuth": true
-            }
-          }
-        }
-      ]
-    },
-    {
-
       "icon": "Layers",
       "routeName": "Categories",
       "title": "Категории страниц",

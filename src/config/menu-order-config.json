@@ -4,26 +4,28 @@
     "Settings", 
     "AdminPanel",
     "Shortcodes",
-    "Files",
     "Categories",
 
     "Email",
     "Messenger",
-    "Maps",
+    "BI",
+    
     "Calendar",
     "Kanban",
-    "Watermarked-Video",
-    "BI",
-    "AssetsAnalyse",
 
+    "LMS",
     "EducationAnalyticModule",
     "ExpertSystem",
-    "Expsys"
+    "Expsys",
+
+    "AssetsAnalyse"
   ],
   
   "separators": {
     "0": "Настройки",
-    "6": "Модули",
-    "14": "Обучение"
+    "5": "Модули",
+    "10": "Обучение",
+    "14": "Трендовая аналитика",
+    "15": "Цифровая среда"
   }
 } 

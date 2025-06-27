@@ -10,7 +10,6 @@ const navigationButtons = ref([
   { icon: UserRound, title: 'Профиль', link: 'Account' },
   { icon: UsersRound, title: 'Команды', link: 'Teams' },
   { icon: LayoutGrid, title: 'Проекты', link: 'Projects' },
-  { icon: Link, title: 'Связи', link: 'Connections' },
 ])
 
 const route = useRoute()
