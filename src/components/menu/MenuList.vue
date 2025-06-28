@@ -143,6 +143,80 @@ const openGroupRouteName = ref(null)
 const preventAutoOpen = ref(false)
 const nestedOpenStates = ref({})
 
+// Рекурсивная функция для поиска родительской группы по маршруту
+const findParentGroupByRoute = (routeName, menuSections) => {
+  for (let section of menuSections) {
+    // Проверяем основную группу
+    if (section.routeName === routeName) {
+      return section.routeName
+    }
+    
+    // Проверяем прямые дочерние элементы
+    if (section.list && Array.isArray(section.list)) {
+      for (let item of section.list) {
+        if (item.routeName === routeName) {
+          return section.routeName
+        }
+      }
+    }
+    
+    // Рекурсивно проверяем children
+    if (section.children && Array.isArray(section.children)) {
+      const found = findParentInChildren(routeName, section.children)
+      if (found) {
+        return section.routeName
+      }
+    }
+  }
+  return null
+}
+
+// Рекурсивная функция для поиска в дочерних элементах
+const findParentInChildren = (routeName, children) => {
+  for (let child of children) {
+    if (child.routeName === routeName) {
+      return true
+    }
+    if (child.children && Array.isArray(child.children)) {
+      if (findParentInChildren(routeName, child.children)) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+// Рекурсивная функция для открытия всех вложенных групп в пути к активному элементу
+const openNestedGroupsForRoute = (routeName, menuSections) => {
+  const findAndOpenNestedGroups = (routeName, children, parentId = '') => {
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
+      const childId = `${child.routeName || child.page || child.name}_${parentId ? parentId + '_' : ''}${i}`
+      
+      if (child.routeName === routeName) {
+        // Найден целевой элемент, открываем все родительские группы
+        return true
+      }
+      
+      if (child.children && Array.isArray(child.children)) {
+        if (findAndOpenNestedGroups(routeName, child.children, childId)) {
+          // Открываем текущую группу, так как целевой элемент найден в её дочерних элементах
+          nestedOpenStates.value[childId] = true
+          return true
+        }
+      }
+    }
+    return false
+  }
+  
+  // Проходим по всем секциям
+  for (let section of menuSections) {
+    if (section.children && Array.isArray(section.children)) {
+      findAndOpenNestedGroups(routeName, section.children)
+    }
+  }
+}
+
 watch(
   () => route.matched,
   (newMatched) => {
@@ -150,11 +224,18 @@ watch(
       preventAutoOpen.value = false
       return
     }
+    
     if (menuSections.value && Array.isArray(menuSections.value)) {
-      for (let i of menuSections.value) {
-        if (i.routeName === newMatched[0].name) {
-          openGroupRouteName.value = i.routeName
-        }
+      const currentRouteName = newMatched[0]?.name
+      
+      // Находим родительскую группу для текущего маршрута
+      const parentGroup = findParentGroupByRoute(currentRouteName, menuSections.value)
+      
+      if (parentGroup) {
+        openGroupRouteName.value = parentGroup
+        
+        // Открываем все необходимые вложенные группы
+        openNestedGroupsForRoute(currentRouteName, menuSections.value)
       }
     }
   },

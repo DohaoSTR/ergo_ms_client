@@ -10,10 +10,6 @@
           "name": "Профиль"
         },
         { 
-          "routeName": "AccountSettings", 
-          "name": "Настройки профиля"
-        },
-        { 
           "routeName": "SecuritySettings", 
           "name": "Безопасность"
         },

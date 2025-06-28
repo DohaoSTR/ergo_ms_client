@@ -34,7 +34,7 @@ const router = useRouter()
 const route = useRoute()
 const emit = defineEmits(['navigate', 'toggle-group'])
 
-// Уникальный идентификатор для группы
+// Уникальный идентификатор для группы (соответствует логике в MenuList.vue)
 const groupId = computed(() => {
   return `${props.item.routeName || props.item.page || props.item.name}_${props.level}`
 })
@@ -76,26 +76,29 @@ const isActive = computed(() => {
   return false
 })
 
-// Проверка, активна ли группа (есть ли активные дочерние элементы)
+// Проверка, активна ли группа (есть ли активные дочерние элементы) - рекурсивная
 const isGroupActive = computed(() => {
   if (!isGroup.value) return false
   
-  return checkChildrenActive(props.item.children, props.currentPage)
+  return checkChildrenActiveRecursive(props.item.children, props.currentPage, route.name)
 })
 
-function checkChildrenActive(children, currentPage) {
+// Рекурсивная функция для проверки активности всех дочерних элементов
+function checkChildrenActiveRecursive(children, currentPage, currentRoute) {
+  if (!children || children.length === 0) return false
+  
   return children.some(child => {
     // Проверяем прямую активность
-    if (child.routeName && route.name === child.routeName) return true
+    if (child.routeName && currentRoute === child.routeName) return true
     
-    // Для BI offcanvas страниц - проверяем что мы находимся на BI странице
+    // Для BI offcanvas страниц
     if (child.isOffcanvas && child.page === currentPage) {
-      // Дополнительно проверяем, что мы действительно на BI странице
       if (route.name === 'BI' || route.path.startsWith('/bi')) {
         return true
       }
     }
     
+    // Для BI элементов с подвкладками
     if (child.page && currentPage && child.page.length > 2) {
       if (currentPage.startsWith(child.page + '-') ||
           currentPage.startsWith(child.page + '_') ||
@@ -104,9 +107,14 @@ function checkChildrenActive(children, currentPage) {
       }
     }
     
-    // Рекурсивно проверяем дочерние элементы
+    // Для BI элементов с page без isOffcanvas флага
+    if (child.page && !child.isOffcanvas && child.page === currentPage) {
+      return true
+    }
+    
+    // РЕКУРСИВНО проверяем дочерние элементы
     if (child.children && child.children.length > 0) {
-      return checkChildrenActive(child.children, currentPage)
+      return checkChildrenActiveRecursive(child.children, currentPage, currentRoute)
     }
     
     return false

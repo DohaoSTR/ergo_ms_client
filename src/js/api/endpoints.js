@@ -1,14 +1,16 @@
 export const endpoints = {
     auth: {
         login: 'cms/adp/authorization/',
-        validateRegistration: 'cms/adp/validate_registration/',
-        sendCode: 'cms/adp/send_code/',
-        verifyCode: 'cms/adp/verify_code/',
+        validateRegistration: 'cms/adp/validate-registration/',
+        sendCode: 'cms/adp/send-code/',
+        verifyCode: 'cms/adp/verify-code/',
         registration: 'cms/adp/registration/',
         protected: 'cms/adp/protected/',
         changePassword: 'cms/adp/change-password/',
         devices: 'cms/adp/devices/',
         deleteDevice: id => `cms/adp/devices/${id}/`,
+        profile: 'cms/adp/profile/',
+        securitySettings: 'cms/adp/security-settings/',
     },
     crm: {
         monthlyStats: 'crm/stats/monthly/',

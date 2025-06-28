@@ -9,7 +9,6 @@ import {
 import NavigationButtons from '@/components/NavigationButtons.vue'
 
 const navigationButtons = ref([
-  { icon: UserRound, title: 'Аккаунт', link: 'AccountSettings' },
   { icon: Lock, title: 'Безопасность', link: 'SecuritySettings' },
   { icon: Settings, title: 'Настройки сайта', link: 'SiteSettings' },  
 ])

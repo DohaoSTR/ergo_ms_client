@@ -22,11 +22,13 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { isDatasetSidebarOpen, currentSidebarPage } from '@/js/bi/useSidebarStore'
+import { useUserStore } from '@/stores/userStore.js'
 import MenuList from '@/components/menu/MenuList.vue'
 import TheHeader from '@/components/header/TheHeader.vue'
 
 import StorageSidebar from '@/pages/bi/components/StorageSidebar.vue'
 
+const userStore = useUserStore()
 const leftPadding = ref('280px')
 const isMenuVisible = ref(window.innerWidth >= 1200)
 const isMenuToggledManually = ref(false)
@@ -73,10 +75,12 @@ function closeSidebar() {
   currentSidebarPage.value = ''
 }
 
-onMounted(() => {
+onMounted(async () => {
   updateMenuVisibility()
   window.addEventListener('resize', updateMenuVisibility)
   
+  // Инициализируем пользователя при загрузке авторизованной области
+  await userStore.initializeUser()
 })
 
 onBeforeUnmount(() => {

@@ -17,7 +17,7 @@ export default defineConfig({
   // Подключение плагинов
   plugins: [
     vue(), // Подключение плагина Vue для Vite
-    vueDevTools(), // Подключение плагина Vue DevTools для Vite
+    //vueDevTools(), // Подключение плагина Vue DevTools для Vite
   ],
 
   // Настройка разрешения путей

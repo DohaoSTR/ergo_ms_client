@@ -79,7 +79,7 @@
             </dd>
             <dt class="col-sm-3">Телефон</dt>
             <dd class="col-sm-9">
-              <span v-if="!editMode">{{ studentData.phone || 'Не указано' }}</span>
+              <span v-if="!editMode">{{ displayPhone(studentData.phone) || 'Не указано' }}</span>
               <input v-else v-model="form.phone" class="form-control form-control-sm" placeholder="Введите телефон" />
             </dd>
           </dl>
@@ -222,6 +222,7 @@ import { endpoints } from '@/js/api/endpoints'
 import ModalCenter from '@/components/ModalCenter.vue'
 import AddSkillModal from './StudentProfileComponents/AddSkillModal.vue'
 import router from '@/js/routers'
+import { displayPhone } from '@/js/utils/phoneUtils.js'
 
 const addSkillModalRef = ref(null);
 

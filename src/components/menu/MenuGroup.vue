@@ -130,61 +130,56 @@ const isCurrentGroupPage = computed(() => {
   return false
 })
 
-// Новый computed для выделения основного элемента меню
+// Рекурсивная функция для проверки активности всех дочерних элементов
+const checkChildrenActiveRecursive = (children, currentPage, currentRoute) => {
+  if (!children || children.length === 0) return false
+  
+  return children.some(item => {
+    // Проверяем прямую активность элемента
+    if (item.routeName && currentRoute === item.routeName) {
+      return true
+    }
+    
+    // Для BI offcanvas страниц
+    if (item.isOffcanvas && item.page === currentPage) {
+      if (route.name === 'BI' || route.path.startsWith('/bi')) {
+        return true
+      }
+    }
+    
+    // Для BI элементов с подвкладками
+    if (item.page && currentPage && item.page.length > 2) {
+      if (currentPage.startsWith(item.page + '-') ||
+          currentPage.startsWith(item.page + '_') ||
+          currentPage.startsWith(item.page + '.')) {
+        return true
+      }
+    }
+    
+    // Для BI элементов с page без isOffcanvas флага
+    if (item.page && !item.isOffcanvas && item.page === currentPage) {
+      return true
+    }
+    
+    // РЕКУРСИВНО проверяем дочерние элементы
+    if (item.children && item.children.length > 0) {
+      return checkChildrenActiveRecursive(item.children, currentPage, currentRoute)
+    }
+    
+    return false
+  })
+}
+
+// Новый computed для выделения основного элемента меню с поддержкой полной иерархии
 const shouldHighlightMainItem = computed(() => {
   // Выделяем если пользователь находится на основной странице группы
   if (route.name === props.data.routeName) {
     return true
   }
   
-  // Выделяем если пользователь находится на любой подстранице этой группы
+  // Выделяем если пользователь находится на любой подстранице этой группы (с рекурсивной проверкой)
   if (menuItems.value.length > 0) {
-    return menuItems.value.some(item => {
-      // Для обычных Vue страниц
-      if (item.routeName && route.name === item.routeName) {
-        return true
-      }
-      
-      // Для BI offcanvas страниц - проверяем что мы находимся на BI странице
-      if (item.isOffcanvas && item.page === props.currentPage) {
-        // Дополнительно проверяем, что мы действительно на BI странице
-        if (route.name === 'BI' || route.path.startsWith('/bi')) {
-          return true
-        }
-      }
-      
-      // Для BI элементов с подвкладками (только с разделителями)
-      if (item.isOffcanvas && item.page && props.currentPage && item.page.length > 2) {
-        const basePage = item.page
-        const currentPage = props.currentPage
-        // Проверяем если текущая страница является подвкладкой данной BI вкладки
-        if (currentPage.startsWith(basePage + '-') || 
-            currentPage.startsWith(basePage + '_') || 
-            currentPage.startsWith(basePage + '.')) {
-          return true
-        }
-      }
-      
-      // Для BI элементов с page без isOffcanvas флага
-      if (item.page && !item.isOffcanvas && item.page === props.currentPage) {
-        return true
-      }
-      
-      // Дополнительная проверка для BI элементов с иерархией подвкладок
-      // Только если currentPage начинается с itemPage и есть разделитель (более строгая проверка)
-      if (item.page && props.currentPage && item.page.length > 2) {
-        const itemPage = item.page.toLowerCase()
-        const currentPage = props.currentPage.toLowerCase()
-        
-        // Проверяем только если currentPage начинается с itemPage + разделитель
-        if (currentPage.startsWith(itemPage + '-') || currentPage.startsWith(itemPage + '_') || 
-            currentPage.startsWith(itemPage + '.')) {
-          return true
-        }
-      }
-      
-      return false
-    })
+    return checkChildrenActiveRecursive(menuItems.value, props.currentPage, route.name)
   }
   
   return false

@@ -1,8 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { Eye, EyeOff } from 'lucide-vue-next'
-import { apiClient } from '@/js/api/manager.js'
-import { endpoints } from '@/js/api/endpoints.js'
+import { Eye, EyeOff, Shield, CheckCircle } from 'lucide-vue-next'
+import { useToast } from 'vue-toastification'
+import { useProfile } from '@/js/api/services/profileService.js'
+
+const toast = useToast()
+const { changePassword } = useProfile()
 
 // Состояния видимости для полей пароля
 const isCurrentPasswordVisible = ref(false)
@@ -54,6 +57,36 @@ const currentPasswordIcon = computed(() => (isCurrentPasswordVisible.value ? Eye
 const newPasswordIcon = computed(() => (isNewPasswordVisible.value ? Eye : EyeOff))
 const confirmPasswordIcon = computed(() => (isConfirmPasswordVisible.value ? Eye : EyeOff))
 
+// Проверка силы пароля
+const passwordStrength = computed(() => {
+  const password = form.value.newPassword
+  if (!password) return { score: 0, label: '', color: '' }
+  
+  let score = 0
+  
+  // Длина
+  if (password.length >= 8) score += 1
+  if (password.length >= 12) score += 1
+  
+  // Символы
+  if (/[a-z]/.test(password)) score += 1
+  if (/[A-Z]/.test(password)) score += 1
+  if (/[0-9]/.test(password)) score += 1
+  if (/[^A-Za-z0-9]/.test(password)) score += 1
+  
+  const strengthMap = {
+    0: { label: '', color: '' },
+    1: { label: 'Очень слабый', color: 'danger' },
+    2: { label: 'Слабый', color: 'warning' },
+    3: { label: 'Слабый', color: 'warning' },
+    4: { label: 'Средний', color: 'info' },
+    5: { label: 'Сильный', color: 'success' },
+    6: { label: 'Очень сильный', color: 'success' }
+  }
+  
+  return { score, ...strengthMap[score] }
+})
+
 // Проверка пароля
 const validateForm = () => {
   let isValid = true
@@ -92,6 +125,16 @@ const cleanErrors = () => {
   }
 }
 
+// Очистка формы
+const resetForm = () => {
+  form.value = {
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  }
+  cleanErrors()
+}
+
 // Обработка формы
 const submitForm = async (event) => {
   event.preventDefault()
@@ -104,34 +147,19 @@ const submitForm = async (event) => {
   cleanErrors()
 
   try {
-    const response = await apiClient.post(endpoints.auth.changePassword, {
+    await changePassword({
       current_password: form.value.currentPassword,
       new_password: form.value.newPassword,
       confirm_password: form.value.confirmPassword,
     })
 
-    if (response.success) {
       // Очищаем форму после успешной смены пароля
-      form.value = {
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      }
-      
-      // Показываем уведомление об успехе
-      if (window.showSuccessToast) {
-        window.showSuccessToast('Пароль успешно изменён')
-      } else {
-        alert('Пароль успешно изменён')
-      }
-    } else {
-      if (window.showErrorToast) {
-        window.showErrorToast(response.message || 'Ошибка при смене пароля')
-      } else {
-        alert(response.message || 'Ошибка при смене пароля')
-      }
-    }
+    resetForm()
+    toast.success('Пароль успешно изменён')
+
   } catch (error) {
+    console.error('Ошибка смены пароля:', error)
+    
     // Обработка ошибок валидации от сервера
     if (error.response?.data) {
       const serverErrors = error.response.data
@@ -161,18 +189,10 @@ const submitForm = async (event) => {
           ? serverErrors.non_field_errors[0] 
           : serverErrors.non_field_errors
         
-        if (window.showErrorToast) {
-          window.showErrorToast(generalError)
-        } else {
-          alert(generalError)
-        }
+        toast.error(generalError)
       }
     } else {
-      if (window.showErrorToast) {
-        window.showErrorToast('Ошибка при смене пароля')
-      } else {
-        alert('Ошибка при смене пароля')
-      }
+      toast.error('Ошибка при смене пароля')
     }
   } finally {
     isLoading.value = false
@@ -182,7 +202,14 @@ const submitForm = async (event) => {
 
 <template>
   <div class="card">
-    <h5 class="card-title">Изменить пароль</h5>
+    <div class="card-header">
+      <h5 class="card-title mb-0">
+        <Shield :size="20" class="me-2" />
+        Изменить пароль
+      </h5>
+    </div>
+    
+    <div class="card-body">
     <form @submit="submitForm">
       <div class="row">
         <div class="mb-3 col-md-6">
@@ -196,14 +223,16 @@ const submitForm = async (event) => {
               placeholder="············"
               v-model="form.currentPassword"
               :disabled="isLoading"
+                autocomplete="current-password"
             />
-            <span
+              <button
+                type="button"
               @click="togglePasswordVisibility('currentPassword')"
-              class="input-group-text"
-              style="cursor: pointer"
+                class="btn btn-outline-secondary"
+                :disabled="isLoading"
             >
-              <component :is="currentPasswordIcon" :size="20" />
-            </span>
+                <component :is="currentPasswordIcon" :size="18" />
+              </button>
             <div v-if="errors.currentPassword" class="invalid-feedback">
               {{ errors.currentPassword }}
             </div>
@@ -223,15 +252,34 @@ const submitForm = async (event) => {
               placeholder="············"
               v-model="form.newPassword"
               :disabled="isLoading"
+                autocomplete="new-password"
             />
-            <span
+              <button
+                type="button"
               @click="togglePasswordVisibility('newPassword')"
-              class="input-group-text"
-              style="cursor: pointer"
+                class="btn btn-outline-secondary"
+                :disabled="isLoading"
             >
-              <component :is="newPasswordIcon" :size="20" />
+                <component :is="newPasswordIcon" :size="18" />
+              </button>
+              <div v-if="errors.newPassword" class="invalid-feedback">{{ errors.newPassword }}</div>
+            </div>
+            
+            <!-- Индикатор силы пароля -->
+            <div v-if="form.newPassword && passwordStrength.score > 0" class="mt-2">
+              <div class="d-flex align-items-center justify-content-between">
+                <small class="text-muted">Сила пароля:</small>
+                <span :class="`text-${passwordStrength.color}`" class="small fw-semibold">
+                  {{ passwordStrength.label }}
             </span>
-            <div v-if="errors.newPassword" class="invalid-feedback">{{ errors.newPassword }}</div>
+              </div>
+              <div class="progress mt-1" style="height: 4px;">
+                <div 
+                  class="progress-bar"
+                  :class="`bg-${passwordStrength.color}`"
+                  :style="{ width: `${(passwordStrength.score / 6) * 100}%` }"
+                ></div>
+              </div>
           </div>
         </div>
 
@@ -246,41 +294,89 @@ const submitForm = async (event) => {
               placeholder="············"
               v-model="form.confirmPassword"
               :disabled="isLoading"
+                autocomplete="new-password"
             />
-            <span
+              <button
+                type="button"
               @click="togglePasswordVisibility('confirmPassword')"
-              class="input-group-text"
-              style="cursor: pointer"
+                class="btn btn-outline-secondary"
+                :disabled="isLoading"
             >
-              <component :is="confirmPasswordIcon" :size="20" />
-            </span>
+                <component :is="confirmPasswordIcon" :size="18" />
+              </button>
             <div v-if="errors.confirmPassword" class="invalid-feedback">
               {{ errors.confirmPassword }}
             </div>
+            </div>
+            
+            <!-- Индикатор совпадения паролей -->
+            <div v-if="form.confirmPassword && form.newPassword && form.confirmPassword === form.newPassword" class="mt-2">
+              <small class="text-success">
+                <CheckCircle :size="14" class="me-1" />
+                Пароли совпадают
+              </small>
           </div>
         </div>
       </div>
 
-      <div class="rounded p-3 bg-info-subtle">
-        <h6 class="text-info-emphasis">Требования к паролю:</h6>
-        <ul class="ps-4 mb-0">
-          <li class="mb-1 text-info-emphasis">Минимум 8 символов — чем больше, тем лучше.</li>
-          <li class="mb-1 text-info-emphasis">Хотя бы один символ нижнего регистра</li>
-          <li class="text-info-emphasis">Хотя бы одна цифра, символ или пробельный символ.</li>
+        <div class="alert alert-info">
+          <h6 class="alert-heading mb-2">
+            <Shield :size="18" class="me-1" />
+            Требования к паролю:
+          </h6>
+          <ul class="mb-0 small">
+            <li class="mb-1">Минимум 8 символов — чем больше, тем лучше</li>
+            <li class="mb-1">Хотя бы один символ нижнего регистра</li>
+            <li class="mb-1">Хотя бы одна цифра</li>
+            <li>Рекомендуется использовать заглавные буквы и специальные символы</li>
         </ul>
       </div>
 
-      <div class="mt-3">
-        <button type="submit" class="btn btn-primary me-2" :disabled="isLoading">
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary" :disabled="isLoading">
           <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-          {{ isLoading ? 'Сохранение...' : 'Сохранить' }}
+            {{ isLoading ? 'Сохранение...' : 'Сохранить пароль' }}
         </button>
-        <button type="reset" class="btn btn-secondary" @click="cleanErrors" :disabled="isLoading">
-          Сбросить
+          <button type="button" class="btn btn-outline-secondary" @click="resetForm" :disabled="isLoading">
+            Очистить
         </button>
       </div>
     </form>
+    </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+.card {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  transition: box-shadow 0.15s ease-in-out;
+
+  &:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  }
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.input-group .btn {
+  border-color: #ced4da;
+  
+  &:hover:not(:disabled) {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+  }
+}
+
+.progress {
+  border-radius: 2px;
+}
+
+.alert {
+  border-left: 4px solid #0dcaf0;
+  background-color: rgba(13, 202, 240, 0.1);
+}
+</style>

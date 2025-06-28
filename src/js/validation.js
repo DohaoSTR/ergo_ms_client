@@ -33,6 +33,17 @@ export const validateFieldsOnEquality = (firstField, secondField, error) => {
     };
 }
 
+// Функция для валидации только логина и пароля (без подтверждения)
+export const validateLoginForm = (login, password) => {
+    let loginError = validateFieldValue(login, 'Логин');
+    let passwordError = validateFieldValue(password, 'Пароль');
+    
+    return {
+        loginError,
+        passwordError,
+    }
+}
+
 export const validateAuthorizationForm = (login, password, passwordConfirm) => {
     let loginError = validateFieldValue(login, 'Логин');
     let passwordError = validateFieldValue(password, 'Пароль');

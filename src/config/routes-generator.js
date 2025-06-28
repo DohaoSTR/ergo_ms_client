@@ -5,14 +5,20 @@
  * - menu-config.json - структура меню (иконки, названия, иерархия, ссылки на маршруты)
  * - routes-config.json - полные конфигурации всех доступных маршрутов
  * 
+ * Структура routes-config.json:
+ * - coreRoutes - системные маршруты (главная, 404, logout)
+ * - authRoutes - маршруты авторизации и BI модуля
+ * - routes - основные маршруты приложения
+ * 
  * Основные функции:
  * - generateRoutesFromConfig() - генерирует маршруты для Vue Router
+ * - generateCoreRoutes() - генерирует системные и auth маршруты
  * - transformMenuSection() - преобразует секцию меню в маршрут
  * - transformSubItem() - преобразует подэлемент меню в дочерний маршрут
  * 
  * Использование:
- * import { generateRoutesFromConfig } from '@/config/routes-generator.js'
- * const routes = generateRoutesFromConfig()
+ * import { generateRoutesFromConfig, generateAllRoutes } from '@/config/routes-generator.js'
+ * const routes = generateAllRoutes()
  */
 
 import menuConfig from '@/config/menu-config.json'
@@ -29,7 +35,7 @@ function getRouteConfig(routeName) {
 
 /**
  * Преобразует строковый путь к компоненту в функцию lazy import
- * @param {string} componentPath - путь к компоненту (например, "@/pages/user/ParentLayout.vue")
+ * @param {string} componentPath - путь к компоненту (например, "@/pages/cms/adp/user/ParentLayout.vue")
  * @returns {Function} - функция для ленивой загрузки компонента
  */
 function createLazyImport(componentPath) {
@@ -225,12 +231,12 @@ export function generateRoutesFromConfig() {
       .filter(route => route !== null) // Убираем невалидные маршруты
     
     return routes
-  } catch (error) {
+  } catch {
     return []
   }
 }
 
-import coreRoutesConfig from '@/config/core-routes-config.json'
+// coreRoutes и authRoutes теперь находятся в routes-config.json
 
 /**
  * Преобразует строковый путь компонента в динамический импорт
@@ -265,8 +271,8 @@ function transformRoute(route) {
  */
 function loadCoreRoutes() {
   try {
-    return coreRoutesConfig.coreRoutes.map(transformRoute)
-  } catch (error) {
+    return routesConfig.coreRoutes.map(transformRoute)
+  } catch {
     return []
   }
 }
@@ -277,8 +283,8 @@ function loadCoreRoutes() {
  */
 function loadAuthRoutes() {
   try {
-    return coreRoutesConfig.authRoutes.map(transformRoute)
-  } catch (error) {
+    return routesConfig.authRoutes.map(transformRoute)
+  } catch {
     return []
   }
 }
@@ -433,7 +439,7 @@ export function getMenuWithSeparators() {
     sections: menuSections,
     separators: separators,
     getSeparatorAt: (index) => separators[index] || null,
-    hasSeparatorAt: (index) => separators.hasOwnProperty(index)
+    hasSeparatorAt: (index) => Object.prototype.hasOwnProperty.call(separators, index)
   }
 }
 

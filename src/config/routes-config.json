@@ -1,8 +1,92 @@
 {
+  "coreRoutes": [
+    {
+      "path": "/",
+      "redirect": { "name": "Account" },
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/:pathMatch(.*)*",
+      "name": "NotFound",
+      "component": "@/pages/NotFound.vue",
+      "meta": {
+        "title": "Страница не найдена",
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/logout",
+      "name": "logout",
+      "component": "@/components/header/Logout.vue",
+      "meta": {
+        "title": "-"
+      }
+    }
+  ],
+  
+  "authRoutes": [
+    {
+      "path": "/start-page",
+      "name": "StartPage",
+      "component": "@/pages/cms/adp/pages/StartPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/login",
+      "name": "Login",
+      "component": "@/pages/cms/adp/pages/LoginPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/register",
+      "name": "Register",
+      "component": "@/pages/cms/adp/pages/RegisterPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/forgot-password",
+      "name": "ForgotPassword",
+      "component": "@/pages/cms/adp/pages/ForgotPasswordPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/reset-password",
+      "name": "ResetPassword",
+      "component": "@/pages/cms/adp/pages/ResetPasswordPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    },
+    {
+      "path": "/two-steps",
+      "name": "TwoSteps",
+      "component": "@/pages/auth/TwoStepsPage.vue",
+      "meta": {
+        "startRoute": true,
+        "requiresAuth": false
+      }
+    }
+  ],
+
   "routes": {
     "User": {
       "path": "/user",
-      "component": "@/pages/user/ParentLayout.vue",
+      "component": "@/pages/cms/adp/user/ParentLayout.vue",
       "redirect": "Account",
       "meta": {
         "requiresAuth": true
@@ -10,14 +94,7 @@
     },
     "Account": {
       "path": "account",
-      "component": "@/pages/user/account/ParentLayout.vue",
-      "meta": {
-        "requiresAuth": true
-      }
-    },
-    "AccountSettings": {
-      "path": "account",
-      "component": "@/pages/cms/adp/settings/account/ParentLayout.vue",
+      "component": "@/pages/cms/adp/user/account/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
@@ -31,21 +108,21 @@
     },
     "Projects": {
       "path": "projects",
-      "component": "@/pages/user/projects/ParentLayout.vue",
+      "component": "@/pages/cms/adp/user/projects/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "PersonalProjects": {
       "path": "personal-projects",
-      "component": "@/pages/user/projects/ParentLayout.vue",
+      "component": "@/pages/cms/adp/user/projects/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "InvitedProjects": {
       "path": "invited-projects",
-      "component": "@/pages/user/projects/ParentLayout.vue",
+      "component": "@/pages/cms/adp/user/projects/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
@@ -60,7 +137,7 @@
     },
     "AdminPanel": {
       "path": "admin-panel",
-      "component": "@/pages/AdminPanel/ParentLayout.vue",
+      "component": "@/pages/cms/adp/admin/ParentLayout.vue",
       "redirect": "UsersPanel",
       "meta": {
         "title": "Админ-панель",
@@ -69,7 +146,7 @@
     },
     "UsersPanel": {
       "path": "users",
-      "component": "@/pages/AdminPanel/Users.vue",
+      "component": "@/pages/cms/adp/admin/Users.vue",
       "meta": {
         "title": "Панель пользователей",
         "requiresAuth": true
@@ -77,7 +154,7 @@
     },
     "CategoriesPanel": {
       "path": "categories",
-      "component": "@/pages/AdminPanel/Categories.vue",
+      "component": "@/pages/cms/adp/admin/Categories.vue",
       "meta": {
         "title": "Панель категорий",
         "requiresAuth": true
@@ -85,7 +162,7 @@
     },
     "GroupsPanel": {
       "path": "groups",
-      "component": "@/pages/AdminPanel/Groups.vue",
+      "component": "@/pages/cms/adp/admin/Groups.vue",
       "meta": {
         "title": "Панель групп",
         "requiresAuth": true
@@ -93,7 +170,7 @@
     },
     "PermissionsPanel": {
       "path": "permissions",
-      "component": "@/pages/AdminPanel/Permissions.vue",
+      "component": "@/pages/cms/adp/admin/Permissions.vue",
       "meta": {
         "title": "Панель прав",
         "requiresAuth": true
@@ -101,7 +178,7 @@
     },
     "LiminationPanel": {
       "path": "limitations",
-      "component": "@/pages/AdminPanel/limitationSettings.vue",
+      "component": "@/pages/cms/adp/admin/limitationSettings.vue",
       "meta": {
         "title": "Панель Ограничений",
         "requiresAuth": true
@@ -228,7 +305,7 @@
     },
     "FileManager": {
       "path": "filemanager",
-      "component": "@/pages/controlFiles/FileManager.vue",
+      "component": "@/pages/cms/filemanager/FileManager.vue",
       "meta": {
         "title": "Файлы",
         "requiresAuth": true
@@ -440,7 +517,7 @@
       }
     },
     "AssetsAnalyse": {
-      "path": "/user/assets-analyse",
+      "path": "/adp/user/assets-analyse",
       "component": "@/pages/assets_analysis/DatabaseAnalyze.vue",
       "meta": {
         "requiresAuth": true
@@ -621,62 +698,6 @@
         "requiresAuth": true
       }
     },
-    "StartPage": {
-      "path": "/start-page",
-      "component": "@/pages/auth/StartPage.vue",
-      "meta": {
-        "startRoute": true,
-        "requiresAuth": false
-      }
-    },
-    "Login": {
-      "path": "/login",
-      "component": "@/pages/auth/LoginPage.vue",
-      "meta": {
-        "startRoute": true,
-        "requiresAuth": false
-      }
-    },
-    "Register": {
-      "path": "/register",
-      "component": "@/pages/auth/RegisterPage.vue",
-      "meta": {
-        "startRoute": true,
-        "requiresAuth": false
-      }
-    },
-    "VerifyEmail": {
-      "path": "/verify-email",
-      "component": "@/pages/auth/VerifyEmailPage.vue",
-      "meta": {
-        "startRoute": true,
-        "requiresAuth": false
-      }
-    },
-    "ForgotPassword": {
-      "path": "/forgot-password",
-      "component": "@/pages/auth/ForgotPasswordPage.vue",
-      "meta": {
-        "startRoute": true,
-        "requiresAuth": false
-      }
-    },
-    "ResetPassword": {
-      "path": "/reset-password",
-      "component": "@/pages/auth/ResetPasswordPage.vue",
-      "meta": {
-        "startRoute": true,
-        "requiresAuth": false
-      }
-    },
-    "TwoSteps": {
-      "path": "/two-steps",
-      "component": "@/pages/auth/TwoStepsPage.vue",
-      "meta": {
-        "startRoute": true,
-        "requiresAuth": false
-      }
-    },
     "Analyze": {
       "path": "/user/analyze",
       "component": "@/pages/user/analyze/Analyze.vue",
@@ -687,6 +708,92 @@
     "DatabaseAnalyze": {
       "path": "databaseanalyze",
       "component": "@/pages/user/analyze/DatabaseAnalyze.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+
+    "StorageList": {
+      "path": "/bi/storagelist",
+      "component": "@/pages/bi/StorageListPage.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "DatasetList": {
+      "path": "/bi/datasetlist",
+      "component": "@/pages/bi/DatasetListPage.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "NewFile": {
+      "path": "/bi/connections/new/file",
+      "component": "@/pages/bi/NewFile.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "ClickHouse": {
+      "path": "/bi/connections/new/clickhouse",
+      "component": "@/pages/bi/components/db-settings/ClickHouse.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "MSSQL": {
+      "path": "/bi/connections/new/mssql",
+      "component": "@/pages/bi/components/db-settings/MSSQL.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "PostgreSQL": {
+      "path": "/bi/connections/new/postgresql",
+      "component": "@/pages/bi/components/db-settings/PostgreSQL.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "ConnectionDetail": {
+      "path": "/bi/connections/:pk",
+      "component": "@/pages/bi/components/db-settings/ConnectionDetail.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "ConnectionFiles": {
+      "path": "/bi/connections/:pk/files",
+      "component": "@/pages/bi/ConnectionFiles.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "NewConnection": {
+      "path": "/bi/connections/new",
+      "component": "@/pages/bi/NewConnection.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "DatasetPage": {
+      "path": "/bi/dataset/:id(\\d+)?",
+      "component": "@/pages/bi/DatasetPage.vue",
+      "alias": "/bi/dataset/new",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "NewChart": {
+      "path": "/bi/chart/new",
+      "component": "@/pages/bi/ChartPage.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "ChartPage": {
+      "path": "/bi/chart/:id",
+      "component": "@/pages/bi/ChartPage.vue",
       "meta": {
         "requiresAuth": true
       }

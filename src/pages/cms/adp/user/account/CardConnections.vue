@@ -3,8 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'vue-toastification'
 import { 
   Monitor, Laptop, Smartphone, Tablet, Wifi, WifiOff, 
-  Trash2, Shield, MapPin, Clock, MoreVertical, Power, 
-  RefreshCw, AlertTriangle
+  Trash2, Shield, MapPin, Clock, MoreVertical, Power
 } from 'lucide-vue-next'
 import { useProfile } from '@/js/api/services/profileService.js'
 
@@ -15,14 +14,11 @@ const { getDevices, deleteDevice, formatDeviceData } = useProfile()
 const loading = ref(true)
 const devices = ref([])
 const deletingDeviceId = ref(null)
-const refreshing = ref(false)
 
 // Получение списка устройств
-const fetchDevices = async (showLoader = true) => {
+const fetchDevices = async () => {
   try {
-    if (showLoader) loading.value = true
-    refreshing.value = !showLoader
-    
+    loading.value = true
     const response = await getDevices()
     devices.value = response.map(device => formatDeviceData(device))
   } catch (error) {
@@ -30,13 +26,12 @@ const fetchDevices = async (showLoader = true) => {
     toast.error('Ошибка загрузки списка устройств')
   } finally {
     loading.value = false
-    refreshing.value = false
   }
 }
 
 // Удаление устройства
 const handleDeleteDevice = async (deviceId, deviceName) => {
-  if (!confirm(`Вы уверены, что хотите завершить сессию на устройстве "${deviceName}"?\n\nЭто действие приведет к выходу из аккаунта на данном устройстве.`)) {
+  if (!confirm(`Вы уверены, что хотите завершить сессию на устройстве "${deviceName}"?`)) {
     return
   }
 
@@ -52,34 +47,6 @@ const handleDeleteDevice = async (deviceId, deviceName) => {
     toast.error('Ошибка завершения сессии')
   } finally {
     deletingDeviceId.value = null
-  }
-}
-
-// Завершение всех сессий кроме текущей
-const terminateAllOtherSessions = async () => {
-  const otherDevices = devices.value.filter(device => !device.isCurrentDevice)
-  
-  if (otherDevices.length === 0) {
-    toast.info('Нет других активных сессий')
-    return
-  }
-
-  if (!confirm(`Вы уверены, что хотите завершить все другие сессии (${otherDevices.length} устройств)?`)) {
-    return
-  }
-
-  try {
-    const promises = otherDevices.map(device => deleteDevice(device.id))
-    await Promise.all(promises)
-    
-    // Оставляем только текущее устройство
-    devices.value = devices.value.filter(device => device.isCurrentDevice)
-    toast.success(`Завершено ${otherDevices.length} сессий`)
-  } catch (error) {
-    console.error('Ошибка завершения сессий:', error)
-    toast.error('Ошибка завершения сессий')
-    // Обновляем список на всякий случай
-    fetchDevices(false)
   }
 }
 
@@ -108,10 +75,6 @@ const currentDevice = computed(() =>
   devices.value.find(device => device.isCurrentDevice)
 )
 
-const otherActiveDevices = computed(() => 
-  activeDevices.value.filter(device => !device.isCurrentDevice)
-)
-
 // Инициализация
 onMounted(() => {
   fetchDevices()
@@ -119,105 +82,47 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="card">
-    <div class="card-header">
-      <div class="d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">
-          <Shield :size="20" class="me-2" />
-          Управление сессиями
-        </h5>
-        <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-primary">
-            {{ totalDevices }} устройств
-          </span>
-      <button 
-            @click="fetchDevices(false)" 
-        class="btn btn-outline-secondary btn-sm"
-            :disabled="loading || refreshing"
-            title="Обновить список"
-      >
-            <RefreshCw :size="16" :class="{ 'spin': refreshing }" />
-      </button>
-        </div>
+  <div class="card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0">
+        <Shield :size="20" class="me-2" />
+        Активные сессии
+      </h5>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary">
+          {{ totalDevices }} устройств
+        </span>
+        <button 
+          @click="fetchDevices" 
+          class="btn btn-outline-secondary btn-sm"
+          :disabled="loading"
+        >
+          <Clock :size="16" />
+        </button>
       </div>
     </div>
-    
+
     <div class="card-body">
       <!-- Загрузка -->
       <div v-if="loading" class="text-center py-4">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Загрузка...</span>
-      </div>
+        <div class="spinner-border text-primary spinner-border-sm" role="status">
+          <span class="visually-hidden">Загрузка...</span>
+        </div>
         <p class="text-muted mt-2 mb-0">Загрузка устройств...</p>
-    </div>
-    
-    <!-- Список устройств -->
+      </div>
+
+      <!-- Список устройств -->
       <div v-else-if="devices.length > 0">
-        <!-- Кнопка завершения всех сессий -->
-        <div v-if="otherActiveDevices.length > 0" class="mb-4">
-          <div class="alert alert-warning d-flex align-items-start">
-            <AlertTriangle :size="20" class="text-warning me-2 flex-shrink-0 mt-1" />
-            <div class="flex-grow-1">
-              <h6 class="alert-heading mb-2">Безопасность аккаунта</h6>
-              <p class="mb-2 small">
-                У вас есть {{ otherActiveDevices.length }} других активных сессий. 
-                Для повышения безопасности рекомендуется завершить неиспользуемые сессии.
-              </p>
-              <button 
-                @click="terminateAllOtherSessions"
-                class="btn btn-sm btn-outline-danger"
-                :disabled="deletingDeviceId !== null"
-              >
-                <Power :size="14" class="me-1" />
-                Завершить все другие сессии
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Текущее устройство -->
-        <div v-if="currentDevice" class="mb-4">
-          <h6 class="text-primary mb-3">
-            <Wifi :size="16" class="me-1" />
-            Текущая сессия
-          </h6>
-          
-          <div class="device-item current-device">
-            <div class="d-flex align-items-center">
-              <!-- Иконка устройства -->
-              <div class="device-icon text-primary">
-                <component :is="getDeviceIconComponent(currentDevice.deviceIcon)" :size="28" />
-              </div>
-
-              <!-- Информация об устройстве -->
-              <div class="flex-grow-1 ms-3">
-                <h6 class="mb-1 fw-semibold">
-                  {{ currentDevice.deviceName }}
-                  <span class="badge bg-primary ms-2">Текущее устройство</span>
-                </h6>
-                <div class="text-muted small mb-1">
-                  <MapPin :size="14" class="me-1" />
-                  {{ currentDevice.city }}, {{ currentDevice.country }}
-                </div>
-                <div class="text-muted small">
-                  <Clock :size="14" class="me-1" />
-                  {{ currentDevice.formattedLastActivity }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Другие активные устройства -->
-        <div v-if="otherActiveDevices.length > 0" class="mb-4">
+        <!-- Активные устройства -->
+        <div v-if="activeDevices.length > 0" class="mb-4">
           <h6 class="text-success mb-3">
             <Wifi :size="16" class="me-1" />
-            Другие активные сессии ({{ otherActiveDevices.length }})
+            Активные сессии ({{ activeDevices.length }})
           </h6>
           
           <div class="d-flex flex-column gap-3">
             <div
-              v-for="device in otherActiveDevices"
+              v-for="device in activeDevices"
               :key="device.id"
               class="device-item active"
             >
@@ -231,7 +136,12 @@ onMounted(() => {
                 <div class="flex-grow-1 ms-3">
                   <div class="d-flex justify-content-between align-items-start">
                     <div>
-                      <h6 class="mb-1 fw-semibold">{{ device.deviceName }}</h6>
+                      <h6 class="mb-1 fw-semibold">
+                        {{ device.deviceName }}
+                        <span v-if="device.isCurrentDevice" class="badge bg-success ms-2 small">
+                          Текущее устройство
+                        </span>
+                      </h6>
                       <div class="text-muted small mb-1">
                         <MapPin :size="14" class="me-1" />
                         {{ device.city }}, {{ device.country }}
@@ -243,7 +153,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Действия -->
-                    <div class="dropdown">
+                    <div class="dropdown" v-if="!device.isCurrentDevice">
                       <button 
                         class="btn btn-sm btn-outline-secondary dropdown-toggle"
                         type="button"
@@ -255,7 +165,7 @@ onMounted(() => {
                       </button>
                       <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-          <button
+                          <button 
                             @click="handleDeleteDevice(device.id, device.deviceName)"
                             class="dropdown-item text-danger"
                             :disabled="deletingDeviceId === device.id"
@@ -270,10 +180,10 @@ onMounted(() => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-    
+
         <!-- Неактивные устройства -->
         <div v-if="inactiveDevices.length > 0">
           <h6 class="text-muted mb-3">
@@ -297,13 +207,8 @@ onMounted(() => {
                 <div class="flex-grow-1 ms-3">
                   <div class="d-flex justify-content-between align-items-start">
                     <div>
-                      <h6 class="mb-1 text-muted small fw-semibold">{{ device.deviceName }}</h6>
-                      <div class="text-muted extra-small mb-1">
-                        <MapPin :size="12" class="me-1" />
-                        {{ device.city }}, {{ device.country }}
-                      </div>
+                      <h6 class="mb-1 text-muted small">{{ device.deviceName }}</h6>
                       <div class="text-muted extra-small">
-                        <Clock :size="12" class="me-1" />
                         {{ device.formattedLastActivity }}
                       </div>
                     </div>
@@ -327,27 +232,30 @@ onMounted(() => {
         <!-- Информация о безопасности -->
         <div class="mt-4 p-3 bg-light rounded">
           <div class="d-flex align-items-start">
-            <Shield :size="20" class="text-info me-2 flex-shrink-0" />
+            <Shield :size="20" class="text-primary me-2 flex-shrink-0" />
             <div>
-              <h6 class="mb-1 small">Рекомендации по безопасности</h6>
-              <ul class="text-muted small mb-2 ps-3">
-                <li>Регулярно проверяйте список активных устройств</li>
-                <li>Завершайте сессии на неиспользуемых устройствах</li>
-                <li>Используйте надежные пароли и двухфакторную аутентификацию</li>
-                <li>Не входите в аккаунт на общественных компьютерах</li>
-              </ul>
+              <h6 class="mb-1 small">Безопасность аккаунта</h6>
+              <p class="text-muted small mb-2">
+                Следите за активностью своего аккаунта. Если вы видите подозрительную активность, 
+                немедленно завершите сессии на неизвестных устройствах.
+              </p>
+              <RouterLink 
+                :to="{ name: 'SecuritySettings' }" 
+                class="btn btn-sm btn-outline-primary"
+              >
+                Настройки безопасности
+              </RouterLink>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Пустой список -->
-    <div v-else class="text-center py-4 text-muted">
+      <div v-else class="text-center py-4 text-muted">
         <Shield :size="48" class="mb-3 opacity-50" />
-        <h6>Нет данных об устройствах</h6>
-        <p class="small">Информация об устройствах появится после входа в систему</p>
-        <button @click="fetchDevices()" class="btn btn-outline-primary btn-sm">
-          <RefreshCw :size="16" class="me-1" />
+        <h6>Нет активных устройств</h6>
+        <p class="small">Войдите в аккаунт с других устройств, чтобы увидеть их здесь</p>
+        <button @click="fetchDevices" class="btn btn-outline-primary btn-sm">
           Обновить список
         </button>
       </div>
@@ -373,17 +281,8 @@ onMounted(() => {
 
 .device-item {
   padding: 1rem;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   transition: all 0.2s ease;
-
-  &.current-device {
-    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
-    border: 2px solid rgba(13, 110, 253, 0.3);
-
-    &:hover {
-      background: linear-gradient(135deg, rgba(13, 110, 253, 0.15) 0%, rgba(13, 110, 253, 0.08) 100%);
-    }
-  }
 
   &.active {
     background-color: rgba(25, 135, 84, 0.05);
@@ -405,27 +304,13 @@ onMounted(() => {
 }
 
 .device-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background-color: rgba(var(--bs-primary-rgb), 0.1);
-  
-  .device-item.current-device & {
-    background-color: rgba(13, 110, 253, 0.15);
-  }
-  
-  .device-item.active & {
-    background-color: rgba(25, 135, 84, 0.15);
-  }
-  
-  .device-item.inactive & {
-    background-color: rgba(108, 117, 125, 0.1);
-    width: 40px;
-    height: 40px;
-  }
 }
 
 .fw-semibold {
@@ -457,18 +342,5 @@ h6 {
 
 .bg-light {
   background-color: #f8f9fa !important;
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.alert {
-  border-left: 4px solid #ffc107;
 }
 </style>

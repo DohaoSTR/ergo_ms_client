@@ -201,3 +201,41 @@ svg.apexcharts-svg {
     background-color: var(--bs-secondary-bg-subtle);
   }
 }
+
+// Высококачественные изображения
+.high-quality-image {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  filter: blur(0);
+  transition: all 0.2s ease;
+}
+
+// Аватары с высоким качеством
+.hq-avatar {
+  @extend .high-quality-image;
+  object-fit: cover;
+  border-radius: 50%;
+  
+  &.hq-avatar-bordered {
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    
+    &:hover {
+      transform: translateZ(0) scale(1.05);
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+  }
+  
+  &.hq-avatar-primary {
+    border: 3px solid var(--bs-primary);
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.2);
+    
+    &:hover {
+      transform: translateZ(0) scale(1.03);
+      box-shadow: 0 8px 30px rgba(0, 123, 255, 0.3);
+    }
+  }
+}
