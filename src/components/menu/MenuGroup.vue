@@ -84,7 +84,7 @@ const isCurrentGroupPage = computed(() => {
   if (menuItems.value.length > 0) {
     return menuItems.value.some(item => {
       // Для обычных Vue страниц
-      if (item.path && route.name === item.path) {
+      if (item.routeName && route.name === item.routeName) {
         return true
       }
       
@@ -141,7 +141,7 @@ const shouldHighlightMainItem = computed(() => {
   if (menuItems.value.length > 0) {
     return menuItems.value.some(item => {
       // Для обычных Vue страниц
-      if (item.path && route.name === item.path) {
+      if (item.routeName && route.name === item.routeName) {
         return true
       }
       

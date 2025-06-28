@@ -1,32 +1,31 @@
 /**
- * ГЕНЕРАТОР МАРШРУТОВ ИЗ JSON КОНФИГУРАЦИИ
+ * ГЕНЕРАТОР МАРШРУТОВ ИЗ КОНФИГУРАЦИИ МЕНЮ И МАРШРУТОВ
  * 
- * Данный модуль автоматически генерирует конфигурацию маршрутов Vue Router
- * на основе JSON конфигураций меню и основных маршрутов. Это обеспечивает 
- * единый источник истины для структуры приложения и устраняет дублирование кода.
+ * Этот модуль генерирует маршруты Vue Router на основе:
+ * - menu-config.json - структура меню (иконки, названия, иерархия, ссылки на маршруты)
+ * - routes-config.json - полные конфигурации всех доступных маршрутов
  * 
- * Архитектура:
- * - menu-config.json: содержит структуру меню и основных маршрутов
- * - core-routes-config.json: содержит служебные маршруты (auth, 404, etc.)
- * - routes-generator.js: преобразует JSON в объекты Vue Router
- * 
- * Функциональность:
- * - Преобразование JSON структуры в массив маршрутов Vue Router
- * - Поддержка вложенных маршрутов (children)
- * - Автоматическое создание ленивой загрузки компонентов
- * - Сохранение метаданных маршрутов (title, requiresAuth и др.)
- * - Обработка redirect для родительских маршрутов
- * - Генерация служебных маршрутов из JSON конфигурации
- * - Разделение на основные маршруты и маршруты аутентификации
- * - Валидация и обработка ошибок
+ * Основные функции:
+ * - generateRoutesFromConfig() - генерирует маршруты для Vue Router
+ * - transformMenuSection() - преобразует секцию меню в маршрут
+ * - transformSubItem() - преобразует подэлемент меню в дочерний маршрут
  * 
  * Использование:
- * import { generateRoutesFromConfig, generateCoreRoutes } from '@/config/routes-generator.js'
- * const menuRoutes = generateRoutesFromConfig()
- * const coreRoutes = generateCoreRoutes()
+ * import { generateRoutesFromConfig } from '@/config/routes-generator.js'
+ * const routes = generateRoutesFromConfig()
  */
 
 import menuConfig from '@/config/menu-config.json'
+import routesConfig from '@/config/routes-config.json'
+
+/**
+ * Получает конфигурацию маршрута по имени
+ * @param {string} routeName - имя маршрута
+ * @returns {Object|null} - конфигурация маршрута или null
+ */
+function getRouteConfig(routeName) {
+  return routesConfig.routes[routeName] || null
+}
 
 /**
  * Преобразует строковый путь к компоненту в функцию lazy import
@@ -42,7 +41,7 @@ function createLazyImport(componentPath) {
 /**
  * Преобразует конфигурацию подраздела в дочерний маршрут Vue Router
  * @param {Object} item - объект подраздела из JSON конфигурации
- * @returns {Object|null} - объект маршрута Vue Router или null
+ * @returns {Object|Array|null} - объект маршрута Vue Router, массив маршрутов или null
  */
 function transformSubItem(item) {
   // Пропускаем offcanvas элементы (они не являются реальными маршрутами)
@@ -51,7 +50,7 @@ function transformSubItem(item) {
   }
 
   // Если это группа без маршрута (только children), возвращаем все дочерние маршруты
-  if (!item.route && (item.children || item.list)) {
+  if (!item.routeName && (item.children || item.list)) {
     const childRoutes = []
     
     // Обрабатываем children
@@ -73,29 +72,30 @@ function transformSubItem(item) {
     return childRoutes.length > 0 ? childRoutes : null
   }
 
-  if (!item.route) {
+  // Получаем конфигурацию маршрута по имени
+  const routeConfig = getRouteConfig(item.routeName || item.path)
+  if (!routeConfig) {
     return null
   }
 
   const route = {
-    path: item.route.path,
-    name: item.path || item.routeName, // Используем path или routeName как name для совместимости
-    component: createLazyImport(item.route.component),
+    path: routeConfig.path,
+    name: item.routeName || item.path, // Используем routeName как name для совместимости
+    component: createLazyImport(routeConfig.component),
     meta: {
       title: item.name || item.title, // Используем название из меню как заголовок по умолчанию
-      ...item.route.meta, // Перезаписываем метаданными из конфигурации
+      ...routeConfig.meta, // Перезаписываем метаданными из конфигурации
     }
   }
 
   // Добавляем redirect если указан
-  if (item.route.redirect) {
+  if (routeConfig.redirect) {
     // Проверяем, является ли redirect именем маршрута или путем
-    if (item.route.redirect.startsWith('/')) {
-      route.redirect = item.route.redirect
+    if (routeConfig.redirect.startsWith('/')) {
+      route.redirect = routeConfig.redirect
     } else {
-      route.redirect = { name: item.route.redirect }
+      route.redirect = { name: routeConfig.redirect }
     }
-
   }
 
   // Рекурсивно обрабатываем дочерние элементы
@@ -146,27 +146,29 @@ function transformSubItem(item) {
  * @returns {Object|null} - объект маршрута Vue Router или null
  */
 function transformMenuSection(section) {
-  if (!section.route) {
+  // Получаем конфигурацию маршрута по имени
+  const routeConfig = getRouteConfig(section.routeName)
+  if (!routeConfig) {
     return null
   }
 
   const route = {
-    path: section.route.path,
+    path: routeConfig.path,
     name: section.routeName,
-    component: createLazyImport(section.route.component),
+    component: createLazyImport(routeConfig.component),
     meta: {
       title: section.title,
-      ...section.route.meta,
+      ...routeConfig.meta,
     }
   }
 
   // Добавляем redirect если указан
-  if (section.route.redirect) {
+  if (routeConfig.redirect) {
     // Проверяем, является ли redirect именем маршрута или путем
-    if (section.route.redirect.startsWith('/')) {
-      route.redirect = section.route.redirect
+    if (routeConfig.redirect.startsWith('/')) {
+      route.redirect = routeConfig.redirect
     } else {
-      route.redirect = { name: section.route.redirect }
+      route.redirect = { name: routeConfig.redirect }
     }
   }
 
@@ -213,7 +215,7 @@ function transformMenuSection(section) {
 }
 
 /**
- * Генерирует массив маршрутов из JSON конфигурации меню
+ * Генерирует массив маршрутов из JSON конфигурации меню и маршрутов
  * @returns {Array} - массив маршрутов для Vue Router
  */
 export function generateRoutesFromConfig() {
@@ -380,7 +382,7 @@ export function generateAdaptiveSeparators() {
       }
       
       // Ищем separator по id элемента
-      const separatorById = menuConfig.separators[section.id.toString()]
+      const separatorById = menuConfig.separators[section.id?.toString()]
       if (separatorById) {
         separators[i] = separatorById
         continue
@@ -450,7 +452,7 @@ export function updateSeparatorsConfig(newSeparators) {
 }
 
 /**
- * Дополнительные служебные функции для работы с маршрутами
+ * ДОПОЛНИТЕЛЬНЫЕ СЛУЖЕБНЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С МАРШРУТАМИ И КОНФИГУРАЦИЕЙ
  */
 
 /**
@@ -473,6 +475,23 @@ export function getAllRouteNames() {
 }
 
 /**
+ * Получает все доступные маршруты из routes-config.json
+ * @returns {Object} - объект со всеми маршрутами
+ */
+export function getAllAvailableRoutes() {
+  return routesConfig.routes
+}
+
+/**
+ * Получает конфигурацию маршрута по имени
+ * @param {string} routeName - имя маршрута
+ * @returns {Object|null} - конфигурация маршрута или null
+ */
+export function getRouteConfigByName(routeName) {
+  return getRouteConfig(routeName)
+}
+
+/**
  * Валидирует конфигурацию маршрутов
  * @returns {Object} - объект с результатами валидации
  */
@@ -482,24 +501,26 @@ export function validateRoutesConfig() {
   
   try {
     menuConfig.menuSections.forEach((section, index) => {
-      if (!section.route) {
+      const routeConfig = getRouteConfig(section.routeName)
+      if (!routeConfig) {
         warnings.push(`Секция ${index + 1} "${section.title}" не содержит конфигурации маршрута`)
         return
       }
       
-      if (!section.route.component) {
+      if (!routeConfig.component) {
         errors.push(`Секция "${section.title}" не содержит component`)
       }
       
-      if (!section.route.path) {
+      if (!routeConfig.path) {
         errors.push(`Секция "${section.title}" не содержит path`)
       }
       
       // Валидация дочерних маршрутов
       if (section.list) {
         section.list.forEach(item => {
-          if (!item.isOffcanvas && item.route && !item.route.component) {
-            errors.push(`Подраздел "${item.name}" в секции "${section.title}" не содержит component`)
+          const itemConfig = getRouteConfig(item.routeName || item.path)
+          if (!item.isOffcanvas && !itemConfig) {
+            errors.push(`Подраздел "${item.name}" в секции "${section.title}" не найден в конфигурации маршрутов`)
           }
         })
       }

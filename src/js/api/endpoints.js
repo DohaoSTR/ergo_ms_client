@@ -6,6 +6,9 @@ export const endpoints = {
         verifyCode: 'cms/adp/verify_code/',
         registration: 'cms/adp/registration/',
         protected: 'cms/adp/protected/',
+        changePassword: 'cms/adp/change-password/',
+        devices: 'cms/adp/devices/',
+        deleteDevice: id => `cms/adp/devices/${id}/`,
     },
     crm: {
         monthlyStats: 'crm/stats/monthly/',

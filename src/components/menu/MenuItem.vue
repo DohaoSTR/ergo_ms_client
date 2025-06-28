@@ -36,7 +36,7 @@ const emit = defineEmits(['navigate', 'toggle-group'])
 
 // Уникальный идентификатор для группы
 const groupId = computed(() => {
-  return `${props.item.path || props.item.page || props.item.name}_${props.level}`
+  return `${props.item.routeName || props.item.page || props.item.name}_${props.level}`
 })
 
 // Проверка, является ли элемент группой (имеет дочерние элементы)
@@ -51,11 +51,6 @@ const isOpen = computed(() => {
 
 // Проверка активности текущего элемента
 const isActive = computed(() => {
-  // Для обычных Vue страниц
-  if (props.item.path && route.name === props.item.path) {
-    return true
-  }
-  
   // Для элементов с routeName
   if (props.item.routeName && route.name === props.item.routeName) {
     return true
@@ -91,7 +86,6 @@ const isGroupActive = computed(() => {
 function checkChildrenActive(children, currentPage) {
   return children.some(child => {
     // Проверяем прямую активность
-    if (child.path && route.name === child.path) return true
     if (child.routeName && route.name === child.routeName) return true
     
     // Для BI offcanvas страниц - проверяем что мы находимся на BI странице
@@ -133,16 +127,16 @@ function handleClick(event) {
       emit('toggle-group', groupId.value)
       
       // Если у группы есть маршрут, переходим на него (для redirect)
-      if (props.item.route && (props.item.path || props.item.routeName)) {
-        router.push({ name: props.item.path || props.item.routeName })
+      if (props.item.routeName) {
+        router.push({ name: props.item.routeName })
       }
     }
   } else if (props.item.isOffcanvas || props.item.page) {
     // Если это BI offcanvas элемент
     emit('navigate', props.item)
-  } else if (props.item.path || props.item.routeName) {
+  } else if (props.item.routeName) {
     // Если это обычная Vue страница
-    router.push({ name: props.item.path || props.item.routeName })
+    router.push({ name: props.item.routeName })
   }
 }
 
