@@ -1,6 +1,7 @@
 import { onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { apiClient } from '@/js/api/manager'
+import { endpoints } from '@/js/api/endpoints'
 
 export function useRedirectIfFileConnection() {
   const router = useRouter()
@@ -10,7 +11,7 @@ export function useRedirectIfFileConnection() {
     const connectionId = route.params.id || route.params.pk
     if (!connectionId) return
 
-    const res = await apiClient.get(`bi_analysis/bi_connections/${connectionId}/`)
+    const res = await apiClient.get(`${endpoints.bi.ConnectionsList}${connectionId}/`)
     if (res.success) {
       const type = (res.data.connector_type_display || res.data.connector_type || '').toLowerCase().trim()
 

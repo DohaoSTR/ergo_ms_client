@@ -1,5 +1,5 @@
 <template>
-  <h2 class="connection-title">Параметры подключения {{ connectionName || '...' }}</h2>
+  <h2 class="connection-title">Параметры подключения {{ connectionName || getConnectionTypeName() }}</h2>
   <div class="main">
       <transition name="shake">
           <div v-if="isChecked && error && message" class="alert alert-danger" role="alert">
@@ -17,7 +17,7 @@
           <button @click="goToNewConnection" class="icon-button" title="Новое подключение">
               <ArrowLeft class="icon" />
           </button>
-          <img src="@/assets/bi/ClickHouse_Logo.svg" alt="ClickHouse" class="logo" />
+          <img :src="getLogoPath()" :alt="connectionType.toUpperCase()" class="logo" />
       </div>
 
       <form class="main-grid needs-validation" @submit.prevent="checkConnection" ref="form" novalidate>
@@ -59,11 +59,12 @@
 
           <div class="row_btns">
               <button type="submit" class="btn btn-outline-secondary" :disabled="loading">Проверить подключение</button>
-              <button type="button" class="btn btn-outline-success" :disabled="loading || !isChanged" @click="changeConnection">Сохранить изменения</button>
+              <button v-if="route.params.pk !== 'new'" type="button" class="btn btn-outline-success" :disabled="loading || !isChanged" @click="changeConnection">Сохранить изменения</button>
+              <button v-else type="button" class="btn btn-primary" :disabled="loading || !isConnectionValid" @click="createConnection">Создать подключение</button>
           </div>
       </form>
   </div>
-  <ConnectionNameDialog v-model:visible="showDialog" :connectorType="'clickhouse'" :connectionConfig="{
+  <ConnectionNameDialog v-model:visible="showDialog" :connectorType="connectionType" :connectionConfig="{
       host: host,
       port: port,
       user: username,
@@ -106,6 +107,29 @@ const database = ref('')
 
 const showDialog = ref(false)
 
+// Определяем тип подключения на основе пути
+const connectionType = computed(() => {
+  const path = route.path
+  if (path.includes('/clickhouse')) return 'clickhouse'
+  if (path.includes('/mssql')) return 'mssql'
+  if (path.includes('/postgresql')) return 'postgresql'
+  return 'clickhouse' // по умолчанию
+})
+
+// Определяем путь к логотипу в зависимости от типа подключения
+function getLogoPath() {
+  switch (connectionType.value) {
+    case 'clickhouse':
+      return '@/assets/bi/ClickHouse_Logo.svg'
+    case 'mssql':
+      return '@/assets/bi/icons/mssql.svg'
+    case 'postgresql':
+      return '@/assets/bi/icons/postgres.svg'
+    default:
+      return '@/assets/bi/ClickHouse_Logo.svg'
+  }
+}
+
 const isChanged = computed(() => {
   return host.value !== initialHost.value ||
          port.value !== initialPort.value ||
@@ -113,14 +137,42 @@ const isChanged = computed(() => {
          password.value !== initialPassword.value
 })
 
+const isConnectionValid = computed(() => {
+  return host.value.trim() !== '' && 
+         port.value !== '' && 
+         username.value.trim() !== '' && 
+         password.value.trim() !== ''
+})
+
 function goToNewConnection() {
-  router.push('/bi/connections/new/')
+  router.push('/bi/connections/new')
 }
 
 async function fetchConnection() {
   loading.value = true
   try {
     const id = route.params.pk 
+    
+    // Если id равен 'new', то это создание нового подключения
+    if (id === 'new') {
+      // Инициализируем значения по умолчанию для нового подключения
+      connectionName.value = 'Новое подключение'
+      host.value = ''
+      port.value = 8443
+      username.value = ''
+      database.value = ''
+      password.value = ''
+      
+      initialHost.value = ''
+      initialPort.value = ''
+      initialUsername.value = ''
+      initialPassword.value = ''
+      
+      loading.value = false
+      return
+    }
+    
+    // Загружаем существующее подключение
     const response = await apiClient.get(`${endpoints.bi.ConnectionsList}${id}/`)
 
     const data = response.data
@@ -153,17 +205,16 @@ async function changeConnection() {
     return
   }
 
-  loading.value = true
-
   message.value = ''
 
   const result = await checkConnection()
 
   if (!result) {
-    showAutoDismissMessage('Ошибка подключения к ClickHouse', true)
-    loading.value = false
+    showAutoDismissMessage(`Ошибка подключения к ${connectionType.value.toUpperCase()}`, true)
     return
   }
+
+  loading.value = true
 
   try {
     const id = route.params.pk
@@ -193,6 +244,20 @@ async function changeConnection() {
   }
 }
 
+async function createConnection() {
+  message.value = ''
+
+  const result = await checkConnection()
+
+  if (!result) {
+    showAutoDismissMessage(`Ошибка подключения к ${connectionType.value.toUpperCase()}`, true)
+    return
+  }
+
+  // Показываем диалог для ввода названия подключения
+  showDialog.value = true
+}
+
 async function checkConnection() {
   message.value = ''
   error.value = false
@@ -203,12 +268,12 @@ async function checkConnection() {
   if (!formEl.checkValidity()) {
     formEl.classList.add('was-validated')
     loading.value = false
-    return
+    return false
   }
 
   try {
     const response = await apiClient.post(endpoints.bi.CheckConnection, {
-      type: 'clickhouse',
+      type: connectionType.value,
       host: host.value,
       port: port.value,
       username: username.value,
@@ -222,19 +287,25 @@ async function checkConnection() {
     if (data.success === true) {
       message.value = data.message || 'Соединение успешно'
       error.value = false
+      isChecked.value = true
+      loading.value = false
+      return true
     } else {
       message.value = translateErrorMessage(data.message || 'Ошибка соединения')
       error.value = true
+      isChecked.value = true
+      loading.value = false
+      return false
     }
 
   } catch (err) {
     const errorMsg = err.response?.data?.detail || err.message || 'Неизвестная ошибка'
     message.value = translateErrorMessage(errorMsg)
     error.value = true
+    isChecked.value = true
+    loading.value = false
+    return false
   }
-
-  isChecked.value = true
-  loading.value = false
 }
 
 
@@ -271,7 +342,7 @@ function onConnectionSaved(data) {
 
   setTimeout(() => {
     router.push({ name: 'connection-detail', params: { pk: data.id } })
-  }, 3000)
+  }, 2000)
 }
 
 function showAutoDismissMessage(msg, isError = false) {

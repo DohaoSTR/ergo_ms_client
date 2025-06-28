@@ -61,7 +61,6 @@ function leftToggle(val) {
 
 function openSidebarWithPage(pageName) {
   currentSidebarPage.value = pageName
-  //currentSidebarPage.value = page
   isDatasetSidebarOpen.value = true
 }
 

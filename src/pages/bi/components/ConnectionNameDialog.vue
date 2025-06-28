@@ -62,16 +62,25 @@ async function submit() {
   try {
     const isFileConnection = props.connectorType === undefined
 
-    emit('saved', {
+    const payload = {
       name: localName.value,
       connector_type: isFileConnection ? 'file' : props.connectorType,
       config: isFileConnection ? { source: 'local_upload' } : (props.connectionConfig || {})
-    })
-    emit('update:visible', false)
+    }
+
+    // Создаем подключение через API
+    const response = await apiClient.post(endpoints.bi.ConnectionsList, payload)
+    
+    if (response.success) {
+      emit('saved', response.data)
+      emit('update:visible', false)
+    } else {
+      error.value = response.message || 'Не удалось сохранить подключение'
+    }
 
   } catch (err) {
     console.error('Ошибка при сохранении подключения:', err.response?.data || err)
-    error.value = 'Не удалось сохранить подключение'
+    error.value = extractErrorMessage(err)
   }
 }
 

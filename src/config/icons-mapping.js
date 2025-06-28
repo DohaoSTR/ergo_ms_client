@@ -44,6 +44,7 @@ import {
   Puzzle,
   CreditCard,
   Landmark,
+  ClipboardList,
 } from 'lucide-vue-next'
 
 /**
@@ -85,6 +86,7 @@ export const iconMapping = {
   Puzzle,
   CreditCard,
   Landmark,
+  ClipboardList,
 }
 
 /**

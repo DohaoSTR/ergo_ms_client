@@ -50,20 +50,94 @@ function transformSubItem(item) {
     return null
   }
 
+  // Если это группа без маршрута (только children), возвращаем все дочерние маршруты
+  if (!item.route && (item.children || item.list)) {
+    const childRoutes = []
+    
+    // Обрабатываем children
+    if (item.children && item.children.length > 0) {
+      const transformedChildren = item.children
+        .map(transformSubItem)
+        .filter(child => child !== null)
+      childRoutes.push(...transformedChildren)
+    }
+    
+    // Обрабатываем list
+    if (item.list && item.list.length > 0) {
+      const transformedList = item.list
+        .map(transformSubItem)
+        .filter(child => child !== null)
+      childRoutes.push(...transformedList)
+    }
+    
+    return childRoutes.length > 0 ? childRoutes : null
+  }
+
   if (!item.route) {
-    console.warn(`Подраздел "${item.name}" не содержит конфигурации маршрута`)
     return null
   }
 
-  return {
+  const route = {
     path: item.route.path,
-    name: item.path, // Используем path как name для совместимости
+    name: item.path || item.routeName, // Используем path или routeName как name для совместимости
     component: createLazyImport(item.route.component),
     meta: {
-      title: item.name, // Используем название из меню как заголовок по умолчанию
+      title: item.name || item.title, // Используем название из меню как заголовок по умолчанию
       ...item.route.meta, // Перезаписываем метаданными из конфигурации
     }
   }
+
+  // Добавляем redirect если указан
+  if (item.route.redirect) {
+    // Проверяем, является ли redirect именем маршрута или путем
+    if (item.route.redirect.startsWith('/')) {
+      route.redirect = item.route.redirect
+    } else {
+      route.redirect = { name: item.route.redirect }
+    }
+
+  }
+
+  // Рекурсивно обрабатываем дочерние элементы
+  const childRoutes = []
+  
+  // Обрабатываем children
+  if (item.children && item.children.length > 0) {
+    const transformedChildren = item.children
+      .map(transformSubItem)
+      .filter(child => child !== null)
+    
+    // Если дочерний элемент вернул массив (группа без маршрута), разворачиваем его
+    transformedChildren.forEach(child => {
+      if (Array.isArray(child)) {
+        childRoutes.push(...child)
+      } else {
+        childRoutes.push(child)
+      }
+    })
+  }
+  
+  // Обрабатываем list
+  if (item.list && item.list.length > 0) {
+    const transformedList = item.list
+      .map(transformSubItem)
+      .filter(child => child !== null)
+      
+    // Если дочерний элемент вернул массив (группа без маршрута), разворачиваем его
+    transformedList.forEach(child => {
+      if (Array.isArray(child)) {
+        childRoutes.push(...child)
+      } else {
+        childRoutes.push(child)
+      }
+    })
+  }
+
+  if (childRoutes.length > 0) {
+    route.children = childRoutes
+  }
+
+  return route
 }
 
 /**
@@ -73,7 +147,6 @@ function transformSubItem(item) {
  */
 function transformMenuSection(section) {
   if (!section.route) {
-    console.warn(`Секция "${section.title}" не содержит конфигурации маршрута`)
     return null
   }
 
@@ -89,18 +162,51 @@ function transformMenuSection(section) {
 
   // Добавляем redirect если указан
   if (section.route.redirect) {
-    route.redirect = { name: section.route.redirect }
+    // Проверяем, является ли redirect именем маршрута или путем
+    if (section.route.redirect.startsWith('/')) {
+      route.redirect = section.route.redirect
+    } else {
+      route.redirect = { name: section.route.redirect }
+    }
   }
 
-  // Обрабатываем дочерние маршруты
-  if (section.list && section.list.length > 0) {
-    const children = section.list
+  // Обрабатываем дочерние маршруты из list и children
+  const childRoutes = []
+  
+  // Обрабатываем children
+  if (section.children && section.children.length > 0) {
+    const transformedChildren = section.children
       .map(transformSubItem)
-      .filter(child => child !== null) // Убираем null элементы (offcanvas)
+      .filter(child => child !== null)
+      
+    // Если дочерний элемент вернул массив (группа без маршрута), разворачиваем его
+    transformedChildren.forEach(child => {
+      if (Array.isArray(child)) {
+        childRoutes.push(...child)
+      } else {
+        childRoutes.push(child)
+      }
+    })
+  }
+  
+  // Обрабатываем list
+  if (section.list && section.list.length > 0) {
+    const transformedList = section.list
+      .map(transformSubItem)
+      .filter(child => child !== null)
+      
+    // Если дочерний элемент вернул массив (группа без маршрута), разворачиваем его
+    transformedList.forEach(child => {
+      if (Array.isArray(child)) {
+        childRoutes.push(...child)
+      } else {
+        childRoutes.push(child)
+      }
+    })
+  }
 
-    if (children.length > 0) {
-      route.children = children
-    }
+  if (childRoutes.length > 0) {
+    route.children = childRoutes
   }
 
   return route
@@ -115,9 +221,9 @@ export function generateRoutesFromConfig() {
     const routes = menuConfig.menuSections
       .map(transformMenuSection)
       .filter(route => route !== null) // Убираем невалидные маршруты
+    
     return routes
   } catch (error) {
-    console.error('Ошибка генерации маршрутов из конфигурации:', error)
     return []
   }
 }
@@ -159,7 +265,6 @@ function loadCoreRoutes() {
   try {
     return coreRoutesConfig.coreRoutes.map(transformRoute)
   } catch (error) {
-    console.error('Ошибка загрузки основных маршрутов:', error)
     return []
   }
 }
@@ -172,7 +277,6 @@ function loadAuthRoutes() {
   try {
     return coreRoutesConfig.authRoutes.map(transformRoute)
   } catch (error) {
-    console.error('Ошибка загрузки маршрутов аутентификации:', error)
     return []
   }
 }

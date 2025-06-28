@@ -88,6 +88,104 @@
         "startRoute": true,
         "requiresAuth": false
       }
+    },
+
+    {
+      "path": "/bi/storagelist",
+      "name": "StorageList",
+      "component": "@/pages/bi/StorageListPage.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/datasetlist",
+      "name": "DatasetList",
+      "component": "@/pages/bi/DatasetListPage.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/connections/new/file",
+      "name": "NewFile",
+      "component": "@/pages/bi/NewFile.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/connections/new/clickhouse",
+      "name": "ClickHouse",
+      "component": "@/pages/bi/components/db-settings/ClickHouse.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/connections/new/mssql",
+      "name": "MSSQL",
+      "component": "@/pages/bi/components/db-settings/MSSQL.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/connections/new/postgresql",
+      "name": "PostgreSQL",
+      "component": "@/pages/bi/components/db-settings/PostgreSQL.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/connections/:pk",
+      "name": "connection-detail",
+      "component": "@/pages/bi/components/db-settings/ConnectionDetail.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/connections/:pk/files",
+      "name": "ConnectionFiles",
+      "component": "@/pages/bi/ConnectionFiles.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/connections/new",
+      "name": "NewConnection",
+      "component": "@/pages/bi/NewConnection.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/dataset/:id(\\d+)?",
+      "name": "DatasetPage",
+      "component": "@/pages/bi/DatasetPage.vue",
+      "alias": "/bi/dataset/new",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/chart/new",
+      "name": "NewChart",
+      "component": "@/pages/bi/ChartPage.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    {
+      "path": "/bi/chart/:id",
+      "name": "ChartPage",
+      "component": "@/pages/bi/ChartPage.vue",
+      "meta": {
+        "requiresAuth": true
+      }
     }
   ]
 } 

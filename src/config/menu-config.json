@@ -93,6 +93,187 @@
           "requiresAuth": true
         }
       },
+      "children": [
+        {
+          "icon": "KeySquare",
+          "routeName": "AdminPanel",
+          "name": "Админ-панель",
+          "route": {
+            "path": "admin-panel",
+            "component": "@/pages/AdminPanel/ParentLayout.vue",
+            "redirect": "UsersPanel",
+            "meta": {
+              "title": "Админ-панель",
+              "requiresAuth": true
+            }
+          },
+          "children": [
+            { 
+              "path": "UsersPanel", 
+              "name": "Пользователи",
+              "route": {
+                "path": "users",
+                "component": "@/pages/AdminPanel/Users.vue",
+                "meta": {
+                  "title": "Панель пользователей",
+                  "requiresAuth": true
+                }
+              }
+            },
+            { 
+              "path": "CategoriesPanel", 
+              "name": "Категории",
+              "route": {
+                "path": "categories",
+                "component": "@/pages/AdminPanel/Categories.vue",
+                "meta": {
+                  "title": "Панель категорий",
+                  "requiresAuth": true
+                }
+              }
+            },
+            { 
+              "path": "GroupsPanel", 
+              "name": "Группы",
+              "route": {
+                "path": "groups",
+                "component": "@/pages/AdminPanel/Groups.vue",
+                "meta": {
+                  "title": "Панель групп",
+                  "requiresAuth": true
+                }
+              }
+            },
+            { 
+              "path": "PermissionsPanel", 
+              "name": "Права",
+              "route": {
+                "path": "permissions",
+                "component": "@/pages/AdminPanel/Permissions.vue",
+                "meta": {
+                  "title": "Панель прав",
+                  "requiresAuth": true
+                }
+              }
+            },
+            { 
+              "path": "LiminationPanel", 
+              "name": "Ограничения",
+              "route": {
+                "path": "limitations",
+                "component": "@/pages/AdminPanel/limitationSettings.vue",
+                "meta": {
+                  "title": "Панель Ограничений",
+                  "requiresAuth": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "icon": "Braces",
+          "routeName": "Shortcodes",
+          "name": "Редактор страниц",
+          "route": {
+            "path": "shortcodes",
+            "component": "@/pages/shortcodes/ParentLayout.vue",
+            "redirect": "MainShortcodePage",
+            "meta": {
+              "title": "Конструктор сайта",
+              "requiresAuth": true
+            }
+          },
+          "children": [
+            { 
+              "path": "MainShortcodePage", 
+              "name": "Главная",
+              "route": {
+                "path": "editor",
+                "component": "@/pages/shortcodes/editor/MainPage.vue",
+                "meta": {
+                  "title": "Главная",
+                  "requiresAuth": true
+                }
+              }
+            },
+            { 
+              "path": "ShortcodeEditor", 
+              "name": "Редактор страниц",
+              "route": {
+                "path": "editor",
+                "component": "@/pages/shortcodes/editor/ShortcodeEditor.vue",
+                "meta": {
+                  "title": "Редактор страниц",
+                  "requiresAuth": true
+                }
+              }
+            },
+            { 
+              "path": "Templates", 
+              "name": "Компоненты",
+              "route": {
+                "path": "templates",
+                "component": "@/pages/shortcodes/editor/TemplateManager.vue",
+                "meta": {
+                  "title": "Компоненты",
+                  "requiresAuth": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "icon": "Layers",
+          "routeName": "Categories",
+          "name": "Категории страниц",
+          "route": {
+            "path": "categories",
+            "component": "@/pages/categories/ParentLayout.vue",
+            "redirect": "PageCategories",
+            "meta": {
+              "requiresAuth": true
+            }
+          },
+          "children": [
+            {
+              "path": "PageCategories",
+              "name": "Категории",
+              "route": {
+                "path": "page-categories",
+                "component": "@/pages/categories/PageCategories.vue",
+                "meta": {
+                  "title": "Категории",
+                  "requiresAuth": true
+                }
+              }
+            },
+            {
+              "path": "PageCategoriesManager",
+              "name": "Создание категорий",
+              "route": {
+                "path": "categories-list",
+                "component": "@/pages/categories/CategoriesManagerPage.vue",
+                "meta": {
+                  "title": "Создание категорий",
+                  "requiresAuth": true
+                }
+              }
+            },
+            {
+              "path": "TagsManager",
+              "name": "Создание тегов",
+              "route": {
+                "path": "tags-list",
+                "component": "@/pages/categories/TagsManagerPage.vue",
+                "meta": {
+                  "title": "Создание тегов",
+                  "requiresAuth": true
+                }
+              }
+            }
+          ]
+        }
+      ],
       "list": [
         { 
           "path": "SiteSettings", 
@@ -170,80 +351,18 @@
       }
     },
     {
-      "icon": "KeySquare",
-      "routeName": "AdminPanel",
-      "title": "Админ-панель",
+      "icon": "ClipboardList",
+      "routeName": "CRM",
+      "title": "CRM модуль",
       "route": {
-        "path": "/AdminPanel",
-        "component": "@/pages/AdminPanel/ParentLayout.vue",
-        "redirect": "UsersPanel",
+        "path": "/crm",
+        "component": "@/pages/kanban/ParentLayout.vue",
         "meta": {
-          "title": "Админ-панель",
+          "title": "CRM модуль",
           "requiresAuth": true
         }
       },
-      "list": [
-        { 
-          "path": "UsersPanel", 
-          "name": "Пользователи",
-          "route": {
-            "path": "UsersPanel",
-            "component": "@/pages/AdminPanel/Users.vue",
-            "meta": {
-              "title": "Панель пользователей",
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
-          "path": "CategoriesPanel", 
-          "name": "Категории",
-          "route": {
-            "path": "CategoriesPanel",
-            "component": "@/pages/AdminPanel/Categories.vue",
-            "meta": {
-              "title": "Панель категорий",
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
-          "path": "GroupsPanel", 
-          "name": "Группы",
-          "route": {
-            "path": "GroupsPanel",
-            "component": "@/pages/AdminPanel/Groups.vue",
-            "meta": {
-              "title": "Панель групп",
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
-          "path": "PermissionsPanel", 
-          "name": "Права",
-          "route": {
-            "path": "PermissionsPanel",
-            "component": "@/pages/AdminPanel/Permissions.vue",
-            "meta": {
-              "title": "Панель прав",
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
-          "path": "LiminationPanel", 
-          "name": "Ограничения",
-          "route": {
-            "path": "LiminationsPanel",
-            "component": "@/pages/AdminPanel/limitationSettings.vue",
-            "meta": {
-              "title": "Панель Ограничений",
-              "requiresAuth": true
-            }
-          }
-        }
-      ]
+      "list": []
     },
     {
       "icon": "ChartSpline",
@@ -258,128 +377,19 @@
       },
       "list": [
         {
-          "path": "StorageList",
-          "name": "StorageList",
-          "route": {
-            "path": "/bi/storagelist",
-            "component": "@/pages/bi/StorageListPage.vue",
-            "meta": {
-              "title": "Главная",
-              "requiresAuth": true
-            }
-          }
+          "name": "Датасеты",
+          "page": "datasets",
+          "isOffcanvas": true
         },
         {
-          "path": "BIStorage",
-          "name": "BIStorage",
-          "route": {
-            "path": "/bi/storage",
-            "component": "@/pages/bi/DatasetListPage.vue",
-            "meta": {
-              "title": "Главная",
-              "requiresAuth": true
-            }
-          }
+          "name": "Подключения",
+          "page": "connections",
+          "isOffcanvas": true
         },
         {
-          "path": "NewConnection",
-          "name": "NewConnection",
-          "route": {
-            "path": "/bi/connections/new",
-            "component": "@/pages/bi/NewConnection.vue",
-            "meta": {
-              "title": "Главная",
-              "requiresAuth": true
-            }
-          }
-        },
-        {
-          "path": "NewFile",
-          "name": "NewFile",
-          "route": {
-            "path": "/bi/connections/new/file",
-            "component": "@/pages/bi/NewFile.vue",
-            "meta": {
-              "title": "Главная",
-              "requiresAuth": true
-            }
-          }
-        },
-        {
-          "path": "ClickHouse",
-          "name": "ClickHouse",
-          "route": {
-            "path": "/bi/connections/new/clickhouse",
-            "component": "@/pages/bi/components/db-settings/ClickHouse.vue",
-            "meta": {
-              "title": "Главная",
-              "requiresAuth": true
-            }
-          }
-        },
-        {
-          "path": "MySQL",
-          "name": "MySQL",
-          "route": {
-            "path": "/bi/connections/new/mysql",
-            "component": "@/pages/bi/components/db-settings/MySQL.vue",
-            "meta": {
-              "title": "Главная",
-              "requiresAuth": true
-            }
-          }
-        }
-      ]
-    },
-    {
-      "icon": "Braces",
-      "routeName": "Shortcodes",
-      "title": "Редактор страниц",
-      "route": {
-        "path": "/shortcodes",
-        "component": "@/pages/shortcodes/ParentLayout.vue",
-        "redirect": "MainShortcodePage",
-        "meta": {
-          "title": "Конструктор сайта",
-          "requiresAuth": true
-        }
-      },
-      "list": [
-        { 
-          "path": "MainShortcodePage", 
-          "name": "Главная",
-          "route": {
-            "path": "editor",
-            "component": "@/pages/shortcodes/editor/MainPage.vue",
-            "meta": {
-              "title": "Главная",
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
-          "path": "ShortcodeEditor", 
-          "name": "Редактор страниц",
-          "route": {
-            "path": "editor",
-            "component": "@/pages/shortcodes/editor/ShortcodeEditor.vue",
-            "meta": {
-              "title": "Редактор страниц",
-              "requiresAuth": true
-            }
-          }
-        },
-        { 
-          "path": "Templates", 
-          "name": "Компоненты",
-          "route": {
-            "path": "templates",
-            "component": "@/pages/shortcodes/editor/TemplateManager.vue",
-            "meta": {
-              "title": "Компоненты",
-              "requiresAuth": true
-            }
-          }
+          "name": "Чарты",
+          "page": "charts",
+          "isOffcanvas": true
         }
       ]
     },
@@ -641,57 +651,6 @@
           "requiresAuth": true
         }
       }
-    },
-    {
-      "icon": "Layers",
-      "routeName": "Categories",
-      "title": "Категории страниц",
-      "route": {
-        "path": "/categories",
-        "component": "@/pages/categories/ParentLayout.vue",
-        "redirect": "PageCategories",
-        "meta": {
-          "requiresAuth": true
-        }
-      },
-      "list": [
-        {
-          "path": "PageCategories",
-          "name": "Категории",
-          "route": {
-            "path": "page-categories",
-            "component": "@/pages/categories/PageCategories.vue",
-            "meta": {
-              "title": "Категории",
-              "requiresAuth": true
-            }
-          }
-        },
-        {
-          "path": "PageCategoriesManager",
-          "name": "Создание категорий",
-          "route": {
-            "path": "categories-list",
-            "component": "@/pages/categories/CategoriesManagerPage.vue",
-            "meta": {
-              "title": "Создание категорий",
-              "requiresAuth": true
-            }
-          }
-        },
-        {
-          "path": "TagsManager",
-          "name": "Создание тегов",
-          "route": {
-            "path": "tags-list",
-            "component": "@/pages/categories/TagsManagerPage.vue",
-            "meta": {
-              "title": "Создание тегов",
-              "requiresAuth": true
-            }
-          }
-        }
-      ]
     },
     {
       "icon": "Brain",

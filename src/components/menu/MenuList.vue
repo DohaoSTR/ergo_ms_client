@@ -141,6 +141,7 @@ const handleMouseLeave = () => {
 const route = useRoute()
 const openGroupRouteName = ref(null)
 const preventAutoOpen = ref(false)
+const nestedOpenStates = ref({})
 
 watch(
   () => route.matched,
@@ -208,6 +209,11 @@ const toggleGroup = (routeName) => {
   } else {
     openGroupRouteName.value = routeName
   }
+}
+
+// Обработчик переключения вложенных групп
+const toggleNestedGroup = (groupId) => {
+  nestedOpenStates.value[groupId] = !nestedOpenStates.value[groupId]
 }
 
 function handleAction(action) {
@@ -307,10 +313,12 @@ onMounted(async () => {
           :is-open="openGroupRouteName === section.routeName"
           :data="section"
           :current-page="props.currentPage"
+          :nested-open-states="nestedOpenStates"
           @toggle="toggleGroup(section.routeName)"
           @action="handleAction"
           @navigate="handleNavigate"
           @reset-page="resetCurrentPage"
+          @toggle-nested="toggleNestedGroup"
         />
       </li>
     </PerfectScrollbar>
