@@ -479,6 +479,146 @@
       }
     },
 
+    "CRM": {
+      "path": "/crm",
+      "component": "@/pages/crm/ParentLayout.vue",
+      "redirect": "/crm/strategic-projects/dashboard",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "StrategicProjects": {
+      "path": "/crm/strategic-projects",
+      "component": "@/pages/crm/strategic-projects/ParentLayout.vue",
+      "redirect": "/crm/strategic-projects/dashboard",
+      "meta": {
+        "title": "Стратегические проекты",
+        "requiresAuth": true
+      }
+    },
+    "StrategicProjectsDashboard": {
+      "path": "/crm/strategic-projects/dashboard",
+      "component": "@/pages/crm/strategic-projects/StrategicProjectsDashboard.vue",
+      "meta": {
+        "title": "Стратегические проекты",
+        "requiresAuth": true
+      }
+    },
+    "ProgramTopics": {
+      "path": "/crm/strategic-projects/program-topics",
+      "component": "@/pages/crm/strategic-projects/ProgramTopics.vue",
+      "meta": {
+        "title": "Темы программы развития",
+        "requiresAuth": true
+      }
+    },
+    "ProjectEdit": {
+      "path": "/crm/strategic-projects/project/:id/edit",
+      "component": "@/pages/crm/strategic-projects/ProjectEdit.vue",
+      "meta": {
+        "title": "Редактирование проекта",
+        "requiresAuth": true
+      }
+    },
+    "ProjectCreate": {
+      "path": "/crm/strategic-projects/project/create",
+      "component": "@/pages/crm/strategic-projects/ProjectEdit.vue",
+      "meta": {
+        "title": "Создание проекта",
+        "requiresAuth": true
+      }
+    },
+    "ProjectView": {
+      "path": "/crm/strategic-projects/project/:id",
+      "component": "@/pages/crm/strategic-projects/ProjectView.vue",
+      "meta": {
+        "title": "Просмотр проекта",
+        "requiresAuth": true
+      }
+    },
+    "ImportProgram": {
+      "path": "/crm/strategic-projects/import-program",
+      "component": "@/pages/crm/strategic-projects/ImportProgram.vue",
+      "meta": {
+        "title": "Импорт программы развития",
+        "requiresAuth": true
+      }
+    },
+    "MyProjects": {
+      "path": "/crm/strategic-projects/my-projects",
+      "component": "@/pages/crm/strategic-projects/MyProjects.vue",
+      "meta": {
+        "title": "Мои проекты",
+        "requiresAuth": true
+      }
+    },
+
+    "ProjectManagement": {
+      "path": "/crm/project-management",
+      "component": "@/pages/crm/project-management/ParentLayout.vue",
+      "redirect": "/crm/project-management/dashboard",
+      "meta": {
+        "title": "Управление проектами",
+        "requiresAuth": true
+      }
+    },
+    "ProjectDashboard": {
+      "path": "/crm/project-management/dashboard",
+      "component": "@/pages/crm/project-management/ProjectDashboard.vue",
+      "meta": {
+        "title": "Дашборд проектов",
+        "requiresAuth": true
+      }
+    },
+    "ProjectCalendar": {
+      "path": "/crm/project-management/calendar",
+      "component": "@/pages/crm/project-management/TaskCalendar.vue",
+      "meta": {
+        "title": "Календарь задач",
+        "requiresAuth": true
+      }
+    },
+    "KanbanBoard": {
+      "path": "/crm/project-management/kanban",
+      "component": "@/pages/crm/project-management/KanbanBoard.vue",
+      "meta": {
+        "title": "Канбан доска",
+        "requiresAuth": true
+      }
+    },
+    "MyProjectsList": {
+      "path": "/crm/project-management/projects",
+      "component": "@/pages/crm/project-management/ProjectsList.vue",
+      "meta": {
+        "title": "Мои проекты",
+        "requiresAuth": true
+      }
+    },
+    "MyTasksList": {
+      "path": "/crm/project-management/tasks",
+      "component": "@/pages/crm/project-management/TasksList.vue",
+      "meta": {
+        "title": "Мои задачи",
+        "requiresAuth": true
+      }
+    },
+    "ProjectDetail": {
+      "path": "/crm/project-management/project/:id",
+      "component": "@/pages/crm/project-management/ProjectDetail.vue",
+      "meta": {
+        "title": "Детали проекта",
+        "requiresAuth": true
+      }
+    },
+    "TaskDetail": {
+      "path": "/crm/project-management/task/:id",
+      "component": "@/pages/crm/project-management/TaskDetail.vue",
+      "meta": {
+        "title": "Детали задачи",
+        "requiresAuth": true
+      }
+    },
+
     "Expsys": {
       "path": "/expsys",
       "component": "@/pages/expsys/ParentLayout.vue",

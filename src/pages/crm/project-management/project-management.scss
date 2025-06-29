@@ -1,0 +1,159 @@
+// Стили для модуля управления проектами
+@import '@/scss/variables';
+@import '@/scss/colors';
+
+// Переменные модуля
+$pm-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+$pm-card-hover-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+$pm-transition: 0.2s ease-in-out;
+
+// Миксины
+@mixin pm-card {
+  background: var(--bs-card-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: $radius-usual;
+  box-shadow: $pm-card-shadow;
+  transition: all $pm-transition;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $pm-card-hover-shadow;
+    border-color: var(--bs-primary);
+  }
+}
+
+@mixin pm-badge {
+  padding: 4px 12px;
+  font-size: $font-size-micro;
+  font-weight: $font-weight-bold;
+  border-radius: $radius-small;
+  letter-spacing: 0.3px;
+}
+
+@mixin pm-button {
+  border-radius: $radius-small;
+  font-weight: $font-weight-bold;
+  transition: all $pm-transition;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Общие классы
+.pm-page-header {
+  margin-bottom: 2rem;
+  
+  h2 {
+    font-size: $font-size-h1;
+    font-weight: $font-weight-bold;
+    color: var(--bs-heading-color);
+    margin: 0;
+  }
+}
+
+.pm-filters-card {
+  @include pm-card;
+  margin-bottom: 2rem;
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+  
+  label {
+    font-size: $font-size-small;
+    font-weight: $font-weight-bold;
+    color: var(--bs-secondary-color);
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-control,
+  .form-select {
+    border-radius: $radius-small;
+    border-color: var(--bs-border-color);
+    font-size: $font-size-small;
+    
+    &:focus {
+      border-color: var(--bs-primary);
+      box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+    }
+  }
+}
+
+.pm-stats-card {
+  @include pm-card;
+  height: 100%;
+  overflow: hidden;
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+  
+  .stats-icon {
+    opacity: 0.15;
+    transition: opacity $pm-transition;
+  }
+  
+  &:hover .stats-icon {
+    opacity: 0.25;
+  }
+  
+  h6 {
+    font-size: $font-size-small;
+    font-weight: normal;
+    margin-bottom: 0.5rem;
+  }
+  
+  h3 {
+    font-size: 2rem;
+    font-weight: $font-weight-bold;
+    margin: 0;
+  }
+}
+
+.pm-avatar {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--bs-card-bg);
+  margin-right: -8px;
+  transition: transform $pm-transition;
+  
+  &:hover {
+    transform: scale(1.1);
+    z-index: 10;
+  }
+  
+  &:first-child {
+    margin-right: 0;
+  }
+}
+
+.pm-progress {
+  height: 6px;
+  background: var(--bs-secondary-bg);
+  border-radius: 3px;
+  overflow: hidden;
+  
+  .progress-bar {
+    transition: width 0.3s ease;
+  }
+}
+
+// Анимации
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pm-fade-in {
+  animation: fadeInUp 0.3s ease-out;
+} 

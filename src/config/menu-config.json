@@ -131,8 +131,58 @@
     {
       "icon": "ClipboardList",
       "routeName": "CRM",
-      "title": "CRM модуль",
+      "title": "CRM",
       "children": [
+        {
+          "icon": "Target",
+          "routeName": "StrategicProjects",
+          "name": "Стратегические проекты",
+          "children": [
+            {
+              "routeName": "StrategicProjectsDashboard",
+              "name": "Дашборд"
+            },
+            {
+              "routeName": "ProgramTopics",
+              "name": "Темы программы развития"
+            },
+            {
+              "routeName": "MyProjects",
+              "name": "Мои проекты"
+            },
+            {
+              "routeName": "ImportProgram",
+              "name": "Импорт программы"
+            }
+          ]
+        },
+        {
+          "icon": "FolderKanban",
+          "routeName": "ProjectManagement",
+          "name": "Управление проектами",
+          "children": [
+            {
+              "routeName": "ProjectDashboard",
+              "name": "Дашборд"
+            },
+            {
+              "routeName": "ProjectCalendar",
+              "name": "Календарь задач"
+            },
+            {
+              "routeName": "KanbanBoard",
+              "name": "Канбан доска"
+            },
+            {
+              "routeName": "MyProjectsList",
+              "name": "Мои проекты"
+            },
+            {
+              "routeName": "MyTasksList",
+              "name": "Мои задачи"
+            }
+          ]
+        }
       ]
     },
 
