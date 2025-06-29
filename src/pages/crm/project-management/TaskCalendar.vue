@@ -405,9 +405,14 @@
 <script>
 import { Modal } from 'bootstrap'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
+import { useNotifications } from '@/pages/lms/composables/useNotifications'
 
 export default {
   name: 'TaskCalendar',
+  setup() {
+    const { showSuccess, showError, showConfirmDialog, closeConfirmDialog } = useNotifications()
+    return { showSuccess, showError, showConfirmDialog, closeConfirmDialog }
+  },
   data() {
     return {
       currentDate: new Date(),
@@ -420,7 +425,7 @@ export default {
         project_id: '',
         status: '',
         priority: '',
-        my_tasks: false
+        my_tasks: true
       },
       currentTask: {
         title: '',
@@ -515,8 +520,8 @@ export default {
         this.projects = Array.isArray(response.data.results) ? response.data.results : 
                         Array.isArray(response.data) ? response.data : []
         
-        // Загружаем все проекты для календаря
-        const allProjectsResponse = await projectManagementApi.getProjects({})
+        // Загружаем проекты пользователя для календаря
+        const allProjectsResponse = await projectManagementApi.getProjects({ my_projects: true })
         this.allProjects = Array.isArray(allProjectsResponse.data.results) ? allProjectsResponse.data.results : 
                            Array.isArray(allProjectsResponse.data) ? allProjectsResponse.data : []
       } catch (error) {
@@ -744,15 +749,23 @@ export default {
         // Перезагружаем события
         this.loadEvents()
         
-        this.$toast?.success(this.isEditing ? 'Задача обновлена' : 'Задача создана')
+        this.showSuccess(this.isEditing ? 'Задача обновлена' : 'Задача создана')
       } catch (error) {
         console.error('Ошибка сохранения задачи:', error)
-        this.$toast?.error('Ошибка сохранения задачи')
+        this.showError('Ошибка сохранения задачи')
       }
     },
     
     async deleteTask() {
-      if (confirm('Вы уверены, что хотите удалить эту задачу?')) {
+      const confirmed = await this.showConfirmDialog({
+        title: 'Удаление задачи',
+        message: 'Вы уверены, что хотите удалить эту задачу?',
+        confirmText: 'Удалить',
+        cancelText: 'Отмена',
+        variant: 'danger'
+      })
+      
+      if (confirmed) {
         try {
           await projectManagementApi.deleteTask(this.currentTask.id)
           
@@ -760,13 +773,16 @@ export default {
           const modal = Modal.getInstance(document.getElementById('taskModal'))
           modal.hide()
           
+          this.closeConfirmDialog()
+          
           // Перезагружаем события
           this.loadEvents()
           
-          this.$toast?.success('Задача удалена')
+          this.showSuccess('Задача удалена')
         } catch (error) {
           console.error('Ошибка удаления задачи:', error)
-          this.$toast?.error('Ошибка удаления задачи')
+          this.closeConfirmDialog()
+          this.showError('Ошибка удаления задачи')
         }
       }
     },

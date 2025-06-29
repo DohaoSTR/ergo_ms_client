@@ -162,24 +162,20 @@
           "name": "Управление проектами",
           "children": [
             {
-              "routeName": "ProjectDashboard",
-              "name": "Дашборд"
-            },
-            {
-              "routeName": "ProjectCalendar",
-              "name": "Календарь задач"
-            },
-            {
-              "routeName": "KanbanBoard",
-              "name": "Канбан доска"
-            },
-            {
               "routeName": "MyProjectsList",
               "name": "Мои проекты"
             },
             {
-              "routeName": "MyTasksList",
-              "name": "Мои задачи"
+              "routeName": "ProjectCalendar",
+              "name": "Календарь проектов"
+            },
+            {
+              "routeName": "KanbanBoard",
+              "name": "Доска проектов"
+            },
+            {
+              "routeName": "ProjectsAndTasksManagement",
+              "name": "Проекты и задачи"
             }
           ]
         }

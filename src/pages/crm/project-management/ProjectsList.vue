@@ -1,11 +1,9 @@
 <template>
   <div class="projects-list">
-    <div class="pm-page-header d-flex justify-content-between align-items-center">
+    <div class="pm-page-header" v-if="!managementMode">
       <h2><i class="fas fa-folder-open me-2"></i>Мои проекты</h2>
-      <button class="btn btn-primary" @click="createProject">
-        <i class="fas fa-plus me-2"></i>Создать проект
-      </button>
     </div>
+    <!-- В режиме управления заголовок и кнопка создания показываются в родительском компоненте -->
 
     <!-- Фильтры и поиск -->
     <div class="pm-filters-card">
@@ -73,8 +71,9 @@
       <div class="text-center">
         <i class="fas fa-folder-open fa-5x text-muted mb-4"></i>
         <h4 class="text-muted mb-3">Проекты не найдены</h4>
-        <p class="text-muted mb-4">Попробуйте изменить фильтры или создайте новый проект</p>
-        <button class="btn btn-primary btn-lg rounded-pill" @click="createProject">
+        <p class="text-muted mb-4" v-if="!managementMode">Попробуйте изменить фильтры</p>
+        <p class="text-muted mb-4" v-else>Попробуйте изменить фильтры или создайте новый проект</p>
+        <button v-if="managementMode" class="btn btn-primary btn-lg rounded-pill" @click="createProject">
           <i class="fas fa-plus me-2"></i>Создать проект
         </button>
       </div>
@@ -165,7 +164,7 @@
                          class="btn btn-primary btn-sm rounded-pill">
               <i class="fas fa-eye me-1"></i>Открыть проект
             </router-link>
-            <div class="btn-group btn-group-sm">
+            <div v-if="managementMode" class="btn-group btn-group-sm">
               <button class="btn btn-light" @click="editProject(project)" title="Редактировать">
                 <i class="fas fa-edit"></i>
               </button>
@@ -204,8 +203,8 @@
       </ul>
     </nav>
 
-    <!-- Модальное окно создания/редактирования проекта -->
-    <div class="modal fade" id="projectModal" tabindex="-1">
+    <!-- Модальное окно создания/редактирования проекта (только в режиме управления) -->
+    <div v-if="managementMode" class="modal fade" id="projectModal" tabindex="-1">
       <div class="modal-dialog modal-lg">
         <div class="modal-content border-0">
           <div class="modal-header border-bottom">
@@ -285,9 +284,20 @@
 <script>
 import { Modal } from 'bootstrap'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
+import { useNotifications } from '@/pages/lms/composables/useNotifications'
 
 export default {
   name: 'ProjectsList',
+  props: {
+    managementMode: {
+      type: Boolean,
+      default: false
+    }
+  },
+  setup() {
+    const { showSuccess, showError, showConfirmDialog, closeConfirmDialog } = useNotifications()
+    return { showSuccess, showError, showConfirmDialog, closeConfirmDialog }
+  },
   data() {
     return {
       projects: [],
@@ -450,10 +460,10 @@ export default {
         // Перезагружаем список
         this.loadProjects()
         
-        alert(this.isEditing ? 'Проект обновлен' : 'Проект создан')
+        this.showSuccess(this.isEditing ? 'Проект обновлен' : 'Проект создан')
       } catch (error) {
         console.error('Ошибка сохранения проекта:', error)
-        alert('Ошибка сохранения проекта')
+        this.showError('Ошибка сохранения проекта')
       }
     },
     
@@ -463,7 +473,15 @@ export default {
     },
     
     async confirmDeleteProject() {
-      if (confirm(`Вы уверены, что хотите удалить проект "${this.currentProject.name}"?`)) {
+      const confirmed = await this.showConfirmDialog({
+        title: 'Удаление проекта',
+        message: `Вы уверены, что хотите удалить проект "${this.currentProject.name}"?`,
+        confirmText: 'Удалить',
+        cancelText: 'Отмена',
+        variant: 'danger'
+      })
+      
+      if (confirmed) {
         try {
           await projectManagementApi.deleteProject(this.currentProject.id)
           
@@ -471,13 +489,16 @@ export default {
           const modal = Modal.getInstance(document.getElementById('projectModal'))
           if (modal) modal.hide()
           
+          this.closeConfirmDialog()
+          
           // Перезагружаем список
           this.loadProjects()
           
-          alert('Проект удален')
+          this.showSuccess('Проект удален')
         } catch (error) {
           console.error('Ошибка удаления проекта:', error)
-          alert('Ошибка удаления проекта')
+          this.closeConfirmDialog()
+          this.showError('Ошибка удаления проекта')
         }
       }
     },

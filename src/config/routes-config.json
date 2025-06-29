@@ -556,17 +556,9 @@
     "ProjectManagement": {
       "path": "/crm/project-management",
       "component": "@/pages/crm/project-management/ParentLayout.vue",
-      "redirect": "/crm/project-management/dashboard",
+      "redirect": "/crm/project-management/my-projects",
       "meta": {
         "title": "Управление проектами",
-        "requiresAuth": true
-      }
-    },
-    "ProjectDashboard": {
-      "path": "/crm/project-management/dashboard",
-      "component": "@/pages/crm/project-management/ProjectDashboard.vue",
-      "meta": {
-        "title": "Дашборд проектов",
         "requiresAuth": true
       }
     },
@@ -587,10 +579,18 @@
       }
     },
     "MyProjectsList": {
-      "path": "/crm/project-management/projects",
+      "path": "/crm/project-management/my-projects",
       "component": "@/pages/crm/project-management/ProjectsList.vue",
       "meta": {
         "title": "Мои проекты",
+        "requiresAuth": true
+      }
+    },
+    "ProjectsAndTasksManagement": {
+      "path": "/crm/project-management/management",
+      "component": "@/pages/crm/project-management/ProjectsAndTasksManagement.vue",
+      "meta": {
+        "title": "Проекты и задачи",
         "requiresAuth": true
       }
     },

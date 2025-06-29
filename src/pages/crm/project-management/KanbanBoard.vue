@@ -304,9 +304,14 @@
 <script>
 import { Modal } from 'bootstrap'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
+import { useNotifications } from '@/pages/lms/composables/useNotifications'
 
 export default {
   name: 'KanbanBoard',
+  setup() {
+    const { showSuccess, showError, showConfirmDialog, closeConfirmDialog } = useNotifications()
+    return { showSuccess, showError, showConfirmDialog, closeConfirmDialog }
+  },
   data() {
     return {
       kanbanColumns: {
@@ -321,7 +326,7 @@ export default {
         project_id: '',
         priority: '',
         assignee: '',
-        my_tasks: false
+        my_tasks: true
       },
       currentTask: {
         title: '',
@@ -408,10 +413,10 @@ export default {
         // Перезагружаем данные
         this.loadKanbanData()
         
-        this.$toast.success('Статус задачи обновлен')
+        this.showSuccess('Статус задачи обновлен')
       } catch (error) {
         console.error('Ошибка обновления статуса:', error)
-        this.$toast.error('Ошибка обновления статуса')
+        this.showError('Ошибка обновления статуса')
       }
       
       this.draggedTask = null
@@ -481,15 +486,23 @@ export default {
         // Перезагружаем данные
         this.loadKanbanData()
         
-        this.$toast.success(this.isEditing ? 'Задача обновлена' : 'Задача создана')
+        this.showSuccess(this.isEditing ? 'Задача обновлена' : 'Задача создана')
       } catch (error) {
         console.error('Ошибка сохранения задачи:', error)
-        this.$toast.error('Ошибка сохранения задачи')
+        this.showError('Ошибка сохранения задачи')
       }
     },
     
     async deleteTask() {
-      if (confirm('Вы уверены, что хотите удалить эту задачу?')) {
+      const confirmed = await this.showConfirmDialog({
+        title: 'Удаление задачи',
+        message: 'Вы уверены, что хотите удалить эту задачу?',
+        confirmText: 'Удалить',
+        cancelText: 'Отмена',
+        variant: 'danger'
+      })
+      
+      if (confirmed) {
         try {
           await projectManagementApi.deleteTask(this.currentTask.id)
           
@@ -497,13 +510,16 @@ export default {
           const modal = Modal.getInstance(document.getElementById('taskModal'))
           modal.hide()
           
+          this.closeConfirmDialog()
+          
           // Перезагружаем данные
           this.loadKanbanData()
           
-          this.$toast.success('Задача удалена')
+          this.showSuccess('Задача удалена')
         } catch (error) {
           console.error('Ошибка удаления задачи:', error)
-          this.$toast.error('Ошибка удаления задачи')
+          this.closeConfirmDialog()
+          this.showError('Ошибка удаления задачи')
         }
       }
     },

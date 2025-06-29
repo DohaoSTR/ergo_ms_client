@@ -436,9 +436,14 @@
 <script>
 import { Modal } from 'bootstrap'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
+import { useNotifications } from '@/pages/lms/composables/useNotifications'
 
 export default {
   name: 'ProjectDetail',
+  setup() {
+    const { showSuccess, showError, showConfirmDialog, closeConfirmDialog } = useNotifications()
+    return { showSuccess, showError, showConfirmDialog, closeConfirmDialog }
+  },
   data() {
     return {
       loading: false,
@@ -598,7 +603,7 @@ export default {
         // Перезагружаем данные проекта
         await this.loadProjectData()
         
-        alert('Проект успешно обновлен!')
+        this.showSuccess('Проект успешно обновлен!')
       } catch (error) {
         console.error('Ошибка обновления проекта:', error)
         
@@ -621,7 +626,7 @@ export default {
           }
         }
         
-        alert(errorMessage)
+        this.showError(errorMessage)
       }
     },
 
@@ -650,7 +655,7 @@ export default {
         // Перезагружаем данные проекта
         await this.loadProjectData()
         
-        alert(this.isEditingTask ? 'Задача обновлена' : 'Задача создана')
+        this.showSuccess(this.isEditingTask ? 'Задача обновлена' : 'Задача создана')
       } catch (error) {
         console.error('Ошибка сохранения задачи:', error)
         
@@ -673,33 +678,53 @@ export default {
           }
         }
         
-        alert(errorMessage)
+        this.showError(errorMessage)
       }
     },
 
     async confirmDeleteProject() {
-      if (confirm(`Вы уверены, что хотите удалить проект "${this.project.name}"? Это действие необратимо.`)) {
+      const confirmed = await this.showConfirmDialog({
+        title: 'Удаление проекта',
+        message: `Вы уверены, что хотите удалить проект "${this.project.name}"? Это действие необратимо.`,
+        confirmText: 'Удалить',
+        cancelText: 'Отмена',
+        variant: 'danger'
+      })
+      
+      if (confirmed) {
         try {
           await projectManagementApi.deleteProject(this.project.id)
-          alert('Проект успешно удален!')
+          this.closeConfirmDialog()
+          this.showSuccess('Проект успешно удален!')
           // Переходим к списку проектов
           this.$router.push('/crm/project-management/projects')
         } catch (error) {
           console.error('Ошибка удаления проекта:', error)
-          alert('Ошибка удаления проекта')
+          this.closeConfirmDialog()
+          this.showError('Ошибка удаления проекта')
         }
       }
     },
 
     async confirmDeleteTask(task) {
-      if (confirm(`Вы уверены, что хотите удалить задачу "${task.title}"?`)) {
+      const confirmed = await this.showConfirmDialog({
+        title: 'Удаление задачи',
+        message: `Вы уверены, что хотите удалить задачу "${task.title}"?`,
+        confirmText: 'Удалить',
+        cancelText: 'Отмена',
+        variant: 'danger'
+      })
+      
+      if (confirmed) {
         try {
           await projectManagementApi.deleteTask(task.id)
+          this.closeConfirmDialog()
           await this.loadProjectData()
-          alert('Задача удалена')
+          this.showSuccess('Задача удалена')
         } catch (error) {
           console.error('Ошибка удаления задачи:', error)
-          alert('Ошибка удаления задачи')
+          this.closeConfirmDialog()
+          this.showError('Ошибка удаления задачи')
         }
       }
     },

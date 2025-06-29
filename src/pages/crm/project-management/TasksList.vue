@@ -1,11 +1,12 @@
 <template>
   <div class="tasks-list">
-    <div class="pm-page-header d-flex justify-content-between align-items-center">
+    <div class="pm-page-header d-flex justify-content-between align-items-center" v-if="!managementMode">
       <h2><i class="fas fa-list-check me-2"></i>Мои задачи</h2>
       <button class="btn btn-primary" @click="createTask">
         <i class="fas fa-plus me-2"></i>Создать задачу
       </button>
     </div>
+    <!-- В режиме управления заголовок и кнопка создания показываются в родительском компоненте -->
 
     <!-- Фильтры и поиск -->
     <div class="pm-filters-card">
@@ -408,9 +409,20 @@
 <script>
 import { Modal } from 'bootstrap'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
+import { useNotifications } from '@/pages/lms/composables/useNotifications'
 
 export default {
   name: 'TasksList',
+  props: {
+    managementMode: {
+      type: Boolean,
+      default: false
+    }
+  },
+  setup() {
+    const { showSuccess, showError, showConfirmDialog, closeConfirmDialog } = useNotifications()
+    return { showSuccess, showError, showConfirmDialog, closeConfirmDialog }
+  },
   data() {
     return {
       tasks: [],
@@ -623,7 +635,7 @@ export default {
         // Перезагружаем список
         this.loadTasks()
         
-        alert(this.isEditing ? 'Задача обновлена' : 'Задача создана')
+        this.showSuccess(this.isEditing ? 'Задача обновлена' : 'Задача создана')
       } catch (error) {
         console.error('Ошибка сохранения задачи:', error)
         console.error('Детали ошибки:', error.response?.data)
@@ -649,7 +661,7 @@ export default {
           }
         }
         
-        alert(errorMessage)
+        this.showError(errorMessage)
       }
     },
     
@@ -659,7 +671,15 @@ export default {
     },
     
     async confirmDeleteTask() {
-      if (confirm(`Вы уверены, что хотите удалить задачу "${this.currentTask.title}"?`)) {
+      const confirmed = await this.showConfirmDialog({
+        title: 'Удаление задачи',
+        message: `Вы уверены, что хотите удалить задачу "${this.currentTask.title}"?`,
+        confirmText: 'Удалить',
+        cancelText: 'Отмена',
+        variant: 'danger'
+      })
+      
+      if (confirmed) {
         try {
           await projectManagementApi.deleteTask(this.currentTask.id)
           
@@ -667,13 +687,16 @@ export default {
           const modal = Modal.getInstance(document.getElementById('taskModal'))
           if (modal) modal.hide()
           
+          this.closeConfirmDialog()
+          
           // Перезагружаем список
           this.loadTasks()
           
-          this.$toast?.success('Задача удалена')
+          this.showSuccess('Задача удалена')
         } catch (error) {
           console.error('Ошибка удаления задачи:', error)
-          this.$toast?.error('Ошибка удаления задачи')
+          this.closeConfirmDialog()
+          this.showError('Ошибка удаления задачи')
         }
       }
     },
