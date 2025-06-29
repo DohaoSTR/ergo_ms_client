@@ -346,6 +346,78 @@ export function isAuthRoute(routeName) {
 }
 
 /**
+ * Получает все имена маршрутов, которые уже созданы из меню
+ * @param {Array} routes - массив маршрутов
+ * @returns {Set} - набор имен маршрутов
+ */
+function getCreatedRouteNames(routes) {
+  const names = new Set()
+  
+  function extractNames(routeArray) {
+    routeArray.forEach(route => {
+      if (route.name) names.add(route.name)
+      if (route.children) extractNames(route.children)
+    })
+  }
+  
+  extractNames(routes)
+  return names
+}
+
+/**
+ * Создает отдельный маршрут из конфигурации
+ * @param {string} routeName - имя маршрута
+ * @param {Object} routeConfig - конфигурация маршрута
+ * @returns {Object} - объект маршрута Vue Router
+ */
+function createStandaloneRoute(routeName, routeConfig) {
+  const route = {
+    path: routeConfig.path,
+    name: routeName,
+    component: createLazyImport(routeConfig.component),
+    meta: {
+      ...routeConfig.meta,
+    }
+  }
+
+  // Добавляем redirect если указан
+  if (routeConfig.redirect) {
+    // Проверяем, является ли redirect именем маршрута или путем
+    if (routeConfig.redirect.startsWith('/')) {
+      route.redirect = routeConfig.redirect
+    } else {
+      route.redirect = { name: routeConfig.redirect }
+    }
+  }
+
+  return route
+}
+
+/**
+ * Генерирует недостающие маршруты (которые есть в routes-config.json, но не в меню)
+ * @param {Set} createdRouteNames - набор уже созданных имен маршрутов
+ * @returns {Array} - массив недостающих маршрутов
+ */
+function generateMissingRoutes(createdRouteNames) {
+  const missingRoutes = []
+  
+  // Проходим по всем маршрутам в routes-config.json
+  Object.entries(routesConfig.routes).forEach(([routeName, routeConfig]) => {
+    // Если маршрут не был создан через меню, создаем его отдельно
+    if (!createdRouteNames.has(routeName)) {
+      try {
+        const route = createStandaloneRoute(routeName, routeConfig)
+        missingRoutes.push(route)
+      } catch (error) {
+        console.warn(`Не удалось создать маршрут ${routeName}:`, error)
+      }
+    }
+  })
+  
+  return missingRoutes
+}
+
+/**
  * Генерирует полную конфигурацию маршрутов
  * @returns {Array} - полный массив маршрутов для приложения
  */
@@ -353,9 +425,16 @@ export function generateAllRoutes() {
   const coreRoutes = generateCoreRoutes()
   const menuRoutes = generateRoutesFromConfig()
   
+  // Получаем имена уже созданных маршрутов
+  const createdRouteNames = getCreatedRouteNames([...coreRoutes, ...menuRoutes])
+  
+  // Создаем недостающие маршруты из routes-config.json
+  const missingRoutes = generateMissingRoutes(createdRouteNames)
+  
   return [
     ...coreRoutes,
-    ...menuRoutes
+    ...menuRoutes,
+    ...missingRoutes
   ]
 }
 
@@ -495,6 +574,30 @@ export function getAllAvailableRoutes() {
  */
 export function getRouteConfigByName(routeName) {
   return getRouteConfig(routeName)
+}
+
+/**
+ * Получает информацию о всех созданных маршрутах для отладки
+ * @returns {Object} - объект с информацией о маршрутах
+ */
+export function getRoutesDebugInfo() {
+  const coreRoutes = generateCoreRoutes()
+  const menuRoutes = generateRoutesFromConfig()
+  const createdRouteNames = getCreatedRouteNames([...coreRoutes, ...menuRoutes])
+  const missingRoutes = generateMissingRoutes(createdRouteNames)
+  
+  return {
+    totalRoutes: coreRoutes.length + menuRoutes.length + missingRoutes.length,
+    coreRoutesCount: coreRoutes.length,
+    menuRoutesCount: menuRoutes.length,
+    missingRoutesCount: missingRoutes.length,
+    coreRouteNames: coreRoutes.map(r => r.name).filter(Boolean),
+    menuRouteNames: Array.from(createdRouteNames).filter(name => 
+      !coreRoutes.some(r => r.name === name)
+    ),
+    missingRouteNames: missingRoutes.map(r => r.name).filter(Boolean),
+    allAvailableRoutes: Object.keys(routesConfig.routes)
+  }
 }
 
 /**

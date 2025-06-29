@@ -5,6 +5,7 @@ import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
 import { useUserStore } from '@/stores/userStore'
 import { useProfile } from '@/js/api/services/profileService.js'
+import DefaultAvatar from '@/components/DefaultAvatar.vue'
 
 const userStore = useUserStore()
 const { getProfile, formatProfileData } = useProfile()
@@ -38,7 +39,7 @@ const displayUserInfo = computed(() => {
 
   return {
     image: userInfo.value.image,
-    username: profile?.fullName || userStore.fullName || user?.first_name || 'Пользователь',
+    username: profile?.fullName || userStore.fullName || 'Гость',
     profession: profile?.bio || '',
     location: profile?.city && profile?.country 
       ? `${profile.city}, ${profile.country}` 
@@ -49,31 +50,7 @@ const displayUserInfo = computed(() => {
   }
 })
 
-// Вычисляем инициалы пользователя
-const userInitials = computed(() => {
-  const user = userStore.user
-  if (!user) return 'У'
-  
-  // Пробуем получить инициалы из имени и фамилии
-  const firstName = user.first_name?.trim()
-  const lastName = user.last_name?.trim()
-  
-  if (firstName && lastName) {
-    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase()
-  }
-  
-  if (firstName) {
-    return firstName.charAt(0).toUpperCase()
-  }
-  
-  // Если имени нет, берем первую букву логина
-  if (user.username) {
-    return user.username.charAt(0).toUpperCase()
-  }
-  
-  // Fallback для неизвестного пользователя
-  return 'У'
-})
+// Удален код для инициалов - теперь используем DefaultAvatar
 
 // Проверяем, есть ли у пользователя кастомный аватар
 const hasCustomAvatar = computed(() => {
@@ -230,14 +207,16 @@ defineExpose({
             :alt="displayUserInfo.username" 
             class="hq-avatar hq-avatar-primary" 
           />
-          <!-- Показываем инициалы если нет кастомного аватара -->
+          <!-- Показываем стандартный аватар если нет кастомного -->
           <div 
             v-else
-            class="avatar-initials-large d-flex align-items-center justify-content-center"
-            :data-letter="userInitials.charAt(0)"
-            :title="displayUserInfo.username"
+            class="d-flex align-items-center justify-content-center"
+            style="width: 100%; height: 100%;"
           >
-            {{ userInitials }}
+            <DefaultAvatar 
+              size="large"
+              :title="displayUserInfo.username"
+            />
           </div>
         </div>
       </div>
@@ -360,70 +339,6 @@ defineExpose({
     }
   }
   
-  // Стили для больших инициалов в профиле
-  .avatar-initials-large {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    font-weight: 700;
-    font-size: 4rem;
-    border: 4px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
-    cursor: default;
-    user-select: none;
-    
-    @media (width <= 992px) {
-      font-size: 3.2rem;
-      border-width: 3px;
-    }
-    @media (width <= 575px) {
-      font-size: 2.5rem;
-      border-width: 2px;
-    }
-    
-    &:hover {
-      transform: scale(1.02);
-      border-color: rgba(255, 255, 255, 0.4);
-      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
-    }
-  }
-}
-
-// Альтернативные цвета для разных букв (для больших инициалов)
-.avatar-initials-large {
-  // Генерируем цвет на основе первой буквы (английские и русские)
-  &[data-letter="A"], &[data-letter="А"] { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-  &[data-letter="B"], &[data-letter="Б"] { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-  &[data-letter="C"], &[data-letter="В"] { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-  &[data-letter="D"], &[data-letter="Г"] { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-  &[data-letter="E"], &[data-letter="Д"] { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
-  &[data-letter="F"], &[data-letter="Е"] { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
-  &[data-letter="G"], &[data-letter="Ж"] { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-  &[data-letter="H"], &[data-letter="З"] { background: linear-gradient(135deg, #f8cdda 0%, #1e3c72 100%); }
-  &[data-letter="I"], &[data-letter="И"] { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
-  &[data-letter="J"], &[data-letter="К"] { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
-  &[data-letter="K"], &[data-letter="Л"] { background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); }
-  &[data-letter="L"], &[data-letter="М"] { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
-  &[data-letter="M"], &[data-letter="Н"] { background: linear-gradient(135deg, #fdbb2d 0%, #22c1c3 100%); }
-  &[data-letter="N"], &[data-letter="О"] { background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%); }
-  &[data-letter="O"], &[data-letter="П"] { background: linear-gradient(135deg, #21d4fd 0%, #b721ff 100%); }
-  &[data-letter="P"], &[data-letter="Р"] { background: linear-gradient(135deg, #3b41c5 0%, #a981bb 100%); }
-  &[data-letter="Q"], &[data-letter="С"] { background: linear-gradient(135deg, #ffc3a0 0%, #ffafbd 100%); }
-  &[data-letter="R"], &[data-letter="Т"] { background: linear-gradient(135deg, #c471f5 0%, #fa71cd 100%); }
-  &[data-letter="S"], &[data-letter="У"] { background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%); }
-  &[data-letter="T"], &[data-letter="Ф"] { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
-  &[data-letter="U"], &[data-letter="Х"] { background: linear-gradient(135deg, #96fbc4 0%, #f9f047 100%); }
-  &[data-letter="V"], &[data-letter="Ц"] { background: linear-gradient(135deg, #fa8bff 0%, #2bd2ff 100%); }
-  &[data-letter="W"], &[data-letter="Ч"] { background: linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%); }
-  &[data-letter="X"], &[data-letter="Ш"] { background: linear-gradient(135deg, #e055a3 0%, #4776e6 100%); }
-  &[data-letter="Y"], &[data-letter="Щ"] { background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%); }
-  &[data-letter="Z"], &[data-letter="Ы"] { background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%); }
-  &[data-letter="Э"] { background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%); }
-  &[data-letter="Ю"] { background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); }
-  &[data-letter="Я"] { background: linear-gradient(135deg, #fd9644 0%, #fe6244 100%); }
-  &[data-letter="У"], &[data-letter="?"] { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 }
 
 .basic__user {

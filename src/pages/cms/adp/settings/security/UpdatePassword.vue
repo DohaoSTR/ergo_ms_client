@@ -203,9 +203,9 @@ const submitForm = async (event) => {
 <template>
   <div class="card">
     <div class="card-header">
-      <h5 class="card-title mb-0">
+      <h5 class="card-title mb-0 d-flex align-items-center">
         <Shield :size="20" class="me-2" />
-        Изменить пароль
+        <span>Изменить пароль</span>
       </h5>
     </div>
     
@@ -264,23 +264,6 @@ const submitForm = async (event) => {
               </button>
               <div v-if="errors.newPassword" class="invalid-feedback">{{ errors.newPassword }}</div>
             </div>
-            
-            <!-- Индикатор силы пароля -->
-            <div v-if="form.newPassword && passwordStrength.score > 0" class="mt-2">
-              <div class="d-flex align-items-center justify-content-between">
-                <small class="text-muted">Сила пароля:</small>
-                <span :class="`text-${passwordStrength.color}`" class="small fw-semibold">
-                  {{ passwordStrength.label }}
-            </span>
-              </div>
-              <div class="progress mt-1" style="height: 4px;">
-                <div 
-                  class="progress-bar"
-                  :class="`bg-${passwordStrength.color}`"
-                  :style="{ width: `${(passwordStrength.score / 6) * 100}%` }"
-                ></div>
-              </div>
-          </div>
         </div>
 
         <div class="mb-3 col-md-6">
@@ -308,13 +291,36 @@ const submitForm = async (event) => {
               {{ errors.confirmPassword }}
             </div>
             </div>
-            
-            <!-- Индикатор совпадения паролей -->
-            <div v-if="form.confirmPassword && form.newPassword && form.confirmPassword === form.newPassword" class="mt-2">
-              <small class="text-success">
-                <CheckCircle :size="14" class="me-1" />
-                Пароли совпадают
-              </small>
+        </div>
+      </div>
+
+      <!-- Индикаторы под полями -->
+      <div class="row">
+        <div class="col-md-6">
+          <!-- Индикатор силы пароля -->
+          <div v-if="form.newPassword && passwordStrength.score > 0" class="mb-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <small class="text-muted">Сила пароля:</small>
+              <span :class="`text-${passwordStrength.color}`" class="small fw-semibold">
+                {{ passwordStrength.label }}
+              </span>
+            </div>
+            <div class="progress mt-1" style="height: 4px;">
+              <div 
+                class="progress-bar"
+                :class="`bg-${passwordStrength.color}`"
+                :style="{ width: `${(passwordStrength.score / 6) * 100}%` }"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <!-- Индикатор совпадения паролей -->
+          <div v-if="form.confirmPassword && form.newPassword && form.confirmPassword === form.newPassword" class="mb-3">
+            <small class="text-success">
+              <CheckCircle :size="14" class="me-1" />
+              Пароли совпадают
+            </small>
           </div>
         </div>
       </div>
@@ -337,7 +343,7 @@ const submitForm = async (event) => {
           <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
             {{ isLoading ? 'Сохранение...' : 'Сохранить пароль' }}
         </button>
-          <button type="button" class="btn btn-outline-secondary" @click="resetForm" :disabled="isLoading">
+          <button type="button" class="btn btn-light" @click="resetForm" :disabled="isLoading">
             Очистить
         </button>
       </div>

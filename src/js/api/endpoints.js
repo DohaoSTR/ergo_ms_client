@@ -12,45 +12,6 @@ export const endpoints = {
         profile: 'cms/adp/profile/',
         securitySettings: 'cms/adp/security-settings/',
     },
-    crm: {
-        monthlyStats: 'crm/stats/monthly/',
-        priorityStats: 'crm/stats/priority/',
-        sectionStats: 'crm/stats/sections/',
-        projectCompletionStats: 'crm/stats/project-completion/',
-        userProductivityStats: 'crm/stats/user-productivity/',
-        deadlineAnalysis: 'crm/stats/deadline-analysis/',
-        taskCreationTrend: 'crm/stats/task-creation-trend/',
-        projectTimelineStats: 'crm/stats/project-timeline/',
-        calendarActivityStats: 'crm/stats/calendar-activity/',
-        taskComplexityStats: 'crm/stats/task-complexity/',
-        tasks: {
-            sectionTasks: 'crm/tasks/section-tasks/',
-            add_task:'crm/tasks/task-new/',
-            add_section:'crm/tasks/section-new/',
-            delete_task:'crm/tasks/delete-task/{id}/',
-            delete_section:'crm/tasks/delete-section/{id}/',
-            update_section:'crm/tasks/update-section/{id}/',
-            add_subtask:'crm/tasks/new-subtask/',
-            toggle_task:'crm/tasks/toggle-task/{id}/',
-            update_task:'crm/tasks/update-task/{id}/',
-            assignee_task:'crm/tasks/assignee/{id}/',
-            alendarTasks: 'crm/calendar/tasks/',
-        },
-        projects:
-        {
-            allprojects:'crm/projects/project-all/',
-            personalprojects:'crm/projects/project-personal/',
-            invitedprojects:'crm/projects/project-invited/',
-            addproject:'crm/projects/project-new-add/',
-            delete_project:'crm/projects/delete-project/{id}/',
-            leave_project:'crm/projects/leave-project/{id}/{project_id}',
-            counttasks:'crm/projects/tasks-count/',
-            usersproject:'crm/projects/users-project/{id}/',
-        },
-        calendar:{
-          createTask: 'crm/tasks/task/',
-        }
-    },
     expsys: {
         subjects: {
             allsubjects: '/expsys_module/subjects-all/',

@@ -12,7 +12,7 @@ export const useUserStore = defineStore('userStore', () => {
   // ==== STATES ====
   const user = ref(null)
   const profile = ref(null)
-  const avatarUrl = ref('/src/assets/avatars/avatar-45.png')
+  const avatarUrl = ref(null) // null означает использование стандартного аватара
   const isLoading = ref(false)
   const isInitialized = ref(false)
 
@@ -21,15 +21,21 @@ export const useUserStore = defineStore('userStore', () => {
   const fullName = computed(() => {
     if (!user.value) return 'Гость'
     if (profile.value?.fullName) return profile.value.fullName
-    const firstName = user.value.first_name || ''
-    const lastName = user.value.last_name || ''
+    
+    // Обрабатываем имя и фамилию
+    const firstName = user.value.first_name?.trim() || ''
+    const lastName = user.value.last_name?.trim() || ''
     const fullName = `${firstName} ${lastName}`.trim()
-    return fullName || user.value.username || 'Пользователь'
+    
+    // Если нет ни имени, ни фамилии, возвращаем "Гость"
+    if (!fullName) return 'Гость'
+    
+    return fullName
   })
   
   const displayName = computed(() => {
     const name = fullName.value
-    if (name === 'Гость' || name === 'Пользователь') return name
+    if (name === 'Гость') return name
     
     // Если имя длинное, сокращаем до "Имя Ф."
     const parts = name.split(' ')
@@ -41,6 +47,7 @@ export const useUserStore = defineStore('userStore', () => {
 
   const userEmail = computed(() => user.value?.email || 'email не указан')
   const userRole = computed(() => profile.value?.role || 'Пользователь')
+  const hasCustomAvatar = computed(() => !!avatarUrl.value)
 
   // ==== ACTIONS ====
   
@@ -72,7 +79,7 @@ export const useUserStore = defineStore('userStore', () => {
       console.error('Ошибка инициализации пользователя:', error)
       user.value = null
       profile.value = null
-      avatarUrl.value = '/src/assets/avatars/avatar-45.png'
+      avatarUrl.value = null // Используем стандартный аватар
       return false
     } finally {
       isLoading.value = false
@@ -173,7 +180,7 @@ export const useUserStore = defineStore('userStore', () => {
       if (response.data?.length) {
         await apiClient.delete(endpoints.userAvatars.delete(response.data[0].id))
       }
-      avatarUrl.value = '/src/assets/avatars/avatar-45.png'
+      avatarUrl.value = null // Используем стандартный аватар
       toast.success('Аватар сброшен')
       return true
 
@@ -188,7 +195,7 @@ export const useUserStore = defineStore('userStore', () => {
   const logout = () => {
     user.value = null
     profile.value = null
-    avatarUrl.value = '/src/assets/avatars/avatar-45.png'
+    avatarUrl.value = null // Используем стандартный аватар
     isInitialized.value = false
     
     // Очищаем куки
@@ -236,6 +243,7 @@ export const useUserStore = defineStore('userStore', () => {
     displayName,
     userEmail,
     userRole,
+    hasCustomAvatar,
     
     // Actions
     initializeUser,

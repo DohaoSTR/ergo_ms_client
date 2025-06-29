@@ -2,17 +2,12 @@
   "menuOrder": [
     "User",
     "Settings", 
-    "AdminPanel",
-    "Shortcodes",
-    "Categories",
 
     "Email",
     "Messenger",
     "BI",
     
     "CRM",
-    "Calendar",
-    "Kanban",
 
     "LMS",
     "EducationAnalyticModule",
@@ -27,8 +22,8 @@
   "separators": {
     "0": "Настройки",
     "2": "Модули",
-    "8": "Обучение",
-    "12": "Трендовая аналитика",
-    "13": "Цифровая лаборатория"
+    "6": "Обучение",
+    "10": "Трендовая аналитика",
+    "11": "Цифровая лаборатория"
   }
 } 

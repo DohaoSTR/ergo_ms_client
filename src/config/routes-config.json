@@ -93,40 +93,20 @@
       }
     },
     "Account": {
-      "path": "account",
+      "path": "/user/account",
       "component": "@/pages/cms/adp/user/account/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "SecuritySettings": {
-      "path": "security",
+      "path": "/user/security",
       "component": "@/pages/cms/adp/settings/security/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
     },
-    "Projects": {
-      "path": "projects",
-      "component": "@/pages/cms/adp/user/projects/ParentLayout.vue",
-      "meta": {
-        "requiresAuth": true
-      }
-    },
-    "PersonalProjects": {
-      "path": "personal-projects",
-      "component": "@/pages/cms/adp/user/projects/ParentLayout.vue",
-      "meta": {
-        "requiresAuth": true
-      }
-    },
-    "InvitedProjects": {
-      "path": "invited-projects",
-      "component": "@/pages/cms/adp/user/projects/ParentLayout.vue",
-      "meta": {
-        "requiresAuth": true
-      }
-    },
+
     "Settings": {
       "path": "/settings",
       "component": "@/pages/cms/adp/settings/ParentLayout.vue",
@@ -136,7 +116,7 @@
       }
     },
     "AdminPanel": {
-      "path": "admin-panel",
+      "path": "/admin-panel",
       "component": "@/pages/cms/adp/admin/ParentLayout.vue",
       "redirect": "UsersPanel",
       "meta": {
@@ -145,7 +125,7 @@
       }
     },
     "UsersPanel": {
-      "path": "users",
+      "path": "/admin-panel/users",
       "component": "@/pages/cms/adp/admin/Users.vue",
       "meta": {
         "title": "Панель пользователей",
@@ -153,7 +133,7 @@
       }
     },
     "CategoriesPanel": {
-      "path": "categories",
+      "path": "/admin-panel/categories",
       "component": "@/pages/cms/adp/admin/Categories.vue",
       "meta": {
         "title": "Панель категорий",
@@ -161,7 +141,7 @@
       }
     },
     "GroupsPanel": {
-      "path": "groups",
+      "path": "/admin-panel/groups",
       "component": "@/pages/cms/adp/admin/Groups.vue",
       "meta": {
         "title": "Панель групп",
@@ -169,7 +149,7 @@
       }
     },
     "PermissionsPanel": {
-      "path": "permissions",
+      "path": "/admin-panel/permissions",
       "component": "@/pages/cms/adp/admin/Permissions.vue",
       "meta": {
         "title": "Панель прав",
@@ -177,7 +157,7 @@
       }
     },
     "LiminationPanel": {
-      "path": "limitations",
+      "path": "/admin-panel/limitations",
       "component": "@/pages/cms/adp/admin/limitationSettings.vue",
       "meta": {
         "title": "Панель Ограничений",
@@ -194,7 +174,7 @@
       }
     },
     "MainShortcodePage": {
-      "path": "editor",
+      "path": "/shortcodes/editor",
       "component": "@/pages/shortcodes/editor/MainPage.vue",
       "meta": {
         "title": "Главная",
@@ -202,7 +182,7 @@
       }
     },
     "ShortcodeEditor": {
-      "path": "editor",
+      "path": "/shortcodes/editor",
       "component": "@/pages/shortcodes/editor/ShortcodeEditor.vue",
       "meta": {
         "title": "Редактор страниц",
@@ -210,7 +190,7 @@
       }
     },
     "Templates": {
-      "path": "templates",
+      "path": "/shortcodes/templates",
       "component": "@/pages/shortcodes/editor/TemplateManager.vue",
       "meta": {
         "title": "Компоненты",
@@ -218,7 +198,7 @@
       }
     },
     "Layouts": {
-      "path": "site-layouts",
+      "path": "/shortcodes/site-layouts",
       "component": "@/pages/shortcodes/SiteLayout.vue",
       "meta": {
         "title": "Разметка сайта",
@@ -226,7 +206,7 @@
       }
     },
     "PageShortcodeCategories": {
-      "path": "categories-page",
+      "path": "/shortcodes/categories-page",
       "component": "@/pages/shortcodes/editor/PageCategories.vue",
       "meta": {
         "title": "Категории страниц",
@@ -234,7 +214,7 @@
       }
     },
     "CreatePage": {
-      "path": "create-page",
+      "path": "/shortcodes/create-page",
       "component": "@/pages/shortcodes/editor/CreatePage.vue",
       "meta": {
         "title": "Создание страниц",
@@ -242,7 +222,7 @@
       }
     },
     "Pages": {
-      "path": "pages",
+      "path": "/shortcodes/pages",
       "component": "@/pages/shortcodes/AllPages.vue",
       "meta": {
         "title": "Страницы",
@@ -250,7 +230,7 @@
       }
     },
     "TemplateEditor": {
-      "path": "templates/:id?",
+      "path": "/shortcodes/templates/:id?",
       "component": "@/pages/shortcodes/editor/TemplateEditor.vue",
       "meta": {
         "title": "Редактор компонентов",
@@ -258,14 +238,14 @@
       }
     },
     "CmsAnyDepthPage": {
-      "path": "/:parts(.*)+",
+      "path": "/shortcodes/:parts(.*)+",
       "component": "@/pages/shortcodes/CmsPage.vue",
       "meta": {
         "public": true
       }
     },
     "Categories": {
-      "path": "categories",
+      "path": "/categories",
       "component": "@/pages/categories/ParentLayout.vue",
       "redirect": "PageCategories",
       "meta": {
@@ -273,7 +253,7 @@
       }
     },
     "PageCategories": {
-      "path": "page-categories",
+      "path": "/categories/page-categories",
       "component": "@/pages/categories/PageCategories.vue",
       "meta": {
         "title": "Категории",
@@ -281,7 +261,7 @@
       }
     },
     "PageCategoriesManager": {
-      "path": "categories-list",
+      "path": "/categories/categories-list",
       "component": "@/pages/categories/CategoriesManagerPage.vue",
       "meta": {
         "title": "Создание категорий",
@@ -289,7 +269,7 @@
       }
     },
     "TagsManager": {
-      "path": "tags-list",
+      "path": "/categories/tags-list",
       "component": "@/pages/categories/TagsManagerPage.vue",
       "meta": {
         "title": "Создание тегов",
@@ -297,20 +277,22 @@
       }
     },
     "SiteSettings": {
-      "path": "site-settings",
+      "path": "/settings/site-settings",
       "component": "@/pages/cms/adp/settings/siteSettings/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
     },
+
     "FileManager": {
-      "path": "filemanager",
+      "path": "/filemanager",
       "component": "@/pages/cms/filemanager/FileManager.vue",
       "meta": {
         "title": "Файлы",
         "requiresAuth": true
       }
     },
+
     "Email": {
       "path": "/email",
       "component": "@/pages/email/ParentLayout.vue",
@@ -318,6 +300,7 @@
         "requiresAuth": true
       }
     },
+
     "Messenger": {
       "path": "/messenger",
       "component": "@/pages/messenger/ParentLayout.vue",
@@ -325,37 +308,7 @@
         "requiresAuth": true
       }
     },
-    "Calendar": {
-      "path": "/calendar",
-      "component": "@/pages/calendar/ParentLayout.vue",
-      "meta": {
-        "title": "Календарь задач",
-        "requiresAuth": true
-      }
-    },
-    "Kanban": {
-      "path": "/kanban",
-      "component": "@/pages/kanban/ParentLayout.vue",
-      "meta": {
-        "title": "Канбан-доска",
-        "requiresAuth": true
-      }
-    },
-    "CRM": {
-      "path": "/crm",
-      "component": "@/pages/kanban/ParentLayout.vue",
-      "meta": {
-        "title": "CRM модуль",
-        "requiresAuth": true
-      }
-    },
-    "BI": {
-      "path": "/bi",
-      "component": "@/pages/bi/HomePageBI.vue",
-      "meta": {
-        "requiresAuth": true
-      }
-    },
+
     "EducationAnalyticModule": {
       "path": "/education_analytics",
       "component": "@/pages/education_analytics_module/ParentLayout.vue",
@@ -365,7 +318,7 @@
       }
     },
     "MainPage": {
-      "path": "main",
+      "path": "/education_analytics/main",
       "component": "@/pages/education_analytics_module/MainPage.vue",
       "meta": {
         "title": "MainPage",
@@ -373,7 +326,7 @@
       }
     },
     "StatsPage": {
-      "path": "stats",
+      "path": "/education_analytics/stats",
       "component": "@/pages/education_analytics_module/StatsPage.vue",
       "meta": {
         "title": "StatsPage",
@@ -381,7 +334,7 @@
       }
     },
     "LearningTrackPage": {
-      "path": "learning_track",
+      "path": "/education_analytics/learning_track",
       "component": "@/pages/education_analytics_module/LearningTrack.vue",
       "meta": {
         "title": "LearningTrackPage",
@@ -389,7 +342,7 @@
       }
     },
     "ReportsPage": {
-      "path": "reports",
+      "path": "/education_analytics/reports",
       "component": "@/pages/education_analytics_module/ReportsPage.vue",
       "meta": {
         "title": "ReportsPage",
@@ -397,7 +350,7 @@
       }
     },
     "ProfilePage": {
-      "path": "profile",
+      "path": "/education_analytics/profile",
       "component": "@/pages/education_analytics_module/ProfilePage.vue",
       "meta": {
         "title": "ProfilePage",
@@ -405,7 +358,7 @@
       }
     },
     "AdminPanelPage": {
-      "path": "admin",
+      "path": "/education_analytics/admin",
       "component": "@/pages/education_analytics_module/AdminPanelPage.vue",
       "meta": {
         "title": "AdminPanelPage",
@@ -413,13 +366,14 @@
       }
     },
     "SuperUserPage": {
-      "path": "root",
+      "path": "/education_analytics/root",
       "component": "@/pages/education_analytics_module/SuperUserPanelPage.vue",
       "meta": {
         "title": "SuperUserPage",
         "requiresAuth": true
       }
     },
+
     "ExpertSystem": {
       "path": "/expert-system",
       "component": "@/pages/expert-system/ParentLayout.vue",
@@ -429,7 +383,7 @@
       }
     },
     "ChoiceRole": {
-      "path": "choice-role",
+      "path": "/expert-system/choice-role",
       "component": "@/pages/expert-system/ChoiceRole.vue",
       "meta": {
         "title": "Выбор роли",
@@ -437,7 +391,7 @@
       }
     },
     "Skills": {
-      "path": "skills",
+      "path": "/expert-system/skills",
       "component": "@/pages/expert-system/SkillManager.vue",
       "meta": {
         "title": "Навыки",
@@ -445,7 +399,7 @@
       }
     },
     "Profile": {
-      "path": "account",
+      "path": "/expert-system/account",
       "component": "@/pages/expert-system/ProfileDashboard.vue",
       "meta": {
         "title": "Профиль",
@@ -453,7 +407,7 @@
       }
     },
     "Groups": {
-      "path": "group-manager",
+      "path": "/expert-system/group-manager",
       "component": "@/pages/expert-system/GroupManager.vue",
       "meta": {
         "title": "Группы обучения",
@@ -461,7 +415,7 @@
       }
     },
     "Vacancies": {
-      "path": "vacancies",
+      "path": "/expert-system/vacancies",
       "component": "@/pages/expert-system/StudentVacancies.vue",
       "meta": {
         "title": "Вакансии",
@@ -469,7 +423,7 @@
       }
     },
     "Proforientation": {
-      "path": "proforientation",
+      "path": "/expert-system/proforientation",
       "component": "@/pages/expert-system/ProforientationTest.vue",
       "meta": {
         "title": "Профориентация",
@@ -477,7 +431,7 @@
       }
     },
     "Profession": {
-      "path": "profession-manager",
+      "path": "/expert-system/profession-manager",
       "component": "@/pages/expert-system/ProfessionManager.vue",
       "meta": {
         "title": "Менеджер профессий",
@@ -485,7 +439,7 @@
       }
     },
     "OrientationTest": {
-      "path": "orientation-test",
+      "path": "/expert-system/orientation-test",
       "component": "@/pages/expert-system/OrientationTestManager.vue",
       "meta": {
         "title": "Менеджер ориентационных тестов",
@@ -493,7 +447,7 @@
       }
     },
     "AllTests": {
-      "path": "all-tests",
+      "path": "/expert-system/all-tests",
       "component": "@/pages/expert-system/Tests/AllTestsPage.vue",
       "meta": {
         "title": "Тесты",
@@ -501,7 +455,7 @@
       }
     },
     "StudentCourses": {
-      "path": "/student-courses",
+      "path": "/expert-system/student-courses",
       "component": "@/pages/expert-system/StudentCourses.vue",
       "meta": {
         "title": "Рекомендованные курсы",
@@ -509,20 +463,22 @@
       }
     },
     "StudentsList": {
-      "path": "/students",
+      "path": "/expert-system/students",
       "component": "@/pages/expert-system/StudentList.vue",
       "meta": {
         "title": "Поиск студентов",
         "requiresAuth": true
       }
     },
+
     "AssetsAnalyse": {
-      "path": "/adp/user/assets-analyse",
+      "path": "/assets-analyse",
       "component": "@/pages/assets_analysis/DatabaseAnalyze.vue",
       "meta": {
         "requiresAuth": true
       }
     },
+
     "Expsys": {
       "path": "/expsys",
       "component": "@/pages/expsys/ParentLayout.vue",
@@ -532,7 +488,7 @@
       }
     },
     "CRMSubjects": {
-      "path": "crm_subjects",
+      "path": "/expsys/crm_subjects",
       "component": "@/pages/expsys/SubjectsManager.vue",
       "meta": {
         "title": "Предметы",
@@ -540,7 +496,7 @@
       }
     },
     "Indicators": {
-      "path": "indicators",
+      "path": "/expsys/indicators",
       "component": "@/pages/expsys/IndicatorsManager.vue",
       "meta": {
         "title": "Индикаторы",
@@ -548,7 +504,7 @@
       }
     },
     "Competencies": {
-      "path": "competencies",
+      "path": "/expsys/competencies",
       "component": "@/pages/expsys/CompetenceManager.vue",
       "meta": {
         "title": "Компетенции",
@@ -556,13 +512,14 @@
       }
     },
     "Vectors": {
-      "path": "vectors",
+      "path": "/expsys/vectors",
       "component": "@/pages/expsys/VektorDevelopment.vue",
       "meta": {
         "title": "Вектор развития",
         "requiresAuth": true
       }
     },
+
     "LMS": {
       "path": "/lms",
       "component": "@/pages/lms/ParentLayout.vue",
@@ -572,7 +529,7 @@
       }
     },
     "LMSDashboard": {
-      "path": "dashboard",
+      "path": "/lms/dashboard",
       "component": "@/pages/lms/Dashboard/DashboardView.vue",
       "meta": {
         "title": "Дашборд LMS",
@@ -580,7 +537,7 @@
       }
     },
     "LMSCatalog": {
-      "path": "catalog",
+      "path": "/lms/catalog",
       "component": "@/pages/lms/Catalog/CatalogView.vue",
       "meta": {
         "title": "Каталог курсов",
@@ -588,7 +545,7 @@
       }
     },
     "LMSCourses": {
-      "path": "courses",
+      "path": "/lms/courses",
       "component": "@/pages/lms/Courses/CoursesView.vue",
       "meta": {
         "title": "Мои курсы",
@@ -596,7 +553,7 @@
       }
     },
     "LMSGrades": {
-      "path": "grades",
+      "path": "/lms/grades",
       "component": "@/pages/lms/Grades/GradesView.vue",
       "meta": {
         "title": "Оценки",
@@ -604,7 +561,7 @@
       }
     },
     "LMSCalendar": {
-      "path": "calendar",
+      "path": "/lms/calendar",
       "component": "@/pages/lms/Calendar/CalendarView.vue",
       "meta": {
         "title": "Календарь LMS",
@@ -612,7 +569,7 @@
       }
     },
     "LMSBadges": {
-      "path": "badges",
+      "path": "/lms/badges",
       "component": "@/pages/lms/Badges/BadgesView.vue",
       "meta": {
         "title": "Достижения",
@@ -620,7 +577,7 @@
       }
     },
     "LMSLessonsManagement": {
-      "path": "lessons-management",
+      "path": "/lms/lessons-management",
       "component": "@/pages/lms/LessonsManagement/LessonsManagementView.vue",
       "meta": {
         "title": "Управление курсами",
@@ -628,13 +585,14 @@
       }
     },
     "LMSCategoriesAndFormats": {
-      "path": "categories-and-formats",
+      "path": "/lms/categories-and-formats",
       "component": "@/pages/lms/CategoriesAndFormats/CategoriesAndFormatsView.vue",
       "meta": {
         "title": "Структура курсов",
         "requiresAuth": true
       }
     },
+
     "ErgoCityStruct": {
       "path": "/ergo-city-struct",
       "component": "@/pages/cityAnalyze/ParentLayout.vue",
@@ -667,6 +625,7 @@
         "requiresAuth": true
       }
     },
+
     "NotFound": {
       "path": "/:pathMatch(.*)*",
       "component": "@/pages/NotFound.vue",
@@ -683,6 +642,7 @@
         "title": "-"
       }
     },
+
     "Dashboard": {
       "path": "/dashboard",
       "component": "@/pages/dashboard/AnaliticsView.vue",
@@ -692,12 +652,13 @@
       }
     },
     "Analytics": {
-      "path": "analytics",
+      "path": "/analytics",
       "component": "@/pages/dashboard/AnaliticsView.vue",
       "meta": {
         "requiresAuth": true
       }
     },
+
     "Analyze": {
       "path": "/user/analyze",
       "component": "@/pages/user/analyze/Analyze.vue",
@@ -706,13 +667,21 @@
       }
     },
     "DatabaseAnalyze": {
-      "path": "databaseanalyze",
+      "path": "/user/analyze/databaseanalyze",
       "component": "@/pages/user/analyze/DatabaseAnalyze.vue",
       "meta": {
         "requiresAuth": true
       }
     },
 
+
+    "BI": {
+      "path": "/bi",
+      "component": "@/pages/bi/HomePageBI.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
     "StorageList": {
       "path": "/bi/storagelist",
       "component": "@/pages/bi/StorageListPage.vue",

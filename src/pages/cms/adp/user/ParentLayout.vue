@@ -1,58 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { LayoutGrid, Link, UserRound, SquarePlus, UsersRound } from 'lucide-vue-next'
-
-import MainInfo from '@/pages/cms/adp/user/CardMain.vue'
-import NavigationButtons from '@/components/NavigationButtons.vue'
-
-const navigationButtons = ref([
-  { icon: UserRound, title: 'Профиль', link: 'Account' },
-  { icon: UsersRound, title: 'Команды', link: 'Teams' },
-  { icon: LayoutGrid, title: 'Проекты', link: 'Projects' },
-])
-
-const route = useRoute()
-const router = useRouter()
-const mainButtons = ref([
-  { icon: LayoutGrid, title: 'Все', link: 'Projects' },
-  { icon: UserRound, title: 'Личные', link: 'PersonalProjects' },
-  { icon: Link, title: 'Приглашённые', link: 'InvitedProjects' },
-])
-
-const createButton = ref({ 
-  icon: SquarePlus, 
-  title: 'Создать проект', 
-  link: 'CreateProject',
-  class: 'create-btn'
-})
-
-const showCreateButton = computed(() => {
-  return ['Projects', 'PersonalProjects', 'InvitedProjects'].includes(route.name)
-})
-
-const openCreateProject = () => {
-  router.push({ name: 'CreateProject' })
-}
+  import MainInfo from '@/pages/cms/adp/user/CardMain.vue'
 </script>
 
 <template>
   <div class="rounded overflow-hidden mb-4">
     <MainInfo />
-  </div>
-
-  <div class="mb-4 d-flex justify-content-between align-items-center navigation-container">
-    <NavigationButtons :data="mainButtons" />
-    <button
-      v-if="showCreateButton"
-      @click="openCreateProject"
-      class="btn fw-bold text-center create-project-btn"
-    >
-      <div class="d-flex align-items-center justify-content-center gap-1">
-        <div class="icon-flex"><component :is="createButton.icon" :size="20" /></div>
-        <div class="fw-bold">{{ createButton.title }}</div>
-      </div>
-    </button>
   </div>
 
   <RouterView></RouterView>

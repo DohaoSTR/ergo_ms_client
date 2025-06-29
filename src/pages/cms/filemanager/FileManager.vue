@@ -261,10 +261,10 @@
                     :href="link(f)"
                     class="btn btn-primary btn-sm"
                     target="_blank"
-                    title="Открыть/создать файл"
+                    title="Открыть/Создать файл"
                   >
                     <ExternalLink :size="16" class="me-1"/>
-                    Открыть/создать
+                    Открыть/Создать
                   </a>
                   <button 
                     class="btn btn-outline-danger btn-sm" 

@@ -12,18 +12,6 @@
         { 
           "routeName": "SecuritySettings", 
           "name": "Безопасность"
-        },
-        { 
-          "routeName": "Projects", 
-          "name": "Проекты"
-        },
-        {
-          "routeName": "PersonalProjects",
-          "name": "Личные"
-        },
-        {
-          "routeName": "InvitedProjects",
-          "name": "Приглашённые"
         }
       ]
     },
@@ -139,22 +127,15 @@
       "routeName": "Messenger",
       "title": "Мессенджер"
     },
-    {
-      "icon": "Calendar",
-      "routeName": "Calendar",
-      "title": "Календарь задач"
-    },
-    {
-      "icon": "Grid2x2",
-      "routeName": "Kanban",
-      "title": "Канбан-доска"
-    },
+
     {
       "icon": "ClipboardList",
       "routeName": "CRM",
       "title": "CRM модуль",
-      "list": []
+      "children": [
+      ]
     },
+
     {
       "icon": "ChartSpline",
       "routeName": "BI",

@@ -12,10 +12,6 @@ const scrollContainer = ref(null)
 const isScrolledToEnd = ref(false)
 const isScrolledToStart = ref(true)
 
-const showNavigation = computed(() => {
-  return props.data.some(item => item.title === 'Все' && route.name === item.link ||route.name === 'PersonalProjects'||route.name === 'InvitedProjects'||route.name==='CreateProject')
-})
-
 const handleScroll = () => {
   const container = scrollContainer.value
   if (container) {

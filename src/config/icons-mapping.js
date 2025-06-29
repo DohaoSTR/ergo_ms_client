@@ -45,6 +45,7 @@ import {
   CreditCard,
   Landmark,
   ClipboardList,
+  LayoutGrid,
 } from 'lucide-vue-next'
 
 /**
@@ -87,6 +88,7 @@ export const iconMapping = {
   CreditCard,
   Landmark,
   ClipboardList,
+  LayoutGrid,
 }
 
 /**

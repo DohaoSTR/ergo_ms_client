@@ -23,6 +23,11 @@ const fetchDevices = async (showLoader = true) => {
     if (showLoader) loading.value = true
     refreshing.value = !showLoader
     
+    // Добавляем небольшую задержку для визуального эффекта
+    if (!showLoader) {
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+    
     const response = await getDevices()
     devices.value = response.map(device => formatDeviceData(device))
   } catch (error) {
@@ -122,9 +127,9 @@ onMounted(() => {
   <div class="card">
     <div class="card-header">
       <div class="d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">
+        <h5 class="card-title mb-0 d-flex align-items-center">
           <Shield :size="20" class="me-2" />
-          Управление сессиями
+          <span>Управление сессиями</span>
         </h5>
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-primary">
@@ -132,7 +137,7 @@ onMounted(() => {
           </span>
       <button 
             @click="fetchDevices(false)" 
-        class="btn btn-outline-secondary btn-sm"
+        class="btn btn-light btn-sm"
             :disabled="loading || refreshing"
             title="Обновить список"
       >
@@ -177,9 +182,9 @@ onMounted(() => {
 
         <!-- Текущее устройство -->
         <div v-if="currentDevice" class="mb-4">
-          <h6 class="text-primary mb-3">
+          <h6 class="text-primary mb-3 d-flex align-items-center">
             <Wifi :size="16" class="me-1" />
-            Текущая сессия
+            <span>Текущая сессия</span>
           </h6>
           
           <div class="device-item current-device">
@@ -210,9 +215,9 @@ onMounted(() => {
 
         <!-- Другие активные устройства -->
         <div v-if="otherActiveDevices.length > 0" class="mb-4">
-          <h6 class="text-success mb-3">
+          <h6 class="text-success mb-3 d-flex align-items-center">
             <Wifi :size="16" class="me-1" />
-            Другие активные сессии ({{ otherActiveDevices.length }})
+            <span>Другие активные сессии ({{ otherActiveDevices.length }})</span>
           </h6>
           
           <div class="d-flex flex-column gap-3">
@@ -276,9 +281,9 @@ onMounted(() => {
     
         <!-- Неактивные устройства -->
         <div v-if="inactiveDevices.length > 0">
-          <h6 class="text-muted mb-3">
+          <h6 class="text-muted mb-3 d-flex align-items-center">
             <WifiOff :size="16" class="me-1" />
-            Неактивные устройства ({{ inactiveDevices.length }})
+            <span>Неактивные устройства ({{ inactiveDevices.length }})</span>
           </h6>
           
           <div class="d-flex flex-column gap-2">

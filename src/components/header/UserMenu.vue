@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { CircleUserRound, Power } from 'lucide-vue-next'
 import { useUserStore } from '@/stores/userStore.js'
+import DefaultAvatar from '@/components/DefaultAvatar.vue'
 
 const userStore = useUserStore()
 
@@ -14,28 +15,48 @@ onMounted(async () => {
 
 // Вычисляем инициалы пользователя
 const userInitials = computed(() => {
-  if (!userStore.user) return 'U'
+  if (!userStore.user) return 'Г'
+  
+  // Если пользователь гость, возвращаем "Г"
+  if (userStore.displayName === 'Гость') return 'Г'
   
   // Пробуем получить инициалы из имени и фамилии
   const firstName = userStore.user.first_name?.trim()
   const lastName = userStore.user.last_name?.trim()
   
-  if (firstName && lastName) {
-    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase()
+  // Обрабатываем пробелы как пустые значения
+  const cleanFirstName = firstName === ' ' ? '' : firstName
+  const cleanLastName = lastName === ' ' ? '' : lastName
+  
+  if (cleanFirstName && cleanLastName) {
+    return (cleanFirstName.charAt(0) + cleanLastName.charAt(0)).toUpperCase()
   }
   
-  if (firstName) {
-    return firstName.charAt(0).toUpperCase()
+  if (cleanFirstName) {
+    return cleanFirstName.charAt(0).toUpperCase()
   }
   
-  // Если имени нет, берем первую букву логина
-  if (userStore.user.username) {
-    return userStore.user.username.charAt(0).toUpperCase()
-  }
-  
-  // Fallback для неизвестного пользователя
-  return 'U'
+  // Если имени нет, возвращаем "Г" для гостя
+  return 'Г'
 })
+
+// Проверяем, есть ли валидные инициалы (имя И фамилия)
+const hasValidInitials = computed(() => {
+  if (!userStore.user) return false
+  
+  const firstName = userStore.user.first_name?.trim()
+  const lastName = userStore.user.last_name?.trim()
+  
+  // Обрабатываем пробелы как пустые значения
+  const cleanFirstName = firstName === ' ' ? '' : firstName
+  const cleanLastName = lastName === ' ' ? '' : lastName
+  
+  // Показываем инициалы только если есть И имя, И фамилия
+  // И если пользователь не "Гость"
+  return !!(cleanFirstName && cleanLastName) && userStore.displayName !== 'Гость'
+})
+
+// Инициализация пользователя при загрузке
 
 
 
@@ -63,25 +84,39 @@ const userDropdownMenu = ref([
       aria-expanded="false"
       data-bs-offset="16,20"
     >
-      <!-- Всегда показываем инициалы -->
+      <!-- Показываем инициалы если есть имя и фамилия, иначе стандартную иконку -->
       <div 
+        v-if="hasValidInitials"
         class="avatar-initials"
         :title="userStore.displayName"
         :data-letter="userInitials.charAt(0)"
       >
         {{ userInitials }}
       </div>
+      <DefaultAvatar 
+        v-else
+        size="medium"
+        :clickable="true"
+        :title="userStore.displayName"
+      />
     </div>
     <ul class="dropdown-menu dropdown-menu-end">
       <!-- Информация о пользователе -->
       <li class="dropdown-header px-3 py-2 border-bottom">
         <div class="d-flex align-items-center">
-          <!-- Всегда показываем инициалы в dropdown -->
+          <!-- Показываем инициалы если есть имя и фамилия, иначе стандартную иконку в dropdown -->
           <div 
+            v-if="hasValidInitials"
             class="me-2 avatar-initials avatar-initials-small"
             :data-letter="userInitials.charAt(0)"
           >
             {{ userInitials }}
+          </div>
+          <div v-else class="me-2">
+            <DefaultAvatar 
+              size="small"
+              :title="userStore.displayName"
+            />
           </div>
           <div class="flex-grow-1 min-width-0">
             <div class="fw-semibold text-truncate">{{ userStore.displayName }}</div>
@@ -211,4 +246,6 @@ const userDropdownMenu = ref([
   &[data-letter="Я"] { background: linear-gradient(135deg, #fd9644 0%, #fe6244 100%); }
   &[data-letter="?"], &[data-letter="U"] { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 }
+
+ 
 </style>
