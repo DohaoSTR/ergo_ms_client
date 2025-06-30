@@ -284,29 +284,6 @@
       "title": "Анализ курсов активов"
     },
     {
-      "icon": "Brain",
-      "routeName": "Expsys",
-      "title": "Экспертная система",
-      "list": [
-        {
-          "routeName": "CRMSubjects",
-          "name": "Предметы"
-        },
-        {
-          "routeName": "Indicators",
-          "name": "Индикаторы"
-        },
-        {
-          "routeName": "Competencies",
-          "name": "Компетенции"
-        },
-        {
-          "routeName": "Vectors",
-          "name": "Вектор развития"
-        }
-      ]
-    },
-    {
       "icon": "GraduationCap",
       "routeName": "LMS",
       "title": "Система обучения",

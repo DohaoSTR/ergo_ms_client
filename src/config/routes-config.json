@@ -623,47 +623,6 @@
       }
     },
 
-    "Expsys": {
-      "path": "/expsys",
-      "component": "@/pages/expsys/ParentLayout.vue",
-      "redirect": "CRMSubjects",
-      "meta": {
-        "requiresAuth": true
-      }
-    },
-    "CRMSubjects": {
-      "path": "/expsys/crm_subjects",
-      "component": "@/pages/expsys/SubjectsManager.vue",
-      "meta": {
-        "title": "Предметы",
-        "requiresAuth": true
-      }
-    },
-    "Indicators": {
-      "path": "/expsys/indicators",
-      "component": "@/pages/expsys/IndicatorsManager.vue",
-      "meta": {
-        "title": "Индикаторы",
-        "requiresAuth": true
-      }
-    },
-    "Competencies": {
-      "path": "/expsys/competencies",
-      "component": "@/pages/expsys/CompetenceManager.vue",
-      "meta": {
-        "title": "Компетенции",
-        "requiresAuth": true
-      }
-    },
-    "Vectors": {
-      "path": "/expsys/vectors",
-      "component": "@/pages/expsys/VektorDevelopment.vue",
-      "meta": {
-        "title": "Вектор развития",
-        "requiresAuth": true
-      }
-    },
-
     "LMS": {
       "path": "/lms",
       "component": "@/pages/lms/ParentLayout.vue",
