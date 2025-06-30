@@ -19,7 +19,7 @@ const navigationButtons = computed(() => {
 
   const baseButtons = [
     { icon: ChartBar, title: 'Дашборд', link: 'LMSDashboard', roles: ['student', 'teacher', 'admin'] },
-    { icon: GraduationCap, title: 'Каталог', link: 'LMSCatalog', roles: ['student', 'teacher', 'admin', 'guest'] },
+    { icon: GraduationCap, title: 'Каталог курсов', link: 'LMSCatalog', roles: ['student', 'teacher', 'admin', 'guest'] },
     { icon: Calendar, title: 'Календарь', link: 'LMSCalendar', roles: ['student', 'teacher', 'admin'] },
     { icon: Award, title: 'Достижения', link: 'LMSBadges', roles: ['student', 'teacher', 'admin'] }
   ]
@@ -30,7 +30,8 @@ const navigationButtons = computed(() => {
   ]
 
   const teacherButtons = [
-    { icon: Settings, title: 'Управление материалами', link: 'LMSLessonsManagement', roles: ['teacher', 'admin'] }
+    { icon: Settings, title: 'Управление курсами', link: 'LMSLessonsManagement', roles: ['teacher', 'admin'] },
+    { icon: Settings, title: 'Структура курсов', link: 'LMSCategoriesAndFormats', roles: ['teacher', 'admin'] }
   ]
 
   let allButtons = [...baseButtons]

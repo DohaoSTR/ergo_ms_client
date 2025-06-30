@@ -12,6 +12,11 @@ const scrollContainer = ref(null)
 const isScrolledToEnd = ref(false)
 const isScrolledToStart = ref(true)
 
+// Computed свойство для контроля видимости навигации
+const showNavigation = computed(() => {
+  return props.data && props.data.length > 0
+})
+
 const handleScroll = () => {
   const container = scrollContainer.value
   if (container) {
