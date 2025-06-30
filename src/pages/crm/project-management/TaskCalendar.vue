@@ -2,27 +2,36 @@
   <div class="task-calendar">
     <div class="pm-page-header d-flex justify-content-between align-items-center">
       <h2><i class="fas fa-calendar-alt me-2"></i>Календарь задач</h2>
-      <div>
-        <button class="btn btn-primary" @click="createTask">
-          <i class="fas fa-plus me-2"></i>Создать задачу
-        </button>
-      </div>
     </div>
 
     <!-- Навигация по календарю -->
     <div class="calendar-navigation">
       <div class="d-flex justify-content-between align-items-center">
         <div class="calendar-nav-buttons">
-          <button class="btn btn-nav" @click="previousMonth" title="Предыдущий месяц">
-            <ChevronLeft :size="20" />
-          </button>
-          <button class="btn btn-today" @click="goToToday" title="Перейти к сегодняшнему дню">
-            <Calendar :size="16" />
-            <span>Сегодня</span>
-          </button>
-          <button class="btn btn-nav" @click="nextMonth" title="Следующий месяц">
-            <ChevronRight :size="20" />
-          </button>
+          <!-- Навигация по годам -->
+          <div class="year-nav-group">
+            <button class="btn btn-nav btn-year" @click="previousYear" title="Предыдущий год">
+              <ChevronsLeft :size="16" />
+            </button>
+            <span class="year-display">{{ currentDate.getFullYear() }}</span>
+            <button class="btn btn-nav btn-year" @click="nextYear" title="Следующий год">
+              <ChevronsRight :size="16" />
+            </button>
+          </div>
+          
+          <!-- Навигация по месяцам -->
+          <div class="month-nav-group">
+            <button class="btn btn-nav" @click="previousMonth" title="Предыдущий месяц">
+              <ChevronLeft :size="20" />
+            </button>
+            <button class="btn btn-today" @click="goToToday" title="Перейти к сегодняшнему дню">
+              <Calendar :size="16" />
+              <span>Сегодня</span>
+            </button>
+            <button class="btn btn-nav" @click="nextMonth" title="Следующий месяц">
+              <ChevronRight :size="20" />
+            </button>
+          </div>
         </div>
         <h3 class="mb-0 text-center flex-grow-1">{{ currentMonthYear }}</h3>
         <div class="calendar-view-options">
@@ -154,8 +163,11 @@
 
     <!-- Список событий для выбранной даты -->
     <div class="selected-date-events" v-if="selectedDate && (projectsForSelectedDate.length > 0 || tasksForSelectedDate.length > 0)">
-      <div class="events-header">
+      <div class="events-header d-flex justify-content-between align-items-center">
         <h5><i class="fas fa-calendar-check me-2"></i>События на {{ formatSelectedDate(selectedDate) }}</h5>
+        <button class="btn btn-sm btn-primary" @click="createTaskForDate(selectedDate)">
+          <i class="fas fa-plus me-1"></i>Добавить задачу
+        </button>
       </div>
       <div class="events-body">
         <div class="row g-4">
@@ -238,8 +250,11 @@
                     <span v-if="hasTaskEventOnDate(task, 'start')" class="badge badge-start me-1">
                       <i class="fas fa-play"></i> Начало
                     </span>
-                    <span v-if="hasTaskEventOnDate(task, 'due')" class="badge badge-due">
+                    <span v-if="hasTaskEventOnDate(task, 'due')" class="badge badge-due me-1">
                       <i class="fas fa-clock"></i> Срок
+                    </span>
+                    <span v-if="hasTaskEventOnDate(task, 'end')" class="badge badge-end">
+                      <i class="fas fa-stop"></i> Окончание
                     </span>
                   </div>
                 </div>
@@ -251,6 +266,23 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Блок для выбранной даты без событий -->
+    <div class="selected-date-events" v-if="selectedDate && projectsForSelectedDate.length === 0 && tasksForSelectedDate.length === 0">
+      <div class="events-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-calendar-check me-2"></i>{{ formatSelectedDate(selectedDate) }}</h5>
+        <button class="btn btn-sm btn-primary" @click="createTaskForDate(selectedDate)">
+          <i class="fas fa-plus me-1"></i>Создать задачу
+        </button>
+      </div>
+      <div class="events-body">
+        <div class="text-center text-muted py-4">
+          <i class="fas fa-calendar-plus fa-3x mb-3"></i>
+          <p>На эту дату нет запланированных событий</p>
+          <p class="small">Нажмите кнопку выше, чтобы создать новую задачу</p>
         </div>
       </div>
     </div>
@@ -422,7 +454,7 @@
 </template>
 
 <script>
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, Calendar, ChevronsLeft, ChevronsRight } from 'lucide-vue-next'
 import { Modal } from 'bootstrap'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
 import { useNotifications } from '@/pages/lms/composables/useNotifications'
@@ -432,7 +464,9 @@ export default {
   components: {
     ChevronLeft,
     ChevronRight,
-    Calendar
+    Calendar,
+    ChevronsLeft,
+    ChevronsRight
   },
   setup() {
     const { showSuccess, showError, showConfirmDialog, closeConfirmDialog } = useNotifications()
@@ -567,16 +601,33 @@ export default {
     await this.loadProjectPriorities()
     this.loadEvents()
   },
+
+  watch: {
+    // Отслеживаем изменение фильтра "только мои задачи" для обновления проектов и задач
+    'filters.my_tasks'() {
+      this.loadProjects()
+      this.loadEvents()
+    }
+  },
   
   methods: {
     async loadProjects() {
       try {
-        const response = await projectManagementApi.getProjects({ my_projects: true })
+        // Загружаем все проекты для фильтра
+        const response = await projectManagementApi.getProjects({ page_size: 1000 })
         this.projects = Array.isArray(response.data.results) ? response.data.results : 
                         Array.isArray(response.data) ? response.data : []
         
-        // Загружаем проекты пользователя для календаря
-        const allProjectsResponse = await projectManagementApi.getProjects({ my_projects: true })
+        // Получаем диапазон дат для всех видимых дней календаря
+        const calendarRange = this.getCalendarDateRange()
+        
+        // Загружаем проекты пользователя для календаря с фильтрацией по датам
+        const allProjectsResponse = await projectManagementApi.getProjects({ 
+          my_projects: this.filters.my_tasks, // Используем тот же фильтр что и для задач
+          start_date: calendarRange.start.toISOString().split('T')[0],
+          end_date: calendarRange.end.toISOString().split('T')[0],
+          page_size: 1000 
+        })
         this.allProjects = Array.isArray(allProjectsResponse.data.results) ? allProjectsResponse.data.results : 
                            Array.isArray(allProjectsResponse.data) ? allProjectsResponse.data : []
       } catch (error) {
@@ -636,21 +687,47 @@ export default {
       }
     },
     
+    getCalendarDateRange() {
+      const year = this.currentDate.getFullYear()
+      const month = this.currentDate.getMonth()
+      
+      // Первый день месяца
+      const firstDay = new Date(year, month, 1)
+      // Последний день месяца
+      const lastDay = new Date(year, month + 1, 0)
+      
+      // Понедельник первой недели (начало календаря)
+      const startDate = new Date(firstDay)
+      const startDayOfWeek = firstDay.getDay() === 0 ? 7 : firstDay.getDay()
+      startDate.setDate(firstDay.getDate() - (startDayOfWeek - 1))
+      
+      // Воскресенье последней недели (конец календаря)
+      const endDate = new Date(lastDay)
+      const endDayOfWeek = lastDay.getDay() === 0 ? 7 : lastDay.getDay()
+      endDate.setDate(lastDay.getDate() + (7 - endDayOfWeek))
+      
+      return {
+        start: startDate,
+        end: endDate
+      }
+    },
+
     async loadEvents() {
       try {
         if (this.showTasks) {
-          const startOfMonth = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1)
-          const endOfMonth = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0)
+          // Получаем диапазон дат для всех видимых дней календаря
+          const calendarRange = this.getCalendarDateRange()
           
           const params = {
-            start_date: startOfMonth.toISOString().split('T')[0],
-            end_date: endOfMonth.toISOString().split('T')[0],
+            start_date: calendarRange.start.toISOString().split('T')[0],
+            end_date: calendarRange.end.toISOString().split('T')[0],
             ...this.filters
           }
           
-          // Убираем пустые фильтры
+          // Убираем пустые фильтры, но оставляем булевые значения для my_tasks
           Object.keys(params).forEach(key => {
-            if (params[key] === '' || params[key] === false) {
+            if (params[key] === '' || params[key] === null || params[key] === undefined || 
+               (params[key] === false && key !== 'my_tasks')) {
               delete params[key]
             }
           })
@@ -672,7 +749,12 @@ export default {
       
       const events = []
       
-      this.allProjects.forEach(project => {
+      // Фильтруем проекты по выбранному проекту если указан
+      const filteredProjects = this.filters.project_id ? 
+        this.allProjects.filter(p => p.id.toString() === this.filters.project_id.toString()) :
+        this.allProjects
+      
+      filteredProjects.forEach(project => {
         if (!project) return
         
         const projectStart = project.start_date ? new Date(project.start_date) : null
@@ -712,6 +794,7 @@ export default {
         
         const taskStart = task.start_date ? new Date(task.start_date) : null
         const taskDue = task.due_date ? new Date(task.due_date) : null
+        const taskEnd = task.end_date ? new Date(task.end_date) : null
         
         // Событие начала задачи
         if (taskStart && this.isSameDay(taskStart, date)) {
@@ -730,6 +813,16 @@ export default {
             eventType: 'due',
             displayTitle: `⏰ ${task.title}`,
             eventDate: taskDue
+          })
+        }
+        
+        // Событие окончания задачи (если есть дата окончания и она отличается от срока выполнения)
+        if (taskEnd && this.isSameDay(taskEnd, date) && (!taskDue || !this.isSameDay(taskEnd, taskDue))) {
+          events.push({
+            ...task,
+            eventType: 'end',
+            displayTitle: `⏹ ${task.title}`,
+            eventDate: taskEnd
           })
         }
       })
@@ -785,28 +878,45 @@ export default {
     
     selectDate(date) {
       this.selectedDate = date
-      const hasEvents = this.getTasksForDay(date).length > 0 || this.getProjectsForDay(date).length > 0
-      
-      if (!hasEvents) {
-        // Если нет событий на эту дату, предлагаем создать задачу
-        this.currentTask.start_date = this.formatDateTimeLocal(date)
-        this.createTask()
-      }
+      // Сразу создаем задачу при клике на день
+      this.createTaskForDate(date)
+    },
+
+    createTaskForDate(date) {
+      // Метод для создания задачи на конкретную дату
+      this.selectedDate = date
+      this.currentTask.start_date = this.formatDateTimeLocal(date)
+      this.createTask()
     },
     
     previousMonth() {
       this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1)
+      this.loadProjects()
       this.loadEvents()
     },
     
     nextMonth() {
       this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1)
+      this.loadProjects()
+      this.loadEvents()
+    },
+    
+    previousYear() {
+      this.currentDate = new Date(this.currentDate.getFullYear() - 1, this.currentDate.getMonth(), 1)
+      this.loadProjects()
+      this.loadEvents()
+    },
+    
+    nextYear() {
+      this.currentDate = new Date(this.currentDate.getFullYear() + 1, this.currentDate.getMonth(), 1)
+      this.loadProjects()
       this.loadEvents()
     },
     
     goToToday() {
       this.currentDate = new Date()
       this.selectedDate = new Date()
+      this.loadProjects()
       this.loadEvents()
     },
     
@@ -1301,11 +1411,13 @@ export default {
   .btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem 1.25rem;
     font-weight: 600;
     border-radius: 8px;
     transition: all 0.2s ease;
+    text-align: center;
     
     &:hover {
       transform: translateY(-1px);
@@ -1356,7 +1468,7 @@ export default {
   .calendar-nav-buttons {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
+    gap: 2rem;
     
     .btn-nav {
       width: 44px;
@@ -1397,6 +1509,66 @@ export default {
         transform: scale(0.97);
         box-shadow: 0 2px 6px rgba(0,123,255,0.10);
       }
+    }
+    
+    .year-nav-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #f8fbff 60%, #e3f0ff 100%);
+      border: 2px solid var(--bs-primary);
+      border-radius: 25px;
+      box-shadow: 0 2px 8px rgba(0,123,255,0.07);
+      
+      .year-display {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--bs-primary);
+        min-width: 3rem;
+        text-align: center;
+        letter-spacing: 0.5px;
+      }
+      
+      .btn-year {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 50%;
+        background: transparent;
+        border: 1px solid var(--bs-primary);
+        color: var(--bs-primary);
+        font-size: 0.875rem;
+        transition: all 0.18s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        svg {
+          color: var(--bs-primary);
+          transition: color 0.18s;
+        }
+        
+        &:hover {
+          background: var(--bs-primary);
+          color: white;
+          transform: scale(1.1);
+          
+          svg {
+            color: white;
+          }
+        }
+        
+        &:active {
+          transform: scale(0.95);
+        }
+      }
+    }
+    
+    .month-nav-group {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
     }
     
     .btn-today {
@@ -1594,6 +1766,12 @@ export default {
             background: rgba($warning, 0.15);
           }
           
+          &.event-end {
+            border-left-style: dotted;
+            opacity: 0.8;
+            background: rgba($success, 0.15);
+          }
+          
           &.priority-urgent {
             border-left-color: var(--bs-danger);
             background: rgba($danger, 0.1);
@@ -1601,21 +1779,37 @@ export default {
             &.event-due {
               background: rgba($danger, 0.15);
             }
+            
+            &.event-end {
+              background: rgba($danger, 0.12);
+            }
           }
           
           &.priority-high {
             border-left-color: var(--bs-warning);
             background: rgba($warning, 0.1);
+            
+            &.event-end {
+              background: rgba($warning, 0.12);
+            }
           }
           
           &.priority-medium {
             border-left-color: var(--bs-primary);
             background: rgba($primary, 0.1);
+            
+            &.event-end {
+              background: rgba($primary, 0.12);
+            }
           }
           
           &.priority-low {
             border-left-color: var(--bs-secondary);
             background: rgba($secondary, 0.1);
+            
+            &.event-end {
+              background: rgba($secondary, 0.12);
+            }
           }
         }
         
@@ -1816,6 +2010,57 @@ export default {
     .d-flex {
       flex-wrap: wrap;
       gap: 1rem;
+    }
+    
+    .calendar-nav-buttons {
+      gap: 1rem;
+      
+      .year-nav-group {
+        padding: 0.4rem 0.8rem;
+        
+        .year-display {
+          font-size: 0.9rem;
+          min-width: 2.5rem;
+        }
+        
+        .btn-year {
+          width: 28px;
+          height: 28px;
+          font-size: 0.75rem;
+          
+          svg {
+            width: 14px;
+            height: 14px;
+          }
+        }
+      }
+      
+      .month-nav-group {
+        gap: 1rem;
+        
+        .btn-nav {
+          width: 36px;
+          height: 36px;
+        }
+        
+        .btn-today {
+          padding: 0.4rem 1rem;
+          font-size: 0.875rem;
+          
+          span {
+            display: none;
+          }
+        }
+      }
+    }
+    
+    .calendar-view-options {
+      flex-direction: column;
+      gap: 0.5rem;
+      
+      .form-check {
+        margin: 0;
+      }
     }
   }
   

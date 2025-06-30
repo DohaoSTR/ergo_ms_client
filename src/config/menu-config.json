@@ -57,24 +57,12 @@
               "name": "Главная"
             },
             { 
-              "routeName": "ShortcodeEditor", 
-              "name": "Редактор страниц"
-            },
-            { 
-              "routeName": "CreatePage", 
-              "name": "Создание страниц"
-            },
-            { 
-              "routeName": "Pages", 
-              "name": "Страницы"
-            },
-            { 
               "routeName": "Templates", 
               "name": "Компоненты"
             },
             { 
-              "routeName": "TemplateEditor", 
-              "name": "Редактор компонентов"
+              "routeName": "Pages", 
+              "name": "Страницы"
             },
             { 
               "routeName": "Layouts", 
@@ -82,7 +70,7 @@
             },
             { 
               "routeName": "PageShortcodeCategories", 
-              "name": "Категории страниц"
+              "name": "Категории шорткодов"
             }
           ]
         },

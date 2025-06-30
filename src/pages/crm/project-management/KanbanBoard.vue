@@ -2,7 +2,7 @@
   <div class="kanban-board">
     <div class="pm-page-header d-flex justify-content-between align-items-center">
       <div>
-        <h2><i class="fas fa-columns me-2"></i>Канбан доска</h2>
+        <h2><i class="fas fa-columns"></i> Доска задач</h2>
         <small class="text-muted" v-if="Object.keys(kanbanColumns).length > 0">
           {{ Object.keys(kanbanColumns).length }} {{ Object.keys(kanbanColumns).length === 1 ? 'колонка' : Object.keys(kanbanColumns).length < 5 ? 'колонки' : 'колонок' }}
         </small>
@@ -38,17 +38,33 @@
           </div>
           <div class="col-md-3">
             <label class="form-label">Исполнитель</label>
-            <select class="form-select" v-model="filters.assignee" @change="loadKanbanData">
+            <select class="form-select" v-model="filters.assignee" @change="onAssigneeChange">
               <option value="">Все исполнители</option>
               <option v-for="user in users" :key="user.id" :value="user.id">
                 {{ user.full_name }}
               </option>
             </select>
           </div>
-          <div class="col-md-2 d-flex align-items-end">
+          <div class="col-md-2">
+            <label class="form-label">Сортировка</label>
+            <select class="form-select" v-model="filters.ordering" @change="loadKanbanData">
+              <option value="kanban_order">По порядку в доске</option>
+              <option value="-created_at">По дате создания ↓</option>
+              <option value="created_at">По дате создания ↑</option>
+              <option value="due_date">По сроку выполнения ↑</option>
+              <option value="-due_date">По сроку выполнения ↓</option>
+              <option value="priority">По приоритету ↑</option>
+              <option value="-priority">По приоритету ↓</option>
+              <option value="assignee">По исполнителю ↑</option>
+              <option value="-assignee">По исполнителю ↓</option>
+            </select>
+          </div>
+        </div>
+        <div class="row g-3 mt-2">
+          <div class="col-md-4 d-flex align-items-center">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" v-model="filters.my_tasks" 
-                     @change="loadKanbanData" id="myTasksKanban">
+                     @change="onMyTasksChange" id="myTasksKanban">
               <label class="form-check-label" for="myTasksKanban">
                 Только мои задачи
               </label>
@@ -93,10 +109,10 @@
         <div :class="`${columnClass} kanban-drop-zone`" 
              v-for="(column, status) in sortedKanbanColumns" 
              :key="status"
-             @drop="handleDrop($event, status)" 
-             @dragover="handleDragOver($event, status)"
-             @dragenter="handleDragEnter($event, status)"
-             @dragleave="handleDragLeave($event, status)">
+             @drop="onDrop($event, status)" 
+             @dragover="onDragOver($event, status)"
+             @dragenter="onDragEnter($event, status)"
+             @dragleave="onDragLeave($event, status)">
           <div class="kanban-column">
             <div class="kanban-header" 
                  :class="getColumnHeaderClass(status)"
@@ -372,7 +388,8 @@ export default {
         project_id: '',
         priority: '',
         assignee: '',
-        my_tasks: true
+        my_tasks: false,  // По умолчанию false, чтобы не конфликтовать с фильтром по исполнителю
+        ordering: 'kanban_order'
       },
       currentTask: {
         title: '',
@@ -598,9 +615,13 @@ export default {
         
         const params = { ...this.filters }
         
-        // Убираем пустые фильтры
+        // Убираем пустые фильтры (но оставляем булевые значения)
         Object.keys(params).forEach(key => {
-          if (params[key] === '' || params[key] === false) {
+          if (params[key] === '' || params[key] === null || params[key] === undefined) {
+            delete params[key]
+          }
+          // Для булевых значений оставляем false, так как это валидный фильтр
+          if (typeof params[key] === 'boolean' && params[key] === false && key !== 'my_tasks') {
             delete params[key]
           }
         })
@@ -611,8 +632,7 @@ export default {
         // Обновляем данные колонок
         Object.keys(this.kanbanColumns).forEach(status => {
           const tasks = response.data[status] || []
-          // Сортируем задачи по kanban_order
-          tasks.sort((a, b) => (a.kanban_order || 0) - (b.kanban_order || 0))
+          // Задачи уже отсортированы на сервере
           this.kanbanColumns[status].tasks = tasks
           console.log(`Column ${status} has ${tasks.length} tasks`)
         })
@@ -788,8 +808,9 @@ export default {
       if (newColumn && newColumn.tasks) {
         newColumn.tasks.push(task)
         
-        // Сортируем задачи по порядку
-        newColumn.tasks.sort((a, b) => (a.kanban_order || 0) - (b.kanban_order || 0))
+        // После drag and drop перезагружаем данные для правильной сортировки
+        // Закомментировано: локальная сортировка больше не нужна
+        // this.sortTasks(newColumn.tasks)
       }
     },
     
@@ -806,6 +827,27 @@ export default {
         project_id: '',
         assignee_id: '',
         status: defaultStatus ? defaultStatus.code : 'todo',
+        priority: defaultPriority ? defaultPriority.code : 'medium',
+        due_date: '',
+        estimated_hours: null
+      }
+      
+      const modal = new Modal(document.getElementById('taskModal'))
+      modal.show()
+    },
+
+    createTaskForStatus(status) {
+      this.isEditing = false
+      
+      // Устанавливаем статус для конкретной колонки
+      const defaultPriority = this.taskPriorities.find(p => p.is_default) || this.taskPriorities[0]
+      
+      this.currentTask = {
+        title: '',
+        description: '',
+        project_id: '',
+        assignee_id: '',
+        status: status,
         priority: defaultPriority ? defaultPriority.code : 'medium',
         due_date: '',
         estimated_hours: null
@@ -1063,6 +1105,59 @@ export default {
       if (due < now) return 'text-danger'
       if (due - now < 24 * 60 * 60 * 1000) return 'text-warning'
       return 'text-muted'
+    },
+
+    getDueDateIconClass(dueDate, status) {
+      if (status === 'done') return 'text-muted'
+      
+      const now = new Date()
+      const due = new Date(dueDate)
+      
+      if (due < now) return 'text-danger'
+      if (due - now < 24 * 60 * 60 * 1000) return 'text-warning'
+      return 'text-muted'
+    },
+
+    getColumnIcon(status) {
+      const icons = {
+        'todo': 'fas fa-clipboard-list',
+        'new': 'fas fa-plus-circle',
+        'in_progress': 'fas fa-cog fa-spin',
+        'active': 'fas fa-play',
+        'working': 'fas fa-cog fa-spin',
+        'review': 'fas fa-eye',
+        'testing': 'fas fa-vials',
+        'done': 'fas fa-check-circle',
+        'completed': 'fas fa-check-circle',
+        'finished': 'fas fa-check-circle',
+        'cancelled': 'fas fa-times-circle',
+        'blocked': 'fas fa-ban'
+      }
+      
+      return icons[status] || 'fas fa-circle'
+    },
+
+    truncateText(text, maxLength) {
+      if (!text || typeof text !== 'string') return ''
+      if (text.length > maxLength) {
+        return text.slice(0, maxLength) + '...'
+      }
+      return text
+    },
+
+    getAvatarUrl(user) {
+      if (!user) return '/default-avatar.png'
+      
+      // Если есть URL аватара, используем его
+      if (user.avatar) {
+        return user.avatar
+      }
+      
+      // Генерируем аватар на основе инициалов
+      const name = user.full_name || user.first_name || user.username
+      const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&size=40&background=007bff&color=fff`
     },
     
     formatDate(date) {
@@ -1371,6 +1466,81 @@ export default {
       }
     },
     
+    sortTasks(tasks) {
+      const ordering = this.filters.ordering || 'kanban_order'
+      
+      tasks.sort((a, b) => {
+        switch (ordering) {
+          case 'kanban_order':
+            return (a.kanban_order || 0) - (b.kanban_order || 0)
+          
+          case '-created_at':
+            return new Date(b.created_at || 0) - new Date(a.created_at || 0)
+          
+          case 'created_at':
+            return new Date(a.created_at || 0) - new Date(b.created_at || 0)
+          
+          case 'due_date':
+            // Задачи без срока в конце
+            if (!a.due_date && !b.due_date) return 0
+            if (!a.due_date) return 1
+            if (!b.due_date) return -1
+            return new Date(a.due_date) - new Date(b.due_date)
+          
+          case '-due_date':
+            // Задачи без срока в конце
+            if (!a.due_date && !b.due_date) return 0
+            if (!a.due_date) return 1
+            if (!b.due_date) return -1
+            return new Date(b.due_date) - new Date(a.due_date)
+          
+          case 'priority':
+            // Сортировка по уровню приоритета из API
+            const priorityA = this.getPriorityLevel(a.priority)
+            const priorityB = this.getPriorityLevel(b.priority)
+            return priorityA - priorityB
+          
+          case '-priority':
+            // Обратная сортировка по уровню приоритета
+            const priorityADesc = this.getPriorityLevel(a.priority)
+            const priorityBDesc = this.getPriorityLevel(b.priority)
+            return priorityBDesc - priorityADesc
+          
+          case 'assignee':
+            // Сортировка по имени исполнителя (задачи без исполнителя в конце)
+            const nameA = a.assignee?.full_name || a.assignee?.username || 'zzz'
+            const nameB = b.assignee?.full_name || b.assignee?.username || 'zzz'
+            return nameA.localeCompare(nameB, 'ru')
+          
+          case '-assignee':
+            // Обратная сортировка по имени исполнителя
+            const nameADesc = a.assignee?.full_name || a.assignee?.username || ''
+            const nameBDesc = b.assignee?.full_name || b.assignee?.username || ''
+            return nameBDesc.localeCompare(nameADesc, 'ru')
+          
+          default:
+            return (a.kanban_order || 0) - (b.kanban_order || 0)
+        }
+      })
+    },
+
+    getPriorityLevel(priority) {
+      // Получаем уровень приоритета из API данных
+      const priorityObj = this.taskPriorities.find(p => p.code === priority)
+      if (priorityObj && priorityObj.level !== undefined) {
+        return priorityObj.level
+      }
+      
+      // Fallback для стандартных приоритетов
+      const fallbackLevels = { 
+        low: 1, 
+        medium: 2, 
+        high: 3, 
+        urgent: 4 
+      }
+      return fallbackLevels[priority] || 0
+    },
+
     async updateTasksOrder(status) {
       console.log('Updating tasks order for status:', status)
       
@@ -1394,6 +1564,22 @@ export default {
         console.log(`Updating ${updatePromises.length} tasks in column ${status}`)
         await Promise.all(updatePromises)
       }
+    },
+    
+    onAssigneeChange() {
+      // Когда выбран конкретный исполнитель, сбрасываем "Мои задачи"
+      if (this.filters.assignee) {
+        this.filters.my_tasks = false
+      }
+      this.loadKanbanData()
+    },
+    
+    onMyTasksChange() {
+      // Когда включен "Мои задачи", сбрасываем фильтр по исполнителю
+      if (this.filters.my_tasks) {
+        this.filters.assignee = ''
+      }
+      this.loadKanbanData()
     }
   }
 }

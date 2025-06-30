@@ -54,9 +54,11 @@
 
     <!-- Состояние загрузки -->
     <div v-if="loading" class="loading-state">
-      <div class="spinner-container">
-        <div class="spinner"></div>
-        <p>Загружаем данные проекта...</p>
+      <div class="d-flex flex-column align-items-center justify-content-center py-5">
+        <div class="spinner-border text-primary mb-3" role="status">
+          <span class="visually-hidden">Загрузка...</span>
+        </div>
+        <p class="text-muted">Загружаем данные проекта...</p>
       </div>
     </div>
 
@@ -165,33 +167,65 @@
           </div>
           
           <!-- Команда проекта -->
-          <div class="info-card team-card" v-if="project.owner || project.manager">
+          <div class="info-card team-card" v-if="project">
             <div class="card-header">
               <Users :size="20" />
               <h3>Команда проекта</h3>
+              <button class="btn btn-outline-primary btn-sm" @click="openTeamModal" title="Управление командой">
+                <UserPlus :size="16" />
+                <span>Добавить участника</span>
+              </button>
             </div>
             <div class="card-body">
+
+              
               <div class="team-members">
-                <div class="team-member" v-if="project.owner">
-                  <img :src="getAvatarUrl(project.owner)" 
-                       :alt="getUserDisplayName(project.owner)"
+                <!-- Все участники команды проекта -->
+                <div class="team-member" 
+                     v-for="member in allProjectMembers" 
+                     :key="`team-member-${member.type}-${member.id}`">
+                  <img :src="getAvatarUrl(member.user)" 
+                       :alt="getUserDisplayName(member.user)"
                        class="member-avatar">
                   <div class="member-info">
-                    <div class="member-name">{{ getUserDisplayName(project.owner) }}</div>
-                    <div class="member-role">Владелец</div>
+                    <div class="member-name">{{ getUserDisplayName(member.user) }}</div>
+                    <div class="member-role" :class="member.roleClass">
+                      {{ member.roleText }}
+                      <span v-if="member.badges.length > 0" class="member-badges ms-2">
+                        <span v-for="badge in member.badges" 
+                              :key="badge.text" 
+                              :class="badge.class"
+                              class="badge me-1">
+                          {{ badge.text }}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="member-actions">
+                    <button class="btn btn-delete-icon" 
+                            v-if="member.canRemove"
+                            @click="removeMember(member.originalMember)" 
+                            title="Исключить из команды">
+                      <UserMinus :size="14" />
+                    </button>
+                    <span v-else class="text-muted small" title="Нельзя исключить">
+                      <i class="fas fa-lock"></i>
+                    </span>
                   </div>
                 </div>
                 
-                <div class="team-member" v-if="project.manager">
-                  <img :src="getAvatarUrl(project.manager)" 
-                       :alt="getUserDisplayName(project.manager)"
-                       class="member-avatar">
-                  <div class="member-info">
-                    <div class="member-name">{{ getUserDisplayName(project.manager) }}</div>
-                    <div class="member-role">Менеджер</div>
-                  </div>
+                <!-- Пустое состояние -->
+                <div v-if="allProjectMembers.length === 0" 
+                     class="empty-team">
+                  <Users :size="32" class="empty-icon" />
+                  <p>В команде проекта пока нет участников</p>
+                  <button class="btn btn-primary btn-sm" @click="openTeamModal">
+                    <UserPlus :size="16" />
+                    <span>Добавить первого участника</span>
+                  </button>
                 </div>
               </div>
+              
             </div>
           </div>
         </div>
@@ -449,12 +483,107 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отменить</button>
-            <button type="button" class="btn btn-danger" v-if="isEditingTask" @click="confirmDeleteTask(currentTask)">
-              Удалить задачу
-            </button>
             <button type="button" class="btn btn-primary" @click="submitTask" :disabled="!currentTask.title">
               {{ isEditingTask ? 'Сохранить' : 'Создать задачу' }}
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно управления командой -->
+    <div class="modal fade" id="teamModal" tabindex="-1" aria-labelledby="teamModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="teamModalLabel">Управление командой проекта</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Добавить участника</h6>
+                <div class="add-member-form">
+                  <div class="mb-3">
+                    <label class="form-label">Выберите пользователя</label>
+                    <select class="form-select" v-model="selectedUserId">
+                      <option value="">Выберите пользователя</option>
+                      <option v-for="user in availableUsers" 
+                              :key="user.id" 
+                              :value="user.id">
+                        {{ getUserDisplayName(user) }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Роль в проекте</label>
+                    <select class="form-select" v-model="selectedRole">
+                      <option value="member">Участник</option>
+                      <option value="lead">Ведущий</option>
+                      <option value="observer">Наблюдатель</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-primary" 
+                          @click="addMember" 
+                          :disabled="!selectedUserId || loadingTeamAction">
+                    <i v-if="loadingTeamAction" class="fas fa-spinner fa-spin me-2"></i>
+                    Добавить в команду
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <h6 class="mb-2">Текущая команда</h6>
+                <div class="current-team">
+                  
+                  <!-- Владелец -->
+                  <div class="team-member-modal" v-if="project && project.owner">
+                    <img :src="getAvatarUrl(project.owner)" 
+                         :alt="getUserDisplayName(project.owner)"
+                         class="member-avatar-small">
+                    <div class="member-info-modal">
+                      <div class="member-name">{{ getUserDisplayName(project.owner) }}</div>
+                      <div class="member-role owner-role">Владелец</div>
+                    </div>
+                  </div>
+                  
+                  <!-- Менеджер -->
+                  <div class="team-member-modal" v-if="project && project.manager && project.manager.id !== project.owner?.id">
+                    <img :src="getAvatarUrl(project.manager)" 
+                         :alt="getUserDisplayName(project.manager)"
+                         class="member-avatar-small">
+                    <div class="member-info-modal">
+                      <div class="member-name">{{ getUserDisplayName(project.manager) }}</div>
+                      <div class="member-role manager-role">Менеджер проекта</div>
+                    </div>
+                  </div>
+                  
+                  <!-- Участники -->
+                  <template v-for="member in filteredTeamMembers" :key="member.id">
+                    <div class="team-member-modal" v-if="member && member.user">
+                      <img :src="getAvatarUrl(member.user)" 
+                           :alt="getUserDisplayName(member.user)"
+                           class="member-avatar-small">
+                      <div class="member-info-modal">
+                        <div class="member-name">{{ getUserDisplayName(member.user) }}</div>
+                        <div class="member-role" :class="getRoleClass(member.role)">{{ getRoleText(member.role) }}</div>
+                      </div>
+                      <button class="btn btn-delete-icon" @click="removeMember(member)" title="Исключить">
+                        <UserMinus :size="12" />
+                      </button>
+                    </div>
+                  </template>
+                  
+                  <div v-if="project && filteredTeamMembers.length === 0 && !project.owner && !project.manager" 
+                       class="text-muted text-center">
+                    <small>Пока нет участников</small>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
           </div>
         </div>
       </div>
@@ -464,7 +593,7 @@
 
 <script>
 import { Modal } from 'bootstrap'
-import { Edit, Trash2, Plus, Home, Info, PieChart, ListTodo, Calendar, Clock, Users, CheckCircle, AlertTriangle } from 'lucide-vue-next'
+import { Edit, Trash2, Plus, Home, Info, PieChart, ListTodo, Calendar, Clock, Users, CheckCircle, AlertTriangle, UserPlus, UserMinus } from 'lucide-vue-next'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
 import { useNotifications } from '@/pages/lms/composables/useNotifications'
 
@@ -482,7 +611,9 @@ export default {
     Clock,
     Users,
     CheckCircle,
-    AlertTriangle
+    AlertTriangle,
+    UserPlus,
+    UserMinus
   },
   setup() {
     const { showSuccess, showError, showConfirmDialog, closeConfirmDialog } = useNotifications()
@@ -521,7 +652,11 @@ export default {
       projectPriorities: [],
       taskStatuses: [],
       taskPriorities: [],
-      loadingStatuses: false
+      loadingStatuses: false,
+      // Управление командой проекта
+      selectedUserId: '',
+      selectedRole: 'member',
+      loadingTeamAction: false
     }
   },
   async mounted() {
@@ -530,6 +665,146 @@ export default {
       this.loadStatusesAndPriorities()
     ])
     this.loadProjectData()
+  },
+  computed: {
+    availableUsers() {
+      if (!this.users || !this.project) return []
+      
+      // Исключаем пользователей, которые уже в команде
+      const teamUserIds = new Set()
+      
+      // Добавляем владельца и менеджера (с проверкой на существование)
+      if (this.project?.owner?.id) teamUserIds.add(this.project.owner.id)
+      if (this.project?.manager?.id) teamUserIds.add(this.project.manager.id)
+      
+      // Добавляем участников команды
+      if (this.project?.memberships && Array.isArray(this.project.memberships)) {
+        this.project.memberships.forEach(member => {
+          if (member && 
+              typeof member === 'object' && 
+              member.user && 
+              typeof member.user === 'object' && 
+              member.user.id) {
+            teamUserIds.add(member.user.id)
+          }
+        })
+      }
+      
+      // Возвращаем пользователей, которых нет в команде
+      return this.users.filter(user => user?.id && !teamUserIds.has(user.id))
+    },
+
+    allTeamMembers() {
+      if (!this.project?.memberships || !Array.isArray(this.project.memberships)) return []
+      
+      return this.project.memberships.filter(member => {
+        // Строгая проверка валидности участника
+        return member && 
+               typeof member === 'object' && 
+               member.user && 
+               typeof member.user === 'object' && 
+               member.user.id && 
+               member.id
+      })
+    },
+
+    filteredTeamMembers() {
+      if (!this.project?.memberships || !Array.isArray(this.project.memberships)) return []
+      
+      return this.project.memberships.filter(member => {
+        // Строгая проверка валидности member
+        if (!member || typeof member !== 'object') return false
+        if (!member.user || typeof member.user !== 'object') return false
+        if (!member.user.id || !member.id) return false
+        
+        // Исключаем владельца и менеджера (они отображаются отдельно)
+        const isOwner = this.project.owner?.id === member.user.id
+        const isManager = this.project.manager?.id === member.user.id
+        
+        return !isOwner && !isManager
+      })
+    },
+
+    allProjectMembers() {
+      if (!this.project) return []
+      
+      const members = []
+      const processedUserIds = new Set()
+      
+             // 1. Добавляем владельца (если есть)
+       if (this.project.owner) {
+         members.push({
+           id: `owner-${this.project.owner.id}`,
+           type: 'owner',
+           user: this.project.owner,
+           roleText: 'Владелец проекта',
+           roleClass: 'owner-role',
+           badges: [],
+           canRemove: false,
+           originalMember: null
+         })
+         processedUserIds.add(this.project.owner.id)
+       }
+      
+      // 2. Добавляем менеджера (если есть и не совпадает с владельцем)
+      if (this.project.manager && !processedUserIds.has(this.project.manager.id)) {
+        members.push({
+          id: `manager-${this.project.manager.id}`,
+          type: 'manager',
+          user: this.project.manager,
+          roleText: 'Менеджер проекта',
+          roleClass: 'manager-role',
+          badges: [],
+          canRemove: false,
+          originalMember: null
+        })
+        processedUserIds.add(this.project.manager.id)
+      }
+      
+      // 3. Добавляем всех участников команды
+      if (this.project.memberships && Array.isArray(this.project.memberships)) {
+        this.project.memberships.forEach(member => {
+          if (member && 
+              typeof member === 'object' && 
+              member.user && 
+              typeof member.user === 'object' && 
+              member.user.id && 
+              member.id) {
+            const badges = []
+            let roleText = this.getRoleText(member.role)
+            let roleClass = this.getRoleClass(member.role)
+            
+            // Если пользователь уже обработан как владелец/менеджер, добавляем дополнительные бейджи
+            if (processedUserIds.has(member.user.id)) {
+              // Находим существующего участника и добавляем дополнительную роль
+              const existingMember = members.find(m => m.user.id === member.user.id)
+              if (existingMember) {
+                existingMember.badges.push({
+                  text: this.getRoleText(member.role),
+                  class: this.getRoleBadgeClass(member.role)
+                })
+                existingMember.originalMember = member // Сохраняем для возможного удаления
+              }
+            } else {
+              // Добавляем как нового участника
+              members.push({
+                id: `member-${member.id}`,
+                type: 'member',
+                user: member.user,
+                roleText: roleText,
+                roleClass: roleClass,
+                badges: [],
+                canRemove: true,
+                originalMember: member
+              })
+              processedUserIds.add(member.user.id)
+            }
+          }
+        })
+      }
+      
+      return members
+    }
   },
   watch: {
     '$route'() {
@@ -554,7 +829,7 @@ export default {
 
         // Загружаем задачи проекта
         const tasksResponse = await projectManagementApi.getProjectTasks(projectId)
-        this.tasks = Array.isArray(tasksResponse.data) ? tasksResponse.data : []
+        this.tasks = Array.isArray(tasksResponse.data) ? tasksResponse.data.filter(task => task && task.id) : []
         
         // Обновляем прогресс проекта
         this.updateProjectProgress()
@@ -569,8 +844,11 @@ export default {
     async loadUsers() {
       try {
         const response = await projectManagementApi.getUsers()
-        this.users = Array.isArray(response.data.results) ? response.data.results : 
-                     Array.isArray(response.data) ? response.data : []
+        const users = Array.isArray(response.data.results) ? response.data.results : 
+                      Array.isArray(response.data) ? response.data : []
+        
+        // Фильтруем только валидных пользователей
+        this.users = users.filter(user => user && user.id)
       } catch (error) {
         console.error('Ошибка загрузки пользователей:', error)
         this.users = []
@@ -861,8 +1139,9 @@ export default {
     },
 
     getStatusText(status) {
-      const statusObj = this.projectStatuses.find(s => s.code === status)
-      return statusObj ? statusObj.name : status
+      if (!status) return 'Не указан'
+      const statusObj = this.projectStatuses?.find(s => s.code === status)
+      return statusObj?.name || status
     },
 
     getTaskStatusClass(status) {
@@ -877,8 +1156,9 @@ export default {
     },
 
     getTaskStatusText(status) {
-      const statusObj = this.taskStatuses.find(s => s.code === status)
-      return statusObj ? statusObj.name : status
+      if (!status) return 'Не указан'
+      const statusObj = this.taskStatuses?.find(s => s.code === status)
+      return statusObj?.name || status
     },
 
     getPriorityClass(priority) {
@@ -892,9 +1172,10 @@ export default {
     },
 
     getPriorityText(priority) {
+      if (!priority) return 'Не указан'
       // Сначала ищем в приоритетах задач, потом в приоритетах проектов
-      const taskPriorityObj = this.taskPriorities.find(p => p.code === priority)
-      const projectPriorityObj = this.projectPriorities.find(p => p.code === priority)
+      const taskPriorityObj = this.taskPriorities?.find(p => p.code === priority)
+      const projectPriorityObj = this.projectPriorities?.find(p => p.code === priority)
       return taskPriorityObj?.name || projectPriorityObj?.name || priority
     },
 
@@ -914,22 +1195,15 @@ export default {
       return new Date(date).toISOString().slice(0, 16)
     },
 
-    getUserDisplayName(user) {
-      if (!user) return 'Неизвестно'
-      return user.full_name || `${user.first_name} ${user.last_name}`.trim() || user.username
-    },
 
-    getAvatarUrl(user) {
-      if (!user) return ''
-      const name = this.getUserDisplayName(user)
-      return user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6c757d&color=fff&size=32`
-    },
 
     updateProjectProgress() {
-      if (!this.project || !this.tasks.length) return
+      if (!this.project || !Array.isArray(this.tasks)) return
       
-      const totalTasks = this.tasks.length
-      const completedTasks = this.tasks.filter(task => task.status === 'done').length
+      // Фильтруем только валидные задачи
+      const validTasks = this.tasks.filter(task => task && task.status)
+      const totalTasks = validTasks.length
+      const completedTasks = validTasks.filter(task => task.status === 'done').length
       const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
       
       // Обновляем локальные данные проекта
@@ -939,6 +1213,7 @@ export default {
     },
 
     truncateText(text, maxLength) {
+      if (!text || typeof text !== 'string') return ''
       if (text.length > maxLength) {
         return text.slice(0, maxLength) + '...'
       }
@@ -978,6 +1253,175 @@ export default {
         return 'Проекты и задачи'
       }
       return 'Мои проекты'
+    },
+
+    // Методы для управления командой проекта
+    openTeamModal() {
+      this.selectedUserId = ''
+      this.selectedRole = 'member'
+      const modal = new Modal(document.getElementById('teamModal'))
+      modal.show()
+    },
+
+    async addMember() {
+      if (!this.selectedUserId || !this.project?.id) {
+        this.showError('Пожалуйста, выберите пользователя')
+        return
+      }
+
+      this.loadingTeamAction = true
+      try {
+        const memberData = {
+          user_id: this.selectedUserId,
+          role: this.selectedRole
+        }
+
+        const response = await projectManagementApi.addProjectMember(this.project.id, memberData)
+        
+        // Обновляем только данные команды
+        await this.refreshTeamData()
+        
+        // Сбрасываем форму
+        this.selectedUserId = ''
+        this.selectedRole = 'member'
+        
+        this.showSuccess('Участник добавлен в команду проекта!')
+      } catch (error) {
+        console.error('Ошибка добавления участника:', error)
+        
+        let errorMessage = 'Ошибка добавления участника'
+        if (error.response?.data) {
+          if (typeof error.response.data === 'object') {
+            const errors = []
+            for (const [field, messages] of Object.entries(error.response.data)) {
+              if (Array.isArray(messages)) {
+                errors.push(`${field}: ${messages.join(', ')}`)
+              } else {
+                errors.push(`${field}: ${messages}`)
+              }
+            }
+            if (errors.length > 0) {
+              errorMessage += ':\n' + errors.join('\n')
+            }
+          } else {
+            errorMessage += ': ' + error.response.data
+          }
+        }
+        
+        this.showError(errorMessage)
+      } finally {
+        this.loadingTeamAction = false
+      }
+    },
+
+    async removeMember(member) {
+      if (!member?.user?.id || !this.project?.id) {
+        this.showError('Ошибка: данные участника или проекта недоступны')
+        return
+      }
+
+      const userName = this.getUserDisplayName(member.user)
+      const confirmed = await this.showConfirmDialog({
+        title: 'Исключение из команды',
+        message: `Вы уверены, что хотите исключить ${userName} из команды проекта?`,
+        confirmText: 'Исключить',
+        cancelText: 'Отмена',
+        variant: 'danger'
+      })
+
+      if (!confirmed) {
+        this.closeConfirmDialog()
+        return
+      }
+
+      try {
+        await projectManagementApi.removeProjectMember(this.project.id, member.user.id)
+        this.closeConfirmDialog()
+        
+        // Обновляем данные команды
+        await this.refreshTeamData()
+        
+        this.showSuccess('Участник исключен из команды проекта!')
+      } catch (error) {
+        console.error('Ошибка удаления участника:', error)
+        this.closeConfirmDialog()
+        this.showError('Ошибка исключения участника из команды')
+      }
+    },
+
+    getRoleText(role) {
+      const roles = {
+        'member': 'Участник',
+        'lead': 'Ведущий',
+        'observer': 'Наблюдатель'
+      }
+      return roles[role] || role
+    },
+
+    getRoleClass(role) {
+      const classes = {
+        'member': 'member-role',
+        'lead': 'lead-role',
+        'observer': 'observer-role'
+      }
+      return classes[role] || 'member-role'
+    },
+
+    getRoleBadgeClass(role) {
+      const classes = {
+        'member': 'bg-secondary',
+        'lead': 'bg-warning',
+        'observer': 'bg-info'
+      }
+      return classes[role] || 'bg-secondary'
+    },
+
+    getUserDisplayName(user) {
+      if (!user) return 'Неизвестный пользователь'
+      
+      if (user.full_name) {
+        return user.full_name
+      }
+      
+      if (user.first_name || user.last_name) {
+        return `${user.first_name || ''} ${user.last_name || ''}`.trim()
+      }
+      
+      return user.username || user.email || 'Пользователь'
+    },
+
+    getAvatarUrl(user) {
+      if (!user) return '/default-avatar.png'
+      
+      // Если есть URL аватара, используем его
+      if (user.avatar) {
+        return user.avatar
+      }
+      
+      // Генерируем аватар на основе инициалов
+      const name = this.getUserDisplayName(user)
+      const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      
+      // Можно использовать сервис для генерации аватаров на основе инициалов
+      // Например: https://ui-avatars.com/
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&size=40&background=007bff&color=fff`
+    },
+
+    async refreshTeamData() {
+      // Принудительное обновление только данных команды
+      if (!this.project?.id) return
+      
+      try {
+        const response = await projectManagementApi.getProject(this.project.id)
+        
+        // Обновляем только поле memberships
+        if (this.project) {
+          this.project.memberships = response.data.memberships || []
+        }
+      } catch (error) {
+        console.error('Ошибка обновления команды:', error)
+        this.showError('Ошибка обновления данных команды')
+      }
     }
   }
 }
@@ -1329,6 +1773,14 @@ export default {
 
 // Секция команды
 .team-card {
+  .card-header {
+    justify-content: space-between;
+    
+    .btn {
+      margin-left: auto;
+    }
+  }
+  
   .team-members {
     display: flex;
     flex-direction: column;
@@ -1341,6 +1793,7 @@ export default {
       padding: 0.75rem;
       background: var(--bs-gray-100);
       border-radius: 8px;
+      position: relative;
       
       .member-avatar {
         width: 40px;
@@ -1352,6 +1805,8 @@ export default {
       }
       
       .member-info {
+        flex: 1;
+        
         .member-name {
           font-weight: 600;
           color: var(--bs-heading-color);
@@ -1359,10 +1814,122 @@ export default {
         
         .member-role {
           font-size: 0.75rem;
-          color: var(--bs-secondary-color);
           text-transform: uppercase;
           letter-spacing: 0.5px;
+          
+          &.owner-role {
+            color: var(--bs-success);
+            font-weight: 600;
+          }
+          
+          &.manager-role {
+            color: var(--bs-primary);
+            font-weight: 600;
+          }
+          
+          &.lead-role {
+            color: var(--bs-warning);
+            font-weight: 600;
+          }
+          
+          &.member-role {
+            color: var(--bs-secondary);
+          }
+          
+          &.observer-role {
+            color: var(--bs-info);
+          }
         }
+      }
+      
+      .member-actions {
+        display: flex;
+        gap: 0.25rem;
+      }
+    }
+    
+    .empty-team {
+      text-align: center;
+      padding: 2rem;
+      
+      .empty-icon {
+        color: var(--bs-gray-400);
+        margin-bottom: 1rem;
+      }
+      
+      p {
+        color: var(--bs-secondary-color);
+        margin-bottom: 1rem;
+      }
+    }
+  }
+}
+
+// Модальное окно управления командой
+#teamModal {
+  .modal-body {
+    .current-team {
+      max-height: 300px;
+      overflow-y: auto;
+      
+      .team-member-modal {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: var(--bs-gray-100);
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        
+        .member-avatar-small {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+        
+        .member-info-modal {
+          flex: 1;
+          
+          .member-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--bs-heading-color);
+          }
+          
+          .member-role {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            
+            &.owner-role {
+              color: var(--bs-success);
+            }
+            
+            &.manager-role {
+              color: var(--bs-primary);
+            }
+            
+            &.lead-role {
+              color: var(--bs-warning);
+            }
+            
+            &.member-role {
+              color: var(--bs-secondary);
+            }
+            
+            &.observer-role {
+              color: var(--bs-info);
+            }
+          }
+        }
+      }
+    }
+    
+    .add-member-form {
+      .form-label {
+        font-weight: 600;
+        color: var(--bs-heading-color);
       }
     }
   }

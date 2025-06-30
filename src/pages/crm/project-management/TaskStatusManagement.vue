@@ -3,6 +3,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h5 class="mb-0">
         <i class="fas fa-tasks me-2"></i>Управление статусами задач
+        <span class="badge bg-secondary ms-2">{{ statuses.length }} записей</span>
       </h5>
       <button class="btn btn-primary" @click="showCreateModal">
         <i class="fas fa-plus me-2"></i>Добавить статус
@@ -35,17 +36,14 @@
               </span>
             </td>
             <td>{{ status.order }}</td>
-            <td>
-              <i v-if="status.is_default" class="fas fa-check text-success"></i>
-              <i v-else class="fas fa-times text-muted"></i>
+            <td class="text-center">
+              <input type="checkbox" class="form-check-input" :checked="getBoolValue(status.is_default)" disabled>
             </td>
-            <td>
-              <i v-if="status.is_final" class="fas fa-check text-success"></i>
-              <i v-else class="fas fa-times text-muted"></i>
+            <td class="text-center">
+              <input type="checkbox" class="form-check-input" :checked="getBoolValue(status.is_final)" disabled>
             </td>
-            <td>
-              <i v-if="status.is_active" class="fas fa-check text-success"></i>
-              <i v-else class="fas fa-times text-danger"></i>
+            <td class="text-center">
+              <input type="checkbox" class="form-check-input" :checked="getBoolValue(status.is_active)" disabled>
             </td>
             <td class="actions-cell">
               <div class="action-buttons">
@@ -185,6 +183,8 @@ export default {
         this.isLoading = true
         const response = await projectManagementApi.getTaskStatuses()
         this.statuses = response.data.results || response.data
+        
+
       } catch (error) {
         console.error('Ошибка загрузки статусов:', error)
         this.showError('Ошибка загрузки статусов')
@@ -278,6 +278,17 @@ export default {
       const b = parseInt(hexColor.slice(5, 7), 16)
       const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
       return luminance > 0.5 ? '#000000' : '#ffffff'
+    },
+
+    getBoolValue(value) {
+      // Функция для корректного преобразования значения в boolean
+      if (value === null || value === undefined) return false
+      if (typeof value === 'boolean') return value
+      if (typeof value === 'string') {
+        return value.toLowerCase() === 'true' || value === '1'
+      }
+      if (typeof value === 'number') return value === 1
+      return Boolean(value)
     }
   }
 }
@@ -328,5 +339,11 @@ code {
   color: var(--bs-primary);
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
+}
+
+/* Стили для чекбоксов в таблице */
+.form-check-input {
+  pointer-events: none;
+  cursor: default;
 }
 </style> 

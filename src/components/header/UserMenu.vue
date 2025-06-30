@@ -1,15 +1,32 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted, nextTick } from 'vue'
 import { CircleUserRound, Power } from 'lucide-vue-next'
 import { useUserStore } from '@/stores/userStore.js'
 import DefaultAvatar from '@/components/DefaultAvatar.vue'
+import { Dropdown } from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 const userStore = useUserStore()
+const dropdownElement = ref(null)
+let dropdownInstance = null
 
 // Инициализируем пользователя при загрузке компонента
 onMounted(async () => {
   if (!userStore.isInitialized) {
     await userStore.initializeUser()
+  }
+  
+  // Инициализируем Bootstrap dropdown
+  await nextTick()
+  if (dropdownElement.value) {
+    dropdownInstance = new Dropdown(dropdownElement.value)
+  }
+})
+
+// Очищаем instance при размонтировании
+onUnmounted(() => {
+  if (dropdownInstance) {
+    dropdownInstance.dispose()
+    dropdownInstance = null
   }
 })
 
@@ -79,6 +96,7 @@ const userDropdownMenu = ref([
 <template>
   <div class="dropdown">
     <div
+      ref="dropdownElement"
       class="tools__avatar avatar"
       data-bs-toggle="dropdown"
       aria-expanded="false"

@@ -3,6 +3,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h5 class="mb-0">
         <i class="fas fa-exclamation-triangle me-2"></i>Управление приоритетами проектов
+        <span class="badge bg-secondary ms-2">{{ priorities.length }} записей</span>
       </h5>
       <button class="btn btn-primary" @click="showCreateModal">
         <i class="fas fa-plus me-2"></i>Добавить приоритет
@@ -17,7 +18,7 @@
             <th>Название</th>
             <th>Код</th>
             <th>Цвет</th>
-            <th>Уровень</th>
+            <th>Порядок</th>
             <th>По умолчанию</th>
             <th>Активен</th>
             <th>Действия</th>
@@ -34,17 +35,14 @@
             </td>
             <td>
               <span class="priority-level">
-                <i v-for="i in priority.level" :key="i" class="fas fa-star text-warning"></i>
-                <i v-for="i in (4 - priority.level)" :key="i + priority.level" class="far fa-star text-muted"></i>
+                {{ priority.level }}
               </span>
             </td>
-            <td>
-              <i v-if="priority.is_default" class="fas fa-check text-success"></i>
-              <i v-else class="fas fa-times text-muted"></i>
+            <td class="text-center">
+              <input type="checkbox" class="form-check-input" :checked="getBoolValue(priority.is_default)" disabled>
             </td>
-            <td>
-              <i v-if="priority.is_active" class="fas fa-check text-success"></i>
-              <i v-else class="fas fa-times text-danger"></i>
+            <td class="text-center">
+              <input type="checkbox" class="form-check-input" :checked="getBoolValue(priority.is_active)" disabled>
             </td>
             <td class="actions-cell">
               <div class="action-buttons">
@@ -95,7 +93,7 @@
               </div>
               
               <div class="mb-3">
-                <label class="form-label">Уровень приоритета (1-4)</label>
+                <label class="form-label">Порядок (1-4)</label>
                 <input type="number" class="form-control" v-model.number="formData.level" min="1" max="4">
                 <div class="form-text">1 - самый низкий, 4 - самый высокий</div>
               </div>
@@ -175,6 +173,8 @@ export default {
         this.isLoading = true
         const response = await projectManagementApi.getProjectPriorities()
         this.priorities = response.data.results || response.data
+        
+
       } catch (error) {
         console.error('Ошибка загрузки приоритетов:', error)
         this.showError('Ошибка загрузки приоритетов')
@@ -267,6 +267,17 @@ export default {
       const b = parseInt(hexColor.slice(5, 7), 16)
       const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
       return luminance > 0.5 ? '#000000' : '#ffffff'
+    },
+
+    getBoolValue(value) {
+      // Функция для корректного преобразования значения в boolean
+      if (value === null || value === undefined) return false
+      if (typeof value === 'boolean') return value
+      if (typeof value === 'string') {
+        return value.toLowerCase() === 'true' || value === '1'
+      }
+      if (typeof value === 'number') return value === 1
+      return Boolean(value)
     }
   }
 }
@@ -321,5 +332,11 @@ code {
   color: var(--bs-primary);
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
+}
+
+/* Стили для чекбоксов в таблице */
+.form-check-input {
+  pointer-events: none;
+  cursor: default;
 }
 </style> 

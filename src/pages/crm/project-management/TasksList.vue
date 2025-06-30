@@ -12,12 +12,12 @@
     <div class="pm-filters-card">
       <div class="card-body">
         <div class="row g-3">
-          <div class="col-md-3">
+          <div class="col-lg-2 col-md-3">
             <label class="form-label"><i class="fas fa-search me-1"></i>Поиск</label>
             <input type="text" class="form-control" v-model="filters.search" @input="debouncedSearch" 
                    placeholder="Поиск по названию...">
           </div>
-          <div class="col-md-2">
+          <div class="col-lg-2 col-md-3">
             <label class="form-label">Статус</label>
             <select class="form-select" v-model="filters.status" @change="loadTasks" :disabled="loadingStatuses">
               <option value="">Все статусы</option>
@@ -27,7 +27,7 @@
               </option>
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-lg-2 col-md-3">
             <label class="form-label">Приоритет</label>
             <select class="form-select" v-model="filters.priority" @change="loadTasks" :disabled="loadingStatuses">
               <option value="">Все приоритеты</option>
@@ -37,7 +37,7 @@
               </option>
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-lg-2 col-md-3">
             <label class="form-label">Проект</label>
             <select class="form-select" v-model="filters.project" @change="loadTasks">
               <option value="">Все проекты</option>
@@ -46,7 +46,16 @@
               </option>
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-lg-2 col-md-3">
+            <label class="form-label">Исполнитель</label>
+            <select class="form-select" v-model="filters.assignee" @change="onAssigneeChange">
+              <option value="">Все исполнители</option>
+              <option v-for="user in users" :key="user.id" :value="user.id">
+                {{ user.full_name || user.username }}
+              </option>
+            </select>
+          </div>
+          <div class="col-lg-2 col-md-3">
             <label class="form-label">Сортировка</label>
             <select class="form-select" v-model="filters.ordering" @change="loadTasks">
               <option value="-created_at">По дате создания ↓</option>
@@ -55,13 +64,17 @@
               <option value="-due_date">По сроку ↓</option>
               <option value="priority">По приоритету ↑</option>
               <option value="-priority">По приоритету ↓</option>
+              <option value="assignee">По исполнителю ↑</option>
+              <option value="-assignee">По исполнителю ↓</option>
             </select>
           </div>
-          <div class="col-md-1 d-flex align-items-end">
+        </div>
+        <div class="row g-3 mt-2">
+          <div class="col-12 d-flex align-items-center">
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" v-model="filters.my_tasks" @change="loadTasks" id="myTasksFilter">
+              <input class="form-check-input" type="checkbox" v-model="filters.my_tasks" @change="onMyTasksChange" id="myTasksFilter">
               <label class="form-check-label" for="myTasksFilter">
-                Мои
+                Показать только мои задачи
               </label>
             </div>
           </div>
@@ -112,10 +125,7 @@
                     <p class="task-description mb-0" v-if="task.description">
                       {{ truncateText(task.description, 80) }}
                     </p>
-                    <div class="task-badges mt-2" v-if="task.comment_count || task.attachment_count">
-                      <span class="badge bg-light text-dark me-2" v-if="task.comment_count">
-                        <i class="fas fa-comment me-1"></i>{{ task.comment_count }}
-                      </span>
+                    <div class="task-badges mt-2" v-if="task.attachment_count">
                       <span class="badge bg-light text-dark" v-if="task.attachment_count">
                         <i class="fas fa-paperclip me-1"></i>{{ task.attachment_count }}
                       </span>
@@ -291,9 +301,6 @@
           </div>
           <div class="modal-footer border-top">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Отменить</button>
-            <button type="button" class="btn btn-danger" v-if="isEditing" @click="confirmDeleteTask">
-              <i class="fas fa-trash me-2"></i>Удалить
-            </button>
             <button type="button" class="btn btn-primary" @click="submitTask" 
                     :disabled="!currentTask.title || !currentTask.project_id">
               <i class="fas fa-save me-2"></i>{{ isEditing ? 'Сохранить' : 'Создать' }}
@@ -307,106 +314,179 @@
     <div class="modal fade" id="taskViewModal" tabindex="-1">
       <div class="modal-dialog modal-lg">
         <div class="modal-content border-0">
-          <div class="modal-header border-bottom">
-            <h5 class="modal-title">
-              <i class="fas fa-eye me-2"></i>{{ selectedTask.title }}
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <div class="modal-header bg-light border-bottom">
+            <div class="d-flex align-items-center gap-3 w-100">
+              <div class="icon-wrapper bg-primary bg-opacity-10 p-2 rounded-circle flex-shrink-0">
+                <i class="fas fa-clipboard-check fa-lg text-primary"></i>
+              </div>
+              <div class="flex-grow-1 overflow-hidden">
+                <h5 class="modal-title mb-0 text-truncate" :title="selectedTask.title">{{ selectedTask.title }}</h5>
+              </div>
+            </div>
+            <button type="button" class="btn-close flex-shrink-0 ms-3" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body p-4">
-            <div class="row g-4">
-              <div class="col-12" v-if="selectedTask.description">
-                <div class="info-section">
-                  <h6 class="text-muted mb-2">Описание</h6>
-                  <p class="mb-0">{{ selectedTask.description }}</p>
-                </div>
+            <div class="task-view-content">
+              <!-- Статус и приоритет -->
+              <div class="mb-4 d-flex gap-3">
+                <span class="badge rounded-pill px-3 py-2" :class="getStatusClass(selectedTask.status)">
+                  <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>
+                  {{ getStatusText(selectedTask.status) }}
+                </span>
+                <span class="badge rounded-pill px-3 py-2" :class="getPriorityClass(selectedTask.priority)">
+                  <i class="fas fa-flag me-1"></i>
+                  {{ getPriorityText(selectedTask.priority) }}
+                </span>
               </div>
-              
-              <div class="col-md-6">
-                <div class="info-section">
-                  <h6 class="text-muted mb-2">Информация</h6>
-                  <div class="info-list">
-                    <div class="info-item">
-                      <i class="fas fa-folder text-primary me-2"></i>
-                      <span class="text-muted me-2">Проект:</span>
-                      <strong>{{ selectedTask.project?.name || 'Без проекта' }}</strong>
+
+              <!-- Описание -->
+              <div class="description-section mb-4 p-3 bg-light rounded" v-if="selectedTask.description">
+                <h6 class="text-uppercase text-muted small mb-2">
+                  <i class="fas fa-align-left me-2"></i>Описание
+                </h6>
+                <p class="mb-0 text-dark">{{ selectedTask.description }}</p>
+              </div>
+
+              <!-- Основная информация в карточках -->
+              <div class="row g-3 mb-4">
+                <!-- Проект -->
+                <div class="col-md-6">
+                  <div class="info-card h-100 p-3 border rounded">
+                    <div class="d-flex align-items-center mb-2">
+                      <div class="icon-sm bg-primary bg-opacity-10 p-2 rounded me-2">
+                        <i class="fas fa-folder text-primary"></i>
+                      </div>
+                      <h6 class="mb-0 text-muted small">
+                        <i class="fas fa-project-diagram me-1"></i>ПРОЕКТ
+                      </h6>
                     </div>
-                    <div class="info-item">
-                      <i class="fas fa-user text-primary me-2"></i>
-                      <span class="text-muted me-2">Исполнитель:</span>
-                      <strong>{{ selectedTask.assignee?.full_name || 'Не назначен' }}</strong>
+                    <div class="fw-bold text-dark">
+                      {{ selectedTask.project?.name || 'Без проекта' }}
                     </div>
-                    <div class="info-item">
-                      <i class="fas fa-clock text-primary me-2"></i>
-                      <span class="text-muted me-2">Создана:</span>
-                      <strong>{{ formatDateTime(selectedTask.created_at) }}</strong>
-                      <span v-if="selectedTask.creator" class="text-muted"> ({{ selectedTask.creator.full_name }})</span>
+                    <div class="project-color-bar mt-2" v-if="selectedTask.project" 
+                         :style="{ backgroundColor: selectedTask.project.color || '#007bff' }">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Исполнитель -->
+                <div class="col-md-6">
+                  <div class="info-card h-100 p-3 border rounded">
+                    <div class="d-flex align-items-center mb-2">
+                      <div class="icon-sm bg-success bg-opacity-10 p-2 rounded me-2">
+                        <i class="fas fa-user text-success"></i>
+                      </div>
+                      <h6 class="mb-0 text-muted small">
+                        <i class="fas fa-user-check me-1"></i>ИСПОЛНИТЕЛЬ
+                      </h6>
+                    </div>
+                    <div class="d-flex align-items-center" v-if="selectedTask.assignee">
+                      <img :src="getAvatarUrl(selectedTask.assignee)" 
+                           :alt="selectedTask.assignee.full_name || selectedTask.assignee.username"
+                           class="rounded-circle me-2"
+                           style="width: 32px; height: 32px; object-fit: cover;">
+                      <div class="fw-bold text-dark">
+                        {{ selectedTask.assignee?.full_name || 'Не назначен' }}
+                      </div>
+                    </div>
+                    <div v-else class="fw-bold text-muted">
+                      <i class="fas fa-user-slash me-2"></i>Не назначен
                     </div>
                   </div>
                 </div>
               </div>
-              
-              <div class="col-md-6">
-                <div class="info-section">
-                  <h6 class="text-muted mb-2">Статус и сроки</h6>
-                  <div class="info-list">
-                    <div class="info-item">
-                      <span class="text-muted me-2">Статус:</span>
-                      <span class="badge rounded-pill" :class="getStatusClass(selectedTask.status)">
-                        {{ getStatusText(selectedTask.status) }}
-                      </span>
+
+              <!-- Даты и время -->
+              <div class="row g-3 mb-4">
+                <!-- Сроки -->
+                <div class="col-md-6">
+                  <div class="info-card h-100 p-3 border rounded">
+                    <div class="d-flex align-items-center mb-2">
+                      <div class="icon-sm bg-warning bg-opacity-10 p-2 rounded me-2">
+                        <i class="fas fa-calendar-alt text-warning"></i>
+                      </div>
+                      <h6 class="mb-0 text-muted small">
+                        <i class="fas fa-calendar-check me-1"></i>СРОКИ
+                      </h6>
                     </div>
-                    <div class="info-item">
-                      <span class="text-muted me-2">Приоритет:</span>
-                      <span class="badge rounded-pill" :class="getPriorityClass(selectedTask.priority)">
-                        {{ getPriorityText(selectedTask.priority) }}
-                      </span>
-                    </div>
-                    <div class="info-item" v-if="selectedTask.due_date">
-                      <i class="fas fa-calendar-check text-primary me-2"></i>
-                      <span class="text-muted me-2">Срок:</span>
-                      <strong :class="getDueDateClass(selectedTask.due_date, selectedTask.status)">
+                    <div v-if="selectedTask.due_date">
+                      <div class="mb-1">
+                        <small class="text-muted">
+                          <i class="fas fa-hourglass-end me-1"></i>Срок выполнения:
+                        </small>
+                      </div>
+                      <div class="fw-bold" :class="getDueDateClass(selectedTask.due_date, selectedTask.status)">
+                        <i class="fas fa-calendar-day me-1"></i>
                         {{ formatDateTime(selectedTask.due_date) }}
-                      </strong>
+                      </div>
+                    </div>
+                    <div v-else class="fw-bold text-muted">
+                      <i class="fas fa-calendar-times me-2"></i>Срок не установлен
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Время -->
+                <div class="col-md-6" v-if="selectedTask.estimated_hours || selectedTask.actual_hours">
+                  <div class="info-card h-100 p-3 border rounded">
+                    <div class="d-flex align-items-center mb-2">
+                      <div class="icon-sm bg-info bg-opacity-10 p-2 rounded me-2">
+                        <i class="fas fa-clock text-info"></i>
+                      </div>
+                      <h6 class="mb-0 text-muted small">
+                        <i class="fas fa-hourglass-half me-1"></i>ВРЕМЯ
+                      </h6>
+                    </div>
+                    <div class="d-flex justify-content-around">
+                      <div v-if="selectedTask.estimated_hours" class="text-center">
+                        <div class="fw-bold text-info">
+                          <i class="fas fa-hourglass-start me-1"></i>{{ selectedTask.estimated_hours }}ч
+                        </div>
+                        <small class="text-muted">Оценка</small>
+                      </div>
+                      <div v-if="selectedTask.actual_hours" class="text-center">
+                        <div class="fw-bold text-success">
+                          <i class="fas fa-business-time me-1"></i>{{ selectedTask.actual_hours }}ч
+                        </div>
+                        <small class="text-muted">Потрачено</small>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-              
-              <div class="col-12" v-if="selectedTask.estimated_hours || selectedTask.actual_hours">
-                <div class="info-section">
-                  <h6 class="text-muted mb-2">Время</h6>
-                  <div class="row">
-                    <div class="col-md-6" v-if="selectedTask.estimated_hours">
-                      <div class="time-card">
-                        <i class="fas fa-hourglass-half text-info"></i>
-                        <div>
-                          <div class="time-value">{{ selectedTask.estimated_hours }} ч.</div>
-                          <div class="time-label">Оценка времени</div>
-                        </div>
-                      </div>
+
+              <!-- Метаинформация -->
+              <div class="meta-info p-3 bg-light rounded">
+                <div class="row g-3">
+                  <div class="col-6">
+                    <small class="text-muted d-block mb-1">
+                      <i class="fas fa-plus-circle me-1"></i>Создана
+                    </small>
+                    <div class="small">
+                      {{ formatDateTime(selectedTask.created_at) }}
+                      <span v-if="selectedTask.creator" class="text-muted">
+                        ({{ selectedTask.creator.full_name }})
+                      </span>
                     </div>
-                    <div class="col-md-6" v-if="selectedTask.actual_hours">
-                      <div class="time-card">
-                        <i class="fas fa-clock text-success"></i>
-                        <div>
-                          <div class="time-value">{{ selectedTask.actual_hours }} ч.</div>
-                          <div class="time-label">Потрачено времени</div>
-                        </div>
-                      </div>
-                    </div>
+                  </div>
+                  <div class="col-6" v-if="selectedTask.updated_at">
+                    <small class="text-muted d-block mb-1">
+                      <i class="fas fa-edit me-1"></i>Обновлена
+                    </small>
+                    <div class="small">{{ formatDateTime(selectedTask.updated_at) }}</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="modal-footer border-top">
-            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Закрыть</button>
-            <router-link :to="`/crm/project-management/task/${selectedTask.id}`" class="btn btn-info">
-              <i class="fas fa-external-link-alt me-2"></i>Подробно
-            </router-link>
-            <button type="button" class="btn btn-primary" @click="editTaskFromView">
-              <i class="fas fa-edit me-2"></i>Редактировать
+          <div class="modal-footer bg-light border-top">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="fas fa-times me-2"></i>Закрыть
+            </button>
+            <button v-if="selectedTask.project" 
+                    @click="goToProject"
+                    class="btn btn-primary">
+              <i class="fas fa-folder-open me-2"></i>Перейти к проекту
             </button>
           </div>
         </div>
@@ -448,8 +528,9 @@ export default {
         status: '',
         priority: '',
         project: '',
+        assignee: '', // Добавляем фильтр по исполнителю
         ordering: '-created_at',
-        my_tasks: false
+        my_tasks: false // По умолчанию false, чтобы не конфликтовать с другими фильтрами
       },
       pagination: {
         current_page: 1,
@@ -567,6 +648,24 @@ export default {
         this.pagination.current_page = page
         this.loadTasks()
       }
+    },
+    
+    onAssigneeChange() {
+      // Когда выбран конкретный исполнитель, сбрасываем "Мои задачи"
+      if (this.filters.assignee) {
+        this.filters.my_tasks = false
+      }
+      this.pagination.current_page = 1  // Сбрасываем на первую страницу
+      this.loadTasks()
+    },
+    
+    onMyTasksChange() {
+      // Когда включен "Мои задачи", сбрасываем фильтр по исполнителю
+      if (this.filters.my_tasks) {
+        this.filters.assignee = ''
+      }
+      this.pagination.current_page = 1  // Сбрасываем на первую страницу
+      this.loadTasks()
     },
 
     async loadStatusesAndPriorities() {
@@ -885,6 +984,21 @@ export default {
           }
         }, 500)
       }
+    },
+
+    goToProject() {
+      if (this.selectedTask.project) {
+        // Закрываем модальное окно перед переходом
+        const modal = Modal.getInstance(document.getElementById('taskViewModal'))
+        if (modal) {
+          modal.hide()
+        }
+        
+        // Делаем переход после небольшой задержки, чтобы модальное окно успело закрыться
+        setTimeout(() => {
+          this.$router.push(`/crm/project-management/project/${this.selectedTask.project.id}`)
+        }, 300)
+      }
     }
   }
 }
@@ -911,10 +1025,16 @@ export default {
   @include pm-card;
   padding: 0;
   overflow: hidden;
+  
+  .table-responsive {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
 }
 
 .tasks-table {
   margin-bottom: 0;
+  table-layout: fixed;
   
   thead {
     background: var(--bs-light);
@@ -923,21 +1043,21 @@ export default {
       border-top: none;
       border-bottom: 2px solid var(--bs-border-color);
       font-weight: $font-weight-bold;
-      font-size: $font-size-small;
+      font-size: 0.75rem;
       color: var(--bs-secondary-color);
-      padding: 1rem;
+      padding: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       
-              &:first-child {
-          width: 28%; // Еще немного уменьшили для задач
-        }
-              &:nth-child(2) {
-          width: 22%; // Увеличили до 22% для проектов
-          min-width: 160px; // Увеличили минимальную ширину
-        }
+      &:first-child {
+        width: 24%;
+      }
+      &:nth-child(2) {
+        width: 18%;
+        min-width: 140px;
+      }
       &:nth-child(3) {
-        width: 15%;
+        width: 12%;
       }
       &:nth-child(4) {
         width: 10%;
@@ -946,10 +1066,10 @@ export default {
         width: 10%;
       }
       &:nth-child(6) {
-        width: 10%;
+        width: 16%;
       }
       &:last-child {
-        width: 8%;
+        width: 10%;
         text-align: center;
       }
     }
@@ -961,13 +1081,24 @@ export default {
     
     &:hover {
       background-color: var(--bs-light);
-      transform: translateX(2px);
     }
     
     td {
       vertical-align: middle;
-      padding: 1rem;
+      padding: 0.75rem;
       border-bottom: 1px solid var(--bs-gray-200);
+      overflow: hidden;
+      word-wrap: break-word;
+      
+      &.task-cell-main {
+        white-space: normal;
+      }
+      
+      &.project-cell,
+      &.actions-cell {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
     }
   }
   
@@ -984,6 +1115,17 @@ export default {
       color: var(--bs-secondary-color);
       line-height: 1.5;
       margin-bottom: 0;
+    }
+    
+    .task-badges {
+      display: flex;
+      gap: 0.25rem;
+      margin-top: 0.5rem;
+      
+      .badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+      }
     }
   }
   
@@ -1031,19 +1173,25 @@ export default {
   .assignee-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    max-width: 100%;
     
     .assignee-avatar {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid var(--bs-gray-200);
+      flex-shrink: 0;
     }
     
     .assignee-name {
-      font-size: $font-size-small;
+      font-size: 0.8rem;
       color: var(--bs-heading-color);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
     }
   }
 }
@@ -1158,6 +1306,83 @@ export default {
         width: 20px;
         text-align: center;
       }
+    }
+  }
+}
+
+.time-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bs-light);
+  border-radius: $radius-small;
+  
+  i {
+    font-size: 2rem;
+  }
+  
+  .time-value {
+    font-size: 1.5rem;
+    font-weight: $font-weight-bold;
+    color: var(--bs-heading-color);
+  }
+  
+  .time-label {
+    font-size: $font-size-small;
+    color: var(--bs-secondary-color);
+  }
+}
+
+// Новые стили для улучшенного модального окна
+.task-view-content {
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .icon-sm {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .info-card {
+    transition: all 0.2s ease;
+    border-color: var(--bs-gray-300) !important;
+    
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transform: translateY(-1px);
+    }
+  }
+  
+  .project-color-bar {
+    height: 3px;
+    border-radius: 2px;
+    width: 100%;
+  }
+  
+  .description-section {
+    background-color: var(--bs-gray-100) !important;
+    border: 1px solid var(--bs-gray-200);
+  }
+  
+  .meta-info {
+    background-color: var(--bs-gray-100) !important;
+    border: 1px solid var(--bs-gray-200);
+    
+    small {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
   }
 }

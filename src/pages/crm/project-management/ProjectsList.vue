@@ -34,7 +34,7 @@
               </option>
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-5">
             <label class="form-label">Сортировка</label>
             <select class="form-select" v-model="filters.ordering" @change="loadProjects">
               <option value="-created_at">По дате создания ↓</option>
@@ -44,15 +44,6 @@
               <option value="start_date">По дате начала ↑</option>
               <option value="-start_date">По дате начала ↓</option>
             </select>
-          </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" v-model="filters.my_projects" 
-                     @change="loadProjects" id="myProjectsFilter">
-              <label class="form-check-label" for="myProjectsFilter">
-                Только мои проекты
-              </label>
-            </div>
           </div>
         </div>
       </div>
@@ -306,8 +297,7 @@ export default {
         search: '',
         status: '',
         priority: '',
-        ordering: '-created_at',
-        my_projects: true
+        ordering: '-created_at'
       },
       pagination: {
         current_page: 1,
@@ -700,6 +690,39 @@ export default {
       .progress-value {
         font-weight: $font-weight-bold;
         color: var(--bs-primary);
+      }
+      
+      // Дополнительные стили для прогресс-бара
+      .pm-progress {
+        height: 6px;
+        background: #e9ecef;
+        border-radius: 3px;
+        overflow: hidden;
+        position: relative;
+        
+        .progress-bar {
+          height: 100%;
+          transition: width 0.3s ease;
+          border-radius: 3px;
+          position: relative;
+          
+          &.bg-success {
+            background-color: #28a745 !important;
+          }
+          
+          &.bg-warning {
+            background-color: #ffc107 !important;
+          }
+          
+          &.bg-danger {
+            background-color: #dc3545 !important;
+          }
+          
+          // Если класс не установлен, используем primary цвет
+          &:not(.bg-success):not(.bg-warning):not(.bg-danger) {
+            background-color: #007bff !important;
+          }
+        }
       }
     }
     

@@ -164,6 +164,7 @@
         "requiresAuth": true
       }
     },
+    
     "Shortcodes": {
       "path": "/shortcodes",
       "component": "@/pages/shortcodes/ParentLayout.vue",
@@ -237,6 +238,7 @@
         "requiresAuth": true
       }
     },
+
     "CmsAnyDepthPage": {
       "path": "/shortcodes/:parts(.*)+",
       "component": "@/pages/shortcodes/CmsPage.vue",
@@ -244,6 +246,7 @@
         "public": true
       }
     },
+
     "Categories": {
       "path": "/categories",
       "component": "@/pages/categories/ParentLayout.vue",
@@ -276,6 +279,7 @@
         "requiresAuth": true
       }
     },
+
     "SiteSettings": {
       "path": "/settings/site-settings",
       "component": "@/pages/cms/adp/settings/siteSettings/ParentLayout.vue",

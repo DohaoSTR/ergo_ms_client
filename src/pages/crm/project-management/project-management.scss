@@ -136,9 +136,30 @@ $pm-transition: 0.2s ease-in-out;
   background: var(--bs-secondary-bg);
   border-radius: 3px;
   overflow: hidden;
+  position: relative;
   
   .progress-bar {
+    height: 100%;
     transition: width 0.3s ease;
+    border-radius: 3px;
+    position: relative;
+    
+    &.bg-success {
+      background-color: #28a745;
+    }
+    
+    &.bg-warning {
+      background-color: #ffc107;
+    }
+    
+    &.bg-danger {
+      background-color: #dc3545;
+    }
+    
+    // Если класс не установлен, используем primary цвет
+    &:not(.bg-success):not(.bg-warning):not(.bg-danger) {
+      background-color: #007bff;
+    }
   }
 }
 
