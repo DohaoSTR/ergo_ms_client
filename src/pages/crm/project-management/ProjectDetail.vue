@@ -1,171 +1,194 @@
 <template>
-  <div class="project-detail">
-    <div class="pm-page-header d-flex justify-content-between align-items-center">
-      <div>
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb mb-2">
+  <div class="project-detail-page">
+    <!-- Заголовок страницы -->
+    <div class="page-header">
+      <div class="header-content">
+        <nav aria-label="breadcrumb" class="breadcrumb-nav">
+          <ol class="breadcrumb">
             <li class="breadcrumb-item">
-              <router-link to="/crm/project-management/dashboard">
-                <i class="fas fa-home me-1"></i>Дашборд
+              <router-link to="/crm/project-management" class="breadcrumb-link">
+                <Home :size="16" />
+                <span>Управление проектами</span>
               </router-link>
             </li>
             <li class="breadcrumb-item">
-              <router-link to="/crm/project-management/projects">
-                Проекты
+              <router-link :to="getBackRoute()" class="breadcrumb-link">
+                {{ getBackRouteTitle() }}
               </router-link>
             </li>
-            <li class="breadcrumb-item active" aria-current="page">
+            <li class="breadcrumb-item active">
               {{ project?.name || 'Загрузка...' }}
             </li>
           </ol>
         </nav>
-        <h2 class="mb-0">
-          <i class="fas fa-folder-open me-2" v-if="project" :style="{ color: project.color }"></i>
-          {{ project?.name || 'Загрузка проекта...' }}
-        </h2>
+        
+        <div class="project-title-section">
+          <div class="project-icon" v-if="project" :style="{ backgroundColor: project.color }">
+            <ListTodo :size="24" color="white" />
+          </div>
+          <div class="project-title">
+            <h1>{{ project?.name || 'Загрузка проекта...' }}</h1>
+            <div class="project-meta-badges" v-if="project">
+              <span class="badge status-badge" :class="getStatusClass(project.status)">
+                {{ getStatusText(project.status) }}
+              </span>
+              <span class="badge priority-badge" :class="getPriorityClass(project.priority)">
+                {{ getPriorityText(project.priority) }}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="d-flex gap-2" v-if="project">
-        <button class="btn btn-outline-secondary" @click="editProject" title="Редактировать проект">
-          <i class="fas fa-edit me-1"></i>Редактировать
+      
+      <div class="header-actions" v-if="project">
+        <button class="btn btn-outline-primary" @click="editProject" title="Редактировать проект">
+          <Edit :size="16" />
+          <span>Редактировать</span>
         </button>
         <button class="btn btn-primary" @click="createTask" title="Добавить задачу">
-          <i class="fas fa-plus me-2"></i>Добавить задачу
+          <Plus :size="16" />
+          <span>Добавить задачу</span>
         </button>
       </div>
     </div>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Загрузка...</span>
+    <!-- Состояние загрузки -->
+    <div v-if="loading" class="loading-state">
+      <div class="spinner-container">
+        <div class="spinner"></div>
+        <p>Загружаем данные проекта...</p>
       </div>
-      <p class="text-muted mt-3">Загружаем данные проекта...</p>
     </div>
 
-    <div v-else-if="error" class="alert alert-danger">
-      <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+    <!-- Состояние ошибки -->
+    <div v-else-if="error" class="error-state">
+      <AlertTriangle :size="48" class="error-icon" />
+      <h3>Ошибка загрузки</h3>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" @click="loadProject">Попробовать снова</button>
     </div>
 
-    <div v-else-if="project">
-      <!-- Информация о проекте -->
-      <div class="row g-4 mb-4">
-        <div class="col-lg-8">
-          <div class="project-info-card">
+    <!-- Основной контент -->
+    <div v-else-if="project" class="project-content">
+      <!-- Информационная секция -->
+      <div class="info-section">
+        <div class="info-grid">
+          <!-- Основная информация о проекте -->
+          <div class="info-card main-info">
             <div class="card-header">
-              <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Информация о проекте</h5>
+              <Info :size="20" />
+              <h3>Информация о проекте</h3>
             </div>
             <div class="card-body">
-              <div class="project-description mb-4">
-                <p class="mb-0">{{ project.description || 'Описание отсутствует' }}</p>
+              <div class="description-section">
+                <p class="description">{{ project.description || 'Описание отсутствует' }}</p>
               </div>
               
-              <div class="project-meta">
-                <div class="row g-3">
-                  <div class="col-sm-6 col-md-3">
-                    <div class="meta-item">
-                      <span class="meta-label">Статус</span>
-                      <span class="badge rounded-pill" :class="getStatusClass(project.status)">
-                        {{ getStatusText(project.status) }}
-                      </span>
-                    </div>
+              <div class="meta-grid">
+                <div class="meta-item">
+                  <div class="meta-icon">
+                    <Calendar :size="16" />
                   </div>
-                  <div class="col-sm-6 col-md-3">
-                    <div class="meta-item">
-                      <span class="meta-label">Приоритет</span>
-                      <span class="badge rounded-pill" :class="getPriorityClass(project.priority)">
-                        {{ getPriorityText(project.priority) }}
-                      </span>
-                    </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Дата начала</span>
+                    <span class="meta-value">{{ formatDate(project.start_date) || 'Не указана' }}</span>
                   </div>
-                  <div class="col-sm-6 col-md-3">
-                    <div class="meta-item">
-                      <span class="meta-label">Дата начала</span>
-                      <span class="meta-value">
-                        <i class="fas fa-calendar-alt text-muted me-1"></i>
-                        {{ formatDate(project.start_date) || 'Не указана' }}
-                      </span>
-                    </div>
+                </div>
+                
+                <div class="meta-item">
+                  <div class="meta-icon">
+                    <Clock :size="16" />
                   </div>
-                  <div class="col-sm-6 col-md-3">
-                    <div class="meta-item">
-                      <span class="meta-label">Дата окончания</span>
-                      <span class="meta-value">
-                        <i class="fas fa-calendar-check text-muted me-1"></i>
-                        {{ formatDate(project.end_date) || 'Не указана' }}
-                      </span>
-                    </div>
+                  <div class="meta-content">
+                    <span class="meta-label">Дата окончания</span>
+                    <span class="meta-value">{{ formatDate(project.end_date) || 'Не указана' }}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        
-        <div class="col-lg-4">
-          <div class="stats-card">
+          
+          <!-- Статистика проекта -->
+          <div class="info-card stats-card">
             <div class="card-header">
-              <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Статистика проекта</h5>
+              <PieChart :size="20" />
+              <h3>Статистика</h3>
             </div>
             <div class="card-body">
               <!-- Прогресс -->
-              <div class="progress-section mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <span class="text-muted">Общий прогресс</span>
-                  <span class="progress-percentage">{{ project.progress || 0 }}%</span>
+              <div class="progress-section">
+                <div class="progress-header">
+                  <span>Общий прогресс</span>
+                  <span class="progress-value">{{ project.progress || 0 }}%</span>
                 </div>
-                <div class="progress progress-lg">
-                  <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                <div class="progress-bar-container">
+                  <div class="progress-bar" 
                        :style="{ width: (project.progress || 0) + '%' }"
                        :class="getProgressClass(project.progress || 0)">
                   </div>
                 </div>
               </div>
               
-              <!-- Задачи -->
-              <div class="stats-items">
+              <!-- Статистика задач -->
+              <div class="stats-grid">
                 <div class="stat-item">
-                  <i class="fas fa-tasks text-primary"></i>
+                  <div class="stat-icon">
+                    <ListTodo :size="20" />
+                  </div>
                   <div class="stat-content">
                     <div class="stat-value">{{ project.task_count || 0 }}</div>
                     <div class="stat-label">Всего задач</div>
                   </div>
                 </div>
+                
                 <div class="stat-item">
-                  <i class="fas fa-check-circle text-success"></i>
+                  <div class="stat-icon completed">
+                    <CheckCircle :size="20" />
+                  </div>
                   <div class="stat-content">
                     <div class="stat-value">{{ project.completed_task_count || 0 }}</div>
                     <div class="stat-label">Выполнено</div>
                   </div>
                 </div>
+                
                 <div class="stat-item">
-                  <i class="fas fa-clock text-warning"></i>
+                  <div class="stat-icon in-progress">
+                    <Clock :size="20" />
+                  </div>
                   <div class="stat-content">
                     <div class="stat-value">{{ (project.task_count || 0) - (project.completed_task_count || 0) }}</div>
                     <div class="stat-label">В работе</div>
                   </div>
                 </div>
               </div>
-              
-              <!-- Команда -->
-              <div class="team-section mt-4" v-if="project.owner || project.manager">
-                <h6 class="text-muted mb-3">Команда проекта</h6>
-                <div class="team-members">
-                  <div class="team-member" v-if="project.owner">
-                    <img :src="getAvatarUrl(project.owner)" 
-                         :alt="getUserDisplayName(project.owner)"
-                         class="team-avatar">
-                    <div class="team-info">
-                      <div class="team-name">{{ getUserDisplayName(project.owner) }}</div>
-                      <div class="team-role">Владелец</div>
-                    </div>
+            </div>
+          </div>
+          
+          <!-- Команда проекта -->
+          <div class="info-card team-card" v-if="project.owner || project.manager">
+            <div class="card-header">
+              <Users :size="20" />
+              <h3>Команда проекта</h3>
+            </div>
+            <div class="card-body">
+              <div class="team-members">
+                <div class="team-member" v-if="project.owner">
+                  <img :src="getAvatarUrl(project.owner)" 
+                       :alt="getUserDisplayName(project.owner)"
+                       class="member-avatar">
+                  <div class="member-info">
+                    <div class="member-name">{{ getUserDisplayName(project.owner) }}</div>
+                    <div class="member-role">Владелец</div>
                   </div>
-                  <div class="team-member" v-if="project.manager">
-                    <img :src="getAvatarUrl(project.manager)" 
-                         :alt="getUserDisplayName(project.manager)"
-                         class="team-avatar">
-                    <div class="team-info">
-                      <div class="team-name">{{ getUserDisplayName(project.manager) }}</div>
-                      <div class="team-role">Менеджер</div>
-                    </div>
+                </div>
+                
+                <div class="team-member" v-if="project.manager">
+                  <img :src="getAvatarUrl(project.manager)" 
+                       :alt="getUserDisplayName(project.manager)"
+                       class="member-avatar">
+                  <div class="member-info">
+                    <div class="member-name">{{ getUserDisplayName(project.manager) }}</div>
+                    <div class="member-role">Менеджер</div>
                   </div>
                 </div>
               </div>
@@ -174,28 +197,35 @@
         </div>
       </div>
 
-      <!-- Задачи проекта -->
+      <!-- Секция задач -->
       <div class="tasks-section">
         <div class="section-header">
-          <h5 class="mb-0"><i class="fas fa-list-check me-2"></i>Задачи проекта</h5>
+          <div class="section-title">
+            <ListTodo :size="24" />
+            <h2>Задачи проекта</h2>
+          </div>
           <button class="btn btn-primary" @click="createTask">
-            <i class="fas fa-plus me-2"></i>Добавить задачу
+            <Plus :size="16" />
+            <span>Добавить задачу</span>
           </button>
         </div>
         
         <div class="tasks-content">
+          <!-- Пустое состояние -->
           <div v-if="tasks.length === 0" class="empty-state">
-            <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
-            <h5 class="text-muted">В проекте пока нет задач</h5>
-            <p class="text-muted mb-4">Создайте первую задачу для начала работы</p>
-            <button class="btn btn-primary btn-lg rounded-pill" @click="createTask">
-              <i class="fas fa-plus me-2"></i>Создать первую задачу
+            <ListTodo :size="64" class="empty-icon" />
+            <h3>В проекте пока нет задач</h3>
+            <p>Создайте первую задачу для начала работы</p>
+            <button class="btn btn-primary btn-lg" @click="createTask">
+              <Plus :size="20" />
+              <span>Создать первую задачу</span>
             </button>
           </div>
           
-          <div v-else class="tasks-table-wrapper">
+          <!-- Таблица задач -->
+          <div v-else class="tasks-table-container">
             <div class="table-responsive">
-              <table class="table table-hover tasks-table mb-0">
+              <table class="tasks-table">
                 <thead>
                   <tr>
                     <th>Задача</th>
@@ -208,43 +238,46 @@
                 </thead>
                 <tbody>
                   <tr v-for="task in tasks" :key="task.id" class="task-row">
-                    <td class="task-cell-main">
-                      <h6 class="task-title mb-1">{{ task.title }}</h6>
-                      <p class="task-description mb-0" v-if="task.description">
-                        {{ truncateText(task.description, 100) }}
-                      </p>
+                    <td class="task-cell">
+                      <div class="task-info">
+                        <h4 class="task-title">{{ task.title }}</h4>
+                        <p class="task-description" v-if="task.description">
+                          {{ truncateText(task.description, 100) }}
+                        </p>
+                      </div>
                     </td>
-                    <td>
+                    <td class="assignee-cell">
                       <div class="assignee-info" v-if="task.assignee">
                         <img :src="getAvatarUrl(task.assignee)" 
                              :alt="getUserDisplayName(task.assignee)"
                              class="assignee-avatar">
                         <span class="assignee-name">{{ getUserDisplayName(task.assignee) }}</span>
                       </div>
-                      <span v-else class="text-muted">Не назначен</span>
+                      <span v-else class="no-assignee">Не назначен</span>
                     </td>
-                    <td>
-                      <span class="badge rounded-pill" :class="getTaskStatusClass(task.status)">
+                    <td class="status-cell">
+                      <span class="badge status-badge" :class="getTaskStatusClass(task.status)">
                         {{ getTaskStatusText(task.status) }}
                       </span>
                     </td>
-                    <td>
-                      <span class="badge rounded-pill" :class="getPriorityClass(task.priority)">
+                    <td class="priority-cell">
+                      <span class="badge priority-badge" :class="getPriorityClass(task.priority)">
                         {{ getPriorityText(task.priority) }}
                       </span>
                     </td>
-                    <td>
+                    <td class="due-date-cell">
                       <span :class="getDueDateClass(task.due_date, task.status)">
-                        <i class="fas fa-clock me-1"></i>{{ formatDate(task.due_date) || '-' }}
+                        <Clock :size="14" />
+                        {{ formatDate(task.due_date) || '-' }}
                       </span>
                     </td>
-                    <td>
-                      <div class="btn-group btn-group-sm">
-                        <button class="btn btn-light" @click="editTask(task)" title="Редактировать">
-                          <i class="fas fa-edit"></i>
+                    <td class="actions-cell">
+                      <div class="action-buttons">
+                        <button class="btn btn-edit-icon" @click="editTask(task)" title="Редактировать">
+                          <Edit :size="14" />
                         </button>
-                        <button class="btn btn-light text-danger" @click="deleteTask(task)" title="Удалить">
-                          <i class="fas fa-trash"></i>
+                        <button class="btn btn-delete-icon" @click="deleteTask(task)" title="Удалить">
+                          <Trash2 :size="14" />
                         </button>
                       </div>
                     </td>
@@ -257,6 +290,7 @@
       </div>
     </div>
 
+    <!-- Модальные окна остаются без изменений -->
     <!-- Модальное окно редактирования проекта -->
     <div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -293,23 +327,22 @@
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label">Статус</label>
-                    <select class="form-select" v-model="currentProject.status">
-                      <option value="planning">Планирование</option>
-                      <option value="active">Активный</option>
-                      <option value="on_hold">Приостановлен</option>
-                      <option value="completed">Завершен</option>
-                      <option value="cancelled">Отменен</option>
+                    <select class="form-select" v-model="currentProject.status" :disabled="loadingStatuses">
+                      <option v-if="loadingStatuses">Загрузка...</option>
+                      <option v-else v-for="status in projectStatuses" :key="status.id" :value="status.code">
+                        {{ status.name }}
+                      </option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label">Приоритет</label>
-                    <select class="form-select" v-model="currentProject.priority">
-                      <option value="low">Низкий</option>
-                      <option value="medium">Средний</option>
-                      <option value="high">Высокий</option>
-                      <option value="urgent">Срочный</option>
+                    <select class="form-select" v-model="currentProject.priority" :disabled="loadingStatuses">
+                      <option v-if="loadingStatuses">Загрузка...</option>
+                      <option v-else v-for="priority in projectPriorities" :key="priority.id" :value="priority.code">
+                        {{ priority.name }}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -322,9 +355,6 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отменить</button>
-            <button type="button" class="btn btn-danger" @click="confirmDeleteProject">
-              Удалить проект
-            </button>
             <button type="button" class="btn btn-primary" @click="submitProject" :disabled="!currentProject.name">
               Сохранить
             </button>
@@ -374,23 +404,22 @@
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label">Статус</label>
-                    <select class="form-select" v-model="currentTask.status">
-                      <option value="todo">К выполнению</option>
-                      <option value="in_progress">В работе</option>
-                      <option value="review">На проверке</option>
-                      <option value="done">Выполнено</option>
-                      <option value="cancelled">Отменено</option>
+                    <select class="form-select" v-model="currentTask.status" :disabled="loadingStatuses">
+                      <option v-if="loadingStatuses">Загрузка...</option>
+                      <option v-else v-for="status in taskStatuses" :key="status.id" :value="status.code">
+                        {{ status.name }}
+                      </option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label">Приоритет</label>
-                    <select class="form-select" v-model="currentTask.priority">
-                      <option value="low">Низкий</option>
-                      <option value="medium">Средний</option>
-                      <option value="high">Высокий</option>
-                      <option value="urgent">Срочный</option>
+                    <select class="form-select" v-model="currentTask.priority" :disabled="loadingStatuses">
+                      <option v-if="loadingStatuses">Загрузка...</option>
+                      <option v-else v-for="priority in taskPriorities" :key="priority.id" :value="priority.code">
+                        {{ priority.name }}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -435,11 +464,26 @@
 
 <script>
 import { Modal } from 'bootstrap'
+import { Edit, Trash2, Plus, Home, Info, PieChart, ListTodo, Calendar, Clock, Users, CheckCircle, AlertTriangle } from 'lucide-vue-next'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
 import { useNotifications } from '@/pages/lms/composables/useNotifications'
 
 export default {
   name: 'ProjectDetail',
+  components: {
+    Edit,
+    Trash2,
+    Plus,
+    Home,
+    Info,
+    PieChart,
+    ListTodo,
+    Calendar,
+    Clock,
+    Users,
+    CheckCircle,
+    AlertTriangle
+  },
   setup() {
     const { showSuccess, showError, showConfirmDialog, closeConfirmDialog } = useNotifications()
     return { showSuccess, showError, showConfirmDialog, closeConfirmDialog }
@@ -471,11 +515,20 @@ export default {
         color: '#007bff'
       },
       isEditingTask: false,
-      isEditingProject: false
+      isEditingProject: false,
+      // Динамические данные для статусов и приоритетов
+      projectStatuses: [],
+      projectPriorities: [],
+      taskStatuses: [],
+      taskPriorities: [],
+      loadingStatuses: false
     }
   },
   async mounted() {
-    await this.loadUsers()
+    await Promise.all([
+      this.loadUsers(),
+      this.loadStatusesAndPriorities()
+    ])
     this.loadProjectData()
   },
   watch: {
@@ -524,6 +577,65 @@ export default {
       }
     },
 
+    async loadStatusesAndPriorities() {
+      try {
+        this.loadingStatuses = true
+        const [projectStatusesRes, projectPrioritiesRes, taskStatusesRes, taskPrioritiesRes] = await Promise.all([
+          projectManagementApi.getProjectStatuses(),
+          projectManagementApi.getProjectPriorities(),
+          projectManagementApi.getTaskStatuses(),
+          projectManagementApi.getTaskPriorities()
+        ])
+        
+        this.projectStatuses = Array.isArray(projectStatusesRes.data) ? 
+          projectStatusesRes.data.filter(s => s.is_active) : 
+          (projectStatusesRes.data.results || []).filter(s => s.is_active)
+          
+        this.projectPriorities = Array.isArray(projectPrioritiesRes.data) ? 
+          projectPrioritiesRes.data.filter(p => p.is_active) : 
+          (projectPrioritiesRes.data.results || []).filter(p => p.is_active)
+
+        this.taskStatuses = Array.isArray(taskStatusesRes.data) ? 
+          taskStatusesRes.data.filter(s => s.is_active) : 
+          (taskStatusesRes.data.results || []).filter(s => s.is_active)
+          
+        this.taskPriorities = Array.isArray(taskPrioritiesRes.data) ? 
+          taskPrioritiesRes.data.filter(p => p.is_active) : 
+          (taskPrioritiesRes.data.results || []).filter(p => p.is_active)
+      } catch (error) {
+        console.error('Ошибка загрузки статусов и приоритетов:', error)
+        // Fallback к жестко заданным значениям
+        this.projectStatuses = [
+          { id: 1, name: 'Планирование', code: 'planning' },
+          { id: 2, name: 'Активный', code: 'active' },
+          { id: 3, name: 'Приостановлен', code: 'on_hold' },
+          { id: 4, name: 'Завершен', code: 'completed' },
+          { id: 5, name: 'Отменен', code: 'cancelled' }
+        ]
+        this.projectPriorities = [
+          { id: 1, name: 'Низкий', code: 'low' },
+          { id: 2, name: 'Средний', code: 'medium' },
+          { id: 3, name: 'Высокий', code: 'high' },
+          { id: 4, name: 'Срочный', code: 'urgent' }
+        ]
+        this.taskStatuses = [
+          { id: 1, name: 'К выполнению', code: 'todo' },
+          { id: 2, name: 'В работе', code: 'in_progress' },
+          { id: 3, name: 'На проверке', code: 'review' },
+          { id: 4, name: 'Выполнено', code: 'done' },
+          { id: 5, name: 'Отменено', code: 'cancelled' }
+        ]
+        this.taskPriorities = [
+          { id: 1, name: 'Низкий', code: 'low' },
+          { id: 2, name: 'Средний', code: 'medium' },
+          { id: 3, name: 'Высокий', code: 'high' },
+          { id: 4, name: 'Срочный', code: 'urgent' }
+        ]
+      } finally {
+        this.loadingStatuses = false
+      }
+    },
+
     editProject() {
       if (!this.project) return
       
@@ -546,14 +658,18 @@ export default {
     createTask() {
       if (!this.project) return
       
+      // Устанавливаем значения по умолчанию из загруженных данных
+      const defaultTaskStatus = this.taskStatuses.find(s => s.is_default) || this.taskStatuses[0]
+      const defaultTaskPriority = this.taskPriorities.find(p => p.is_default) || this.taskPriorities[0]
+      
       this.isEditingTask = false
       this.currentTask = {
         title: '',
         description: '',
         project_id: this.project.id,
         assignee_id: '',
-        status: 'todo',
-        priority: 'medium',
+        status: defaultTaskStatus ? defaultTaskStatus.code : 'todo',
+        priority: defaultTaskPriority ? defaultTaskPriority.code : 'medium',
         start_date: '',
         due_date: '',
         estimated_hours: null
@@ -580,6 +696,10 @@ export default {
       
       const modal = new Modal(document.getElementById('taskModal'))
       modal.show()
+    },
+
+    deleteTask(task) {
+      this.confirmDeleteTask(task)
     },
 
     async submitProject() {
@@ -741,14 +861,8 @@ export default {
     },
 
     getStatusText(status) {
-      const texts = {
-        'planning': 'Планирование',
-        'active': 'Активный',
-        'on_hold': 'Приостановлен',
-        'completed': 'Завершен',
-        'cancelled': 'Отменен'
-      }
-      return texts[status] || status
+      const statusObj = this.projectStatuses.find(s => s.code === status)
+      return statusObj ? statusObj.name : status
     },
 
     getTaskStatusClass(status) {
@@ -763,14 +877,8 @@ export default {
     },
 
     getTaskStatusText(status) {
-      const texts = {
-        'todo': 'К выполнению',
-        'in_progress': 'В работе',
-        'review': 'На проверке',
-        'done': 'Выполнено',
-        'cancelled': 'Отменено'
-      }
-      return texts[status] || status
+      const statusObj = this.taskStatuses.find(s => s.code === status)
+      return statusObj ? statusObj.name : status
     },
 
     getPriorityClass(priority) {
@@ -784,13 +892,10 @@ export default {
     },
 
     getPriorityText(priority) {
-      const texts = {
-        'low': 'Низкий',
-        'medium': 'Средний',
-        'high': 'Высокий',
-        'urgent': 'Срочный'
-      }
-      return texts[priority] || priority
+      // Сначала ищем в приоритетах задач, потом в приоритетах проектов
+      const taskPriorityObj = this.taskPriorities.find(p => p.code === priority)
+      const projectPriorityObj = this.projectPriorities.find(p => p.code === priority)
+      return taskPriorityObj?.name || projectPriorityObj?.name || priority
     },
 
     getProgressClass(progress) {
@@ -855,186 +960,687 @@ export default {
       } else {
         return ''
       }
+    },
+
+    getBackRoute() {
+      // Проверяем query параметр from для определения откуда пришли
+      const from = this.$route.query.from
+      if (from === 'management') {
+        return '/crm/project-management/management'
+      }
+      // По умолчанию возвращаемся в "Мои проекты"
+      return '/crm/project-management/my-projects'
+    },
+
+    getBackRouteTitle() {
+      const from = this.$route.query.from
+      if (from === 'management') {
+        return 'Проекты и задачи'
+      }
+      return 'Мои проекты'
     }
   }
 }
 </script>
 
-<style scoped>
-.project-detail {
-  padding: 20px;
+<style scoped lang="scss">
+@import './project-management.scss';
+
+.project-detail-page {
+  padding: 2rem;
+  min-height: 100vh;
+  background: var(--bs-gray-100);
 }
 
-.pm-page-header {
-  margin-bottom: 20px;
-}
-
-.breadcrumb {
-  background-color: transparent;
-  padding: 0;
-}
-
-.breadcrumb-item {
-  font-size: 14px;
-}
-
-.breadcrumb-item.active {
-  font-weight: 600;
-}
-
-.project-info-card {
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.project-description {
-  margin-bottom: 20px;
-}
-
-.project-meta {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.meta-item {
-  width: 50%;
-}
-
-.meta-label {
-  font-weight: 600;
-}
-
-.meta-value {
-  margin-left: 10px;
-}
-
-.stats-card {
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.progress-section {
-  margin-bottom: 20px;
-}
-
-.progress-percentage {
-  font-weight: 600;
-}
-
-.stats-items {
-  margin-bottom: 20px;
-}
-
-.stat-item {
+// Заголовок страницы
+.page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: $radius-usual;
+  box-shadow: $pm-card-shadow;
+  
+  .header-content {
+    flex: 1;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-left: 2rem;
+  }
 }
 
-.team-section {
-  margin-top: 20px;
+// Хлебные крошки
+.breadcrumb-nav {
+  margin-bottom: 1rem;
+  
+  .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    
+    .breadcrumb-item {
+      font-size: 0.875rem;
+      
+      .breadcrumb-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--bs-secondary-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+        
+        &:hover {
+          color: var(--bs-primary);
+        }
+      }
+      
+      &.active {
+        color: var(--bs-heading-color);
+        font-weight: 600;
+      }
+    }
+  }
 }
 
-.team-members {
+// Секция заголовка проекта
+.project-title-section {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  
+  .project-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .project-title {
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--bs-heading-color);
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .project-meta-badges {
+      display: flex;
+      gap: 0.5rem;
+      
+      .badge {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 6px;
+      }
+    }
+  }
 }
 
-.team-member {
-  width: 50%;
-  margin-bottom: 10px;
+// Кнопки в заголовке
+.header-actions {
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+  }
 }
 
-.team-avatar {
-  width: 32px;
-  height: 32px;
-  object-fit: cover;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-
-.team-info {
+// Состояния загрузки и ошибки
+.loading-state,
+.error-state {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: $radius-usual;
+  box-shadow: $pm-card-shadow;
+  
+  h3 {
+    margin: 1rem 0 0.5rem 0;
+    color: var(--bs-heading-color);
+  }
+  
+  p {
+    color: var(--bs-secondary-color);
+    margin-bottom: 1.5rem;
+  }
 }
 
-.team-name {
-  font-weight: 600;
+.spinner-container {
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--bs-gray-200);
+    border-left-color: var(--bs-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
 }
 
-.team-role {
-  font-size: 0.8em;
-  color: #6c757d;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
+.error-state {
+  .error-icon {
+    color: var(--bs-danger);
+    margin-bottom: 1rem;
+  }
+}
+
+// Основной контент
+.project-content {
+  .info-section {
+    margin-bottom: 2rem;
+  }
+  
+  .info-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 1.5rem;
+    
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr 1fr;
+    }
+    
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// Карточки информации
+.info-card {
+  background: white;
+  border-radius: $radius-usual;
+  box-shadow: $pm-card-shadow;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    box-shadow: $pm-card-hover-shadow;
+  }
+  
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--bs-heading-color);
+      margin: 0;
+    }
+  }
+  
+  .card-body {
+    .description-section {
+      margin-bottom: 1.5rem;
+      
+      .description {
+        color: var(--bs-secondary-color);
+        line-height: 1.6;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// Сетка метаданных
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bs-gray-100);
+    border-radius: 8px;
+    
+    .meta-icon {
+      color: var(--bs-secondary-color);
+    }
+    
+    .meta-content {
+      display: flex;
+      flex-direction: column;
+      
+      .meta-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--bs-secondary-color);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .meta-value {
+        font-weight: 600;
+        color: var(--bs-heading-color);
+      }
+    }
+  }
+}
+
+// Секция статистики
+.stats-card {
+  .progress-section {
+    margin-bottom: 1.5rem;
+    
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      
+      span {
+        font-size: 0.875rem;
+        color: var(--bs-secondary-color);
+      }
+      
+      .progress-value {
+        font-weight: 600;
+        color: var(--bs-primary);
+      }
+    }
+    
+    .progress-bar-container {
+      height: 8px;
+      background: var(--bs-gray-200);
+      border-radius: 4px;
+      overflow: hidden;
+      
+      .progress-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+        
+        &.bg-success { background: var(--bs-success); }
+        &.bg-warning { background: var(--bs-warning); }
+        &.bg-danger { background: var(--bs-danger); }
+      }
+    }
+  }
+  
+  .stats-grid {
+    display: grid;
+    gap: 1rem;
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: var(--bs-gray-100);
+      border-radius: 8px;
+      
+      .stat-icon {
+        color: var(--bs-primary);
+        
+        &.completed { color: var(--bs-success); }
+        &.in-progress { color: var(--bs-warning); }
+      }
+      
+      .stat-content {
+        .stat-value {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--bs-heading-color);
+          line-height: 1;
+        }
+        
+        .stat-label {
+          font-size: 0.75rem;
+          color: var(--bs-secondary-color);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      }
+    }
+  }
+}
+
+// Секция команды
+.team-card {
+  .team-members {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    
+    .team-member {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: var(--bs-gray-100);
+      border-radius: 8px;
+      
+      .member-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      
+      .member-info {
+        .member-name {
+          font-weight: 600;
+          color: var(--bs-heading-color);
+        }
+        
+        .member-role {
+          font-size: 0.75rem;
+          color: var(--bs-secondary-color);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      }
+    }
+  }
+}
+
+// Секция задач
 .tasks-section {
-  margin-top: 20px;
+  background: white;
+  border-radius: $radius-usual;
+  box-shadow: $pm-card-shadow;
+  overflow: hidden;
+  
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      
+      h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--bs-heading-color);
+        margin: 0;
+      }
+    }
+    
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      font-weight: 600;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
+  
+  .tasks-content {
+    padding: 1.5rem;
+    
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      
+      .empty-icon {
+        color: var(--bs-gray-400);
+        margin-bottom: 1rem;
+      }
+      
+      h3 {
+        color: var(--bs-heading-color);
+        margin-bottom: 0.5rem;
+      }
+      
+      p {
+        color: var(--bs-secondary-color);
+        margin-bottom: 1.5rem;
+      }
+      
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        border-radius: 8px;
+      }
+    }
+  }
 }
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+// Таблица задач
+.tasks-table-container {
+  .tasks-table {
+    width: 100%;
+    border-collapse: collapse;
+    
+    thead {
+      background: var(--bs-gray-100);
+      
+      th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--bs-heading-color);
+        border-bottom: 2px solid var(--bs-border-color);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+    
+    tbody {
+      tr {
+        border-bottom: 1px solid var(--bs-border-color);
+        transition: background-color 0.2s ease;
+        
+        &:hover {
+          background: var(--bs-gray-50);
+        }
+        
+        td {
+          padding: 1rem;
+          vertical-align: top;
+        }
+      }
+    }
+  }
 }
 
-.tasks-content {
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 20px;
+// Ячейки таблицы
+.task-cell {
+  .task-info {
+    .task-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--bs-heading-color);
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .task-description {
+      font-size: 0.875rem;
+      color: var(--bs-secondary-color);
+      margin: 0;
+      line-height: 1.4;
+    }
+  }
 }
 
-.empty-state {
-  text-align: center;
-  padding: 40px;
+.assignee-cell {
+  .assignee-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    .assignee-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    
+    .assignee-name {
+      font-weight: 600;
+      color: var(--bs-heading-color);
+    }
+  }
+  
+  .no-assignee {
+    color: var(--bs-secondary-color);
+    font-style: italic;
+  }
 }
 
-.tasks-table-wrapper {
-  overflow-x: auto;
+.status-cell,
+.priority-cell {
+  .badge {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+  }
 }
 
-.tasks-table {
-  width: 100%;
+.due-date-cell {
+  span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    
+    &.text-danger { color: var(--bs-danger); }
+    &.text-warning { color: var(--bs-warning); }
+    &.text-primary { color: var(--bs-primary); }
+  }
 }
 
-.task-row {
-  cursor: pointer;
+// Адаптивность
+@media (max-width: 768px) {
+  .project-detail-page {
+    padding: 1rem;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    gap: 1rem;
+    
+    .header-actions {
+      margin-left: 0;
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+  
+  .project-title-section {
+    .project-title h1 {
+      font-size: 1.5rem;
+    }
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tasks-section {
+    .section-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+  }
+  
+  .tasks-table-container {
+    overflow-x: auto;
+    
+    .tasks-table {
+      min-width: 600px;
+    }
+  }
 }
 
-.task-cell-main {
-  width: 100%;
-}
-
-.task-title {
-  font-weight: 600;
-}
-
-.task-description {
-  margin-bottom: 0;
-}
-
-.assignee-info {
-  display: flex;
-  align-items: center;
-}
-
-.assignee-avatar {
-  width: 32px;
-  height: 32px;
-  object-fit: cover;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-
-.assignee-name {
-  font-weight: 600;
-}
-
-.btn-group-sm > .btn {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
+// Кнопки действий в таблице
+.actions-cell {
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    
+    .btn-edit-icon,
+    .btn-delete-icon {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      background: transparent;
+      border: 1px solid;
+      cursor: pointer;
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
+    }
+    
+    .btn-edit-icon {
+      border-color: var(--bs-primary);
+      color: var(--bs-primary);
+      
+      &:hover {
+        background-color: var(--bs-primary);
+        color: white;
+      }
+    }
+    
+    .btn-delete-icon {
+      border-color: var(--bs-danger);
+      color: var(--bs-danger);
+      
+      &:hover {
+        background-color: var(--bs-danger);
+        color: white;
+      }
+    }
+  }
 }
 </style> 

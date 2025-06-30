@@ -253,6 +253,128 @@ class ProjectManagementApi {
             responseType: 'blob'
         });
     }
+
+    // УПРАВЛЕНИЕ СТАТУСАМИ И ПРИОРИТЕТАМИ
+
+    // Статусы проектов
+    async getProjectStatuses(params = {}) {
+        return await this.client.get('/crm/api/project-statuses/', { params });
+    }
+
+    async getProjectStatus(id) {
+        return await this.client.get(`/crm/api/project-statuses/${id}/`);
+    }
+
+    async createProjectStatus(data) {
+        return await this.client.post('/crm/api/project-statuses/', data);
+    }
+
+    async updateProjectStatus(id, data) {
+        return await this.client.patch(`/crm/api/project-statuses/${id}/`, data);
+    }
+
+    async deleteProjectStatus(id) {
+        return await this.client.delete(`/crm/api/project-statuses/${id}/`);
+    }
+
+    async getActiveProjectStatuses() {
+        return await this.client.get('/crm/api/project-statuses/active/');
+    }
+
+    async getDefaultProjectStatus() {
+        return await this.client.get('/crm/api/project-statuses/default/');
+    }
+
+    // Приоритеты проектов
+    async getProjectPriorities(params = {}) {
+        return await this.client.get('/crm/api/project-priorities/', { params });
+    }
+
+    async getProjectPriority(id) {
+        return await this.client.get(`/crm/api/project-priorities/${id}/`);
+    }
+
+    async createProjectPriority(data) {
+        return await this.client.post('/crm/api/project-priorities/', data);
+    }
+
+    async updateProjectPriority(id, data) {
+        return await this.client.patch(`/crm/api/project-priorities/${id}/`, data);
+    }
+
+    async deleteProjectPriority(id) {
+        return await this.client.delete(`/crm/api/project-priorities/${id}/`);
+    }
+
+    async getActiveProjectPriorities() {
+        return await this.client.get('/crm/api/project-priorities/active/');
+    }
+
+    async getDefaultProjectPriority() {
+        return await this.client.get('/crm/api/project-priorities/default/');
+    }
+
+    // Статусы задач
+    async getTaskStatuses(params = {}) {
+        return await this.client.get('/crm/api/task-statuses/', { params });
+    }
+
+    async getTaskStatus(id) {
+        return await this.client.get(`/crm/api/task-statuses/${id}/`);
+    }
+
+    async createTaskStatus(data) {
+        return await this.client.post('/crm/api/task-statuses/', data);
+    }
+
+    async updateTaskStatus(id, data) {
+        return await this.client.patch(`/crm/api/task-statuses/${id}/`, data);
+    }
+
+    async deleteTaskStatus(id) {
+        return await this.client.delete(`/crm/api/task-statuses/${id}/`);
+    }
+
+    async getActiveTaskStatuses() {
+        return await this.client.get('/crm/api/task-statuses/active/');
+    }
+
+    async getKanbanTaskStatuses() {
+        return await this.client.get('/crm/api/task-statuses/kanban_columns/');
+    }
+
+    async getDefaultTaskStatus() {
+        return await this.client.get('/crm/api/task-statuses/default/');
+    }
+
+    // Приоритеты задач
+    async getTaskPriorities(params = {}) {
+        return await this.client.get('/crm/api/task-priorities/', { params });
+    }
+
+    async getTaskPriority(id) {
+        return await this.client.get(`/crm/api/task-priorities/${id}/`);
+    }
+
+    async createTaskPriority(data) {
+        return await this.client.post('/crm/api/task-priorities/', data);
+    }
+
+    async updateTaskPriority(id, data) {
+        return await this.client.patch(`/crm/api/task-priorities/${id}/`, data);
+    }
+
+    async deleteTaskPriority(id) {
+        return await this.client.delete(`/crm/api/task-priorities/${id}/`);
+    }
+
+    async getActiveTaskPriorities() {
+        return await this.client.get('/crm/api/task-priorities/active/');
+    }
+
+    async getDefaultTaskPriority() {
+        return await this.client.get('/crm/api/task-priorities/default/');
+    }
 }
 
 const projectManagementApi = new ProjectManagementApi();

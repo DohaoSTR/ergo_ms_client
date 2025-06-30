@@ -21,6 +21,20 @@
             <i class="fas fa-tasks me-2"></i>Задачи
           </button>
         </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="statuses-tab" data-bs-toggle="tab" 
+                  data-bs-target="#statuses" type="button" role="tab" aria-controls="statuses" 
+                  aria-selected="false" @click="activeTab = 'statuses'">
+            <i class="fas fa-flag me-2"></i>Статусы
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="priorities-tab" data-bs-toggle="tab" 
+                  data-bs-target="#priorities" type="button" role="tab" aria-controls="priorities" 
+                  aria-selected="false" @click="activeTab = 'priorities'">
+            <i class="fas fa-exclamation-triangle me-2"></i>Приоритеты
+          </button>
+        </li>
       </ul>
     </div>
 
@@ -28,7 +42,22 @@
     <div class="tab-content" id="managementTabContent">
       <!-- Вкладка проектов -->
       <div class="tab-pane fade show active" id="projects" role="tabpanel" aria-labelledby="projects-tab">
-        <div class="projects-management-section">
+        <!-- Просмотр отдельного проекта -->
+        <div v-if="viewMode === 'project-view'" class="project-view-section">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+              <button class="btn btn-outline-secondary me-3" @click="backToProjectsList">
+                <i class="fas fa-arrow-left me-2"></i>К списку проектов
+              </button>
+              <h5 class="mb-0">Просмотр проекта</h5>
+            </div>
+          </div>
+          
+          <ProjectView :key="selectedProjectId" :project-id="selectedProjectId" />
+        </div>
+
+        <!-- Управление проектами (список) -->
+        <div v-else class="projects-management-section">
           <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="mb-0">Управление проектами</h5>
             <button class="btn btn-primary" @click="createProject">
@@ -36,12 +65,12 @@
             </button>
           </div>
           
-                     <!-- Встроенное управление проектами -->
-           <ProjectsList 
-             ref="projectsComponent"
-             :management-mode="true"
-             @refresh="refreshData" 
-           />
+          <!-- Встроенное управление проектами -->
+          <ProjectsList 
+            ref="projectsComponent"
+            :management-mode="true"
+            @refresh="refreshData" 
+          />
         </div>
       </div>
 
@@ -63,6 +92,70 @@
            />
         </div>
       </div>
+
+      <!-- Вкладка статусов -->
+      <div class="tab-pane fade" id="statuses" role="tabpanel" aria-labelledby="statuses-tab">
+        <div class="statuses-management-section">
+          <!-- Подвкладки для статусов проектов и задач -->
+          <ul class="nav nav-pills mb-4" id="statusesSubTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="project-statuses-tab" data-bs-toggle="pill" 
+                      data-bs-target="#project-statuses" type="button" role="tab" 
+                      aria-controls="project-statuses" aria-selected="true">
+                <i class="fas fa-folder-open me-2"></i>Статусы проектов
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="task-statuses-tab" data-bs-toggle="pill" 
+                      data-bs-target="#task-statuses" type="button" role="tab" 
+                      aria-controls="task-statuses" aria-selected="false">
+                <i class="fas fa-tasks me-2"></i>Статусы задач
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="statusesSubTabContent">
+            <div class="tab-pane fade show active" id="project-statuses" role="tabpanel" aria-labelledby="project-statuses-tab">
+              <ProjectStatusManagement @statusChanged="onProjectStatusChanged" />
+            </div>
+            <div class="tab-pane fade" id="task-statuses" role="tabpanel" aria-labelledby="task-statuses-tab">
+              <TaskStatusManagement @statusChanged="onTaskStatusChanged" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Вкладка приоритетов -->
+      <div class="tab-pane fade" id="priorities" role="tabpanel" aria-labelledby="priorities-tab">
+        <div class="priorities-management-section">
+          <!-- Подвкладки для приоритетов проектов и задач -->
+          <ul class="nav nav-pills mb-4" id="prioritiesSubTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="project-priorities-tab" data-bs-toggle="pill" 
+                      data-bs-target="#project-priorities" type="button" role="tab" 
+                      aria-controls="project-priorities" aria-selected="true">
+                <i class="fas fa-folder-open me-2"></i>Приоритеты проектов
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="task-priorities-tab" data-bs-toggle="pill" 
+                      data-bs-target="#task-priorities" type="button" role="tab" 
+                      aria-controls="task-priorities" aria-selected="false">
+                <i class="fas fa-tasks me-2"></i>Приоритеты задач
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="prioritiesSubTabContent">
+            <div class="tab-pane fade show active" id="project-priorities" role="tabpanel" aria-labelledby="project-priorities-tab">
+              <ProjectPriorityManagement @priorityChanged="onProjectPriorityChanged" />
+            </div>
+            <div class="tab-pane fade" id="task-priorities" role="tabpanel" aria-labelledby="task-priorities-tab">
+              <TaskPriorityManagement @priorityChanged="onTaskPriorityChanged" />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -70,28 +163,62 @@
 <script>
 import ProjectsList from './ProjectsList.vue'
 import TasksList from './TasksList.vue'
+import ProjectView from './ProjectView.vue'
+import ProjectStatusManagement from './ProjectStatusManagement.vue'
+import ProjectPriorityManagement from './ProjectPriorityManagement.vue'
+import TaskStatusManagement from './TaskStatusManagement.vue'
+import TaskPriorityManagement from './TaskPriorityManagement.vue'
 
 export default {
   name: 'ProjectsAndTasksManagement',
   components: {
     ProjectsList,
-    TasksList
+    TasksList,
+    ProjectView,
+    ProjectStatusManagement,
+    ProjectPriorityManagement,
+    TaskStatusManagement,
+    TaskPriorityManagement
   },
   data() {
     return {
-      activeTab: 'projects'
+      activeTab: 'projects',
+      viewMode: 'list', // 'list' или 'project-view'
+      selectedProjectId: null
+    }
+  },
+  
+  mounted() {
+    // Проверяем URL параметры при загрузке
+    this.handleRouteParams()
+  },
+
+  watch: {
+    // Отслеживаем смену вкладок
+    activeTab(newTab, oldTab) {
+      if (newTab === 'projects' || newTab === 'tasks') {
+        // Обновляем статусы и приоритеты при возврате к проектам/задачам
+        this.$nextTick(() => {
+          this.refreshComponentData(newTab)
+        })
+      }
+    },
+
+    // Отслеживаем изменения маршрута
+    '$route'() {
+      this.handleRouteParams()
     }
   },
   methods: {
-    createProject() {
+    async createProject() {
       if (this.$refs.projectsComponent) {
-        this.$refs.projectsComponent.createProject()
+        await this.$refs.projectsComponent.createProject()
       }
     },
     
-    createTask() {
+    async createTask() {
       if (this.$refs.tasksComponent) {
-        this.$refs.tasksComponent.createTask()
+        await this.$refs.tasksComponent.createTask()
       }
     },
     
@@ -101,6 +228,85 @@ export default {
       } else if (this.activeTab === 'tasks' && this.$refs.tasksComponent) {
         this.$refs.tasksComponent.loadTasks()
       }
+    },
+
+    async refreshComponentData(tab) {
+      // Обновляем статусы и приоритеты в соответствующих компонентах
+      if (tab === 'projects' && this.$refs.projectsComponent) {
+        await this.$refs.projectsComponent.refreshStatusesAndPriorities()
+      } else if (tab === 'tasks' && this.$refs.tasksComponent) {
+        await this.$refs.tasksComponent.refreshStatusesAndPriorities()
+      }
+    },
+
+    // Метод для обновления всех данных (вызывается из дочерних компонентов)
+    async refreshAllData() {
+      // Обновляем статусы и приоритеты во всех компонентах
+      if (this.$refs.projectsComponent) {
+        await this.$refs.projectsComponent.refreshStatusesAndPriorities()
+      }
+      if (this.$refs.tasksComponent) {
+        await this.$refs.tasksComponent.refreshStatusesAndPriorities()
+      }
+    },
+
+    // Обработчики событий от компонентов управления статусами и приоритетами
+    async onProjectStatusChanged() {
+      console.log('Статус проекта изменен, обновляем данные...')
+      if (this.$refs.projectsComponent) {
+        await this.$refs.projectsComponent.refreshStatusesAndPriorities()
+      }
+    },
+
+    async onProjectPriorityChanged() {
+      console.log('Приоритет проекта изменен, обновляем данные...')
+      if (this.$refs.projectsComponent) {
+        await this.$refs.projectsComponent.refreshStatusesAndPriorities()
+      }
+    },
+
+    async onTaskStatusChanged() {
+      console.log('Статус задачи изменен, обновляем данные...')
+      if (this.$refs.tasksComponent) {
+        await this.$refs.tasksComponent.refreshStatusesAndPriorities()
+      }
+    },
+
+    async onTaskPriorityChanged() {
+      console.log('Приоритет задачи изменен, обновляем данные...')
+      if (this.$refs.tasksComponent) {
+        await this.$refs.tasksComponent.refreshStatusesAndPriorities()
+      }
+    },
+
+    // Обработка URL параметров
+    handleRouteParams() {
+      const query = this.$route.query
+      
+      // Проверяем, есть ли параметр для просмотра отдельного проекта
+      if (query.project && query.view === 'project') {
+        this.selectedProjectId = query.project
+        this.viewMode = 'project-view'
+        this.activeTab = 'projects'
+      } else {
+        this.viewMode = 'list'
+        this.selectedProjectId = null
+      }
+      
+      // Устанавливаем активную вкладку из URL
+      if (query.tab) {
+        this.activeTab = query.tab
+      }
+    },
+
+    // Возврат к списку проектов
+    backToProjectsList() {
+      this.viewMode = 'list'
+      this.selectedProjectId = null
+      this.$router.push({ 
+        path: '/crm/project-management',
+        query: { tab: 'projects' }
+      })
     }
   }
 }
@@ -160,10 +366,34 @@ export default {
 }
 
 .projects-management-section,
-.tasks-management-section {
+.tasks-management-section,
+.statuses-management-section,
+.priorities-management-section {
   h5 {
     color: var(--bs-heading-color);
     font-weight: $font-weight-bold;
+  }
+}
+
+// Стили для подвкладок
+.nav-pills {
+  .nav-link {
+    border-radius: $radius-usual;
+    margin-right: 0.5rem;
+    color: var(--bs-secondary-color);
+    background: transparent;
+    border: 1px solid var(--bs-border-color);
+    
+    &:hover {
+      color: var(--bs-primary);
+      background: var(--bs-light);
+    }
+    
+    &.active {
+      color: white;
+      background: var(--bs-primary);
+      border-color: var(--bs-primary);
+    }
   }
 }
 

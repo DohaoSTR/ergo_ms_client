@@ -1,11 +1,8 @@
 <template>
   <div class="task-calendar">
     <div class="pm-page-header d-flex justify-content-between align-items-center">
-      <h2><i class="fas fa-calendar-alt me-2"></i>Календарь проектов и задач</h2>
+      <h2><i class="fas fa-calendar-alt me-2"></i>Календарь задач</h2>
       <div>
-        <button class="btn btn-outline-secondary me-2" @click="goToToday">
-          <i class="fas fa-calendar-day me-1"></i>Сегодня
-        </button>
         <button class="btn btn-primary" @click="createTask">
           <i class="fas fa-plus me-2"></i>Создать задачу
         </button>
@@ -15,15 +12,16 @@
     <!-- Навигация по календарю -->
     <div class="calendar-navigation">
       <div class="d-flex justify-content-between align-items-center">
-        <div class="btn-group">
-          <button class="btn btn-light" @click="previousMonth">
-            <i class="fas fa-chevron-left"></i>
+        <div class="calendar-nav-buttons">
+          <button class="btn btn-nav" @click="previousMonth" title="Предыдущий месяц">
+            <ChevronLeft :size="20" />
           </button>
-          <button class="btn btn-light" @click="goToToday">
-            Сегодня
+          <button class="btn btn-today" @click="goToToday" title="Перейти к сегодняшнему дню">
+            <Calendar :size="16" />
+            <span>Сегодня</span>
           </button>
-          <button class="btn btn-light" @click="nextMonth">
-            <i class="fas fa-chevron-right"></i>
+          <button class="btn btn-nav" @click="nextMonth" title="Следующий месяц">
+            <ChevronRight :size="20" />
           </button>
         </div>
         <h3 class="mb-0 text-center flex-grow-1">{{ currentMonthYear }}</h3>
@@ -34,7 +32,7 @@
               <i class="fas fa-tasks text-primary"></i> Задачи
             </label>
           </div>
-          <div class="form-check form-switch form-check-inline">
+          <div class="form-check form-switch form-switch form-check-inline">
             <input class="form-check-input" type="checkbox" v-model="showProjects" @change="loadEvents" id="showProjects">
             <label class="form-check-label" for="showProjects">
               <i class="fas fa-project-diagram text-success"></i> Проекты
@@ -61,20 +59,18 @@
             <label class="form-label">Статус</label>
             <select class="form-select" v-model="filters.status" @change="loadEvents">
               <option value="">Все статусы</option>
-              <option value="todo">К выполнению</option>
-              <option value="in_progress">В работе</option>
-              <option value="review">На проверке</option>
-              <option value="done">Выполнено</option>
+              <option v-for="status in taskStatuses" :key="status.id" :value="status.code">
+                {{ status.name }}
+              </option>
             </select>
           </div>
           <div class="col-md-3">
             <label class="form-label">Приоритет</label>
             <select class="form-select" v-model="filters.priority" @change="loadEvents">
               <option value="">Все приоритеты</option>
-              <option value="low">Низкий</option>
-              <option value="medium">Средний</option>
-              <option value="high">Высокий</option>
-              <option value="urgent">Срочный</option>
+              <option v-for="priority in taskPriorities" :key="priority.id" :value="priority.code">
+                {{ priority.name }}
+              </option>
             </select>
           </div>
           <div class="col-md-3 d-flex align-items-end">
@@ -118,28 +114,37 @@
             <div class="day-events">
               <!-- Проекты -->
               <div class="event-item project-event" 
-                   v-for="(project, index) in getProjectsForDay(day.date).slice(0, 2)" 
-                   :key="'project-' + project.id"
+                   v-for="(project, index) in getProjectsForDay(day.date).slice(0, 3)" 
+                   :key="'project-' + project.id + '-' + project.eventType"
                    :style="{ backgroundColor: project.color + '20', borderColor: project.color }"
-                   @click.stop="viewProject(project)"
-                   :title="project.name">
-                <i class="fas fa-circle" :style="{ color: project.color }"></i>
-                <span>{{ truncateText(project.name, 12) }}</span>
+                   @click.stop.prevent="viewProject(project)"
+                   :title="project.displayTitle"
+                   :class="'event-' + project.eventType">
+                <div class="event-content">
+                  <div class="event-title">
+                    <i class="fas fa-circle" :style="{ color: project.color }"></i>
+                    <span>{{ truncateText(project.displayTitle, 15) }}</span>
+                  </div>
+                </div>
               </div>
               
               <!-- Задачи -->
               <div class="event-item task-event" 
-                   v-for="(task, index) in getTasksForDay(day.date).slice(0, 2)" 
-                   :key="'task-' + task.id"
-                   :class="'priority-' + task.priority"
-                   @click.stop="viewTask(task)"
-                   :title="task.title">
-                <span>{{ truncateText(task.title, 12) }}</span>
+                   v-for="(task, index) in getTasksForDay(day.date).slice(0, 3)" 
+                   :key="'task-' + task.id + '-' + task.eventType"
+                   :class="['priority-' + task.priority, 'event-' + task.eventType]"
+                   @click.stop.prevent="viewTask(task)"
+                   :title="task.displayTitle">
+                <div class="event-content">
+                  <div class="event-title">
+                    <span>{{ truncateText(task.displayTitle, 15) }}</span>
+                  </div>
+                </div>
               </div>
               
               <!-- Показать больше -->
-              <div class="event-more" v-if="getEventsCount(day.date) > 4">
-                +{{ getEventsCount(day.date) - 4 }}
+              <div class="event-more" v-if="getEventsCount(day.date) > 6">
+                +{{ getEventsCount(day.date) - 6 }}
               </div>
             </div>
           </div>
@@ -177,6 +182,14 @@
                   <div class="event-meta">
                     <i class="fas fa-calendar-alt text-muted"></i>
                     <span>{{ formatDateRange(project.start_date, project.end_date) }}</span>
+                  </div>
+                  <div class="event-indicators mt-2">
+                    <span v-if="hasProjectEventOnDate(project, 'start')" class="badge badge-start me-1">
+                      <i class="fas fa-play"></i> Начало
+                    </span>
+                    <span v-if="hasProjectEventOnDate(project, 'end')" class="badge badge-end">
+                      <i class="fas fa-stop"></i> Окончание
+                    </span>
                   </div>
                 </div>
                 <div class="event-card-footer">
@@ -221,6 +234,14 @@
                     <i class="fas fa-user text-muted"></i>
                     <span>{{ task.assignee.full_name }}</span>
                   </div>
+                  <div class="event-indicators mt-2">
+                    <span v-if="hasTaskEventOnDate(task, 'start')" class="badge badge-start me-1">
+                      <i class="fas fa-play"></i> Начало
+                    </span>
+                    <span v-if="hasTaskEventOnDate(task, 'due')" class="badge badge-due">
+                      <i class="fas fa-clock"></i> Срок
+                    </span>
+                  </div>
                 </div>
                 <div class="event-card-footer">
                   <button class="btn btn-sm btn-outline-primary" @click="editTask(task)">
@@ -235,12 +256,12 @@
     </div>
 
     <!-- Модальное окно создания/редактирования задачи -->
-    <div class="modal fade" id="taskModal" tabindex="-1">
+    <div class="modal fade" id="taskModal" role="dialog" aria-labelledby="taskModalLabel" aria-modal="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">{{ isEditing ? 'Редактировать задачу' : 'Создать задачу' }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title" id="taskModalLabel">{{ isEditing ? 'Редактировать задачу' : 'Создать задачу' }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="submitTask">
@@ -285,10 +306,9 @@
                   <div class="mb-3">
                     <label class="form-label">Статус</label>
                     <select class="form-select" v-model="currentTask.status">
-                      <option value="todo">К выполнению</option>
-                      <option value="in_progress">В работе</option>
-                      <option value="review">На проверке</option>
-                      <option value="done">Выполнено</option>
+                      <option v-for="status in taskStatuses" :key="status.id" :value="status.code">
+                        {{ status.name }}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -299,10 +319,9 @@
                   <div class="mb-3">
                     <label class="form-label">Приоритет</label>
                     <select class="form-select" v-model="currentTask.priority">
-                      <option value="low">Низкий</option>
-                      <option value="medium">Средний</option>
-                      <option value="high">Высокий</option>
-                      <option value="urgent">Срочный</option>
+                      <option v-for="priority in taskPriorities" :key="priority.id" :value="priority.code">
+                        {{ priority.name }}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -340,12 +359,12 @@
     </div>
 
     <!-- Модальное окно просмотра задачи -->
-    <div class="modal fade" id="taskViewModal" tabindex="-1">
+    <div class="modal fade" id="taskViewModal" role="dialog" aria-labelledby="taskViewModalLabel" aria-modal="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">{{ viewTaskData.title }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title" id="taskViewModalLabel">{{ viewTaskData.title }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
           </div>
           <div class="modal-body">
             <div v-if="viewTaskData.description" class="mb-3">
@@ -403,12 +422,18 @@
 </template>
 
 <script>
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-vue-next'
 import { Modal } from 'bootstrap'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
 import { useNotifications } from '@/pages/lms/composables/useNotifications'
 
 export default {
   name: 'TaskCalendar',
+  components: {
+    ChevronLeft,
+    ChevronRight,
+    Calendar
+  },
   setup() {
     const { showSuccess, showError, showConfirmDialog, closeConfirmDialog } = useNotifications()
     return { showSuccess, showError, showConfirmDialog, closeConfirmDialog }
@@ -421,6 +446,10 @@ export default {
       projects: [],
       allProjects: [], // Все проекты для календаря
       users: [],
+      taskStatuses: [], // Статусы задач
+      taskPriorities: [], // Приоритеты задач
+      projectStatuses: [], // Статусы проектов
+      projectPriorities: [], // Приоритеты проектов
       filters: {
         project_id: '',
         status: '',
@@ -498,18 +527,44 @@ export default {
     
     tasksForSelectedDate() {
       if (!this.selectedDate) return []
-      return this.getTasksForDay(this.selectedDate)
+      const taskEvents = this.getTasksForDay(this.selectedDate)
+      
+      // Группируем события по задачам, чтобы не дублировать задачи
+      const uniqueTasks = new Map()
+      taskEvents.forEach(event => {
+        if (!uniqueTasks.has(event.id)) {
+          const { eventType, displayTitle, eventDate, ...taskData } = event
+          uniqueTasks.set(event.id, taskData)
+        }
+      })
+      
+      return Array.from(uniqueTasks.values())
     },
     
     projectsForSelectedDate() {
       if (!this.selectedDate) return []
-      return this.getProjectsForDay(this.selectedDate)
+      const projectEvents = this.getProjectsForDay(this.selectedDate)
+      
+      // Группируем события по проектам, чтобы не дублировать проекты
+      const uniqueProjects = new Map()
+      projectEvents.forEach(event => {
+        if (!uniqueProjects.has(event.id)) {
+          const { eventType, displayTitle, eventDate, ...projectData } = event
+          uniqueProjects.set(event.id, projectData)
+        }
+      })
+      
+      return Array.from(uniqueProjects.values())
     }
   },
   
   async mounted() {
     await this.loadProjects()
     await this.loadUsers()
+    await this.loadTaskStatuses()
+    await this.loadTaskPriorities()
+    await this.loadProjectStatuses()
+    await this.loadProjectPriorities()
     this.loadEvents()
   },
   
@@ -538,6 +593,46 @@ export default {
       } catch (error) {
         console.error('Ошибка загрузки пользователей:', error)
         this.users = []
+      }
+    },
+    
+    async loadTaskStatuses() {
+      try {
+        const response = await projectManagementApi.getTaskStatuses()
+        this.taskStatuses = Array.isArray(response.data) ? response.data : []
+      } catch (error) {
+        console.error('Ошибка загрузки статусов задач:', error)
+        this.taskStatuses = []
+      }
+    },
+    
+    async loadTaskPriorities() {
+      try {
+        const response = await projectManagementApi.getTaskPriorities()
+        this.taskPriorities = Array.isArray(response.data) ? response.data : []
+      } catch (error) {
+        console.error('Ошибка загрузки приоритетов задач:', error)
+        this.taskPriorities = []
+      }
+    },
+    
+    async loadProjectStatuses() {
+      try {
+        const response = await projectManagementApi.getProjectStatuses()
+        this.projectStatuses = Array.isArray(response.data) ? response.data : []
+      } catch (error) {
+        console.error('Ошибка загрузки статусов проектов:', error)
+        this.projectStatuses = []
+      }
+    },
+    
+    async loadProjectPriorities() {
+      try {
+        const response = await projectManagementApi.getProjectPriorities()
+        this.projectPriorities = Array.isArray(response.data) ? response.data : []
+      } catch (error) {
+        console.error('Ошибка загрузки приоритетов проектов:', error)
+        this.projectPriorities = []
       }
     },
     
@@ -575,35 +670,71 @@ export default {
     getProjectsForDay(date) {
       if (!this.showProjects) return []
       
-      return this.allProjects.filter(project => {
-        if (!project) return false
+      const events = []
+      
+      this.allProjects.forEach(project => {
+        if (!project) return
         
         const projectStart = project.start_date ? new Date(project.start_date) : null
         const projectEnd = project.end_date ? new Date(project.end_date) : null
         
-        // Проект отображается если он начинается в этот день или завершается
-        if (projectStart && this.isSameDay(projectStart, date)) return true
-        if (projectEnd && this.isSameDay(projectEnd, date)) return true
+        // Событие начала проекта
+        if (projectStart && this.isSameDay(projectStart, date)) {
+          events.push({
+            ...project,
+            eventType: 'start',
+            displayTitle: `▶ ${project.name}`,
+            eventDate: projectStart
+          })
+        }
         
-        return false
+        // Событие окончания проекта
+        if (projectEnd && this.isSameDay(projectEnd, date)) {
+          events.push({
+            ...project,
+            eventType: 'end',
+            displayTitle: `⏹ ${project.name}`,
+            eventDate: projectEnd
+          })
+        }
       })
+      
+      return events
     },
     
     getTasksForDay(date) {
       if (!this.showTasks) return []
       
-      return this.tasks.filter(task => {
-        if (!task) return false
+      const events = []
+      
+      this.tasks.forEach(task => {
+        if (!task) return
         
         const taskStart = task.start_date ? new Date(task.start_date) : null
         const taskDue = task.due_date ? new Date(task.due_date) : null
         
-        // Задача отображается если она начинается в этот день или должна быть завершена
-        if (taskStart && this.isSameDay(taskStart, date)) return true
-        if (taskDue && this.isSameDay(taskDue, date)) return true
+        // Событие начала задачи
+        if (taskStart && this.isSameDay(taskStart, date)) {
+          events.push({
+            ...task,
+            eventType: 'start',
+            displayTitle: `▶ ${task.title}`,
+            eventDate: taskStart
+          })
+        }
         
-        return false
+        // Событие срока выполнения задачи
+        if (taskDue && this.isSameDay(taskDue, date)) {
+          events.push({
+            ...task,
+            eventType: 'due',
+            displayTitle: `⏰ ${task.title}`,
+            eventDate: taskDue
+          })
+        }
       })
+      
+      return events
     },
     
     isToday(date) {
@@ -681,8 +812,25 @@ export default {
     
     createTask() {
       this.isEditing = false
-      if (!this.currentTask.start_date) {
-        this.currentTask.start_date = this.formatDateTimeLocal(this.selectedDate || new Date())
+      
+      // Устанавливаем значения по умолчанию из API
+      const defaultStatus = this.taskStatuses.find(s => s.is_default) || this.taskStatuses[0]
+      const defaultPriority = this.taskPriorities.find(p => p.is_default) || this.taskPriorities[0]
+      
+      // Если есть выбранная дата, используем её как дату начала
+      const initialStartDate = this.selectedDate ? 
+        this.formatDateTimeLocal(this.selectedDate) : ''
+      
+      this.currentTask = {
+        title: '',
+        description: '',
+        project_id: '',
+        assignee_id: '',
+        status: defaultStatus ? defaultStatus.code : 'todo',
+        priority: defaultPriority ? defaultPriority.code : 'medium',
+        start_date: initialStartDate,
+        due_date: '',
+        estimated_hours: null
       }
       
       const modal = new Modal(document.getElementById('taskModal'))
@@ -699,8 +847,8 @@ export default {
         assignee_id: task.assignee?.id,
         status: task.status,
         priority: task.priority,
-        start_date: task.start_date ? this.formatDateTimeLocal(new Date(task.start_date)) : '',
-        due_date: task.due_date ? this.formatDateTimeLocal(new Date(task.due_date)) : '',
+        start_date: task.start_date ? this.formatDateTimeLocal(task.start_date) : '',
+        due_date: task.due_date ? this.formatDateTimeLocal(task.due_date) : '',
         estimated_hours: task.estimated_hours
       }
       
@@ -713,20 +861,58 @@ export default {
       editModal.show()
     },
     
-    viewTask(task) {
-      this.viewTaskData = task
-      const modal = new Modal(document.getElementById('taskViewModal'))
-      modal.show()
+    viewTask(taskEvent) {
+      if (!taskEvent) {
+        console.error('Некорректные данные задачи:', taskEvent)
+        this.showError('Ошибка открытия задачи')
+        return
+      }
+      
+      try {
+        // Создаем объект задачи без дополнительных полей события
+        const { eventType, displayTitle, eventDate, ...taskData } = taskEvent
+        this.viewTaskData = taskData
+        const modal = new Modal(document.getElementById('taskViewModal'))
+        modal.show()
+      } catch (error) {
+        console.error('Ошибка открытия модального окна:', error)
+        this.showError('Ошибка отображения задачи')
+      }
     },
     
     async submitTask() {
       try {
+        // Подготавливаем данные задачи
+        const taskData = { ...this.currentTask }
+        
+        // Правильно форматируем даты для отправки на сервер
+        if (taskData.start_date) {
+          taskData.start_date = this.formatDateForAPI(taskData.start_date)
+        } else {
+          delete taskData.start_date // Удаляем пустое поле
+        }
+        
+        if (taskData.due_date) {
+          taskData.due_date = this.formatDateForAPI(taskData.due_date)
+        } else {
+          delete taskData.due_date // Удаляем пустое поле
+        }
+        
+        // Убираем пустые значения
+        if (!taskData.assignee_id) {
+          delete taskData.assignee_id
+        }
+        
+        if (!taskData.estimated_hours || taskData.estimated_hours === '') {
+          delete taskData.estimated_hours
+        }
+        
         let response
         
         if (this.isEditing) {
-          response = await projectManagementApi.updateTask(this.currentTask.id, this.currentTask)
+          response = await projectManagementApi.updateTask(this.currentTask.id, taskData)
         } else {
-          response = await projectManagementApi.createTask(this.currentTask)
+          response = await projectManagementApi.createTask(taskData)
         }
         
         // Закрываем модальное окно
@@ -734,13 +920,16 @@ export default {
         modal.hide()
         
         // Сбрасываем форму
+        const defaultStatus = this.taskStatuses.find(s => s.is_default) || this.taskStatuses[0]
+        const defaultPriority = this.taskPriorities.find(p => p.is_default) || this.taskPriorities[0]
+        
         this.currentTask = {
           title: '',
           description: '',
           project_id: '',
           assignee_id: '',
-          status: 'todo',
-          priority: 'medium',
+          status: defaultStatus ? defaultStatus.code : 'todo',
+          priority: defaultPriority ? defaultPriority.code : 'medium',
           start_date: '',
           due_date: '',
           estimated_hours: null
@@ -790,18 +979,58 @@ export default {
     formatDateTimeLocal(date) {
       if (!date) return ''
       const d = new Date(date)
-      return d.toISOString().slice(0, 16)
+      // Корректируем для локального времени
+      const offsetMs = d.getTimezoneOffset() * 60 * 1000
+      const localTime = new Date(d.getTime() - offsetMs)
+      return localTime.toISOString().slice(0, 16)
+    },
+    
+    formatDateForAPI(dateString) {
+      if (!dateString) return null
+      
+      // Если уже в правильном формате ISO, возвращаем как есть
+      if (dateString.includes('T') && dateString.includes(':')) {
+        // Добавляем секунды если их нет
+        if (dateString.length === 16) { // YYYY-MM-DDTHH:MM
+          dateString += ':00'
+        }
+        
+        // Добавляем таймзону если её нет
+        if (!dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+          // Получаем смещение таймзоны
+          const date = new Date(dateString)
+          const offsetMinutes = date.getTimezoneOffset()
+          const offsetHours = Math.abs(Math.floor(offsetMinutes / 60))
+          const offsetMins = Math.abs(offsetMinutes % 60)
+          const offsetSign = offsetMinutes <= 0 ? '+' : '-'
+          const timezoneOffset = `${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMins.toString().padStart(2, '0')}`
+          dateString += timezoneOffset
+        }
+        
+        return dateString
+      }
+      
+      // Иначе считаем что это локальная дата и преобразуем в ISO
+      const date = new Date(dateString)
+      return date.toISOString()
     },
     
     formatDateTime(date) {
       if (!date) return 'Не указана'
-      return new Date(date).toLocaleDateString('ru-RU', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      try {
+        const d = new Date(date)
+        if (isNaN(d.getTime())) return 'Неверная дата'
+        return d.toLocaleDateString('ru-RU', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } catch (e) {
+        console.warn('Ошибка форматирования даты:', e)
+        return 'Ошибка даты'
+      }
     },
     
     formatSelectedDate(date) {
@@ -824,6 +1053,10 @@ export default {
     },
     
     getStatusText(status) {
+      const statusObj = this.taskStatuses.find(s => s.code === status)
+      if (statusObj) return statusObj.name
+      
+      // Fallback для старых значений
       const texts = {
         'todo': 'К выполнению',
         'in_progress': 'В работе',
@@ -845,6 +1078,10 @@ export default {
     },
     
     getPriorityText(priority) {
+      const priorityObj = this.taskPriorities.find(p => p.code === priority)
+      if (priorityObj) return priorityObj.name
+      
+      // Fallback для старых значений
       const texts = {
         'low': 'Низкий',
         'medium': 'Средний',
@@ -882,6 +1119,10 @@ export default {
     },
     
     getProjectPriorityText(priority) {
+      const priorityObj = this.projectPriorities.find(p => p.code === priority)
+      if (priorityObj) return priorityObj.name
+      
+      // Fallback для старых значений
       const texts = {
         'low': 'Низкий',
         'medium': 'Средний',
@@ -903,6 +1144,10 @@ export default {
     },
     
     getProjectStatusText(status) {
+      const statusObj = this.projectStatuses.find(s => s.code === status)
+      if (statusObj) return statusObj.name
+      
+      // Fallback для старых значений
       const texts = {
         'todo': 'К выполнению',
         'in_progress': 'В работе',
@@ -915,19 +1160,37 @@ export default {
     
     formatDate(date) {
       if (!date) return 'Не указана'
-      return new Date(date).toLocaleDateString('ru-RU', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
+      try {
+        const d = new Date(date)
+        if (isNaN(d.getTime())) return 'Неверная дата'
+        return d.toLocaleDateString('ru-RU', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      } catch (e) {
+        console.warn('Ошибка форматирования даты:', e)
+        return 'Ошибка даты'
+      }
     },
     
-    viewProject(project) {
+    viewProject(projectEvent) {
       // Переходим к детальному просмотру проекта
-      this.$router.push({
-        name: 'project-detail',
-        params: { id: project.id }
-      })
+      if (!projectEvent || !projectEvent.id) {
+        console.error('Некорректные данные проекта:', projectEvent)
+        this.showError('Ошибка открытия проекта')
+        return
+      }
+      
+      try {
+        this.$router.push({
+          name: 'ProjectDetail',
+          params: { id: projectEvent.id.toString() }
+        })
+      } catch (error) {
+        console.error('Ошибка навигации:', error)
+        this.showError('Ошибка перехода к проекту')
+      }
     },
     
     getEventsCount(date) {
@@ -950,7 +1213,14 @@ export default {
     formatDateRange(startDate, endDate) {
       const formatDate = (date) => {
         if (!date) return null
-        return new Date(date).toLocaleDateString('ru-RU')
+        try {
+          const d = new Date(date)
+          if (isNaN(d.getTime())) return null
+          return d.toLocaleDateString('ru-RU')
+        } catch (e) {
+          console.warn('Ошибка форматирования даты в диапазоне:', e)
+          return null
+        }
       }
       
       const start = formatDate(startDate)
@@ -960,6 +1230,57 @@ export default {
       if (start) return `с ${start}`
       if (end) return `до ${end}`
       return 'Даты не указаны'
+    },
+    
+    formatEventTime(startDate, endDate) {
+      if (!startDate && !endDate) return ''
+      
+      const formatTime = (date) => {
+        if (!date) return ''
+        try {
+          const d = new Date(date)
+          // Проверяем что дата валидна
+          if (isNaN(d.getTime())) return ''
+          return d.toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })
+        } catch (e) {
+          console.warn('Ошибка форматирования времени:', e)
+          return ''
+        }
+      }
+      
+      const startTime = formatTime(startDate)
+      const endTime = formatTime(endDate)
+      
+      if (startTime && endTime) {
+        return `${startTime} - ${endTime}`
+      } else if (startTime) {
+        return `с ${startTime}`
+      } else if (endTime) {
+        return `до ${endTime}`
+      }
+      
+      return ''
+    },
+    
+    hasProjectEventOnDate(project, eventType) {
+      if (!this.selectedDate || !project) return false
+      
+      const projectEvents = this.getProjectsForDay(this.selectedDate)
+      return projectEvents.some(event => 
+        event.id === project.id && event.eventType === eventType
+      )
+    },
+    
+    hasTaskEventOnDate(task, eventType) {
+      if (!this.selectedDate || !task) return false
+      
+      const taskEvents = this.getTasksForDay(this.selectedDate)
+      return taskEvents.some(event => 
+        event.id === task.id && event.eventType === eventType
+      )
     }
   }
 }
@@ -976,6 +1297,48 @@ export default {
 
 .pm-page-header {
   margin-bottom: 20px;
+  
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  .btn-outline-primary {
+    border: 2px solid var(--bs-primary);
+    color: var(--bs-primary);
+    background: transparent;
+    
+    &:hover {
+      background: var(--bs-primary);
+      color: white;
+      border-color: var(--bs-primary);
+    }
+  }
+  
+  .btn-primary {
+    background: var(--bs-primary);
+    border: 2px solid var(--bs-primary);
+    color: white;
+    
+    &:hover {
+      background: var(--bs-primary-dark);
+      border-color: var(--bs-primary-dark);
+    }
+  }
 }
 
 .calendar-navigation {
@@ -988,6 +1351,86 @@ export default {
     font-weight: $font-weight-bold;
     color: var(--bs-heading-color);
     margin: 0;
+  }
+  
+  .calendar-nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    
+    .btn-nav {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f8fbff 60%, #e3f0ff 100%);
+      border: 2.5px solid var(--bs-primary);
+      color: var(--bs-primary);
+      transition: all 0.18s cubic-bezier(.4,0,.2,1);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,123,255,0.07);
+      outline: none;
+      position: relative;
+      z-index: 1;
+      
+      svg {
+        width: 26px;
+        height: 26px;
+        color: var(--bs-primary);
+        transition: color 0.18s;
+      }
+      
+      &:hover, &:focus {
+        background: linear-gradient(135deg, #e3f0ff 60%, #b6d6ff 100%);
+        color: #fff;
+        border-color: var(--bs-primary);
+        box-shadow: 0 6px 18px rgba(0,123,255,0.13);
+        transform: scale(1.08) translateY(-2px);
+        svg {
+          color: #0056b3;
+        }
+      }
+      &:active {
+        transform: scale(0.97);
+        box-shadow: 0 2px 6px rgba(0,123,255,0.10);
+      }
+    }
+    
+    .btn-today {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 999px;
+      background: transparent;
+      border: 2px solid var(--bs-primary);
+      color: var(--bs-primary);
+      font-weight: 600;
+      transition: all 0.2s;
+      box-shadow: none;
+      outline: none;
+      
+      svg {
+        color: var(--bs-primary);
+      }
+      
+      &:hover, &:focus {
+        background: var(--bs-primary);
+        color: #fff;
+        svg {
+          color: #fff;
+        }
+        box-shadow: 0 4px 12px rgba(0,123,255,0.10);
+        border-color: var(--bs-primary);
+        transform: translateY(-2px);
+      }
+      &:active {
+        transform: scale(0.97);
+      }
+    }
   }
   
   .calendar-view-options {
@@ -1116,32 +1559,48 @@ export default {
         font-size: $font-size-micro;
         cursor: pointer;
         transition: all $pm-transition;
-        display: flex;
-        align-items: center;
-        gap: 4px;
         overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
         
         &:hover {
           transform: translateX(2px);
         }
         
-        i {
-          font-size: 8px;
-        }
-        
         &.project-event {
           border-left: 3px solid;
+          
+          &.event-start {
+            border-left-style: solid;
+            opacity: 0.9;
+          }
+          
+          &.event-end {
+            border-left-style: dashed;
+            opacity: 0.8;
+          }
         }
         
         &.task-event {
           background: var(--bs-light);
           border-left: 3px solid var(--bs-primary);
           
+          &.event-start {
+            border-left-style: solid;
+            opacity: 0.9;
+          }
+          
+          &.event-due {
+            border-left-style: dashed;
+            opacity: 0.8;
+            background: rgba($warning, 0.15);
+          }
+          
           &.priority-urgent {
             border-left-color: var(--bs-danger);
             background: rgba($danger, 0.1);
+            
+            &.event-due {
+              background: rgba($danger, 0.15);
+            }
           }
           
           &.priority-high {
@@ -1159,6 +1618,37 @@ export default {
             background: rgba($secondary, 0.1);
           }
         }
+        
+        .event-content {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          
+          .event-title {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            
+            i {
+              font-size: 8px;
+              flex-shrink: 0;
+            }
+          }
+          
+          .event-time {
+            font-size: 9px;
+            color: var(--bs-secondary-color);
+            line-height: 1;
+            opacity: 0.8;
+            
+            small {
+              font-size: inherit;
+            }
+          }
+        }
       }
       
       .event-more {
@@ -1172,13 +1662,40 @@ export default {
   }
 }
 
+// Стили для индикаторов событий
+.event-indicators {
+  .badge {
+    font-size: 10px;
+    padding: 3px 6px;
+    
+    &.badge-start {
+      background-color: var(--bs-success);
+      color: white;
+    }
+    
+    &.badge-end {
+      background-color: var(--bs-secondary);
+      color: white;
+    }
+    
+    &.badge-due {
+      background-color: var(--bs-warning);
+      color: var(--bs-dark);
+    }
+    
+    i {
+      font-size: 8px;
+    }
+  }
+}
+
 .selected-date-events {
   @include pm-card;
   margin-top: 2rem;
   padding: 0;
   
   .events-header {
-    padding: 1.5rem;
+    padding: 1rem 1.5rem;
     background: var(--bs-light);
     border-bottom: 1px solid var(--bs-border-color);
     

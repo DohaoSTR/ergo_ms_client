@@ -16,23 +16,22 @@
           </div>
           <div class="col-md-2">
             <label class="form-label">Статус</label>
-            <select class="form-select" v-model="filters.status" @change="loadProjects">
+            <select class="form-select" v-model="filters.status" @change="loadProjects" :disabled="loadingStatuses">
               <option value="">Все статусы</option>
-              <option value="planning">Планирование</option>
-              <option value="active">Активный</option>
-              <option value="on_hold">Приостановлен</option>
-              <option value="completed">Завершен</option>
-              <option value="cancelled">Отменен</option>
+              <option v-if="loadingStatuses">Загрузка...</option>
+              <option v-else v-for="status in projectStatuses" :key="status.id" :value="status.code">
+                {{ status.name }}
+              </option>
             </select>
           </div>
           <div class="col-md-2">
             <label class="form-label">Приоритет</label>
-            <select class="form-select" v-model="filters.priority" @change="loadProjects">
+            <select class="form-select" v-model="filters.priority" @change="loadProjects" :disabled="loadingStatuses">
               <option value="">Все приоритеты</option>
-              <option value="low">Низкий</option>
-              <option value="medium">Средний</option>
-              <option value="high">Высокий</option>
-              <option value="urgent">Срочный</option>
+              <option v-if="loadingStatuses">Загрузка...</option>
+              <option v-else v-for="priority in projectPriorities" :key="priority.id" :value="priority.code">
+                {{ priority.name }}
+              </option>
             </select>
           </div>
           <div class="col-md-3">
@@ -160,16 +159,16 @@
           </div>
           
           <div class="project-footer">
-            <router-link :to="`/crm/project-management/project/${project.id}`" 
-                         class="btn btn-primary btn-sm rounded-pill">
-              <i class="fas fa-eye me-1"></i>Открыть проект
+            <router-link :to="{ path: `/crm/project-management/project/${project.id}`, query: getProjectLinkQuery() }" 
+                         class="btn btn-open-project">
+              <i class="fas fa-eye me-2"></i>Открыть проект
             </router-link>
-            <div v-if="managementMode" class="btn-group btn-group-sm">
-              <button class="btn btn-light" @click="editProject(project)" title="Редактировать">
-                <i class="fas fa-edit"></i>
+            <div v-if="managementMode" class="project-actions">
+              <button class="btn btn-edit-icon" @click="editProject(project)" title="Редактировать проект">
+                <Edit />
               </button>
-              <button class="btn btn-light text-danger" @click="deleteProject(project)" title="Удалить">
-                <i class="fas fa-trash"></i>
+              <button class="btn btn-delete-icon" @click="deleteProject(project)" title="Удалить проект">
+                <Trash2 />
               </button>
             </div>
           </div>
@@ -239,21 +238,20 @@
               <div class="row g-3 mb-4">
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Статус</label>
-                  <select class="form-select" v-model="currentProject.status">
-                    <option value="planning">Планирование</option>
-                    <option value="active">Активный</option>
-                    <option value="on_hold">Приостановлен</option>
-                    <option value="completed">Завершен</option>
-                    <option value="cancelled">Отменен</option>
+                  <select class="form-select" v-model="currentProject.status" :disabled="loadingStatuses">
+                    <option v-if="loadingStatuses">Загрузка...</option>
+                    <option v-else v-for="status in projectStatuses" :key="status.id" :value="status.code">
+                      {{ status.name }}
+                    </option>
                   </select>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Приоритет</label>
-                  <select class="form-select" v-model="currentProject.priority">
-                    <option value="low">Низкий</option>
-                    <option value="medium">Средний</option>
-                    <option value="high">Высокий</option>
-                    <option value="urgent">Срочный</option>
+                  <select class="form-select" v-model="currentProject.priority" :disabled="loadingStatuses">
+                    <option v-if="loadingStatuses">Загрузка...</option>
+                    <option v-else v-for="priority in projectPriorities" :key="priority.id" :value="priority.code">
+                      {{ priority.name }}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -268,9 +266,6 @@
           </div>
           <div class="modal-footer border-top">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Отменить</button>
-            <button type="button" class="btn btn-danger" v-if="isEditing" @click="confirmDeleteProject">
-              <i class="fas fa-trash me-2"></i>Удалить
-            </button>
             <button type="button" class="btn btn-primary" @click="submitProject" :disabled="!currentProject.name">
               <i class="fas fa-save me-2"></i>{{ isEditing ? 'Сохранить' : 'Создать' }}
             </button>
@@ -283,11 +278,16 @@
 
 <script>
 import { Modal } from 'bootstrap'
+import { Edit, Trash2 } from 'lucide-vue-next'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
 import { useNotifications } from '@/pages/lms/composables/useNotifications'
 
 export default {
   name: 'ProjectsList',
+  components: {
+    Edit,
+    Trash2
+  },
   props: {
     managementMode: {
       type: Boolean,
@@ -326,12 +326,17 @@ export default {
         color: '#007bff'
       },
       isEditing: false,
-      searchTimeout: null
+      searchTimeout: null,
+      // Динамические данные для статусов и приоритетов
+      projectStatuses: [],
+      projectPriorities: [],
+      loadingStatuses: false
     }
   },
   
   async mounted() {
     this.loadProjects()
+    this.loadStatusesAndPriorities()
   },
   
   computed: {
@@ -384,12 +389,66 @@ export default {
         this.loading = false
       }
     },
+
+    async loadStatusesAndPriorities() {
+      try {
+        this.loadingStatuses = true
+        const [statusesResponse, prioritiesResponse] = await Promise.all([
+          projectManagementApi.getProjectStatuses(),
+          projectManagementApi.getProjectPriorities()
+        ])
+        
+        // Обрабатываем ответ - может быть массив или объект с results
+        this.projectStatuses = Array.isArray(statusesResponse.data) ? 
+          statusesResponse.data.filter(s => s.is_active) : 
+          (statusesResponse.data.results || []).filter(s => s.is_active)
+          
+        this.projectPriorities = Array.isArray(prioritiesResponse.data) ? 
+          prioritiesResponse.data.filter(p => p.is_active) : 
+          (prioritiesResponse.data.results || []).filter(p => p.is_active)
+        
+        // Устанавливаем значения по умолчанию если есть
+        const defaultStatus = this.projectStatuses.find(s => s.is_default)
+        const defaultPriority = this.projectPriorities.find(p => p.is_default)
+        
+        if (defaultStatus && !this.isEditing) {
+          this.currentProject.status = defaultStatus.code
+        }
+        if (defaultPriority && !this.isEditing) {
+          this.currentProject.priority = defaultPriority.code
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки статусов и приоритетов:', error)
+        // Fallback к жестко заданным значениям
+        this.projectStatuses = [
+          { id: 1, name: 'Планирование', code: 'planning' },
+          { id: 2, name: 'Активный', code: 'active' },
+          { id: 3, name: 'Приостановлен', code: 'on_hold' },
+          { id: 4, name: 'Завершен', code: 'completed' },
+          { id: 5, name: 'Отменен', code: 'cancelled' }
+        ]
+        this.projectPriorities = [
+          { id: 1, name: 'Низкий', code: 'low' },
+          { id: 2, name: 'Средний', code: 'medium' },
+          { id: 3, name: 'Высокий', code: 'high' },
+          { id: 4, name: 'Срочный', code: 'urgent' }
+        ]
+      } finally {
+        this.loadingStatuses = false
+      }
+    },
     
     changePage(page) {
       if (page >= 1 && page <= this.pagination.total_pages) {
         this.pagination.current_page = page
         this.loadProjects()
       }
+    },
+
+    // Публичный метод для обновления статусов и приоритетов
+    async refreshStatusesAndPriorities() {
+      await this.loadStatusesAndPriorities()
+      console.log('Статусы и приоритеты проектов обновлены:', this.projectStatuses.length, this.projectPriorities.length)
     },
     
     getPageNumbers() {
@@ -404,15 +463,23 @@ export default {
       return pages
     },
     
-    createProject() {
+    async createProject() {
       this.isEditing = false
+      
+      // Обновляем статусы и приоритеты перед созданием проекта
+      await this.refreshStatusesAndPriorities()
+      
+      // Устанавливаем значения по умолчанию из загруженных данных
+      const defaultStatus = this.projectStatuses.find(s => s.is_default) || this.projectStatuses[0]
+      const defaultPriority = this.projectPriorities.find(p => p.is_default) || this.projectPriorities[0]
+      
       this.currentProject = {
         name: '',
         description: '',
         start_date: '',
         end_date: '',
-        status: 'planning',
-        priority: 'medium',
+        status: defaultStatus ? defaultStatus.code : 'planning',
+        priority: defaultPriority ? defaultPriority.code : 'medium',
         color: '#007bff'
       }
       
@@ -515,14 +582,8 @@ export default {
     },
     
     getStatusText(status) {
-      const texts = {
-        'planning': 'Планирование',
-        'active': 'Активный',
-        'on_hold': 'Приостановлен',
-        'completed': 'Завершен',
-        'cancelled': 'Отменен'
-      }
-      return texts[status] || status
+      const statusObj = this.projectStatuses.find(s => s.code === status)
+      return statusObj ? statusObj.name : status
     },
     
     getPriorityClass(priority) {
@@ -536,13 +597,8 @@ export default {
     },
     
     getPriorityText(priority) {
-      const texts = {
-        'low': 'Низкий',
-        'medium': 'Средний',
-        'high': 'Высокий',
-        'urgent': 'Срочный'
-      }
-      return texts[priority] || priority
+      const priorityObj = this.projectPriorities.find(p => p.code === priority)
+      return priorityObj ? priorityObj.name : priority
     },
     
     getProgressClass(progress) {
@@ -569,6 +625,15 @@ export default {
     getAvatarUrl(user) {
       if (!user) return ''
       return user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.username)}&background=6c757d&color=fff&size=32`
+    },
+
+    getProjectLinkQuery() {
+      // Если компонент используется в режиме управления, передаем from=management
+      if (this.managementMode) {
+        return { from: 'management' }
+      }
+      // Иначе не передаем query параметры (для "Мои проекты")
+      return {}
     }
   }
 }
@@ -710,6 +775,49 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    
+    .project-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    // Кнопка "Открыть проект" - прямоугольная с закругленными концами
+    .btn-open-project {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+      
+      &:hover {
+        background: #c82333;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+        text-decoration: none;
+      }
+      
+      &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+      }
+      
+      i {
+        color: white;
+        transition: transform 0.3s ease;
+      }
+      
+      &:hover i {
+        transform: translateX(2px);
+      }
+    }
   }
 }
 

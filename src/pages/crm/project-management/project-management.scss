@@ -156,4 +156,142 @@ $pm-transition: 0.2s ease-in-out;
 
 .pm-fade-in {
   animation: fadeInUp 0.3s ease-out;
+}
+
+// Общие стили для кнопок действий (в стиле LMS)
+.action-buttons {
+  display: flex;
+  gap: 0.25rem;
+  
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    
+    &.btn-primary {
+      color: #0d6efd;
+      border-color: #0d6efd;
+      
+      &:hover {
+        background: #0d6efd;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+      }
+    }
+    
+    &.btn-danger {
+      color: #dc3545;
+      border-color: #dc3545;
+      
+      &:hover {
+        background: #dc3545;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+      }
+    }
+  }
+}
+
+// Стили для кнопок в карточках проектов
+.btn-edit-icon,
+.btn-delete-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.btn-edit-icon {
+  color: #0d6efd;
+  border-color: #0d6efd;
+  
+  &:hover {
+    background: #0d6efd;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+  }
+}
+
+.btn-delete-icon {
+  color: #dc3545;
+  border-color: #dc3545;
+  
+  &:hover {
+    background: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+  }
+}
+
+// Стили для кнопок в календаре
+.task-calendar {
+  .pm-page-header {
+    .btn-primary {
+      @include pm-button;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      
+      &:hover {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+      
+      &:focus {
+        box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+      }
+    }
+  }
+}
+
+.selected-date-events {
+  @include pm-card;
+  margin-top: 2rem;
+  padding: 0;
+  
+  .events-header {
+    padding: 1.5rem;
+    background: var(--bs-light);
+    border-bottom: 1px solid var(--bs-border-color);
+    
+    h5 {
+      margin: 0;
+      font-size: $font-size-h3;
+      font-weight: $font-weight-bold;
+      color: var(--bs-heading-color);
+    }
+  }
+}
+
+.event-more {
+  text-align: center;
+  font-size: $font-size-micro;
+  color: var(--bs-primary);
+  font-weight: $font-weight-bold;
+  cursor: pointer;
 } 

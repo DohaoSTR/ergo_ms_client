@@ -167,11 +167,11 @@
             },
             {
               "routeName": "ProjectCalendar",
-              "name": "Календарь проектов"
+              "name": "Календарь задач"
             },
             {
               "routeName": "KanbanBoard",
-              "name": "Доска проектов"
+              "name": "Доска задач"
             },
             {
               "routeName": "ProjectsAndTasksManagement",

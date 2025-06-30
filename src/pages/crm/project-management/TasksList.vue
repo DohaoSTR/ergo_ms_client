@@ -19,23 +19,22 @@
           </div>
           <div class="col-md-2">
             <label class="form-label">Статус</label>
-            <select class="form-select" v-model="filters.status" @change="loadTasks">
+            <select class="form-select" v-model="filters.status" @change="loadTasks" :disabled="loadingStatuses">
               <option value="">Все статусы</option>
-              <option value="todo">К выполнению</option>
-              <option value="in_progress">В работе</option>
-              <option value="review">На проверке</option>
-              <option value="done">Выполнено</option>
-              <option value="cancelled">Отменено</option>
+              <option v-if="loadingStatuses">Загрузка...</option>
+              <option v-else v-for="status in taskStatuses" :key="status.id" :value="status.code">
+                {{ status.name }}
+              </option>
             </select>
           </div>
           <div class="col-md-2">
             <label class="form-label">Приоритет</label>
-            <select class="form-select" v-model="filters.priority" @change="loadTasks">
+            <select class="form-select" v-model="filters.priority" @change="loadTasks" :disabled="loadingStatuses">
               <option value="">Все приоритеты</option>
-              <option value="low">Низкий</option>
-              <option value="medium">Средний</option>
-              <option value="high">Высокий</option>
-              <option value="urgent">Срочный</option>
+              <option v-if="loadingStatuses">Загрузка...</option>
+              <option v-else v-for="priority in taskPriorities" :key="priority.id" :value="priority.code">
+                {{ priority.name }}
+              </option>
             </select>
           </div>
           <div class="col-md-2">
@@ -123,10 +122,21 @@
                     </div>
                   </div>
                 </td>
-                <td>
-                  <span class="project-badge" :style="{ backgroundColor: task.project?.color || '#f8f9fa' }">
-                    {{ task.project?.name || 'Без проекта' }}
-                  </span>
+                <td class="project-cell">
+                  <div class="project-info" v-if="task.project">
+                    <div class="project-badge" 
+                         :style="{ backgroundColor: task.project.color || '#007bff' }" 
+                         :title="task.project.name">
+                      <i class="fas fa-folder me-1"></i>
+                      <span class="project-name">{{ task.project.name }}</span>
+                    </div>
+                  </div>
+                  <div v-else class="project-empty">
+                    <span class="text-muted">
+                      <i class="fas fa-folder-open me-1"></i>
+                      Без проекта
+                    </span>
+                  </div>
                 </td>
                 <td>
                   <div class="assignee-info" v-if="task.assignee">
@@ -152,13 +162,13 @@
                     <i class="fas fa-clock me-1"></i>{{ formatDate(task.due_date) }}
                   </span>
                 </td>
-                <td @click.stop>
-                  <div class="btn-group btn-group-sm">
-                    <button class="btn btn-light" @click="editTask(task)" title="Редактировать">
-                      <i class="fas fa-edit"></i>
+                <td @click.stop class="actions-cell">
+                  <div class="action-buttons">
+                    <button class="btn btn-edit-icon" @click="editTask(task)" title="Редактировать">
+                      <Edit />
                     </button>
-                    <button class="btn btn-light text-danger" @click="deleteTask(task)" title="Удалить">
-                      <i class="fas fa-trash"></i>
+                    <button class="btn btn-delete-icon" @click="deleteTask(task)" title="Удалить">
+                      <Trash2 />
                     </button>
                   </div>
                 </td>
@@ -243,12 +253,11 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Статус</label>
-                  <select class="form-select" v-model="currentTask.status">
-                    <option value="todo">К выполнению</option>
-                    <option value="in_progress">В работе</option>
-                    <option value="review">На проверке</option>
-                    <option value="done">Выполнено</option>
-                    <option value="cancelled">Отменено</option>
+                  <select class="form-select" v-model="currentTask.status" :disabled="loadingStatuses">
+                    <option v-if="loadingStatuses">Загрузка...</option>
+                    <option v-else v-for="status in taskStatuses" :key="status.id" :value="status.code">
+                      {{ status.name }}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -256,11 +265,11 @@
               <div class="row g-3 mb-4">
                 <div class="col-md-4">
                   <label class="form-label fw-bold">Приоритет</label>
-                  <select class="form-select" v-model="currentTask.priority">
-                    <option value="low">Низкий</option>
-                    <option value="medium">Средний</option>
-                    <option value="high">Высокий</option>
-                    <option value="urgent">Срочный</option>
+                  <select class="form-select" v-model="currentTask.priority" :disabled="loadingStatuses">
+                    <option v-if="loadingStatuses">Загрузка...</option>
+                    <option v-else v-for="priority in taskPriorities" :key="priority.id" :value="priority.code">
+                      {{ priority.name }}
+                    </option>
                   </select>
                 </div>
                 <div class="col-md-4">
@@ -408,11 +417,16 @@
 
 <script>
 import { Modal } from 'bootstrap'
+import { Edit, Trash2 } from 'lucide-vue-next'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
 import { useNotifications } from '@/pages/lms/composables/useNotifications'
 
 export default {
   name: 'TasksList',
+  components: {
+    Edit,
+    Trash2
+  },
   props: {
     managementMode: {
       type: Boolean,
@@ -457,14 +471,22 @@ export default {
       },
       selectedTask: {},
       isEditing: false,
-      searchTimeout: null
+      searchTimeout: null,
+      // Динамические данные для статусов и приоритетов
+      taskStatuses: [],
+      taskPriorities: [],
+      loadingStatuses: false
     }
   },
   
   async mounted() {
     await this.loadProjects()
     await this.loadUsers()
+    await this.loadStatusesAndPriorities()
     this.loadTasks()
+    
+    // Проверяем URL параметры для автоматического создания задачи
+    this.handleUrlParams()
   },
   
   computed: {
@@ -546,6 +568,58 @@ export default {
         this.loadTasks()
       }
     },
+
+    async loadStatusesAndPriorities() {
+      try {
+        this.loadingStatuses = true
+        const [statusesResponse, prioritiesResponse] = await Promise.all([
+          projectManagementApi.getTaskStatuses(),
+          projectManagementApi.getTaskPriorities()
+        ])
+        
+        // Обрабатываем ответ - может быть массив или объект с results
+        this.taskStatuses = Array.isArray(statusesResponse.data) ? 
+          statusesResponse.data.filter(s => s.is_active) : 
+          (statusesResponse.data.results || []).filter(s => s.is_active)
+          
+        this.taskPriorities = Array.isArray(prioritiesResponse.data) ? 
+          prioritiesResponse.data.filter(p => p.is_active) : 
+          (prioritiesResponse.data.results || []).filter(p => p.is_active)
+          
+        console.log(`Загружено статусов задач: ${this.taskStatuses.length}, приоритетов: ${this.taskPriorities.length}`)
+        console.log('Статусы задач:', this.taskStatuses.map(s => s.name))
+        console.log('Приоритеты задач:', this.taskPriorities.map(p => p.name))
+        
+        // Устанавливаем значения по умолчанию если есть
+        const defaultStatus = this.taskStatuses.find(s => s.is_default)
+        const defaultPriority = this.taskPriorities.find(p => p.is_default)
+        
+        if (defaultStatus && !this.isEditing) {
+          this.currentTask.status = defaultStatus.code
+        }
+        if (defaultPriority && !this.isEditing) {
+          this.currentTask.priority = defaultPriority.code
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки статусов и приоритетов:', error)
+        // Fallback к жестко заданным значениям
+        this.taskStatuses = [
+          { id: 1, name: 'К выполнению', code: 'todo' },
+          { id: 2, name: 'В работе', code: 'in_progress' },
+          { id: 3, name: 'На проверке', code: 'review' },
+          { id: 4, name: 'Выполнено', code: 'done' },
+          { id: 5, name: 'Отменено', code: 'cancelled' }
+        ]
+        this.taskPriorities = [
+          { id: 1, name: 'Низкий', code: 'low' },
+          { id: 2, name: 'Средний', code: 'medium' },
+          { id: 3, name: 'Высокий', code: 'high' },
+          { id: 4, name: 'Срочный', code: 'urgent' }
+        ]
+      } finally {
+        this.loadingStatuses = false
+      }
+    },
     
     getPageNumbers() {
       const pages = []
@@ -558,16 +632,31 @@ export default {
       
       return pages
     },
+
+    // Публичный метод для обновления статусов и приоритетов
+    async refreshStatusesAndPriorities() {
+      await this.loadStatusesAndPriorities()
+      console.log('Статусы и приоритеты задач обновлены:', this.taskStatuses.length, this.taskPriorities.length)
+    },
     
-    createTask() {
+    async createTask() {
       this.isEditing = false
+      
+      // Обновляем статусы и приоритеты перед созданием задачи
+      console.log('Обновляем статусы перед созданием задачи...')
+      await this.refreshStatusesAndPriorities()
+      
+      // Устанавливаем значения по умолчанию из загруженных данных
+      const defaultStatus = this.taskStatuses.find(s => s.is_default) || this.taskStatuses[0]
+      const defaultPriority = this.taskPriorities.find(p => p.is_default) || this.taskPriorities[0]
+      
       this.currentTask = {
         title: '',
         description: '',
         project_id: '',
         assignee_id: '',
-        status: 'todo',
-        priority: 'medium',
+        status: defaultStatus ? defaultStatus.code : 'todo',
+        priority: defaultPriority ? defaultPriority.code : 'medium',
         start_date: '',
         due_date: '',
         estimated_hours: null
@@ -713,14 +802,8 @@ export default {
     },
     
     getStatusText(status) {
-      const texts = {
-        'todo': 'К выполнению',
-        'in_progress': 'В работе',
-        'review': 'На проверке',
-        'done': 'Выполнено',
-        'cancelled': 'Отменено'
-      }
-      return texts[status] || status
+      const statusObj = this.taskStatuses.find(s => s.code === status)
+      return statusObj ? statusObj.name : status
     },
     
     getPriorityClass(priority) {
@@ -734,13 +817,8 @@ export default {
     },
     
     getPriorityText(priority) {
-      const texts = {
-        'low': 'Низкий',
-        'medium': 'Средний',
-        'high': 'Высокий',
-        'urgent': 'Срочный'
-      }
-      return texts[priority] || priority
+      const priorityObj = this.taskPriorities.find(p => p.code === priority)
+      return priorityObj ? priorityObj.name : priority
     },
     
     getDueDateClass(dueDate, status) {
@@ -789,6 +867,24 @@ export default {
       if (!user) return ''
       const name = user.full_name || `${user.first_name} ${user.last_name}`.trim() || user.username || 'User'
       return user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6c757d&color=fff&size=32`
+    },
+
+    // Обработка URL параметров
+    handleUrlParams() {
+      const query = this.$route.query
+      
+      // Автоматическое создание задачи, если есть соответствующие параметры
+      if (query.create === 'task') {
+        // Небольшая задержка для завершения инициализации
+        setTimeout(() => {
+          this.createTask()
+          
+          // Если указан проект, предустанавливаем его
+          if (query.project && this.projects.length > 0) {
+            this.currentTask.project_id = query.project
+          }
+        }, 500)
+      }
     }
   }
 }
@@ -833,12 +929,13 @@ export default {
       text-transform: uppercase;
       letter-spacing: 0.5px;
       
-      &:first-child {
-        width: 35%;
-      }
-      &:nth-child(2) {
-        width: 15%;
-      }
+              &:first-child {
+          width: 28%; // Еще немного уменьшили для задач
+        }
+              &:nth-child(2) {
+          width: 22%; // Увеличили до 22% для проектов
+          min-width: 160px; // Увеличили минимальную ширину
+        }
       &:nth-child(3) {
         width: 15%;
       }
@@ -852,7 +949,7 @@ export default {
         width: 10%;
       }
       &:last-child {
-        width: 5%;
+        width: 8%;
         text-align: center;
       }
     }
@@ -890,10 +987,45 @@ export default {
     }
   }
   
-  .project-badge {
-    @include pm-badge;
-    color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  .project-cell {
+    .project-info {
+      .project-badge {
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: inline-block;
+        max-width: 100%;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        
+        .project-name {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          display: inline-block;
+          max-width: 140px;
+        }
+        
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        i {
+          margin-right: 0.3rem;
+          font-size: 0.7rem;
+        }
+      }
+    }
+    
+    .project-empty {
+      font-size: 0.875rem;
+      font-style: italic;
+      color: var(--bs-secondary);
+    }
   }
   
   .assignee-info {
@@ -1058,6 +1190,46 @@ export default {
 .text-danger {
   &.fw-bold {
     font-weight: $font-weight-bold !important;
+  }
+}
+
+// Стили для кнопок действий
+.actions-cell {
+  .action-buttons {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+    
+    .btn-action {
+      padding: 0.375rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      border-width: 1px;
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
+      
+      i {
+        font-size: 0.85rem;
+      }
+    }
+    
+    .btn-primary {
+      &:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+    }
+    
+    .btn-danger {
+      &:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+    }
   }
 }
 
