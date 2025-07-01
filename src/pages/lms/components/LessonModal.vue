@@ -6,6 +6,7 @@
           <h5 class="modal-title d-flex align-items-center">
             <component :is="getLessonIcon(lesson.lessontype)" :size="20" class="me-2" />
             {{ lesson.name }}
+            <span v-if="isReadOnly" class="badge bg-info ms-2">Режим просмотра</span>
           </h5>
           <button 
             type="button" 
@@ -88,20 +89,20 @@
                     <div class="mt-auto">
                       <button 
                         @click="openItem(item)" 
-                        class="btn btn-outline-primary btn-sm w-100"
+                        :class="isReadOnly ? 'btn btn-outline-secondary btn-sm w-100' : 'btn btn-outline-primary btn-sm w-100'"
                         :disabled="loading"
                       >
                         <template v-if="item.item_type === 'test'">
                           <HelpCircle :size="14" class="me-1" />
-                          Пройти тест
+                          {{ isReadOnly ? 'Просмотреть тест' : 'Пройти тест' }}
                         </template>
                         <template v-else-if="item.item_type === 'assignment'">
                           <FileCheck :size="14" class="me-1" />
-                          Сдать задание
+                          {{ isReadOnly ? 'Просмотреть задание' : 'Сдать задание' }}
                         </template>
                         <template v-else>
                           <Download :size="14" class="me-1" />
-                          Скачать
+                          {{ isReadOnly ? 'Просмотреть' : 'Скачать' }}
                         </template>
                       </button>
                     </div>
@@ -122,6 +123,12 @@
         </div>
         
         <div class="modal-footer">
+          <!-- Режим только чтения -->
+          <div v-if="isReadOnly" class="d-flex align-items-center me-auto">
+            <Info :size="16" class="me-2 text-info" />
+            <span class="text-muted small">Режим просмотра - изменения недоступны</span>
+          </div>
+          
           <button 
             type="button" 
             class="btn btn-secondary" 
@@ -130,21 +137,24 @@
             Закрыть
           </button>
           
-          <button 
-            v-if="!isLessonCompleted"
-            type="button" 
-            class="btn btn-success" 
-            @click="markAsCompleted"
-            :disabled="loading"
-          >
-            <CheckCircle :size="16" class="me-1" />
-            Отметить как завершенный
-          </button>
-          
-          <span v-else class="btn btn-success disabled">
-            <CheckCircle :size="16" class="me-1" />
-            Урок завершен
-          </span>
+          <!-- Кнопки завершения только для студентов -->
+          <template v-if="!isReadOnly">
+            <button 
+              v-if="!isLessonCompleted"
+              type="button" 
+              class="btn btn-success" 
+              @click="markAsCompleted"
+              :disabled="loading"
+            >
+              <CheckCircle :size="16" class="me-1" />
+              Отметить как завершенный
+            </button>
+            
+            <span v-else class="btn btn-success disabled">
+              <CheckCircle :size="16" class="me-1" />
+              Урок завершен
+            </span>
+          </template>
         </div>
       </div>
     </div>
@@ -154,6 +164,7 @@
       v-if="selectedTest"
       :test="selectedTest"
       :course="course"
+      :isReadOnly="isReadOnly"
       @close="closeTest"
       @completed="onTestCompleted"
     />
@@ -163,6 +174,7 @@
       v-if="selectedAssignment"
       :assignment="selectedAssignment"
       :course="course"
+      :isReadOnly="isReadOnly"
       @close="closeAssignment"
       @submitted="onAssignmentSubmitted"
     />
@@ -188,6 +200,10 @@ const props = defineProps({
   course: {
     type: Object,
     required: true
+  },
+  isReadOnly: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -362,6 +378,13 @@ function closeAssignment() {
 
 // Обработка завершения
 function onTestCompleted(testId) {
+  // В режиме только чтения не сохраняем прогресс
+  if (props.isReadOnly) {
+    console.log('Режим только чтения: прогресс теста не сохраняется')
+    closeTest()
+    return
+  }
+  
   // Находим элемент теста и отмечаем как завершенный
   const testItem = props.lesson.items.find(item => 
     item.item_type === 'test' && (item.test.id === testId || item.test === testId)
@@ -373,6 +396,13 @@ function onTestCompleted(testId) {
 }
 
 function onAssignmentSubmitted(assignmentId) {
+  // В режиме только чтения не сохраняем прогресс
+  if (props.isReadOnly) {
+    console.log('Режим только чтения: прогресс задания не сохраняется')
+    closeAssignment()
+    return
+  }
+  
   // Находим элемент задания и отмечаем как завершенный
   const assignmentItem = props.lesson.items.find(item => 
     item.item_type === 'assignment' && (item.assignment.id === assignmentId || item.assignment === assignmentId)
@@ -384,6 +414,11 @@ function onAssignmentSubmitted(assignmentId) {
 }
 
 async function markAsCompleted() {
+  // В режиме только чтения блокируем отметку о завершении
+  if (props.isReadOnly) {
+    console.log('Режим только чтения: отметка о завершении недоступна')
+    return
+  }
   try {
     loading.value = true
     
@@ -428,6 +463,14 @@ async function markAsCompleted() {
 }
 
 onMounted(() => {
+  console.log('🔍 Инициализация урока:', props.lesson.name, props.isReadOnly ? '(режим просмотра)' : '(режим прохождения)')
+  
+  // В режиме только чтения не загружаем прогресс
+  if (props.isReadOnly) {
+    console.log('Режим только чтения: прогресс не загружается')
+    return
+  }
+  
   // Загружаем сохраненный прогресс урока
   const storageKey = `lesson_progress_${props.course.id}_${props.lesson.id}`
   const savedProgress = localStorage.getItem(storageKey)
@@ -445,7 +488,6 @@ onMounted(() => {
   }
   
   // Можно также загрузить прогресс выполнения элементов урока из API
-  console.log('🔍 Инициализация урока:', props.lesson.name)
 })
 </script>
 

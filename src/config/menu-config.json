@@ -106,11 +106,6 @@
       ]
     },
     {
-      "icon": "AtSign",
-      "routeName": "Email",
-      "title": "Электронная почта"
-    },
-    {
       "icon": "MessagesSquare",
       "routeName": "Messenger",
       "title": "Мессенджер"
@@ -301,12 +296,12 @@
           "name": "Мои курсы"
         },
         {
-          "routeName": "LMSGrades",
-          "name": "Оценки"
-        },
-        {
           "routeName": "LMSCalendar",
           "name": "Календарь"
+        },
+        {
+          "routeName": "LMSGrades",
+          "name": "Оценки"
         },
         {
           "routeName": "LMSBadges",

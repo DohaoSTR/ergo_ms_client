@@ -228,6 +228,9 @@ export const endpoints = {
         // Личные сообщения
         messages: 'lms/api/messages/',
         
+        // Оценки
+        grades: 'lms/api/grades/',
+        
         // Аналитика
         studentStats: 'lms/analytics/student/',
         teacherStats: 'lms/analytics/teacher/',

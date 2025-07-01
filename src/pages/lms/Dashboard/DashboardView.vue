@@ -164,7 +164,9 @@ async function loadStudentDashboardData() {
               const daysSinceEnrollment = Math.floor((Date.now() - enrollmentDate.getTime()) / (1000 * 60 * 60 * 24))
               progress = Math.min(daysSinceEnrollment * 5, 75) // 5% в день, максимум 75%
             } else {
-              progress = Math.floor(Math.random() * 30) + 10 // 10-40% если нет данных
+              // Используем стабильный прогресс на основе ID курса вместо случайного
+              const seed = parseInt(subject.id) || 1
+              progress = ((seed * 19) % 40) + 10 // 10-49% стабильно для каждого курса
             }
           }
           

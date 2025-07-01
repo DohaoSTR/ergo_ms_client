@@ -18,31 +18,20 @@ const navigationButtons = computed(() => {
   }
 
   const baseButtons = [
-    { icon: ChartBar, title: 'Панель пользователя', link: 'LMSDashboard', roles: ['student', 'teacher', 'admin'] },
+    { icon: ChartBar, title: 'Панель пользователя', link: 'LMSDashboard', roles: ['student', 'teacher', 'admin', 'guest'] },
     { icon: GraduationCap, title: 'Каталог курсов', link: 'LMSCatalog', roles: ['student', 'teacher', 'admin', 'guest'] },
-    { icon: Calendar, title: 'Календарь', link: 'LMSCalendar', roles: ['student', 'teacher', 'admin'] },
-    { icon: Award, title: 'Достижения', link: 'LMSBadges', roles: ['student', 'teacher', 'admin'] }
-  ]
 
-  const studentButtons = [
-    { icon: BookOpen, title: 'Мои курсы', link: 'LMSCourses', roles: ['student'] },
-    { icon: FileCheck, title: 'Оценки', link: 'LMSGrades', roles: ['student'] }
-  ]
+    { icon: BookOpen, title: 'Мои курсы', link: 'LMSCourses', roles: ['student', 'teacher', 'admin', 'guest'] },
+    { icon: Calendar, title: 'Календарь', link: 'LMSCalendar', roles: ['student', 'teacher', 'admin', 'guest'] },
 
-  const teacherButtons = [
-    { icon: Settings, title: 'Управление курсами', link: 'LMSLessonsManagement', roles: ['teacher', 'admin'] },
-    { icon: Settings, title: 'Структура курсов', link: 'LMSCategoriesAndFormats', roles: ['teacher', 'admin'] }
+    { icon: FileCheck, title: 'Оценки', link: 'LMSGrades', roles: ['student', 'teacher', 'admin', 'guest'] },
+    { icon: Award, title: 'Достижения', link: 'LMSBadges', roles: ['student', 'teacher', 'admin', 'guest'] },
+
+    { icon: Settings, title: 'Управление курсами', link: 'LMSLessonsManagement', roles: ['student', 'teacher', 'admin', 'guest'] },
+    { icon: Settings, title: 'Структура курсов', link: 'LMSCategoriesAndFormats', roles: ['student', 'teacher', 'admin', 'guest'] }
   ]
 
   let allButtons = [...baseButtons]
-  
-  if (userRole.isStudent.value ) {
-    allButtons.push(...studentButtons)
-  }
-  
-  if (userRole.isTeacher.value || userRole.isAdmin.value) {
-    allButtons.push(...teacherButtons)
-  }
 
   return allButtons.filter(button => 
     button.roles.includes(userRole.primaryRole.value)

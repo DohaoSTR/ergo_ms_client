@@ -556,6 +556,30 @@
         "requiresAuth": true
       }
     },
+    "ProjectReports": {
+      "path": "/crm/strategic-projects/reports",
+      "component": "@/pages/crm/strategic-projects/ProjectReports.vue",
+      "meta": {
+        "title": "Отчеты и аналитика",
+        "requiresAuth": true
+      }
+    },
+    "ProjectsArchive": {
+      "path": "/crm/strategic-projects/archive",
+      "component": "@/pages/crm/strategic-projects/ProjectsArchive.vue",
+      "meta": {
+        "title": "Архив проектов",
+        "requiresAuth": true
+      }
+    },
+    "EmployeeWorkload": {
+      "path": "/crm/strategic-projects/workload",
+      "component": "@/pages/crm/strategic-projects/EmployeeWorkload.vue",
+      "meta": {
+        "title": "Занятость сотрудников",
+        "requiresAuth": true
+      }
+    },
 
     "ProjectManagement": {
       "path": "/crm/project-management",

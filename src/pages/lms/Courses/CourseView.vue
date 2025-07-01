@@ -36,14 +36,14 @@
                 <span class="badge bg-light text-dark">{{ course.category.name }}</span>
               </div>
               
-              <div v-if="enrollmentInfo" class="d-flex align-items-center">
+              <div v-if="userRole.isStudent?.value && enrollmentInfo" class="d-flex align-items-center">
                 <Calendar :size="16" class="me-2 text-muted" />
                 <span>Записан {{ formatDate(enrollmentInfo.enrollment_date) }}</span>
               </div>
             </div>
             
-            <!-- Прогресс -->
-            <div v-if="enrollmentInfo" class="progress-section mb-3">
+            <!-- Прогресс (только для студентов) -->
+            <div v-if="userRole.isStudent?.value && enrollmentInfo" class="progress-section mb-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="text-muted">Прогресс курса</span>
                 <span class="fw-bold">{{ enrollmentInfo.progress_percentage || 0 }}%</span>
@@ -53,6 +53,18 @@
                   class="progress-bar bg-success" 
                   :style="`width: ${enrollmentInfo.progress_percentage || 0}%`"
                 ></div>
+              </div>
+            </div>
+            
+            <!-- Уведомление для преподавателей и администраторов -->
+            <div v-if="userRole.isTeacher?.value || userRole.isAdmin?.value" class="alert alert-info mb-3">
+              <div class="d-flex align-items-center">
+                <User :size="16" class="me-2" />
+                <span>
+                  <strong>Режим просмотра:</strong> 
+                  Вы просматриваете курс как {{ userRole.isAdmin?.value ? 'администратор' : 'преподаватель' }}. 
+                  Интерактивные элементы недоступны.
+                </span>
               </div>
             </div>
           </div>
@@ -106,7 +118,7 @@
                       <span class="theme-number">{{ themeIndex + 1 }}.</span>
                       {{ theme.name }}
                     </h5>
-                    <div class="theme-progress">
+                    <div v-if="userRole.isStudent?.value" class="theme-progress">
                       <span class="badge bg-light text-dark">
                         {{ getThemeProgress(theme) }}% завершено
                       </span>
@@ -163,21 +175,32 @@
                       </div>
                       
                       <div class="lesson-status">
-                        <CheckCircle 
-                          v-if="isLessonCompleted(lesson)"
-                          :size="20" 
-                          class="text-success"
-                        />
-                        <Circle 
-                          v-else-if="canAccessLesson(lesson)"
-                          :size="20" 
-                          class="text-muted"
-                        />
-                        <Lock 
-                          v-else
-                          :size="20" 
-                          class="text-muted"
-                        />
+                        <!-- Статус для студентов -->
+                        <template v-if="userRole.isStudent?.value">
+                          <CheckCircle 
+                            v-if="isLessonCompleted(lesson)"
+                            :size="20" 
+                            class="text-success"
+                          />
+                          <Circle 
+                            v-else-if="canAccessLesson(lesson)"
+                            :size="20" 
+                            class="text-muted"
+                          />
+                          <Lock 
+                            v-else
+                            :size="20" 
+                            class="text-muted"
+                          />
+                        </template>
+                        <!-- Статус для преподавателей и администраторов -->
+                        <template v-else-if="userRole.isTeacher?.value || userRole.isAdmin?.value">
+                          <BookOpen 
+                            :size="20" 
+                            class="text-primary"
+                            title="Режим просмотра"
+                          />
+                        </template>
                       </div>
                     </div>
                   </div>
@@ -204,6 +227,7 @@
       v-if="selectedLesson"
       :lesson="selectedLesson"
       :course="course"
+      :isReadOnly="!userRole.isStudent?.value"
       @close="closeLessonModal"
       @completed="onLessonCompleted"
     />
@@ -221,10 +245,12 @@ import {
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
 import { lmsApi } from '@/js/api/lmsApi'
+import { globalUserRole } from '../composables/useUserRole'
 import LessonModal from '../components/LessonModal.vue'
 
 const route = useRoute()
 const courseId = route.params.id
+const userRole = globalUserRole
 
 const course = ref(null)
 const structure = ref([])
@@ -306,6 +332,12 @@ async function loadLessonItems() {
 
 // Загрузка информации о записи
 async function loadEnrollmentInfo() {
+  // Информация о записи актуальна только для студентов
+  if (!userRole.isStudent?.value) {
+    console.log('Информация о записи доступна только студентам')
+    return
+  }
+  
   try {
     const enrollmentResponse = await apiClient.get(endpoints.lms.enrollments, {
       params: { subject: courseId }
@@ -321,6 +353,12 @@ async function loadEnrollmentInfo() {
 
 // Загрузка завершенных уроков из localStorage
 function loadCompletedLessons() {
+  // Прогресс уроков актуален только для студентов
+  if (!userRole.isStudent?.value) {
+    console.log('Прогресс уроков доступен только студентам')
+    return
+  }
+  
   try {
     console.log('📊 Загружаем завершенные уроки для курса:', courseId)
     
@@ -400,8 +438,13 @@ function getItemTypeName(itemType) {
 }
 
 function canAccessLesson(lesson) {
-  // Логика доступности урока (пока просто возвращаем true)
-  return true
+  // Студенты, преподаватели и администраторы могут просматривать уроки
+  if (userRole.isStudent?.value || userRole.isTeacher?.value || userRole.isAdmin?.value) {
+    return true
+  }
+  
+  // Неавторизованные пользователи не могут открывать уроки
+  return false
 }
 
 function isLessonCompleted(lesson) {
@@ -438,8 +481,10 @@ function getThemeProgress(theme) {
 }
 
 function openLesson(lesson) {
+  // Авторизованные пользователи могут открывать уроки для просмотра
   if (canAccessLesson(lesson)) {
     selectedLesson.value = lesson
+    console.log(`Открываем урок для ${userRole.isStudent?.value ? 'прохождения' : 'просмотра'}: ${lesson.name}`)
   }
 }
 
@@ -448,6 +493,12 @@ function closeLessonModal() {
 }
 
 function onLessonCompleted(lessonId) {
+  // Только студенты могут отмечать уроки как завершенные
+  if (!userRole.isStudent?.value) {
+    console.log('Отмечать уроки как завершенные могут только студенты')
+    return
+  }
+  
   completedLessons.value.add(lessonId)
   closeLessonModal()
 }
