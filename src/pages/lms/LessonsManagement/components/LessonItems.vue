@@ -6,30 +6,6 @@
         Материалы урока
         <span class="badge bg-primary">{{ items.length }}</span>
       </h6>
-      
-      <div class="btn-group">
-        <button 
-          @click="$emit('createTest')" 
-          class="btn btn-sm btn-outline-info"
-          title="Добавить тест"
-        >
-          <FileCheck :size="14" />
-        </button>
-        <button 
-          @click="$emit('createAssignment')" 
-          class="btn btn-sm btn-outline-warning"
-          title="Добавить задание"
-        >
-          <ClipboardList :size="14" />
-        </button>
-        <button 
-          @click="$emit('createResource')" 
-          class="btn btn-sm btn-outline-success"
-          title="Добавить ресурс"
-        >
-          <Upload :size="14" />
-        </button>
-      </div>
     </div>
 
     <!-- Пустое состояние -->
@@ -106,53 +82,31 @@
                       </div>
                     </div>
 
-                    <!-- Меню действий -->
-                    <div class="dropdown">
-                      <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                        <MoreVertical :size="14" />
+                    <!-- Кнопки действий -->
+                    <div class="btn-group">
+                      <button @click="handleEdit(item)" class="btn btn-sm btn-outline-primary">
+                        <Edit :size="14" />
                       </button>
-                      <ul class="dropdown-menu">
-                        <!-- Общие действия -->
-                        <li>
-                          <a class="dropdown-item" href="#" @click.prevent="handleEdit(item)">
-                            <Edit :size="14" class="me-2" />
-                            Редактировать
-                          </a>
-                        </li>
-                        
-                        <!-- Специфичные для типа действия -->
-                        <template v-if="item.item_type === 'test'">
-                          <li>
-                            <a class="dropdown-item" href="#" @click.prevent="$emit('openQuestionManagement', item.content)">
-                              <HelpCircle :size="14" class="me-2" />
-                              Управление вопросами
-                            </a>
-                          </li>
-                          <li>
-                            <a class="dropdown-item" href="#" @click.prevent="$emit('duplicateTest', item.content)">
-                              <Copy :size="14" class="me-2" />
-                              Дублировать
-                            </a>
-                          </li>
-                        </template>
-                        
-                        <template v-if="item.item_type === 'resource'">
-                          <li>
-                            <a class="dropdown-item" href="#" @click.prevent="downloadResource(item.content)">
-                              <Download :size="14" class="me-2" />
-                              Скачать
-                            </a>
-                          </li>
-                        </template>
-                        
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                          <a class="dropdown-item text-danger" href="#" @click.prevent="handleDelete(item)">
-                            <Trash2 :size="14" class="me-2" />
-                            Удалить
-                          </a>
-                        </li>
-                      </ul>
+                      <button 
+                        v-if="item.item_type === 'test'" 
+                        @click="$emit('openQuestionManagement', item.content)" 
+                        class="btn btn-sm btn-outline-info"
+                      >
+                        <HelpCircle :size="14" />
+                        Вопросы
+                      </button>
+                      <ResourceDownloadButton 
+                        v-if="item.item_type === 'resource'" 
+                        :resource="item.content"
+                        variant="outline-success"
+                        size="sm"
+                        :showText="true"
+                        @downloadSuccess="onResourceDownloaded"
+                        @downloadError="onResourceDownloadError"
+                      />
+                      <button @click="handleDelete(item)" class="btn btn-sm btn-outline-danger">
+                        <Trash2 :size="14" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -173,6 +127,10 @@ import {
   MoreVertical, Edit, HelpCircle, Copy, Download, Trash2,
   Eye, EyeOff
 } from 'lucide-vue-next'
+import { apiClient } from '@/js/api/manager'
+import { endpoints } from '@/js/api/endpoints'
+import { downloadResource as downloadResourceUtil } from '@/js/utils/resourceDownload'
+import ResourceDownloadButton from '../../components/ResourceDownloadButton.vue'
 
 const props = defineProps({
   items: {
@@ -347,16 +305,14 @@ const handleDelete = (item) => {
   }
 }
 
-// Скачивание ресурса
-const downloadResource = (resource) => {
-  if (resource.file) {
-    const link = document.createElement('a')
-    link.href = resource.file
-    link.download = resource.name || 'download'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+// Обработчики для скачивания ресурсов
+const onResourceDownloaded = (resource) => {
+  console.log('Ресурс успешно скачан:', resource.name)
+}
+
+const onResourceDownloadError = (errorMsg, resource) => {
+  console.error('Ошибка скачивания ресурса:', resource.name, errorMsg)
+  alert(errorMsg)
 }
 </script>
 
@@ -431,5 +387,87 @@ const downloadResource = (resource) => {
 .dropdown-menu {
   position: absolute !important;
   z-index: 2000 !important;
+}
+
+/* Стили для курсора кнопок */
+.btn {
+  cursor: pointer !important;
+  position: relative;
+}
+
+.btn:hover {
+  cursor: pointer !important;
+}
+
+.btn:disabled {
+  cursor: not-allowed !important;
+}
+
+/* Все дочерние элементы кнопки не должны перехватывать события мыши */
+.btn * {
+  pointer-events: none !important;
+  cursor: inherit !important;
+}
+
+/* Группы кнопок */
+.btn-group .btn {
+  cursor: pointer !important;
+}
+
+.btn-group .btn:hover {
+  cursor: pointer !important;
+}
+
+.btn-group .btn:disabled {
+  cursor: not-allowed !important;
+}
+
+/* Обеспечиваем что весь контент кнопки наследует курсор */
+.btn:not(:disabled) *,
+.btn:not(:disabled) svg,
+.btn:not(:disabled) span {
+  cursor: pointer !important;
+  pointer-events: none !important;
+}
+
+.btn:disabled *,
+.btn:disabled svg,
+.btn:disabled span {
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+/* Центрирование иконок в кнопках */
+.btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+}
+
+.btn svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
+}
+
+/* Для кнопок в группах */
+.btn-group .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+}
+
+.btn-group .btn svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
+}
+
+/* Центрирование для всех svg иконок */
+svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
 }
 </style> 

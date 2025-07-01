@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { GraduationCap, BookOpen, FileCheck, Award, Calendar, ChartBar, Settings, User } from 'lucide-vue-next'
+import { GraduationCap, BookOpen, FileCheck, Award, Calendar, ChartBar, Settings, User, Library } from 'lucide-vue-next'
 
 import NavigationButtons from '@/components/NavigationButtons.vue'
 import RoleSwitcher from './components/RoleSwitcher.vue'
@@ -18,7 +18,7 @@ const navigationButtons = computed(() => {
   }
 
   const baseButtons = [
-    { icon: ChartBar, title: 'Дашборд', link: 'LMSDashboard', roles: ['student', 'teacher', 'admin'] },
+    { icon: ChartBar, title: 'Панель пользователя', link: 'LMSDashboard', roles: ['student', 'teacher', 'admin'] },
     { icon: GraduationCap, title: 'Каталог курсов', link: 'LMSCatalog', roles: ['student', 'teacher', 'admin', 'guest'] },
     { icon: Calendar, title: 'Календарь', link: 'LMSCalendar', roles: ['student', 'teacher', 'admin'] },
     { icon: Award, title: 'Достижения', link: 'LMSBadges', roles: ['student', 'teacher', 'admin'] }
@@ -36,7 +36,7 @@ const navigationButtons = computed(() => {
 
   let allButtons = [...baseButtons]
   
-  if (userRole.isStudent.value) {
+  if (userRole.isStudent.value ) {
     allButtons.push(...studentButtons)
   }
   

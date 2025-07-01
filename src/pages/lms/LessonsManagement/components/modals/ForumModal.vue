@@ -40,20 +40,20 @@
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <label class="form-label">Курс *</label>
+            <label class="form-label">Тема *</label>
             <select 
-              v-model="form.subject" 
+              v-model="form.theme" 
               class="form-select"
-              :class="{ 'is-invalid': validationErrors.subject }"
+              :class="{ 'is-invalid': validationErrors.theme }"
               required
             >
-              <option value="">Выберите курс</option>
-              <option v-for="course in courses" :key="course.id" :value="course.id">
-                {{ course.name }}
+              <option value="">Выберите тему</option>
+              <option v-for="theme in themes" :key="theme.id" :value="theme.id">
+                {{ theme.name }}
               </option>
             </select>
-            <div v-if="validationErrors.subject" class="invalid-feedback">
-              {{ validationErrors.subject }}
+            <div v-if="validationErrors.theme" class="invalid-feedback">
+              {{ validationErrors.theme }}
             </div>
           </div>
         </div>
@@ -184,6 +184,7 @@ const props = defineProps({
   show: Boolean,
   editing: Boolean,
   forumData: Object,
+  themes: Array,
   courses: Array,
   loading: Boolean
 })
@@ -194,7 +195,7 @@ const form = ref({
   name: '',
   description: '',
   forum_type: 'general',
-  subject: null,
+  theme: null,
   is_moderated: false,
   allow_anonymous: false,
   allow_attachments: true,
@@ -211,7 +212,7 @@ function resetForm() {
     name: '',
     description: '',
     forum_type: 'general',
-    subject: null,
+    theme: null,
     is_moderated: false,
     allow_anonymous: false,
     allow_attachments: true,
@@ -232,8 +233,8 @@ function handleSave() {
     errors.name = 'Название форума обязательно'
   }
   
-  if (!form.value.subject) {
-    errors.subject = 'Выберите курс'
+  if (!form.value.theme) {
+    errors.theme = 'Выберите тему'
   }
 
   if (Object.keys(errors).length > 0) {
@@ -246,7 +247,7 @@ function handleSave() {
     name: form.value.name?.trim(),
     description: form.value.description?.trim() || 'Описание форума',
     forum_type: form.value.forum_type || 'general',
-    subject: form.value.subject,
+    theme: form.value.theme,
     is_moderated: Boolean(form.value.is_moderated),
     allow_anonymous: Boolean(form.value.allow_anonymous),
     allow_attachments: Boolean(form.value.allow_attachments),
@@ -262,16 +263,16 @@ function handleSave() {
 watch(() => props.forumData, (newData) => {
   if (newData && Object.keys(newData).length > 0) {
     if (props.editing) {
-      let subjectId = newData.subject
-      if (typeof subjectId === 'object' && subjectId?.id) {
-        subjectId = subjectId.id
+      let themeId = newData.theme
+      if (typeof themeId === 'object' && themeId?.id) {
+        themeId = themeId.id
       }
       
       form.value = {
         name: newData.name || '',
         description: newData.description || '',
         forum_type: newData.forum_type || 'general',
-        subject: subjectId,
+        theme: themeId,
         is_moderated: newData.is_moderated || false,
         allow_anonymous: newData.allow_anonymous || false,
         allow_attachments: newData.allow_attachments !== undefined ? newData.allow_attachments : true,
@@ -286,7 +287,7 @@ watch(() => props.forumData, (newData) => {
         name: '',
         description: '',
         forum_type: 'general',
-        subject: newData.subject || null,
+        theme: newData.theme || null,
         is_moderated: false,
         allow_anonymous: false,
         allow_attachments: true,

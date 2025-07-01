@@ -119,7 +119,7 @@
     {
       "icon": "ClipboardList",
       "routeName": "CRM",
-      "title": "CRM",
+      "title": "Управление организациями",
       "children": [
         {
           "icon": "Target",
@@ -286,11 +286,11 @@
     {
       "icon": "GraduationCap",
       "routeName": "LMS",
-      "title": "Система обучения",
+      "title": "Управление обучением",
       "list": [
         {
           "routeName": "LMSDashboard",
-          "name": "Дашборд"
+          "name": "Панель пользователя"
         },
         {
           "routeName": "LMSCatalog",

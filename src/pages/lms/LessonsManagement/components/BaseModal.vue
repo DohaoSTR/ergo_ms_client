@@ -126,4 +126,37 @@ const confirmButtonClass = computed(() => `btn btn-${props.confirmVariant}`)
     margin: 0.5rem auto;
   }
 }
+
+/* Центрирование иконок в кнопках */
+.btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+}
+
+.btn svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
+}
+
+/* Центрирование иконки в заголовке модального окна */
+.modal-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.modal-title svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
+}
+
+/* Центрирование для всех svg иконок */
+svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
 </style> 

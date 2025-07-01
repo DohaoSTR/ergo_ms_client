@@ -78,75 +78,73 @@ async function loadEvents() {
   try {
     loading.value = true
     
+    // Загружаем события календаря
     const response = await apiClient.get(endpoints.lms.calendar)
+    let calendarEvents = []
+    
     if (response.success) {
-      events.value = response.data.results || response.data
-    } else {
-      // Fallback данные
-      events.value = [
-        {
-          id: 1,
-          title: 'Вебинар по JavaScript',
-          description: 'Изучение асинхронного программирования',
-          event_type: 'lesson',
-          start_date: '2024-01-15T14:00:00Z',
-          end_date: '2024-01-15T15:30:00Z',
-          location: 'Онлайн',
-          is_all_day: false,
-          subject: { name: 'Основы веб-разработки' }
-        },
-        {
-          id: 2,
-          title: 'Дедлайн проекта Python',
-          description: 'Сдача финального проекта по курсу Python',
-          event_type: 'deadline',
-          start_date: '2024-01-18T23:59:00Z',
-          end_date: null,
-          location: '',
-          is_all_day: true,
-          subject: { name: 'Python для начинающих' }
-        },
-        {
-          id: 3,
-          title: 'Экзамен по дизайну',
-          description: 'Финальный экзамен по курсу UX/UI дизайн',
-          event_type: 'exam',
-          start_date: '2024-01-20T10:00:00Z',
-          end_date: '2024-01-20T12:00:00Z',
-          location: 'Аудитория 301',
-          is_all_day: false,
-          subject: { name: 'UX/UI дизайн интерфейсов' }
-        },
-        {
-          id: 4,
-          title: 'Тест по алгоритмам',
-          description: 'Промежуточный тест по основам алгоритмов',
-          event_type: 'quiz',
-          start_date: '2024-01-22T09:00:00Z',
-          end_date: '2024-01-22T10:30:00Z',
-          location: 'Онлайн',
-          is_all_day: false,
-          subject: { name: 'Алгоритмы и структуры данных' }
-        }
-      ]
+      calendarEvents = response.data.results || response.data || []
     }
+    
+    // Также загружаем предстоящие дедлайны заданий
+    try {
+      const assignmentsResponse = await apiClient.get(endpoints.lms.assignments)
+      if (assignmentsResponse.success) {
+        const assignments = assignmentsResponse.data.results || assignmentsResponse.data || []
+        
+        // Преобразуем задания в события календаря
+        assignments.forEach(assignment => {
+          if (assignment.deadline) {
+            calendarEvents.push({
+              id: `assignment-${assignment.id}`,
+              title: `Дедлайн: ${assignment.title}`,
+              description: assignment.description,
+              event_type: 'deadline',
+              start_date: assignment.deadline,
+              end_date: null,
+              location: '',
+              is_all_day: true,
+              subject: assignment.subject ? { name: assignment.subject.name } : { name: 'Общее' }
+            })
+          }
+        })
+      }
+    } catch (error) {
+      console.warn('Не удалось загрузить дедлайны заданий:', error)
+    }
+    
+    // Загружаем предстоящие тесты
+    try {
+      const testsResponse = await apiClient.get(endpoints.lms.tests)
+      if (testsResponse.success) {
+        const tests = testsResponse.data.results || testsResponse.data || []
+        
+        tests.forEach(test => {
+          if (test.available_until) {
+            calendarEvents.push({
+              id: `test-${test.id}`,
+              title: `Тест: ${test.name || test.title}`,
+              description: test.description,
+              event_type: 'quiz',
+              start_date: test.available_from || new Date().toISOString(),
+              end_date: test.available_until,
+              location: 'Онлайн',
+              is_all_day: false,
+              subject: test.subject ? { name: test.subject.name } : { name: 'Общее' }
+            })
+          }
+        })
+      }
+    } catch (error) {
+      console.warn('Не удалось загрузить информацию о тестах:', error)
+    }
+    
+    events.value = calendarEvents
     
   } catch (error) {
     console.error('Ошибка загрузки событий:', error)
-    // Показываем демо-данные при ошибке
-    events.value = [
-      {
-        id: 1,
-        title: 'Вебинар по JavaScript',
-        description: 'Изучение асинхронного программирования',
-        event_type: 'lesson',
-        start_date: '2024-01-15T14:00:00Z',
-        end_date: '2024-01-15T15:30:00Z',
-        location: 'Онлайн',
-        is_all_day: false,
-        subject: { name: 'Основы веб-разработки' }
-      }
-    ]
+    // При ошибке показываем пустой календарь
+    events.value = []
   } finally {
     loading.value = false
   }

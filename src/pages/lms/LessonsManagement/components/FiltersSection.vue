@@ -93,4 +93,24 @@ defineProps({
 })
 
 defineEmits(['update:selectedCourseId', 'update:searchQuery', 'update:selectedCategory', 'update:selectedFormat', 'update:sortBy', 'update:sortOrder', 'update:selectedStatus'])
-</script> 
+</script>
+
+<style scoped>
+/* Центрирование иконки поиска */
+.input-group-text {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.input-group-text svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+/* Центрирование для всех svg иконок */
+svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+</style> 

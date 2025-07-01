@@ -59,7 +59,9 @@
                   <div>
                     <h5 class="mb-0">{{ courseGroup.course.name }}</h5>
                     <div class="d-flex align-items-center gap-2 mt-1">
-                      <span class="badge bg-light text-dark">{{ courseGroup.totalLessons }} уроков</span>
+                      <span class="badge bg-light text-dark">{{ courseGroup.themes.length }} тем</span>
+                      <span class="badge bg-primary text-white">{{ courseGroup.totalLessons }} уроков</span>
+                      <span class="badge bg-success text-white">{{ getCourseStatsText(courseGroup.course.id) }}</span>
                       <span v-if="!courseGroup.course.is_published" class="badge bg-warning">Черновик</span>
                     </div>
                   </div>
@@ -72,10 +74,7 @@
                     <Plus :size="16" />
                     Тема
                   </button>
-                  <button @click.stop="$emit('createForum', courseGroup.course)" class="btn btn-sm btn-outline-secondary">
-                    <MessageSquare :size="16" />
-                    Форум
-                  </button>
+
                   <button @click.stop="$emit('deleteCourse', courseGroup.course)" class="btn btn-sm btn-outline-danger">
                     <Trash2 :size="16" />
                   </button>
@@ -128,6 +127,7 @@
                         <FolderOpen :size="18" />
                         <span class="fw-semibold">{{ theme.name }}</span>
                         <span class="badge bg-primary">{{ theme.lessons.length }} уроков</span>
+                        <span class="badge bg-success">{{ getThemeStatsText(theme.id) }}</span>
                         <span v-if="!theme.is_visible" class="badge bg-secondary">Скрыта</span>
                       </div>
                       <div class="btn-group" @click.stop>
@@ -137,6 +137,10 @@
                         <button @click.stop="$emit('createLesson', theme)" class="btn btn-sm btn-outline-success">
                           <Plus :size="14" />
                           Урок
+                        </button>
+                        <button @click.stop="$emit('createForum', theme)" class="btn btn-sm btn-outline-purple">
+                          <MessageSquare :size="14" />
+                          Форум
                         </button>
                         <button @click.stop="$emit('deleteTheme', theme)" class="btn btn-sm btn-outline-danger">
                           <Trash2 :size="14" />
@@ -206,6 +210,7 @@
                                     <small class="text-muted">{{ lesson.description || 'Без описания' }}</small>
                                   </div>
                                   <div class="d-flex gap-1">
+                                    <span class="badge bg-info small">{{ getLessonStatsText(lesson.id) }}</span>
                                     <span v-if="lesson.is_visible" class="badge bg-success small">Видимый</span>
                                     <span v-else class="badge bg-secondary small">Скрытый</span>
                                     <span v-if="lesson.completion_required" class="badge bg-warning small">Обязательный</span>
@@ -217,43 +222,20 @@
                                     <Edit :size="14" />
                                   </button>
                                   <button @click.stop="$emit('createTest', null, lesson)" class="btn btn-sm btn-outline-info">
-                                    <FileCheck :size="14" />
+                                    <FileCheck :size="14" class="me-1" />
                                     Тест
                                   </button>
                                   <button @click.stop="$emit('createAssignment', null, lesson)" class="btn btn-sm btn-outline-warning">
-                                    <ClipboardList :size="14" />
+                                    <ClipboardList :size="14" class="me-1" />
                                     Задание
                                   </button>
                                   <button @click.stop="$emit('createResource', lesson)" class="btn btn-sm btn-outline-success">
-                                    <Upload :size="14" />
+                                    <Upload :size="14" class="me-1" />
                                     Ресурс
                                   </button>
-                                  <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                                      <MoreVertical :size="14" />
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                      <li>
-                                        <a class="dropdown-item" href="#" @click.prevent="$emit('duplicateLesson', lesson)">
-                                          <Copy :size="14" class="me-2" />
-                                          Дублировать
-                                        </a>
-                                      </li>
-                                      <li>
-                                        <a class="dropdown-item" href="#" @click.prevent="$emit('toggleLessonVisibility', lesson)">
-                                          <component :is="lesson.is_visible ? 'EyeOff' : 'Eye'" :size="14" class="me-2" />
-                                          {{ lesson.is_visible ? 'Скрыть' : 'Показать' }}
-                                        </a>
-                                      </li>
-                                      <li><hr class="dropdown-divider"></li>
-                                      <li>
-                                        <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('deleteLesson', lesson)">
-                                          <Trash2 :size="14" class="me-2" />
-                                          Удалить
-                                        </a>
-                                      </li>
-                                    </ul>
-                                  </div>
+                                  <button @click.stop="$emit('deleteLesson', lesson)" class="btn btn-sm btn-outline-danger">
+                                    <Trash2 :size="14" />
+                                  </button>
                                 </div>
                               </div>
                             </button>
@@ -284,47 +266,33 @@
                         </template>
                       </draggable>
                     </div>
-                    
-                    <!-- Форумы курса -->
+
+                    <!-- Форумы темы -->
                     <div class="mt-4">
                       <h6 class="mb-3 d-flex align-items-center gap-2">
                         <MessageSquare :size="18" />
-                        Форумы курса
+                        Форумы темы
                       </h6>
                       
-                      <div v-if="getForumsByCourse(courseGroup.course.id).length === 0" class="text-center py-3 bg-light rounded">
+                      <div v-if="getForumsByTheme(theme.id).length === 0" class="text-center py-3">
                         <MessageSquare :size="24" class="text-muted mb-2" />
-                        <p class="text-muted mb-2">В курсе нет форумов</p>
-                        <button @click.stop="$emit('createForum', courseGroup.course)" class="btn btn-sm btn-secondary me-2">
-                          Создать первый форум
-                        </button>
+                        <p class="text-muted mb-2">В теме нет форумов</p>
+                        <small class="text-muted">Используйте кнопки выше для создания контента</small>
                       </div>
 
                       <div v-else class="row">
-                        <div v-for="forum in getForumsByCourse(courseGroup.course.id)" :key="forum.id" class="col-md-6 col-lg-4 mb-3">
+                        <div v-for="forum in getForumsByTheme(theme.id)" :key="forum.id" class="col-md-6 col-lg-4 mb-3">
                           <div class="card h-100 forum-card">
                             <div class="card-body">
                               <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h6 class="card-title mb-0">{{ forum.name }}</h6>
-                                <div class="dropdown">
-                                  <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                                    <MoreVertical :size="14" />
+                                <div class="btn-group">
+                                  <button @click="$emit('editForum', forum)" class="btn btn-sm btn-outline-primary">
+                                    <Edit :size="14" />
                                   </button>
-                                  <ul class="dropdown-menu">
-                                    <li>
-                                      <a class="dropdown-item" href="#" @click.prevent="$emit('editForum', forum)">
-                                        <Edit :size="14" class="me-2" />
-                                        Редактировать
-                                      </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                      <a class="dropdown-item text-danger" href="#" @click.prevent="$emit('deleteForum', forum)">
-                                        <Trash2 :size="14" class="me-2" />
-                                        Удалить
-                                      </a>
-                                    </li>
-                                  </ul>
+                                  <button @click="$emit('deleteForum', forum)" class="btn btn-sm btn-outline-danger">
+                                    <Trash2 :size="14" />
+                                  </button>
                                 </div>
                               </div>
                               
@@ -348,6 +316,7 @@
                         </div>
                       </div>
                     </div>
+
                   </div>
                 </div>
                   </div>
@@ -496,14 +465,72 @@ function isLessonExpanded(lessonId) {
   return props.expandedLessons?.has(lessonId)
 }
 
-function getForumsByCourse(courseId) {
+function getForumsByTheme(themeId) {
   return props.forums?.filter(forum => {
-    let forumCourseId = forum.subject
-    if (typeof forumCourseId === 'object' && forumCourseId?.id) {
-      forumCourseId = forumCourseId.id
+    let forumThemeId = forum.theme
+    if (typeof forumThemeId === 'object' && forumThemeId?.id) {
+      forumThemeId = forumThemeId.id
     }
-    return parseInt(forumCourseId) === parseInt(courseId)
+    return parseInt(forumThemeId) === parseInt(themeId)
   }) || []
+}
+
+// Функции для подсчета статистики
+function getCourseStatsText(courseId) {
+  const courseGroup = props.groupedData.find(group => group.course.id === courseId)
+  if (!courseGroup) return '0 материалов'
+  
+  let totalMaterials = 0
+  courseGroup.themes.forEach(theme => {
+    // Считаем материалы уроков
+    theme.lessons.forEach(lesson => {
+      const tests = getLessonTests(lesson.id)
+      const assignments = getLessonAssignments(lesson.id)
+      const resources = getLessonResources(lesson.id)
+      totalMaterials += tests.length + assignments.length + resources.length
+    })
+    
+    // Добавляем форумы темы
+    const forums = getForumsByTheme(theme.id)
+    totalMaterials += forums.length
+  })
+  
+  return `${totalMaterials} материалов`
+}
+
+function getThemeStatsText(themeId) {
+  const courseGroup = props.groupedData.find(group => 
+    group.themes.some(theme => theme.id === themeId)
+  )
+  if (!courseGroup) return '0 материалов'
+  
+  const theme = courseGroup.themes.find(t => t.id === themeId)
+  if (!theme) return '0 материалов'
+  
+  let totalMaterials = 0
+  
+  // Считаем материалы уроков
+  theme.lessons.forEach(lesson => {
+    const tests = getLessonTests(lesson.id)
+    const assignments = getLessonAssignments(lesson.id)
+    const resources = getLessonResources(lesson.id)
+    totalMaterials += tests.length + assignments.length + resources.length
+  })
+  
+  // Добавляем форумы темы
+  const forums = getForumsByTheme(themeId)
+  totalMaterials += forums.length
+  
+  return `${totalMaterials} материалов`
+}
+
+function getLessonStatsText(lessonId) {
+  const tests = getLessonTests(lessonId)
+  const assignments = getLessonAssignments(lessonId)
+  const resources = getLessonResources(lessonId)
+  const totalMaterials = tests.length + assignments.length + resources.length
+  
+  return `${totalMaterials} материалов`
 }
 
 async function onThemeChange(evt, courseId) {
@@ -869,6 +896,54 @@ async function handleLessonItemsReorder(reorderData) {
 </script>
 
 <style scoped>
+/* Кнопки форума - фиолетовые */
+.btn-outline-purple {
+  color: #6f42c1;
+  border-color: #6f42c1;
+  background-color: transparent;
+}
+
+.btn-outline-purple:hover {
+  color: #fff;
+  background-color: #6f42c1;
+  border-color: #6f42c1;
+}
+
+.btn-outline-purple:focus {
+  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.5);
+}
+
+.btn-outline-purple:active {
+  color: #fff;
+  background-color: #5a359a;
+  border-color: #533085;
+}
+
+.btn-purple {
+  color: #fff;
+  background-color: #6f42c1;
+  border-color: #6f42c1;
+}
+
+.btn-purple:hover {
+  color: #fff;
+  background-color: #5a359a;
+  border-color: #533085;
+}
+
+.btn-purple:focus {
+  color: #fff;
+  background-color: #5a359a;
+  border-color: #533085;
+  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.5);
+}
+
+.btn-purple:active {
+  color: #fff;
+  background-color: #4e2e7e;
+  border-color: #462872;
+}
+
 .course-group {
   border-left: 4px solid var(--bs-primary);
   position: relative;
@@ -926,16 +1001,56 @@ async function handleLessonItemsReorder(reorderData) {
 .lesson-type-C { background-color: #ffc107; }
 .lesson-type-FILE { background-color: #6c757d; }
 
+/* Стили для форумов - статичные карточки без drag and drop */
+.forum-list {
+  pointer-events: auto;
+  position: relative;
+}
+
+.forum-item {
+  cursor: default !important;
+  user-select: auto;
+  position: static !important;
+}
+
 .forum-card {
   transition: box-shadow 0.2s, transform 0.2s;
-  border-left: 4px solid #6c757d;
-  position: relative;
-  z-index: 1;
+  border: 2px solid #6f42c1 !important;
+  border-radius: 0.5rem;
+  position: static;
+  z-index: auto;
+  cursor: default;
+  box-shadow: 0 2px 8px rgba(111, 66, 193, 0.15);
 }
 
 .forum-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 20px rgba(111, 66, 193, 0.25);
   transform: translateY(-2px);
+  border-color: #5a359a !important;
+}
+
+.forum-empty-state {
+  position: static !important;
+  cursor: default !important;
+  user-select: auto;
+  pointer-events: auto;
+}
+
+/* Убеждаемся что форумы не реагируют на drag and drop стили */
+.forum-item .sortable-ghost,
+.forum-item .sortable-chosen,
+.forum-item .sortable-drag,
+.forum-empty-state .sortable-ghost,
+.forum-empty-state .sortable-chosen,
+.forum-empty-state .sortable-drag {
+  display: none !important;
+}
+
+.forum-item:not(.sortable-ghost):not(.sortable-chosen):not(.sortable-drag),
+.forum-empty-state:not(.sortable-ghost):not(.sortable-chosen):not(.sortable-drag) {
+  opacity: 1 !important;
+  transform: none !important;
+  cursor: default !important;
 }
 
 /* Drag and Drop стили */
@@ -951,6 +1066,15 @@ async function handleLessonItemsReorder(reorderData) {
 
 .theme-draggable-item:hover {
   background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Убираем курсор move с внутренностей темы */
+.theme-draggable-item .accordion-body {
+  cursor: default !important;
+}
+
+.theme-draggable-item .accordion-body * {
+  cursor: default !important;
 }
 
 .theme-draggable-item .accordion-header .accordion-button {
@@ -1233,6 +1357,7 @@ async function handleLessonItemsReorder(reorderData) {
   border: none;
   font-weight: 500;
   padding: 0.75rem 1rem;
+  cursor: pointer !important;
 }
 
 .lesson-card .card-header .accordion-button:not(.collapsed) {
@@ -1243,6 +1368,33 @@ async function handleLessonItemsReorder(reorderData) {
 .lesson-card .card-header .accordion-button:focus {
   box-shadow: none;
   border-color: transparent;
+}
+
+.lesson-card .card-header .accordion-button:hover {
+  background-color: rgba(var(--bs-success-rgb), 0.05);
+  cursor: pointer !important;
+}
+
+/* Убеждаемся что все элементы внутри кнопки урока имеют cursor pointer */
+.lesson-card .card-header .accordion-button * {
+  cursor: pointer !important;
+}
+
+/* Исключение для кнопок управления уроком */
+.lesson-card .card-header .btn-group,
+.lesson-card .card-header .btn-group * {
+  cursor: default !important;
+}
+
+/* Исключение для drag handle урока - оставляем grab cursor */
+.lesson-card .card-header .lesson-drag-handle,
+.lesson-card .card-header .lesson-drag-handle * {
+  cursor: grab !important;
+}
+
+.lesson-card .card-header .lesson-drag-handle:active,
+.lesson-card .card-header .lesson-drag-handle:active * {
+  cursor: grabbing !important;
 }
 
 .accordion-body {
@@ -1346,10 +1498,59 @@ async function handleLessonItemsReorder(reorderData) {
   }
 }
 
-/* Стили для кнопок в header урока */
-.lesson-card .card-header .btn-group .btn {
-  font-size: 0.8rem;
-  padding: 0.375rem 0.5rem;
+/* Стили для курсора кнопок */
+.btn {
+  cursor: pointer !important;
+}
+
+.btn:hover {
+  cursor: pointer !important;
+}
+
+.btn:disabled {
+  cursor: not-allowed !important;
+}
+
+/* Группы кнопок */
+.btn-group .btn {
+  cursor: pointer !important;
+}
+
+.btn-group .btn:hover {
+  cursor: pointer !important;
+}
+
+.btn-group .btn:disabled {
+  cursor: not-allowed !important;
+}
+
+/* Кнопки в карточках курсов, тем и уроков */
+.course-group .btn,
+.accordion-item .btn,
+.lesson-card .btn,
+.card .btn {
+  cursor: pointer !important;
+}
+
+.course-group .btn:hover,
+.accordion-item .btn:hover,
+.lesson-card .btn:hover,
+.card .btn:hover {
+  cursor: pointer !important;
+}
+
+.course-group .btn:disabled,
+.accordion-item .btn:disabled,
+.lesson-card .btn:disabled,
+.card .btn:disabled {
+  cursor: not-allowed !important;
+}
+
+/* Убеждаемся что иконки внутри кнопок тоже имеют правильный курсор */
+.btn svg,
+.btn i {
+  cursor: pointer !important;
+  pointer-events: none; /* Предотвращаем захват событий иконками */
 }
 
 /* Стили для стрелочек accordion-button */
@@ -1398,6 +1599,57 @@ async function handleLessonItemsReorder(reorderData) {
   cursor: not-allowed !important;
   transform: none !important;
   background-color: transparent !important;
+}
+
+/* Центрирование иконок в кнопках */
+.btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+}
+
+.btn svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
+}
+
+/* Для кнопок в группах */
+.btn-group .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+}
+
+.btn-group .btn svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
+}
+
+/* Центрирование для кнопок аккордеона */
+.accordion-button {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.accordion-button .d-flex {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.accordion-button svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
+}
+
+/* Центрирование для всех svg иконок */
+svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
 }
 
 /* Адаптивность для мобильных устройств */

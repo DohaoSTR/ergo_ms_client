@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { BookOpen, Search, Filter, Users, Clock, Star, Plus, ChevronDown, Edit, Calendar, FileText, User, FolderPlus, Tag, Trash2, RotateCcw, Copy } from 'lucide-vue-next'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
+import { lmsApi } from '@/js/api/lmsApi'
 import { globalUserRole } from '../composables/useUserRole'
 import { 
   showSuccess, 
@@ -202,6 +203,11 @@ async function fetchCourses() {
     }
     
     courses.value = coursesData
+    console.log('📋 Финальные курсы с проверенным статусом записи:', courses.value.map(c => ({
+      id: c.id,
+      name: c.name,
+      isEnrolled: c.isEnrolled
+    })))
   } catch (error) {
     console.error('Ошибка загрузки курсов:', error)
     courses.value = []
@@ -212,35 +218,42 @@ async function fetchCourses() {
 
 async function checkEnrollmentStatus(coursesData) {
   try {
+    console.log('🔍 Проверяем статус записи для курсов:', coursesData.length)
+    
     // Пытаемся получить список записей пользователя
     let enrolledCourseIds = []
     
     try {
-      // Пробуем разные endpoints для получения записей
-      let enrolledResponse
+      console.log('📝 Получаем список записей пользователя')
+      const enrolledResponse = await apiClient.get(endpoints.lms.enrollments)
+      console.log('📋 Ответ от API записей:', enrolledResponse.data)
       
-      if (endpoints.lms.enrollments) {
-        enrolledResponse = await apiClient.get(endpoints.lms.enrollments)
-      } else if (endpoints.lms.myEnrollments) {
-        enrolledResponse = await apiClient.get(endpoints.lms.myEnrollments)
-      } else {
-        // Fallback: получаем информацию из самих курсов
-        enrolledResponse = await apiClient.get(endpoints.lms.subjects + '?my_courses=true')
-      }
+      const enrollments = enrolledResponse.data.results || enrolledResponse.data || []
+      console.log('📚 Найдено записей:', enrollments.length)
       
-      enrolledCourseIds = (enrolledResponse.data.results || enrolledResponse.data || []).map(course => 
-        course.subject_id || course.course_id || course.id
-      )
+      // Правильно извлекаем ID курсов из записей
+      enrolledCourseIds = enrollments.map(enrollment => {
+        // В записи subject может быть объектом или ID
+        const subjectId = enrollment.subject?.id || enrollment.subject
+        console.log('🎯 Запись на курс:', subjectId, 'статус:', enrollment.status)
+        return subjectId
+      }).filter(id => id !== undefined && id !== null)
+      
+      console.log('✅ ID курсов, на которые записан пользователь:', enrolledCourseIds)
+      
     } catch (apiError) {
-      console.log('Не удалось получить список записей, проверяем каждый курс индивидуально')
+      console.log('❌ Не удалось получить список записей:', apiError)
+      console.log('🔄 Проверяем каждый курс индивидуально')
       
       // Если нет специального API, проверяем статус каждого курса индивидуально
       for (const course of coursesData) {
         try {
           await apiClient.get(`${endpoints.lms.subjects}${course.id}/enrollment_status/`)
           course.isEnrolled = true
+          console.log('✅ Пользователь записан на курс:', course.name)
         } catch {
           course.isEnrolled = false
+          console.log('❌ Пользователь НЕ записан на курс:', course.name)
         }
       }
       return
@@ -248,10 +261,19 @@ async function checkEnrollmentStatus(coursesData) {
     
     // Устанавливаем статус записи для каждого курса
     coursesData.forEach(course => {
+      const wasEnrolled = course.isEnrolled
       course.isEnrolled = enrolledCourseIds.includes(course.id)
+      
+      if (course.isEnrolled !== wasEnrolled) {
+        console.log(`🔄 Изменение статуса для курса "${course.name}": ${wasEnrolled} → ${course.isEnrolled}`)
+      }
     })
+    
+    const enrolledCount = coursesData.filter(course => course.isEnrolled).length
+    console.log(`📊 Итого записан на ${enrolledCount} из ${coursesData.length} курсов`)
+    
   } catch (error) {
-    console.error('Ошибка проверки статуса записи:', error)
+    console.error('❌ Ошибка проверки статуса записи:', error)
     // Если ошибка, просто не устанавливаем статус
   }
 }
@@ -319,15 +341,8 @@ async function enrollCourse(course) {
     console.log('Записываемся на курс:', course.name, 'ID:', course.id)
     console.log('Текущий пользователь:', userRole.currentUser.value)
     
-    // Отправляем запрос на запись с правильными данными
-    const enrollmentData = {
-      subject: course.id,
-      student: userRole.currentUser.value.id
-    }
-    
-    console.log('Данные для записи:', enrollmentData)
-    
-    await apiClient.post(endpoints.lms.enrollments, enrollmentData)
+    // Используем lmsApi для записи на курс
+    await lmsApi.enrollInCourse(course.id)
     
     // Обновляем статус курса
     course.isEnrolled = true
@@ -339,16 +354,24 @@ async function enrollCourse(course) {
   } catch (error) {
     console.error('Ошибка записи на курс:', error)
     
-    if (error.response?.status === 409) {
-      showError('Вы уже записаны на этот курс')
-      course.isEnrolled = true // Обновляем статус если сервер говорит что уже записаны
+    if (error.response?.status === 400) {
+      const errorData = error.response?.data
+      if (typeof errorData === 'string' && errorData.includes('уже записаны')) {
+        showError('Вы уже записаны на этот курс')
+        course.isEnrolled = true
+      } else if (errorData?.non_field_errors) {
+        showError(errorData.non_field_errors[0] || 'Ошибка валидации данных')
+      } else {
+        showError('Неверные данные для записи на курс')
+        console.error('Детали ошибки 400:', errorData)
+      }
     } else if (error.response?.status === 403) {
       showError('У вас нет прав для записи на этот курс')
     } else if (error.response?.status === 404) {
       showError('Курс не найден')
-    } else if (error.response?.status === 400) {
-      showError('Неверные данные для записи на курс')
-      console.error('Детали ошибки 400:', error.response?.data)
+    } else if (error.response?.status === 409) {
+      showError('Вы уже записаны на этот курс')
+      course.isEnrolled = true
     } else {
       showError('Ошибка при записи на курс. Попробуйте позже.')
     }
@@ -1838,7 +1861,14 @@ onMounted(async () => {
                   >
                     Записаться
                   </button>
-                  <span v-else class="badge bg-success">Вы записаны</span>
+                  <router-link 
+                    v-else
+                    :to="`/lms/course/${course.id}`"
+                    class="btn btn-success btn-sm"
+                  >
+                    <BookOpen :size="16" class="me-1" />
+                    Изучать
+                  </router-link>
                 </div>
                 <div v-else-if="userRole.isTeacher.value || userRole.isAdmin.value" class="d-flex gap-2">
                   <button 

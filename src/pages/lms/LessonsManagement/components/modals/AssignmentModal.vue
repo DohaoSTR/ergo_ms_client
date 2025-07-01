@@ -96,17 +96,17 @@
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <label class="form-label">Крайний срок *</label>
+            <label class="form-label">Крайний срок</label>
             <input 
               v-model="form.deadline" 
               type="date" 
               class="form-control"
               :class="{ 'is-invalid': validationErrors.deadline }"
-              required
             />
             <div v-if="validationErrors.deadline" class="invalid-feedback">
               {{ validationErrors.deadline }}
             </div>
+            <div class="form-text">Если не указан, задание не имеет ограничений по времени</div>
           </div>
         </div>
         <div class="col-md-6">
@@ -276,10 +276,6 @@ function handleSave() {
   
   if (!form.value.course) {
     errors.course = 'Выберите курс'
-  }
-  
-  if (!form.value.deadline?.trim()) {
-    errors.deadline = 'Крайний срок обязателен'
   }
   
   if (!form.value.max_grade || form.value.max_grade < 1) {

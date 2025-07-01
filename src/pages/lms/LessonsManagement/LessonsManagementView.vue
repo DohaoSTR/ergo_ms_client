@@ -146,6 +146,7 @@
         :show="forumModal.showModal.value"
         :editing="forumModal.editingItem.value"
         :forumData="forumModal.formData.value"
+        :themes="lessonsData.themes.value"
         :courses="lessonsData.courses.value"
         :loading="forumModal.isSubmitting.value"
         @close="forumModal.closeModal"
@@ -781,8 +782,8 @@ function deleteAssignment(assignment) {
 }
 
 // Методы для форумов
-function openForumModal(course = null) {
-  forumModal.formData.value = course ? { subject: course.id } : {}
+function openForumModal(theme = null) {
+  forumModal.formData.value = theme ? { theme: theme.id } : {}
   forumModal.editingItem.value = false
   forumModal.openModal()
 }
@@ -965,5 +966,25 @@ onMounted(async () => {
 <style scoped>
 .lessons-management-view {
   padding: 1rem;
+}
+
+/* Центрирование иконок в кнопках */
+.btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+}
+
+.btn svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
+}
+
+/* Центрирование для всех svg иконок */
+svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
 }
 </style> 

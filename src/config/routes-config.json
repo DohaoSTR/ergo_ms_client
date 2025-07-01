@@ -695,6 +695,14 @@
         "requiresAuth": true
       }
     },
+    "LMSCourseView": {
+      "path": "/lms/course/:id",
+      "component": "@/pages/lms/Courses/CourseView.vue",
+      "meta": {
+        "title": "Просмотр курса",
+        "requiresAuth": true
+      }
+    },
 
     "ErgoCityStruct": {
       "path": "/ergo-city-struct",

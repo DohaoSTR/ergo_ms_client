@@ -71,85 +71,81 @@ async function loadGrades() {
   try {
     loading.value = true
     
-    // Загружаем оценки студента из API
-    const response = await apiClient.get(endpoints.lms.studentStats)
+    let allGrades = []
     
-    if (response.success && response.data.recent_grades) {
-      grades.value = response.data.recent_grades
-    } else {
-      // Fallback данные для демонстрации
-      grades.value = [
-        {
-          id: 1,
-          subject_name: 'Основы веб-разработки',
-          grade: 85,
-          related: '2024-01-15',
-          feedback: 'Хорошая работа над проектом',
-          grader_name: 'Иванов И.И.',
-          grade_type: 'assignment'
-        },
-        {
-          id: 2,
-          subject_name: 'Python для начинающих',
-          grade: 92,
-          related: '2024-01-12',
-          feedback: 'Отличное понимание основ',
-          grader_name: 'Петров П.П.',
-          grade_type: 'test'
-        },
-        {
-          id: 3,
-          subject_name: 'Основы веб-разработки',
-          grade: 78,
-          related: '2024-01-10',
-          feedback: 'Есть замечания по стилю кода',
-          grader_name: 'Иванов И.И.',
-          grade_type: 'assignment'
-        },
-        {
-          id: 4,
-          subject_name: 'Python для начинающих',
-          grade: 95,
-          related: '2024-01-08',
-          feedback: 'Превосходная работа!',
-          grader_name: 'Петров П.П.',
-          grade_type: 'test'
-        },
-        {
-          id: 5,
-          subject_name: 'Алгоритмы и структуры данных',
-          grade: 72,
-          related: '2024-01-05',
-          feedback: 'Хорошее понимание темы',
-          grader_name: 'Сидоров С.С.',
-          grade_type: 'assignment'
-        }
-      ]
+    // Загружаем оценки из API
+    try {
+      const gradesResponse = await apiClient.get(`${endpoints.lms.subjects}grades/`, {
+        params: { student: 'me' }
+      })
+      if (gradesResponse.success) {
+        const apiGrades = gradesResponse.data.results || gradesResponse.data || []
+        allGrades = allGrades.concat(apiGrades.map(grade => ({
+          id: grade.id,
+          subject_name: grade.subject?.name || 'Курс не указан',
+          grade: grade.grade,
+          related: grade.related,
+          feedback: grade.feedback,
+          grader_name: grade.grader?.first_name + ' ' + grade.grader?.last_name || 'Преподаватель',
+          grade_type: grade.grade_type || 'manual'
+        })))
+      }
+    } catch (error) {
+      console.warn('Не удалось загрузить основные оценки:', error)
     }
+    
+    // Загружаем результаты тестов
+    try {
+      const testAttemptsResponse = await apiClient.get(endpoints.lms.testAttempts)
+      if (testAttemptsResponse.success) {
+        const attempts = testAttemptsResponse.data.results || testAttemptsResponse.data || []
+        attempts.forEach(attempt => {
+          if (attempt.score !== null) {
+            allGrades.push({
+              id: `test-${attempt.id}`,
+              subject_name: attempt.test?.subject?.name || 'Тест',
+              grade: attempt.score,
+              related: attempt.completed_at || attempt.started_at,
+              feedback: attempt.is_passed ? 'Тест пройден успешно' : 'Тест не пройден',
+              grader_name: 'Автоматическая проверка',
+              grade_type: 'test'
+            })
+          }
+        })
+      }
+    } catch (error) {
+      console.warn('Не удалось загрузить результаты тестов:', error)
+    }
+    
+    // Загружаем оценки за задания
+    try {
+      const submissionsResponse = await apiClient.get(endpoints.lms.submittedAssignments)
+      if (submissionsResponse.success) {
+        const submissions = submissionsResponse.data.results || submissionsResponse.data || []
+        submissions.forEach(submission => {
+          if (submission.grade) {
+            allGrades.push({
+              id: `assignment-${submission.id}`,
+              subject_name: submission.assignment?.subject?.name || 'Задание',
+              grade: submission.grade,
+              related: submission.graded_at || submission.dateofsubmit,
+              feedback: submission.feedback || 'Задание оценено',
+              grader_name: submission.graded_by?.first_name + ' ' + submission.graded_by?.last_name || 'Преподаватель',
+              grade_type: 'assignment'
+            })
+          }
+        })
+      }
+    } catch (error) {
+      console.warn('Не удалось загрузить оценки за задания:', error)
+    }
+    
+    grades.value = allGrades
     
   } catch (error) {
     console.error('Ошибка загрузки оценок:', error)
-    // Даже при ошибке показываем демо-данные
-    grades.value = [
-      {
-        id: 1,
-        subject_name: 'Основы веб-разработки',
-        grade: 85,
-        related: '2024-01-15',
-        feedback: 'Хорошая работа над проектом',
-        grader_name: 'Иванов И.И.',
-        grade_type: 'assignment'
-      },
-      {
-        id: 2,
-        subject_name: 'Python для начинающих',
-        grade: 92,
-        related: '2024-01-12',
-        feedback: 'Отличное понимание основ',
-        grader_name: 'Петров П.П.',
-        grade_type: 'test'
-      }
-    ]
+    // При ошибке показываем пустой список
+    grades.value = []
   } finally {
     loading.value = false
   }

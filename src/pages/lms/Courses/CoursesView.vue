@@ -3,8 +3,10 @@ import { ref, onMounted, computed } from 'vue'
 import { BookOpen, Play, CheckCircle, Clock, Users, Star, Search, Filter } from 'lucide-vue-next'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
+import { useRouter } from 'vue-router'
 import CourseImagePlaceholder from '../components/CourseImagePlaceholder.vue'
 
+const router = useRouter()
 const courses = ref([])
 const loading = ref(true)
 const searchQuery = ref('')
@@ -125,9 +127,6 @@ function getCourseImageUrl(course) {
 }
 
 function openCourse(courseId) {
-  // Переход к странице курса или к урокам курса
-  console.log('Открыть курс:', courseId)
-  
   // Найдем курс по ID
   const course = courses.value.find(c => c.id === courseId)
   if (!course) {
@@ -135,78 +134,16 @@ function openCourse(courseId) {
     return
   }
 
-  // Если курс завершен, показываем сертификат или результаты
-  if (course.status === 'completed') {
-    // Показываем модальное окно с результатами
-    showCourseResults(course)
-    return
-  }
-
-  // Иначе переходим к следующему уроку или первому уроку
-  openLessonForCourse(course)
+  console.log('🔗 Переход к курсу:', course.name, 'ID:', course.subjectId)
+  
+  // Переходим на страницу курса
+  router.push({
+    name: 'LMSCourseView',
+    params: { id: course.subjectId }
+  })
 }
 
-async function showCourseResults(course) {
-  try {
-    // Загружаем реальные результаты курса
-    const response = await apiClient.get(`${endpoints.lms.subjects}${course.id}/results/`)
-    const results = response.data
-    
-    // Здесь должно быть модальное окно с результатами
-    console.log('Результаты курса:', results)
-    alert(`🎉 Поздравляем!\n\nКурс "${course.name}" успешно завершен!\n\nВаши результаты:\n• Прогресс: ${results.progress || course.progress}%\n• Оценка: ${results.grade || 'Не указана'}\n\nСертификат будет отправлен на вашу почту в течение 24 часов.`)
-  } catch (error) {
-    console.error('Ошибка загрузки результатов:', error)
-    alert(`Курс "${course.name}" завершен, но результаты временно недоступны.`)
-  }
-}
-
-async function openLessonForCourse(course) {
-  try {
-    // Получаем список уроков курса
-    const response = await apiClient.get(endpoints.lms.lessons + `?course_id=${course.id}`)
-    const lessons = response.data.results || response.data || []
-    
-    if (lessons.length === 0) {
-      alert(`Курс "${course.title}" пока не содержит уроков.`)
-      return
-    }
-
-    // Находим следующий урок для изучения или первый урок
-    let targetLesson = null
-    for (const lesson of lessons) {
-      const isCompleted = await isLessonCompleted(course.id, lesson.id)
-      if (!isCompleted) {
-        targetLesson = lesson
-        break
-      }
-    }
-    
-    if (!targetLesson) {
-      targetLesson = lessons[0] // Если все уроки завершены, открываем первый
-    }
-
-    // Переходим к просмотру урока
-    console.log('Переход к уроку:', targetLesson)
-    // TODO: Здесь должен быть роутинг к компоненту урока
-    alert(`Переход к уроку: "${targetLesson.name || targetLesson.title}"\n\n(Урок ${targetLesson.sort_order || targetLesson.order || 1} из ${lessons.length})`)
-    
-  } catch (error) {
-    console.error('Ошибка загрузки уроков:', error)
-    alert(`Ошибка при открытии курса "${course.title}". Попробуйте позже.`)
-  }
-}
-
-async function isLessonCompleted(courseId, lessonId) {
-  try {
-    // Проверяем завершение урока через API
-    const response = await apiClient.get(`${endpoints.lms.lessons}${lessonId}/progress/?course=${courseId}`)
-    return response.data.completed || false
-  } catch (error) {
-    console.error('Ошибка проверки завершения урока:', error)
-    return false
-  }
-}
+// Удалены неиспользуемые функции showCourseResults, openLessonForCourse, isLessonCompleted
 
 async function toggleFavorite(course) {
   try {
