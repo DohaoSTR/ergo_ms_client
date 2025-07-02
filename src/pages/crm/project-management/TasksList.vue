@@ -500,6 +500,7 @@ import { Modal } from 'bootstrap'
 import { Edit, Trash2 } from 'lucide-vue-next'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
 import { useNotifications } from '@/pages/lms/composables/useNotifications'
+import { getAvatarUrl } from '@/js/utils/avatarUtils.js'
 
 export default {
   name: 'TasksList',
@@ -963,9 +964,8 @@ export default {
     },
     
     getAvatarUrl(user) {
-      if (!user) return ''
-      const name = user.full_name || `${user.first_name} ${user.last_name}`.trim() || user.username || 'User'
-      return user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6c757d&color=fff&size=32`
+      // Используем локальную утилиту для генерации аватаров
+      return getAvatarUrl(user, 32)
     },
 
     // Обработка URL параметров

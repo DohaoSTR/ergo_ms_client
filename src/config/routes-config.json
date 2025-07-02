@@ -378,103 +378,6 @@
       }
     },
 
-    "ExpertSystem": {
-      "path": "/expert-system",
-      "component": "@/pages/expert-system/ParentLayout.vue",
-      "redirect": "ChoiceRole",
-      "meta": {
-        "requiresAuth": true
-      }
-    },
-    "ChoiceRole": {
-      "path": "/expert-system/choice-role",
-      "component": "@/pages/expert-system/ChoiceRole.vue",
-      "meta": {
-        "title": "Выбор роли",
-        "requiresAuth": true
-      }
-    },
-    "Skills": {
-      "path": "/expert-system/skills",
-      "component": "@/pages/expert-system/SkillManager.vue",
-      "meta": {
-        "title": "Навыки",
-        "requiresAuth": true
-      }
-    },
-    "Profile": {
-      "path": "/expert-system/account",
-      "component": "@/pages/expert-system/ProfileDashboard.vue",
-      "meta": {
-        "title": "Профиль",
-        "requiresAuth": true
-      }
-    },
-    "Groups": {
-      "path": "/expert-system/group-manager",
-      "component": "@/pages/expert-system/GroupManager.vue",
-      "meta": {
-        "title": "Группы обучения",
-        "requiresAuth": true
-      }
-    },
-    "Vacancies": {
-      "path": "/expert-system/vacancies",
-      "component": "@/pages/expert-system/StudentVacancies.vue",
-      "meta": {
-        "title": "Вакансии",
-        "requiresAuth": true
-      }
-    },
-    "Proforientation": {
-      "path": "/expert-system/proforientation",
-      "component": "@/pages/expert-system/ProforientationTest.vue",
-      "meta": {
-        "title": "Профориентация",
-        "requiresAuth": true
-      }
-    },
-    "Profession": {
-      "path": "/expert-system/profession-manager",
-      "component": "@/pages/expert-system/ProfessionManager.vue",
-      "meta": {
-        "title": "Менеджер профессий",
-        "requiresAuth": true
-      }
-    },
-    "OrientationTest": {
-      "path": "/expert-system/orientation-test",
-      "component": "@/pages/expert-system/OrientationTestManager.vue",
-      "meta": {
-        "title": "Менеджер ориентационных тестов",
-        "requiresAuth": true
-      }
-    },
-    "AllTests": {
-      "path": "/expert-system/all-tests",
-      "component": "@/pages/expert-system/Tests/AllTestsPage.vue",
-      "meta": {
-        "title": "Тесты",
-        "requiresAuth": true
-      }
-    },
-    "StudentCourses": {
-      "path": "/expert-system/student-courses",
-      "component": "@/pages/expert-system/StudentCourses.vue",
-      "meta": {
-        "title": "Рекомендованные курсы",
-        "requiresAuth": true
-      }
-    },
-    "StudentsList": {
-      "path": "/expert-system/students",
-      "component": "@/pages/expert-system/StudentList.vue",
-      "meta": {
-        "title": "Поиск студентов",
-        "requiresAuth": true
-      }
-    },
-
     "AssetsAnalyse": {
       "path": "/assets-analyse",
       "component": "@/pages/assets_analysis/DatabaseAnalyze.vue",
@@ -900,6 +803,241 @@
       "component": "@/pages/bi/ChartPage.vue",
       "meta": {
         "requiresAuth": true
+      }
+    },
+
+    "ExpertSystem": {
+      "path": "/expert-system",
+      "component": "@/pages/expert-system/ParentLayout.vue",
+      "redirect": "ChoiceRole",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "ChoiceRole": {
+      "path": "/expert-system/choice-role",
+      "component": "@/pages/expert-system/ChoiceRole.vue",
+      "meta": {
+        "title": "Выбор роли",
+        "requiresAuth": true
+      }
+    },
+    "Skills": {
+      "path": "/expert-system/skills",
+      "component": "@/pages/expert-system/SkillManager.vue",
+      "meta": {
+        "title": "Навыки",
+        "requiresAuth": true
+      }
+    },
+    "Profile": {
+      "path": "/expert-system/account",
+      "component": "@/pages/expert-system/ProfileDashboard.vue",
+      "meta": {
+        "title": "Профиль",
+        "requiresAuth": true
+      }
+    },
+    "Groups": {
+      "path": "/expert-system/group-manager",
+      "component": "@/pages/expert-system/GroupManager.vue",
+      "meta": {
+        "title": "Группы обучения",
+        "requiresAuth": true
+      }
+    },
+    "Vacancies": {
+      "path": "/expert-system/vacancies",
+      "component": "@/pages/expert-system/StudentVacancies.vue",
+      "meta": {
+        "title": "Вакансии",
+        "requiresAuth": true
+      }
+    },
+    "Proforientation": {
+      "path": "/expert-system/proforientation",
+      "component": "@/pages/expert-system/ProforientationTest.vue",
+      "meta": {
+        "title": "Профориентация",
+        "requiresAuth": true
+      }
+    },
+    "Profession": {
+      "path": "/expert-system/profession-manager",
+      "component": "@/pages/expert-system/ProfessionManager.vue",
+      "meta": {
+        "title": "Менеджер профессий",
+        "requiresAuth": true
+      }
+    },
+    "OrientationTest": {
+      "path": "/expert-system/orientation-test",
+      "component": "@/pages/expert-system/OrientationTestManager.vue",
+      "meta": {
+        "title": "Менеджер ориентационных тестов",
+        "requiresAuth": true
+      }
+    },
+    "AllTests": {
+      "path": "/expert-system/all-tests",
+      "component": "@/pages/expert-system/Tests/AllTestsPage.vue",
+      "meta": {
+        "title": "Тесты",
+        "requiresAuth": true
+      }
+    },
+    "StudentCourses": {
+      "path": "/expert-system/student-courses",
+      "component": "@/pages/expert-system/StudentCourses.vue",
+      "meta": {
+        "title": "Рекомендованные курсы",
+        "requiresAuth": true
+      }
+    },
+    "StudentsList": {
+      "path": "/expert-system/students",
+      "component": "@/pages/expert-system/StudentList.vue",
+      "meta": {
+        "title": "Поиск студентов",
+        "requiresAuth": true
+      }
+    },
+
+    "OrientationQuestionManager": {
+      "path": "/expert-system/orientation-question/:testId",
+      "component": "@/pages/expert-system/OrientationQuestionManager.vue",
+      "meta": {
+        "title": "Менеджер вопросов",
+        "requiresAuth": true
+      }
+    },
+    "OrientationAnswerManager": {
+      "path": "/expert-system/orientation-answer/:questionId",
+      "component": "@/pages/expert-system/OrientationAnswerManager.vue",
+      "meta": {
+        "title": "Менеджер ответов",
+        "requiresAuth": true
+      }
+    },
+    "ProforientationTest": {
+      "path": "/expert-system/proforientation-test/:testId",
+      "component": "@/pages/expert-system/ProforientationTest.vue",
+      "meta": {
+        "title": "Прохождение теста",
+        "requiresAuth": true
+      }
+    },
+
+    "StudentRegister": {
+      "path": "/expert-system/student-register",
+      "component": "@/pages/expert-system/StudentRegister.vue",
+      "meta": {
+        "title": "Регистрация студента",
+        "requiresAuth": true
+      }
+    },
+    "CompanyRegister": {
+      "path": "/expert-system/company-register",
+      "component": "@/pages/expert-system/CompanyRegister.vue",
+      "meta": {
+        "title": "Вход / Регистрация работодателя",
+        "requiresAuth": true
+      }
+    },
+    "Addstudentskills": {
+      "path": "/expert-system/addstudent-skills",
+      "component": "@/pages/expert-system/AddSkillForStudentsWithExpirience.vue",
+      "meta": {
+        "title": "Добавление навыков студенту",
+        "requiresAuth": true
+      }
+    },
+    "OrientationQuestion": {
+      "path": "/expert-system/orientation-question",
+      "component": "@/pages/expert-system/OrientationQuestionManager.vue",
+      "meta": {
+        "title": "Менеджер управление ориентационными вопросами",
+        "requiresAuth": true
+      }
+    },
+    "OrientationAnswer": {
+      "path": "/expert-system/orientation-answer",
+      "component": "@/pages/expert-system/OrientationAnswerManager.vue",
+      "meta": {
+        "title": "Менеджер управление вариантов ответов на вопросы",
+        "requiresAuth": true
+      }
+    },
+    "TestCreation": {
+      "path": "/expert-system/test-creation",
+      "component": "@/pages/expert-system/Tests/TestCreation.vue",
+      "meta": {
+        "title": "Создание тестов",
+        "requiresAuth": true
+      }
+    },
+    "TestPreview": {
+      "path": "/expert-system/test-preview/:id",
+      "component": "@/pages/expert-system/Tests/TestViewPage.vue",
+      "meta": {
+        "title": "Предпросмотр теста",
+        "requiresAuth": true
+      }
+    },
+    "TestPage": {
+      "path": "/expert-system/test/:id",
+      "component": "@/pages/expert-system/Tests/TestPage.vue",
+      "meta": {
+        "title": "Предпросмотр теста",
+        "requiresAuth": true
+      }
+    },
+    "TestResult": {
+      "path": "/expert-system/test-result/:id",
+      "component": "@/pages/expert-system/Tests/TestResult.vue",
+      "meta": {
+        "title": "Результат теста",
+        "requiresAuth": true
+      }
+    },
+    "VacancyDetail": {
+      "path": "/expert-system/vacancy/:id",
+      "component": "@/pages/expert-system/VacancyDetail.vue",
+      "meta": {
+        "title": "Детали вакансии",
+        "requiresAuth": true
+      }
+    },
+    "CompanyDetail": {
+      "path": "/expert-system/company/:id",
+      "component": "@/pages/expert-system/CompanyDetail.vue",
+      "meta": {
+        "title": "Детали компании",
+        "requiresAuth": true
+      }
+    },
+    "StudentDetail": {
+      "path": "/expert-system/student/:id",
+      "component": "@/pages/expert-system/StudentDetail.vue",
+      "meta"  : {
+        "title": "Детали студента",
+        "requiresAuth": true
+      }
+    },
+    "CourseDetail": {
+      "path": "/expert-system/course/:id",
+      "component": "@/pages/expert-system/CourseDetail.vue",
+      "meta": {
+        "title": "Детали курса",
+        "requiresAuth": true
+      }
+    },
+    "ExpertDashboard": {
+      "path": "/expert-system/expdashboard",
+      "component": "@/pages/expert-system/ExpertSystemDashboard.vue",
+      "meta": {
+        "requiresAuth": true,
+        "title": "Дашборд экспертной системы"
       }
     }
   }

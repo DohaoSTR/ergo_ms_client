@@ -74,9 +74,6 @@ const hasValidInitials = computed(() => {
 })
 
 // Инициализация пользователя при загрузке
-
-
-
 const userDropdownMenu = ref([
   {
     id: 1,

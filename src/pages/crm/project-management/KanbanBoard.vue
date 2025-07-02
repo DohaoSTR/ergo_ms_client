@@ -370,6 +370,7 @@
 import { Modal } from 'bootstrap'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
 import { useNotifications } from '@/pages/lms/composables/useNotifications'
+import { getAvatarUrl } from '@/js/utils/avatarUtils.js'
 
 export default {
   name: 'KanbanBoard',
@@ -1146,18 +1147,8 @@ export default {
     },
 
     getAvatarUrl(user) {
-      if (!user) return '/default-avatar.png'
-      
-      // Если есть URL аватара, используем его
-      if (user.avatar) {
-        return user.avatar
-      }
-      
-      // Генерируем аватар на основе инициалов
-      const name = user.full_name || user.first_name || user.username
-      const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-      
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&size=40&background=007bff&color=fff`
+      // Используем локальную утилиту для генерации аватаров
+      return getAvatarUrl(user, 24)
     },
     
     formatDate(date) {
@@ -1259,10 +1250,7 @@ export default {
       return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
     },
     
-    getAvatarUrl(user) {
-      // Возвращаем аватар пользователя или дефолтный
-      return user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=6c757d&color=fff&size=32`
-    },
+    // Дублирующая функция удалена, используем импортированную getAvatarUrl
     
     getColumnIcon(status) {
       // Пытаемся определить иконку по названию или коду статуса

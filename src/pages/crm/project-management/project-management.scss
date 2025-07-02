@@ -315,4 +315,55 @@ $pm-transition: 0.2s ease-in-out;
   color: var(--bs-primary);
   font-weight: $font-weight-bold;
   cursor: pointer;
+}
+
+// Стили для аватаров (в конце файла)
+.member-avatar,
+.assignee-avatar,
+.task-assignee-avatar,
+.pm-avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+  
+  // SVG аватары должны отображаться корректно
+  &[src^="data:image/svg"] {
+    background: white;
+  }
+}
+
+// Специальные размеры для разных типов аватаров
+.member-avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.assignee-avatar {
+  width: 28px;
+  height: 28px;
+}
+
+.task-assignee-avatar {
+  width: 24px;
+  height: 24px;
+}
+
+.pm-avatar {
+  width: 32px;
+  height: 32px;
+}
+
+// Малые аватары для модальных окон
+.member-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--bs-gray-300);
 } 

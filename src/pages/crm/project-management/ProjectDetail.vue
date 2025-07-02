@@ -596,6 +596,7 @@ import { Modal } from 'bootstrap'
 import { Edit, Trash2, Plus, Home, Info, PieChart, ListTodo, Calendar, Clock, Users, CheckCircle, AlertTriangle, UserPlus, UserMinus } from 'lucide-vue-next'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
 import { useNotifications } from '@/pages/lms/composables/useNotifications'
+import { getAvatarUrl } from '@/js/utils/avatarUtils.js'
 
 export default {
   name: 'ProjectDetail',
@@ -1391,20 +1392,8 @@ export default {
     },
 
     getAvatarUrl(user) {
-      if (!user) return '/default-avatar.png'
-      
-      // Если есть URL аватара, используем его
-      if (user.avatar) {
-        return user.avatar
-      }
-      
-      // Генерируем аватар на основе инициалов
-      const name = this.getUserDisplayName(user)
-      const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-      
-      // Можно использовать сервис для генерации аватаров на основе инициалов
-      // Например: https://ui-avatars.com/
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&size=40&background=007bff&color=fff`
+      // Используем локальную утилиту для генерации аватаров
+      return getAvatarUrl(user, 40)
     },
 
     async refreshTeamData() {

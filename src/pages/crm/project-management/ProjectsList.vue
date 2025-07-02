@@ -272,6 +272,7 @@ import { Modal } from 'bootstrap'
 import { Edit, Trash2 } from 'lucide-vue-next'
 import projectManagementApi from '@/js/api/projectManagementApi.js'
 import { useNotifications } from '@/pages/lms/composables/useNotifications'
+import { getAvatarUrl } from '@/js/utils/avatarUtils.js'
 
 export default {
   name: 'ProjectsList',
@@ -613,8 +614,8 @@ export default {
     },
     
     getAvatarUrl(user) {
-      if (!user) return ''
-      return user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.username)}&background=6c757d&color=fff&size=32`
+      // Используем локальную утилиту для генерации аватаров
+      return getAvatarUrl(user, 32)
     },
 
     getProjectLinkQuery() {
