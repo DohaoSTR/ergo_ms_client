@@ -335,6 +335,12 @@
           "name": "Мои задачи"
         }
       ]
+    },
+    
+    {
+      "icon": "Microscope",
+      "routeName": "AnalysisPorosity",
+      "title": "Анализ пористости поверхности"
     }
   ]
 } 

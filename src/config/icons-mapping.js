@@ -46,6 +46,7 @@ import {
   Landmark,
   ClipboardList,
   LayoutGrid,
+  Microscope,
 } from 'lucide-vue-next'
 
 /**
@@ -89,6 +90,7 @@ export const iconMapping = {
   Landmark,
   ClipboardList,
   LayoutGrid,
+  Microscope,
 }
 
 /**
