@@ -136,6 +136,22 @@
             {
               "routeName": "ImportProgram",
               "name": "Импорт программы"
+            },
+            {
+              "routeName": "ProjectReports",
+              "name": "Отчеты и аналитика"
+            },
+            {
+              "routeName": "ProjectsArchive",
+              "name": "Архив проектов"
+            },
+            {
+              "routeName": "EmployeeWorkload",
+              "name": "Занятость сотрудников"
+            },
+            {
+              "routeName": "ExpertApproval",
+              "name": "Экспертная оценка"
             }
           ]
         },

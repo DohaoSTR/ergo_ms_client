@@ -1,27 +1,26 @@
 <template>
   <div class="strategic-projects-dashboard">
     <div class="container-fluid">
-      <!-- Заголовок страницы с градиентом -->
-      <div class="page-header-gradient mb-4">
-        <div class="row align-items-center">
-          <div class="col-lg-8">
-            <h1 class="page-title mb-2">
-              <i class="fas fa-rocket mr-3"></i>
-              Управление стратегическими проектами
-            </h1>
-            <nav aria-label="breadcrumb">
-              <ol class="breadcrumb breadcrumb-transparent">
-                <li class="breadcrumb-item"><router-link to="/">Главная</router-link></li>
-                <li class="breadcrumb-item"><router-link to="/crm">CRM</router-link></li>
-                <li class="breadcrumb-item active">Стратегические проекты</li>
-              </ol>
-            </nav>
-          </div>
-          <div class="col-lg-4 text-right">
-            <div class="user-role-badge" v-if="userRole">
-              <i class="fas fa-user-tag mr-2"></i>
-              {{ userRoleLabel }}
-            </div>
+      <!-- Верхний блок с заголовком и кнопками -->
+      <div class="row mb-4">
+        <div class="col-lg-8">
+          <h1 class="dashboard-title">
+            <i class="fas fa-project-diagram mr-3"></i>
+            Стратегические проекты
+          </h1>
+          <p class="dashboard-subtitle">Управление инициативными и инновационными проектами университета</p>
+        </div>
+        <div class="col-lg-4 text-right">
+          <div class="header-actions">
+            <NotificationCenter />
+            <button 
+              v-if="canCreateProject"
+              @click="openNewProjectModal" 
+              class="btn btn-gradient btn-lg"
+            >
+              <i class="fas fa-plus mr-2"></i>
+              Новый проект
+            </button>
           </div>
         </div>
       </div>
@@ -345,9 +344,14 @@ import { useUserStore } from '@/stores/userStore'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { apiClient } from '@/js/api/manager'
+import NotificationCenter from '@/components/crm/strategic-projects/NotificationCenter.vue'
 
 export default {
   name: 'StrategicProjectsDashboard',
+  
+  components: {
+    NotificationCenter
+  },
   
   setup() {
     const userStore = useUserStore()
@@ -412,7 +416,7 @@ export default {
     const loadMyProjects = async () => {
       try {
         const response = await apiClient.get('/crm/strategic-projects/strategic-projects/', {
-          my_projects: true
+          params: { my_projects: true }
         })
         myProjects.value = response.data
       } catch (error) {
@@ -426,7 +430,7 @@ export default {
       
       try {
         const response = await apiClient.get('/crm/strategic-projects/strategic-projects/', {
-          for_approval: true
+          params: { for_approval: true }
         })
         projectsForApproval.value = response.data
       } catch (error) {
@@ -477,11 +481,17 @@ export default {
     // Загрузка роли пользователя
     const loadUserRole = async () => {
       try {
-        // Временно устанавливаем роль администратора для демонстрации
-        // В реальном приложении здесь должен быть API запрос
-        userRole.value = 'admin'
+        const response = await apiClient.get('/crm/strategic-projects/user-roles/my_role/')
+        if (response.data && response.data.role) {
+          userRole.value = response.data.role
+        } else {
+          // Если роль не назначена, проверяем - может пользователь может создавать проекты
+          userRole.value = 'project_lead'
+        }
       } catch (error) {
         console.error('Ошибка загрузки роли пользователя:', error)
+        // По умолчанию устанавливаем роль руководителя проекта
+        userRole.value = 'project_lead'
       }
     }
     
@@ -552,11 +562,52 @@ export default {
 }
 
 .user-role-badge {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255,255,255,0.2);
+  color: white;
   padding: 0.5rem 1rem;
-  border-radius: 50px;
-  font-weight: 500;
-  display: inline-block;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Header actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+}
+
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+  color: white;
 }
 
 /* Статистические карточки */
