@@ -672,15 +672,6 @@
       }
     },
 
-    "AnalysisPorosity": {
-      "path": "/analysis-porosity",
-      "component": "@/pages/analysis_porosity/AnalysisPorosityPage.vue",
-      "meta": {
-        "title": "Анализ пористости поверхности",
-        "requiresAuth": true
-      }
-    },
-
     "NotFound": {
       "path": "/:pathMatch(.*)*",
       "component": "@/pages/NotFound.vue",
