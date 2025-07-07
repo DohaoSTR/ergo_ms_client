@@ -351,6 +351,21 @@
           "name": "Мои задачи"
         }
       ]
+    },
+    {
+      "icon": "Microscope",
+      "routeName": "PorosityAnalysis",
+      "title": "Анализ поверхности",
+      "list": [
+        {
+          "routeName": "PorosityAnalysisMain",
+          "name": "Создать анализ"
+        },
+        {
+          "routeName": "PorosityAnalysisList",
+          "name": "Мои анализы"
+        }
+      ]
     }
   ]
 } 

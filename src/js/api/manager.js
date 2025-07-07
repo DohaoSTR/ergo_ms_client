@@ -172,6 +172,31 @@ class ApiClient {
         }
     }
 
+    // Метод для скачивания файлов (бинарные данные)
+    async downloadFile(endpoint, params = {}, needToken = true) {
+        try {
+            const config = { 
+                params,
+                responseType: 'blob' // Важно для бинарных данных
+            };
+            if (needToken) {
+                this._addAuthToken(config);
+            }
+            const response = await this.client.get(endpoint, config);
+            
+            // Для бинарных данных возвращаем специальный формат
+            return {
+                success: true,
+                data: response.data, // Это blob объект
+                message: 'Файл успешно загружен',
+                status: response.status
+            };
+        } catch (error) {
+            const errorInfo = this.handleError(error);
+            throw error;
+        }
+    }
+
     // Вспомогательный метод для добавления токена авторизации в конфигурацию
     _addAuthToken(config) {
         const token = Cookies.get('token');
@@ -194,6 +219,16 @@ class ApiClient {
         // Успешные статусы: 200 OK, 201 Created, 204 No Content и т.д.
         if (response.status >= 200 && response.status < 300) {
             const data = response.data || {};
+
+            // Для DELETE-запросов с кодом 204 (No Content) считаем успешным
+            if (response.status === 204) {
+                return {
+                    success: true,
+                    data: null,
+                    message: 'Успешно удалено',
+                    status: response.status
+                };
+            }
 
             // Если сервер вернул success: false, сохраняем это значение
             // Иначе считаем ответ успешным по умолчанию

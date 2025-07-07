@@ -1047,6 +1047,40 @@
         "requiresAuth": true,
         "title": "Дашборд экспертной системы"
       }
+    },
+
+    "PorosityAnalysis": {
+      "path": "/porosity-analysis",
+      "component": "@/pages/porosity-analysis/ParentLayout.vue",
+      "redirect": "PorosityAnalysisMain",
+      "meta": {
+        "title": "Анализ поверхности",
+        "requiresAuth": true
+      }
+    },
+    "PorosityAnalysisMain": {
+      "path": "/porosity-analysis",
+      "component": "@/pages/porosity-analysis/MainPage.vue",
+      "meta": {
+        "title": "Создать анализ",
+        "requiresAuth": true
+      }
+    },
+    "PorosityAnalysisList": {
+      "path": "/porosity-analysis/analyses",
+      "component": "@/pages/porosity-analysis/AnalysesList.vue",
+      "meta": {
+        "title": "Мои анализы",
+        "requiresAuth": true
+      }
+    },
+    "PorosityAnalysisDetail": {
+      "path": "/porosity-analysis/analysis/:id",
+      "component": "@/pages/porosity-analysis/AnalysisDetail.vue",
+      "meta": {
+        "title": "Детали анализа",
+        "requiresAuth": true
+      }
     }
   }
 } 
