@@ -260,7 +260,7 @@ class ApiClient {
         const status = error.response?.status;
         const statusText = error.response?.statusText;
 
-        console.error(`API Error [${status}${statusText ? ' ' + statusText : ''}]:`, errorMessage);
+        console.error(`API Error [${status || 'undefined'}${statusText ? ' ' + statusText : ''}]:`, errorMessage);
 
         return {
             success: false,

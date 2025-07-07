@@ -30,6 +30,32 @@
                 <ArrowLeft size="16" />
                 <span>К списку</span>
               </router-link>
+              <div v-if="analysis.status === 'completed'" class="dropdown">
+                <button
+                  class="btn btn-success dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  :disabled="downloadingReport"
+                >
+                  <FileText class="me-2" size="16" />
+                  {{ downloadingReport ? 'Загрузка...' : 'Скачать отчет' }}
+                </button>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a class="dropdown-item" href="#" @click.prevent="downloadReport('pdf')">
+                      <FileText class="me-2" size="16" />
+                      PDF отчет
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="#" @click.prevent="downloadReport('docx')">
+                      <FileText class="me-2" size="16" />
+                      Word отчет (DOCX)
+                    </a>
+                  </li>
+                </ul>
+              </div>
               <button
                 v-if="analysis.status === 'failed'"
                 type="button"
@@ -171,8 +197,13 @@
                         :result-files="resultFiles"
                         :show-files="true"
                         :downloading="downloading"
+                        :generating-reports="generatingReports"
+                        :downloading-report="downloadingReport"
+                        :has-reports="hasReports"
                         @download-all="downloadAllResults"
                         @download-file="downloadFile"
+                        @generate-reports="generateReports"
+                        @download-report="downloadReport"
                       />
                     </div>
                   </div>
@@ -272,6 +303,32 @@
 .card-body.compact-card {
   padding: 1rem !important;
 }
+
+/* Стили для dropdown меню в заголовке */
+.card-header .dropdown-menu {
+  min-width: 180px;
+}
+
+.card-header .dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.card-header .dropdown-item svg {
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+}
+
+.card-header .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Стиль для кнопок в заголовке */
+.card-header .d-flex.gap-2 {
+  gap: 0.5rem;
+}
 </style>
 
 <script>
@@ -293,7 +350,8 @@ import {
   ChevronDown,
   ChevronRight,
   Info,
-  Upload
+  Upload,
+  FileText
 } from 'lucide-vue-next'
 
 export default {
@@ -314,7 +372,8 @@ export default {
     ChevronDown,
     ChevronRight,
     Info,
-    Upload
+    Upload,
+    FileText
   },
   name: 'PorosityAnalysisDetail',
   data() {
@@ -334,7 +393,11 @@ export default {
       showResults: true,
       showVisualizations: true,
       // Модальное окно удаления
-      showDeleteConfirm: false
+      showDeleteConfirm: false,
+      // Состояния для отчетов
+      generatingReports: false,
+      downloadingReport: false,
+      hasReports: false
     }
   },
   async mounted() {
@@ -357,6 +420,8 @@ export default {
           
           if (this.analysis.status === 'completed') {
             await this.loadResultFiles()
+            // Проверяем наличие отчетов
+            this.checkReportsExistence()
           }
         } else {
           this.$toast.error(response?.message || 'Ошибка при загрузке анализа')
@@ -506,15 +571,98 @@ export default {
       }
     },
     
-    cancelDeleteAnalysis() {
+        cancelDeleteAnalysis() {
       this.showDeleteConfirm = false
     },
+    
+    async generateReports() {
+      this.generatingReports = true
+      try {
+        const response = await porosityAnalysisAPI.generateReports(this.analysis.id)
+        if (response && response.success) {
+          this.$toast.success('Отчеты успешно сгенерированы')
+          this.hasReports = true
+        } else {
+          this.$toast.error(response?.message || 'Ошибка при генерации отчетов')
+        }
+      } catch (error) {
+        let errorMessage = 'Ошибка при генерации отчетов'
+        if (error && typeof error === 'object') {
+          if (error.response && error.response.data) {
+            errorMessage = error.response.data.message || error.response.data.detail || errorMessage
+          } else if (error.message) {
+            errorMessage = error.message
+          }
+        }
+        this.$toast.error(errorMessage)
+      } finally {
+        this.generatingReports = false
+      }
+    },
+    
+    async downloadReport(reportType) {
+      this.downloadingReport = true
+      try {
+        console.log(`Downloading report type: ${reportType} for analysis: ${this.analysis.id}`)
+        
+        // Сначала проверяем, есть ли уже отчеты, если нет - генерируем
+        if (!this.hasReports) {
+          await this.generateReports()
+        }
+        
+        // Используем API клиент для скачивания файла
+        const response = await porosityAnalysisAPI.downloadReport(this.analysis.id, reportType)
+        
+        if (response && response.success && response.data) {
+          // Создаем blob из данных
+          const blob = new Blob([response.data], {
+            type: reportType === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          })
+          
+          // Создаем ссылку для скачивания
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `porosity_analysis_${this.analysis.id}_${this.analysis.created_at.split('T')[0]}.${reportType}`
+          
+          // Добавляем ссылку в DOM, кликаем и удаляем
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          
+          // Освобождаем URL
+          window.URL.revokeObjectURL(url)
+          
+          this.$toast.success(`Отчет ${reportType.toUpperCase()} скачивается`)
+        } else {
+          throw new Error(response?.message || 'Ошибка при скачивании отчета')
+        }
+      } catch (error) {
+        console.error('Download error:', error)
+        this.$toast.error(error.message || 'Ошибка при скачивании отчета')
+      } finally {
+        this.downloadingReport = false
+      }
+    },
+    
+    checkReportsExistence() {
+      // Проверяем наличие папки reports в результатах
+      if (this.resultFiles && this.resultFiles.length > 0) {
+        // Если есть файлы отчетов, устанавливаем флаг
+        this.hasReports = this.resultFiles.some(file => 
+          file.name.includes('porosity_report') && 
+          (file.name.endsWith('.pdf') || file.name.endsWith('.docx'))
+        )
+      }
+    },
+    
+    // Убран метод loadQueueInfo, так как ограничения сняты
     
     formatDate(dateString) {
       const date = new Date(dateString)
       return date.toLocaleDateString('ru-RU', {
         year: 'numeric',
-        month: 'long',
+        month: 'long', 
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'

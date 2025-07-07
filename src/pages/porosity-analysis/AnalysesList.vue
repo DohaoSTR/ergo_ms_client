@@ -20,54 +20,75 @@
           <div class="card-header d-flex justify-content-between align-items-center">
             <h4 class="card-title mb-0">
               <List class="me-2" size="20" />
-              Список анализов
+              Список анализируемых образцов
             </h4>
-            <div class="filter-buttons">
-              <button
-                type="button"
-                class="filter-btn"
-                :class="{ active: currentFilter === 'all' }"
-                @click="setFilter('all')"
-              >
-                <List class="me-1" size="16" />
-                Все
-              </button>
-              <button
-                type="button"
-                class="filter-btn"
-                :class="{ active: currentFilter === 'pending' }"
-                @click="setFilter('pending')"
-              >
-                <Clock class="me-1" size="16" />
-                Ожидающие
-              </button>
-              <button
-                type="button"
-                class="filter-btn"
-                :class="{ active: currentFilter === 'processing' }"
-                @click="setFilter('processing')"
-              >
-                <Loader2 class="me-1" size="16" />
-                Обрабатываются
-              </button>
-              <button
-                type="button"
-                class="filter-btn"
-                :class="{ active: currentFilter === 'completed' }"
-                @click="setFilter('completed')"
-              >
-                <CheckCircle class="me-1" size="16" />
-                Завершенные
-              </button>
-              <button
-                type="button"
-                class="filter-btn"
-                :class="{ active: currentFilter === 'failed' }"
-                @click="setFilter('failed')"
-              >
-                <AlertTriangle class="me-1" size="16" />
-                Ошибки
-              </button>
+
+            <div class="d-flex align-items-center gap-3">
+              <div class="filter-buttons">
+                <button
+                  type="button"
+                  class="filter-btn"
+                  :class="{ active: currentFilter === 'all' }"
+                  data-filter="all"
+                  @click="setFilter('all')"
+                >
+                  <List class="me-1" size="16" />
+                  Все
+                </button>
+                <button
+                  type="button"
+                  class="filter-btn"
+                  :class="{ active: currentFilter === 'pending' }"
+                  data-filter="pending"
+                  @click="setFilter('pending')"
+                >
+                  <Clock class="me-1" size="16" />
+                  Ожидающие
+                </button>
+                <button
+                  type="button"
+                  class="filter-btn"
+                  :class="{ active: currentFilter === 'processing' }"
+                  data-filter="processing"
+                  @click="setFilter('processing')"
+                >
+                  <Loader2 class="me-1" size="16" />
+                  Обрабатываются
+                </button>
+                <button
+                  type="button"
+                  class="filter-btn"
+                  :class="{ active: currentFilter === 'completed' }"
+                  data-filter="completed"
+                  @click="setFilter('completed')"
+                >
+                  <CheckCircle class="me-1" size="16" />
+                  Завершенные
+                </button>
+                <button
+                  type="button"
+                  class="filter-btn"
+                  :class="{ active: currentFilter === 'failed' }"
+                  data-filter="failed"
+                  @click="setFilter('failed')"
+                >
+                  <AlertTriangle class="me-1" size="16" />
+                  Ошибки
+                </button>
+              </div>
+              
+              <div class="bulk-actions">
+                <button
+                  v-if="failedAnalyses.length > 0"
+                  type="button"
+                  class="btn btn-warning btn-sm"
+                  @click="restartFailedAnalyses"
+                  :disabled="restartingMultiple"
+                >
+                  <RotateCcw class="me-1" size="16" />
+                  {{ restartingMultiple ? 'Перезапуск...' : `Перезапустить ошибки (${failedAnalyses.length})` }}
+                </button>
+              </div>
             </div>
           </div>
           <div class="card-body">
@@ -159,6 +180,7 @@
                         class="action-btn warning"
                         @click="restartAnalysis(analysis.id)"
                         :disabled="restartingAnalysis === analysis.id"
+                        title="Перезапустить анализ с ошибкой"
                       >
                         <RotateCcw class="me-1" size="16" />
                         {{ restartingAnalysis === analysis.id ? 'Перезапуск...' : 'Перезапустить' }}
@@ -167,13 +189,59 @@
                       <button
                         v-if="analysis.status === 'completed'"
                         type="button"
-                        class="action-btn success"
-                        @click="downloadResults(analysis.id)"
-                        :disabled="downloadingAnalysis === analysis.id"
+                        class="action-btn info"
+                        @click="restartAnalysis(analysis.id)"
+                        :disabled="restartingAnalysis === analysis.id"
+                        title="Перезапустить завершенный анализ"
                       >
-                        <Download class="me-1" size="16" />
-                        {{ downloadingAnalysis === analysis.id ? 'Скачивание...' : 'Скачать архив' }}
+                        <RotateCcw class="me-1" size="16" />
+                        {{ restartingAnalysis === analysis.id ? 'Перезапуск...' : 'Перезапустить' }}
                       </button>
+                      
+                      <button
+                        v-if="analysis.status === 'pending'"
+                        type="button"
+                        class="action-btn secondary"
+                        @click="restartAnalysis(analysis.id)"
+                        :disabled="restartingAnalysis === analysis.id"
+                        title="Перезапустить ожидающий анализ"
+                      >
+                        <RotateCcw class="me-1" size="16" />
+                        {{ restartingAnalysis === analysis.id ? 'Перезапуск...' : 'Перезапустить' }}
+                      </button>
+                      
+                      <div v-if="analysis.status === 'completed'" class="dropdown d-inline-block">
+                        <button
+                          type="button"
+                          class="action-btn success dropdown-toggle"
+                          data-bs-toggle="dropdown"
+                          aria-expanded="false"
+                          :disabled="downloadingAnalysis === analysis.id"
+                        >
+                          <Download class="me-1" size="16" />
+                          {{ downloadingAnalysis === analysis.id ? 'Скачивание...' : 'Скачать' }}
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li>
+                            <a class="dropdown-item" href="#" @click.prevent="downloadResults(analysis.id)">
+                              <Download class="me-2" size="16" />
+                              Архив результатов
+                            </a>
+                          </li>
+                          <li>
+                            <a class="dropdown-item" href="#" @click.prevent="downloadReport(analysis.id, 'pdf')">
+                              <FileText class="me-2" size="16" />
+                              PDF отчет
+                            </a>
+                          </li>
+                          <li>
+                            <a class="dropdown-item" href="#" @click.prevent="downloadReport(analysis.id, 'docx')">
+                              <FileText class="me-2" size="16" />
+                              Word отчет
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
                       
                       <button
                         type="button"
@@ -201,7 +269,7 @@ import { porosityAnalysisAPI } from './js/porosity-analysis.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { 
   List, Clock, Loader2, CheckCircle, AlertTriangle, Inbox, Plus, 
-  Calendar, Ruler, BarChart3, CircleDot, Eye, RotateCcw, Download, Trash2 
+  Calendar, Ruler, BarChart3, CircleDot, Eye, RotateCcw, Download, Trash2, FileText
 } from 'lucide-vue-next'
 
 export default {
@@ -209,7 +277,7 @@ export default {
   components: {
     ConfirmDialog,
     List, Clock, Loader2, CheckCircle, AlertTriangle, Inbox, Plus,
-    Calendar, Ruler, BarChart3, CircleDot, Eye, RotateCcw, Download, Trash2
+    Calendar, Ruler, BarChart3, CircleDot, Eye, RotateCcw, Download, Trash2, FileText
   },
   data() {
     return {
@@ -220,7 +288,8 @@ export default {
       downloadingAnalysis: null,
       deletingAnalysis: null,
       showDeleteConfirm: false,
-      analysisToDelete: null
+      analysisToDelete: null,
+      restartingMultiple: false
     }
   },
   computed: {
@@ -229,6 +298,10 @@ export default {
         return this.analyses
       }
       return this.analyses.filter(analysis => analysis.status === this.currentFilter)
+    },
+    
+    failedAnalyses() {
+      return this.analyses.filter(analysis => analysis.status === 'failed')
     }
   },
   async mounted() {
@@ -313,9 +386,23 @@ export default {
         const response = await porosityAnalysisAPI.restartAnalysis(analysisId)
         if (response && response.success) {
           this.$toast.success('Анализ перезапущен')
-          await this.loadAnalyses()
+          
+          // Немедленно обновляем статус анализа в списке
+          const analysisIndex = this.analyses.findIndex(a => a.id === analysisId)
+          if (analysisIndex !== -1) {
+            this.analyses[analysisIndex].status = 'pending'
+            this.analyses[analysisIndex].updated_at = new Date().toISOString()
+          }
+          
+          // Обновляем список в фоне с обработкой ошибок
+          try {
+            await this.loadAnalyses()
+          } catch (error) {
+            console.warn('Ошибка при обновлении списка анализов:', error)
+            // Не показываем ошибку пользователю, так как основной функционал работает
+          }
         } else {
-          this.$toast.error(response?.message || 'Ошибка при перезапуске анализа')
+          this.$toast.error((response && response.message) ? response.message : 'Ошибка при перезапуске анализа')
         }
       } catch (error) {
         let errorMessage = 'Ошибка при перезапуске анализа'
@@ -329,6 +416,54 @@ export default {
         this.$toast.error(errorMessage)
       } finally {
         this.restartingAnalysis = null
+      }
+    },
+    
+    async restartFailedAnalyses() {
+      if (this.failedAnalyses.length === 0) {
+        this.$toast.warning('Нет анализов с ошибками для перезапуска')
+        return
+      }
+      
+      this.restartingMultiple = true
+      try {
+        const response = await porosityAnalysisAPI.restartMultipleAnalyses({
+          status: 'failed'
+        })
+        
+        if (response && response.success) {
+          this.$toast.success(`Перезапущено ${response.restarted_count} анализов`)
+          
+          // Немедленно обновляем статусы анализов в списке
+          this.failedAnalyses.forEach(analysis => {
+            const analysisIndex = this.analyses.findIndex(a => a.id === analysis.id)
+            if (analysisIndex !== -1) {
+              this.analyses[analysisIndex].status = 'pending'
+              this.analyses[analysisIndex].updated_at = new Date().toISOString()
+            }
+          })
+          
+          // Обновляем список в фоне
+          try {
+            await this.loadAnalyses()
+          } catch (error) {
+            console.warn('Ошибка при обновлении списка анализов:', error)
+          }
+        } else {
+          this.$toast.error((response && response.message) ? response.message : 'Ошибка при массовом перезапуске')
+        }
+      } catch (error) {
+        let errorMessage = 'Ошибка при массовом перезапуске'
+        if (error && typeof error === 'object') {
+          if (error.response && error.response.data) {
+            errorMessage = error.response.data.message || error.response.data.detail || errorMessage
+          } else if (error.message) {
+            errorMessage = error.message
+          }
+        }
+        this.$toast.error(errorMessage)
+      } finally {
+        this.restartingMultiple = false
       }
     },
     
@@ -352,7 +487,7 @@ export default {
           }
         } else {
           if (this.$toast && this.$toast.error) {
-            this.$toast.error(response?.message || 'Ошибка при скачивании результатов')
+            this.$toast.error((response && response.message) ? response.message : 'Ошибка при скачивании результатов')
           }
         }
       } catch (error) {
@@ -403,7 +538,7 @@ export default {
             // Игнорируем ошибки при обновлении списка
           })
         } else {
-          const errorMsg = response && response.message ? response.message : 'Ошибка при удалении анализа'
+          const errorMsg = (response && response.message) ? response.message : 'Ошибка при удалении анализа'
           this.$toast.error(errorMsg)
         }
       } catch (error) {
@@ -426,6 +561,46 @@ export default {
     cancelDeleteAnalysis() {
       this.showDeleteConfirm = false
       this.analysisToDelete = null
+    },
+    
+    async downloadReport(analysisId, reportType) {
+      this.downloadingAnalysis = analysisId
+      try {
+        console.log(`Downloading report type: ${reportType} for analysis: ${analysisId}`)
+        
+        // Используем API клиент для скачивания файла
+        const response = await porosityAnalysisAPI.downloadReport(analysisId, reportType)
+        
+        if (response && response.success && response.data) {
+          // Создаем blob из данных
+          const blob = new Blob([response.data], {
+            type: reportType === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          })
+          
+          // Создаем ссылку для скачивания
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `porosity_analysis_${analysisId}_${new Date().toISOString().split('T')[0]}.${reportType}`
+          
+          // Добавляем ссылку в DOM, кликаем и удаляем
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          
+          // Освобождаем URL
+          window.URL.revokeObjectURL(url)
+          
+          this.$toast.success(`Отчет ${reportType.toUpperCase()} скачивается`)
+        } else {
+          throw new Error((response && response.message) ? response.message : 'Ошибка при скачивании отчета')
+        }
+      } catch (error) {
+        console.error('Download error:', error)
+        this.$toast.error(error.message || 'Ошибка при скачивании отчета')
+      } finally {
+        this.downloadingAnalysis = null
+      }
     }
   }
 }
@@ -457,18 +632,100 @@ export default {
   cursor: pointer;
 }
 
-.filter-btn:hover {
-  background-color: #f8f9fa;
-  border-color: #adb5bd;
-  color: #495057;
+/* Цветные стили для кнопок фильтров */
+.filter-btn[data-filter="all"] {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.filter-btn[data-filter="all"]:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
   transform: translateY(-1px);
 }
 
-.filter-btn.active {
-  background-color: #007bff;
-  border-color: #007bff;
+.filter-btn[data-filter="all"].active {
+  background-color: #6c757d;
+  border-color: #6c757d;
   color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+.filter-btn[data-filter="pending"] {
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.filter-btn[data-filter="pending"]:hover {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+  transform: translateY(-1px);
+}
+
+.filter-btn[data-filter="pending"].active {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+}
+
+.filter-btn[data-filter="processing"] {
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.filter-btn[data-filter="processing"]:hover {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.filter-btn[data-filter="processing"].active {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(23, 162, 184, 0.3);
+}
+
+.filter-btn[data-filter="completed"] {
+  border-color: #28a745;
+  color: #155724;
+}
+
+.filter-btn[data-filter="completed"]:hover {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.filter-btn[data-filter="completed"].active {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.filter-btn[data-filter="failed"] {
+  border-color: #dc3545;
+  color: #721c24;
+}
+
+.filter-btn[data-filter="failed"]:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.filter-btn[data-filter="failed"].active {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
 }
 
 .analysis-card {
@@ -538,6 +795,126 @@ export default {
   border: 1px solid #f5c6cb;
 }
 
+/* Стили для цветных иконок в статусах */
+.badge svg {
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+}
+
+.badge-warning svg {
+  color: #ffc107;
+}
+
+.badge-info svg {
+  color: #17a2b8;
+}
+
+.badge-success svg {
+  color: #28a745;
+}
+
+.badge-danger svg {
+  color: #dc3545;
+}
+
+/* Дополнительные стили для иконок в фильтрах */
+.filter-btn svg {
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+}
+
+/* Цветные иконки для фильтров */
+.filter-btn[data-filter="all"] svg {
+  color: #6c757d;
+}
+
+.filter-btn[data-filter="all"]:hover svg,
+.filter-btn[data-filter="all"].active svg {
+  color: #fff;
+}
+
+.filter-btn[data-filter="pending"] svg {
+  color: #856404;
+}
+
+.filter-btn[data-filter="pending"]:hover svg,
+.filter-btn[data-filter="pending"].active svg {
+  color: #212529;
+}
+
+.filter-btn[data-filter="processing"] svg {
+  color: #0c5460;
+}
+
+.filter-btn[data-filter="processing"]:hover svg,
+.filter-btn[data-filter="processing"].active svg {
+  color: #fff;
+}
+
+.filter-btn[data-filter="completed"] svg {
+  color: #155724;
+}
+
+.filter-btn[data-filter="completed"]:hover svg,
+.filter-btn[data-filter="completed"].active svg {
+  color: #fff;
+}
+
+.filter-btn[data-filter="failed"] svg {
+  color: #721c24;
+}
+
+.filter-btn[data-filter="failed"]:hover svg,
+.filter-btn[data-filter="failed"].active svg {
+  color: #fff;
+}
+
+/* Стили для иконок в кнопках действий */
+.action-btn svg {
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+}
+
+/* Специальные цвета для иконок в кнопках */
+.action-btn.primary svg {
+  color: #fff;
+}
+
+.action-btn.warning svg {
+  color: #212529;
+}
+
+.action-btn.success svg {
+  color: #fff;
+}
+
+.action-btn.danger svg {
+  color: #fff;
+}
+
+.action-btn.info svg {
+  color: #fff;
+}
+
+.action-btn.secondary svg {
+  color: #fff;
+}
+
+/* Стили для кнопки массового перезапуска */
+.bulk-actions .btn svg {
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+  color: #212529;
+}
+
+.bulk-actions .btn:hover svg {
+  color: #212529;
+}
+
+.bulk-actions .btn:disabled svg {
+  color: #6c757d;
+}
+
 .card-body {
   padding: 1rem;
   flex-grow: 1;
@@ -578,6 +955,28 @@ export default {
   margin-right: 0.15rem;
   display: inline-block;
   vertical-align: middle;
+  color: #6c757d;
+}
+
+/* Цветные иконки для информационных блоков */
+.info-item .lucide[data-icon="calendar"] {
+  color: #17a2b8;
+}
+
+.info-item .lucide[data-icon="ruler"] {
+  color: #6f42c1;
+}
+
+.info-item .lucide[data-icon="bar-chart-3"] {
+  color: #28a745;
+}
+
+.info-item .lucide[data-icon="circle-dot"] {
+  color: #fd7e14;
+}
+
+.info-item .lucide[data-icon="alert-triangle"] {
+  color: #dc3545;
 }
 
 .info-item .date-text {
@@ -607,15 +1006,17 @@ export default {
 }
 
 .action-buttons {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.5rem;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .action-btn {
   display: inline-flex;
   align-items: center;
-  padding: 0.5rem 1rem;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
   border: 1px solid transparent;
   border-radius: 0.375rem;
   font-size: 0.875rem;
@@ -623,10 +1024,14 @@ export default {
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  flex: 1;
-  justify-content: center;
-  min-width: 120px;
-  max-width: 100%;
+  width: 100%;
+  height: 40px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .action-btn:hover {
@@ -688,6 +1093,30 @@ export default {
   color: #fff;
 }
 
+.action-btn.info {
+  background-color: #17a2b8;
+  color: #fff;
+  border-color: #17a2b8;
+}
+
+.action-btn.info:hover {
+  background-color: #138496;
+  border-color: #138496;
+  color: #fff;
+}
+
+.action-btn.secondary {
+  background-color: #6c757d;
+  color: #fff;
+  border-color: #6c757d;
+}
+
+.action-btn.secondary:hover {
+  background-color: #5a6268;
+  border-color: #5a6268;
+  color: #fff;
+}
+
 @media (max-width: 768px) {
   .filter-buttons {
     flex-direction: column;
@@ -699,16 +1128,75 @@ export default {
   }
   
   .action-buttons {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
   
   .info-row, .results-row {
     flex-direction: column;
     gap: 0.5rem;
   }
+  
   .action-btn {
-    min-width: 100%;
+    width: 100%;
+    justify-content: center;
+    height: 44px; /* Увеличиваем высоту для лучшего тапа на мобильных */
+  }
+  
+  .analysis-card .dropdown {
     width: 100%;
   }
+  
+  /* Улучшение отображения кнопок перезапуска на мобильных */
+  .action-btn[title*="Перезапустить"] {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* Стили для dropdown меню в карточках анализов */
+.analysis-card .dropdown {
+  width: 100%;
+  display: block;
+}
+
+.analysis-card .dropdown .action-btn {
+  width: 100%;
+}
+
+.analysis-card .dropdown-menu {
+  min-width: 180px;
+  margin-top: 0.25rem;
+}
+
+/* Дополнительные стили для grid-сетки кнопок */
+.action-buttons > * {
+  width: 100%;
+}
+
+.analysis-card .dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.analysis-card .dropdown-item svg {
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+  color: #6c757d;
+}
+
+.analysis-card .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.analysis-card .dropdown-item:hover svg {
+  color: #495057;
+}
+
+/* Стиль для кнопки с dropdown */
+.action-btn.dropdown-toggle::after {
+  margin-left: 0.5rem;
 }
 </style> 

@@ -15,6 +15,13 @@
       <small class="text-muted">Обработка изображения...</small>
     </div>
     
+    <div v-if="status === 'pending'" class="queue-info mt-2">
+      <div class="alert alert-info small">
+        <Clock class="me-1" size="16" />
+        <span>Анализ добавлен в очередь обработки</span>
+      </div>
+    </div>
+    
     <div v-if="errorMessage" class="error-message mt-2">
       <div class="alert alert-danger small">
         <AlertTriangle class="me-1" size="16" />
@@ -49,7 +56,8 @@ export default {
     showProgress: {
       type: Boolean,
       default: true
-    }
+    },
+    // Убраны props для информации о очереди, так как ограничения сняты
   },
   computed: {
     statusClass() {
@@ -81,6 +89,9 @@ export default {
       }
       return texts[this.status] || this.status
     }
+  },
+  methods: {
+    // Убран метод formatWaitTime, так как информация о времени ожидания больше не нужна
   }
 }
 </script>

@@ -308,10 +308,16 @@ export default {
       try {
         const results = await porosityAnalysisAPI.createMultipleAnalyses(this.quickUploadFiles, 100.0)
         
+        console.log('Multiple analyses results:', results)
+        console.log('Results type:', typeof results)
+        console.log('Results is array:', Array.isArray(results))
+        
         if (Array.isArray(results) && results.length > 0) {
           const validResults = results.filter(r => r !== null && r !== undefined)
-          const successCount = validResults.filter(r => r && r.success === true).length
+          const successCount = validResults.filter(r => r && typeof r === 'object' && r.success === true).length
           const failedCount = validResults.length - successCount
+          
+          console.log(`Valid results: ${validResults.length}, Success: ${successCount}, Failed: ${failedCount}`)
           
           if (successCount > 0) {
             this.$toast.success(`Создано ${successCount} из ${this.quickUploadFiles.length} анализов`)
@@ -320,8 +326,21 @@ export default {
           if (failedCount > 0) {
             this.$toast.warning(`${failedCount} анализов не удалось создать`)
           }
+        } else if (results && typeof results === 'object') {
+          // Если API вернул одиночный результат
+          if (results.success === true) {
+            this.$toast.success('Анализ создан успешно')
+          } else if (results.data) {
+            console.log('Results with data:', results)
+            this.$toast.success('Анализ создан успешно')
+          } else {
+            console.warn('Unexpected single result format:', results)
+            this.$toast.success('Анализ отправлен на обработку')
+          }
         } else {
-          this.$toast.success('Анализы созданы успешно')
+          // Если результаты не в ожидаемом формате
+          console.warn('Unexpected results format:', results)
+          this.$toast.success('Анализы отправлены на обработку')
         }
         
         this.quickUploadFiles = []
@@ -340,7 +359,10 @@ export default {
           } else if (error.message) {
             errorMessage = error.message
           }
+        } else if (error && typeof error === 'string') {
+          errorMessage = error
         }
+        console.error('Error creating multiple analyses:', error)
         this.$toast.error(errorMessage)
       } finally {
         this.isCreatingMultiple = false

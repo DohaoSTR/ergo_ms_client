@@ -45,15 +45,52 @@
               <FileText class="me-2" size="20" />
               Файлы результатов
             </h6>
-                          <button
+            <div class="d-flex gap-2">
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                @click="$emit('generate-reports')"
+                :disabled="generatingReports"
+              >
+                <FileText class="me-2" size="16" />
+                {{ generatingReports ? 'Генерация...' : 'Создать отчеты' }}
+              </button>
+              <div class="dropdown" v-if="hasReports">
+                <button
+                  class="btn btn-sm btn-secondary dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  :disabled="downloadingReport"
+                >
+                  <Download class="me-2" size="16" />
+                  {{ downloadingReport ? 'Загрузка...' : 'Скачать отчет' }}
+                </button>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a class="dropdown-item" href="#" @click.prevent="$emit('download-report', 'pdf')">
+                      <FileText class="me-2" size="16" />
+                      PDF
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="#" @click.prevent="$emit('download-report', 'docx')">
+                      <FileText class="me-2" size="16" />
+                      Word (DOCX)
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <button
                 type="button"
                 class="btn btn-success btn-sm"
                 @click="$emit('download-all')"
                 :disabled="downloading"
               >
                 <Download class="me-2" size="16" />
-                {{ downloading ? 'Скачивание...' : 'Скачать все' }}
+                {{ downloading ? 'Скачивание...' : 'Скачать изображения' }}
               </button>
+            </div>
           </div>
           <div class="card-body">
             <div class="row">
@@ -117,9 +154,21 @@ export default {
     downloading: {
       type: Boolean,
       default: false
+    },
+    generatingReports: {
+      type: Boolean,
+      default: false
+    },
+    downloadingReport: {
+      type: Boolean,
+      default: false
+    },
+    hasReports: {
+      type: Boolean,
+      default: false
     }
   },
-  emits: ['download-all', 'download-file'],
+  emits: ['download-all', 'download-file', 'generate-reports', 'download-report'],
   methods: {
     formatDate(dateString) {
       const date = new Date(dateString)
@@ -285,5 +334,25 @@ export default {
 
 .card-body .row {
   margin-bottom: 1.5rem;
+}
+
+/* Стили для dropdown меню */
+.dropdown-menu {
+  min-width: 150px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
+}
+
+/* Стиль для кнопок в заголовке */
+.card-header .d-flex.gap-2 {
+  gap: 0.5rem;
 }
 </style> 

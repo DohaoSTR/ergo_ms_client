@@ -355,15 +355,15 @@
     {
       "icon": "Microscope",
       "routeName": "PorosityAnalysis",
-      "title": "Анализ поверхности",
+      "title": "Анализ пористости",
       "list": [
         {
           "routeName": "PorosityAnalysisMain",
-          "name": "Создать анализ"
+          "name": "Создание анализа"
         },
         {
           "routeName": "PorosityAnalysisList",
-          "name": "Мои анализы"
+          "name": "Анализируемые образцы"
         }
       ]
     }

@@ -26,8 +26,20 @@ class PorosityAnalysisAPI {
    * Создать новый анализ
    */
   async createAnalysis(data) {
-    const response = await apiClient.post(this.baseEndpoint, data)
-    return response
+    try {
+      console.log('Creating analysis with data:', data)
+      const response = await apiClient.post(this.baseEndpoint, data)
+      console.log('Analysis creation response:', response)
+      return response
+    } catch (error) {
+      console.error('Error in createAnalysis:', error)
+      // Возвращаем объект с ошибкой в том же формате
+      return {
+        success: false,
+        message: error.message || 'Ошибка при создании анализа',
+        data: null
+      }
+    }
   }
 
   /**
@@ -49,17 +61,58 @@ class PorosityAnalysisAPI {
    * Загрузить изображение для анализа
    */
   async uploadImage(analysisId, imageFile) {
-    const formData = new FormData()
-    formData.append('image', imageFile)
-    const response = await apiClient.post(`${this.baseEndpoint}${analysisId}/upload_image/`, formData)
-    return response
+    try {
+      console.log(`Uploading image for analysis ${analysisId}:`, imageFile.name)
+      const formData = new FormData()
+      formData.append('image', imageFile)
+      const response = await apiClient.post(`${this.baseEndpoint}${analysisId}/upload_image/`, formData)
+      console.log(`Upload response for analysis ${analysisId}:`, response)
+      return response
+    } catch (error) {
+      console.error(`Error uploading image for analysis ${analysisId}:`, error)
+      // Возвращаем объект с ошибкой в том же формате
+      return {
+        success: false,
+        message: error.message || 'Ошибка при загрузке изображения',
+        data: null
+      }
+    }
   }
 
   /**
    * Перезапустить анализ
    */
   async restartAnalysis(analysisId) {
-    return await apiClient.post(`${this.baseEndpoint}${analysisId}/restart/`)
+    try {
+      const response = await apiClient.post(`${this.baseEndpoint}${analysisId}/restart/`)
+      return response
+    } catch (error) {
+      console.error('Error in restartAnalysis:', error)
+      // Возвращаем объект с ошибкой в том же формате, что и успешный ответ
+      return {
+        success: false,
+        message: error.message || 'Ошибка при перезапуске анализа',
+        data: null
+      }
+    }
+  }
+
+  /**
+   * Массовый перезапуск анализов
+   */
+  async restartMultipleAnalyses(params) {
+    try {
+      const response = await apiClient.post(`${this.baseEndpoint}restart_multiple/`, params)
+      return response
+    } catch (error) {
+      console.error('Error in restartMultipleAnalyses:', error)
+      // Возвращаем объект с ошибкой в том же формате, что и успешный ответ
+      return {
+        success: false,
+        message: error.message || 'Ошибка при массовом перезапуске анализов',
+        data: null
+      }
+    }
   }
 
   /**
@@ -141,8 +194,12 @@ class PorosityAnalysisAPI {
       return []
     }
 
-    const promises = files.map(async (file) => {
+    console.log(`Creating ${files.length} analyses with scale: ${defaultScale}`)
+
+    const promises = files.map(async (file, index) => {
       try {
+        console.log(`Processing file ${index + 1}/${files.length}: ${file.name}`)
+        
         const analysisData = {
           name: `Анализ ${file.name.replace(/\.[^/.]+$/, '')}`,
           description: `Автоматически созданный анализ для файла ${file.name}`,
@@ -151,6 +208,7 @@ class PorosityAnalysisAPI {
         }
 
         const response = await this.createAnalysis(analysisData)
+        console.log(`Analysis creation response for ${file.name}:`, response)
         
         if (response && response.success) {
           // Получаем ID анализа из ответа
@@ -166,6 +224,8 @@ class PorosityAnalysisAPI {
             try {
               // Загружаем изображение для созданного анализа
               const uploadResponse = await this.uploadImage(analysisId, file)
+              console.log(`Upload response for ${file.name}:`, uploadResponse)
+              
               if (uploadResponse && uploadResponse.success) {
                 return {
                   success: true,
@@ -180,6 +240,7 @@ class PorosityAnalysisAPI {
                 }
               }
             } catch (uploadError) {
+              console.error(`Upload error for ${file.name}:`, uploadError)
               return {
                 success: false,
                 message: `Ошибка загрузки изображения для анализа ${analysisId}: ${uploadError.message || 'Неизвестная ошибка'}`,
@@ -187,6 +248,7 @@ class PorosityAnalysisAPI {
               }
             }
           } else {
+            console.warn(`No valid analysis ID for ${file.name}:`, response.data)
             return {
               success: false,
               message: 'Не удалось получить ID анализа',
@@ -194,13 +256,15 @@ class PorosityAnalysisAPI {
             }
           }
         } else {
+          console.warn(`Analysis creation failed for ${file.name}:`, response)
           return {
             success: false,
-            message: response?.message || 'Ошибка создания анализа',
-            data: response?.data
+            message: (response && response.message) ? response.message : 'Ошибка создания анализа',
+            data: (response && response.data) ? response.data : null
           }
         }
       } catch (error) {
+        console.error(`Error creating analysis for ${file.name}:`, error)
         return {
           success: false,
           message: `Ошибка создания анализа для файла ${file.name}: ${error.message || 'Неизвестная ошибка'}`,
@@ -210,8 +274,33 @@ class PorosityAnalysisAPI {
     })
 
     try {
-      return await Promise.all(promises)
+      const results = await Promise.all(promises)
+      console.log('All analyses creation results:', results)
+      
+      // Проверяем, что все результаты имеют правильный формат
+      const validatedResults = results.map(result => {
+        if (result && typeof result === 'object' && result.hasOwnProperty('success')) {
+          return result
+        } else {
+          console.warn('Invalid result format:', result)
+          return {
+            success: false,
+            message: 'Неверный формат результата',
+            data: result
+          }
+        }
+      })
+      
+      console.log('Validated results:', validatedResults)
+      
+      // Если у нас только один результат, возвращаем его как объект
+      if (validatedResults.length === 1) {
+        return validatedResults[0]
+      }
+      
+      return validatedResults
     } catch (error) {
+      console.error('Error in Promise.all for multiple analyses:', error)
       return [{
         success: false,
         message: `Ошибка при создании анализов: ${error.message || 'Неизвестная ошибка'}`,
@@ -233,6 +322,42 @@ class PorosityAnalysisAPI {
   getImageUrl(imageUuid) {
     return `${apiClient.baseUrl}media/porosity_analysis/initial_photo/${imageUuid}.png`
   }
+
+  /**
+   * Генерировать отчеты по анализу
+   */
+  async generateReports(analysisId) {
+    return await apiClient.get(`${this.baseEndpoint}${analysisId}/generate_report/`)
+  }
+
+  /**
+   * Получить URL для скачивания отчета
+   */
+  getReportDownloadUrl(analysisId, reportType) {
+    return `${apiClient.baseUrl}${apiClient.apiPath}${this.baseEndpoint}${analysisId}/download_report/?type=${reportType}`
+  }
+
+  /**
+   * Скачать отчет
+   */
+  async downloadReport(analysisId, reportType) {
+    console.log(`API: Downloading report for analysis ${analysisId}, type: ${reportType}`)
+    try {
+      const response = await apiClient.downloadFile(`${this.baseEndpoint}${analysisId}/download_report/`, { type: reportType })
+      console.log('API: Download response:', response)
+      return response
+    } catch (error) {
+      console.error('API: Download error:', error)
+      // Возвращаем объект с ошибкой в том же формате
+      return {
+        success: false,
+        message: error.message || 'Ошибка при скачивании отчета',
+        data: null
+      }
+    }
+  }
+
+  // Убран метод getLimits, так как ограничения сняты
 }
 
 // Создать и экспортировать синглтон-объект
