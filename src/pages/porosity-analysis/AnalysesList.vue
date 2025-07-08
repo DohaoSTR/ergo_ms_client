@@ -108,153 +108,209 @@
               </router-link>
             </div>
             
-            <div v-else class="row">
-              <div
-                v-for="analysis in filteredAnalyses"
-                :key="analysis.id"
-                class="col-md-6 col-lg-4 mb-4"
-              >
-                <div class="analysis-card">
-                  <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-start">
-                      <h6 class="card-title mb-0">{{ analysis.name }}</h6>
-                      <span :class="getStatusBadgeClass(analysis.status)">
-                        <component :is="getStatusIcon(analysis.status)" class="me-1" size="14" />
-                        {{ getStatusText(analysis.status) }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <p class="card-text text-muted small">
-                      {{ analysis.description || 'Описание отсутствует' }}
-                    </p>
-                    
-                    <div class="analysis-info">
-                      <div class="info-row">
-                        <div class="info-item">
-                          <Calendar class="me-1" size="14" />
-                          <small class="text-muted">Создан:</small>
-                          <div>{{ formatDate(analysis.created_at) }}</div>
-                        </div>
-                        <div class="info-item">
-                          <Ruler class="me-1" size="14" />
-                          <small class="text-muted">Шкала:</small>
-                          <div>{{ analysis.scale_value }} мкм</div>
-                        </div>
-                      </div>
-                      
-                      <div v-if="analysis.status === 'completed'" class="results-row">
-                        <div class="info-item">
-                          <BarChart3 class="me-1" size="14" />
-                          <small class="text-muted">Пористость:</small>
-                          <div class="fw-bold text-success">{{ analysis.porosity_percentage?.toFixed(2) }}%</div>
-                        </div>
-                        <div class="info-item">
-                          <CircleDot class="me-1" size="14" />
-                          <small class="text-muted">Пор:</small>
-                          <div class="fw-bold">{{ analysis.number_of_pores }}</div>
-                        </div>
-                      </div>
-                      
-                      <div v-if="analysis.status === 'failed'" class="error-row">
-                        <div class="alert alert-danger small mb-0">
-                          <AlertTriangle class="me-1" size="14" />
-                          {{ analysis.error_message || 'Неизвестная ошибка' }}
-                        </div>
+            <div v-else>
+              <div class="row">
+                <div
+                  v-for="analysis in filteredAnalyses"
+                  :key="analysis.id"
+                  class="col-md-6 col-lg-4 mb-4"
+                >
+                  <div class="analysis-card">
+                    <div class="card-header">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="card-title mb-0">{{ analysis.name }}</h6>
+                        <span :class="getStatusBadgeClass(analysis.status)">
+                          <component :is="getStatusIcon(analysis.status)" class="me-1" size="14" />
+                          {{ getStatusText(analysis.status) }}
+                        </span>
                       </div>
                     </div>
-                  </div>
-                  <div class="card-footer">
-                    <div class="action-buttons">
-                      <router-link
-                        :to="`/porosity-analysis/analysis/${analysis.id}`"
-                        class="action-btn primary"
-                      >
-                        <Eye class="me-1" size="16" />
-                        Просмотр
-                      </router-link>
+                    <div class="card-body">
+                      <p class="card-text text-muted small">
+                        {{ analysis.description || 'Описание отсутствует' }}
+                      </p>
                       
-                      <button
-                        v-if="analysis.status === 'failed'"
-                        type="button"
-                        class="action-btn warning"
-                        @click="restartAnalysis(analysis.id)"
-                        :disabled="restartingAnalysis === analysis.id"
-                        title="Перезапустить анализ с ошибкой"
-                      >
-                        <RotateCcw class="me-1" size="16" />
-                        {{ restartingAnalysis === analysis.id ? 'Перезапуск...' : 'Перезапустить' }}
-                      </button>
-                      
-                      <button
-                        v-if="analysis.status === 'completed'"
-                        type="button"
-                        class="action-btn info"
-                        @click="restartAnalysis(analysis.id)"
-                        :disabled="restartingAnalysis === analysis.id"
-                        title="Перезапустить завершенный анализ"
-                      >
-                        <RotateCcw class="me-1" size="16" />
-                        {{ restartingAnalysis === analysis.id ? 'Перезапуск...' : 'Перезапустить' }}
-                      </button>
-                      
-                      <button
-                        v-if="analysis.status === 'pending'"
-                        type="button"
-                        class="action-btn secondary"
-                        @click="restartAnalysis(analysis.id)"
-                        :disabled="restartingAnalysis === analysis.id"
-                        title="Перезапустить ожидающий анализ"
-                      >
-                        <RotateCcw class="me-1" size="16" />
-                        {{ restartingAnalysis === analysis.id ? 'Перезапуск...' : 'Перезапустить' }}
-                      </button>
-                      
-                      <div v-if="analysis.status === 'completed'" class="dropdown d-inline-block">
+                      <div class="analysis-info">
+                        <div class="info-row">
+                          <div class="info-item">
+                            <Calendar class="me-1" size="14" />
+                            <small class="text-muted">Создан:</small>
+                            <div>{{ formatDate(analysis.created_at) }}</div>
+                          </div>
+                          <div class="info-item">
+                            <Ruler class="me-1" size="14" />
+                            <small class="text-muted">Шкала:</small>
+                            <div>{{ analysis.scale_value }} мкм</div>
+                          </div>
+                        </div>
+                        
+                        <div v-if="analysis.status === 'completed'" class="results-row">
+                          <div class="info-item">
+                            <BarChart3 class="me-1" size="14" />
+                            <small class="text-muted">Пористость:</small>
+                            <div class="fw-bold text-success">{{ analysis.porosity_percentage?.toFixed(2) }}%</div>
+                          </div>
+                          <div class="info-item">
+                            <CircleDot class="me-1" size="14" />
+                            <small class="text-muted">Пор:</small>
+                            <div class="fw-bold">{{ analysis.number_of_pores }}</div>
+                          </div>
+                        </div>
+                        
+                        <div v-if="analysis.status === 'failed'" class="error-row">
+                          <div class="alert alert-danger small mb-0">
+                            <AlertTriangle class="me-1" size="14" />
+                            {{ analysis.error_message || 'Неизвестная ошибка' }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-footer">
+                      <div class="action-buttons">
+                        <router-link
+                          :to="`/porosity-analysis/analysis/${analysis.id}`"
+                          class="action-btn primary"
+                        >
+                          <Eye class="me-1" size="16" />
+                          Просмотр
+                        </router-link>
+                        
+                        <button
+                          v-if="analysis.status === 'failed'"
+                          type="button"
+                          class="action-btn warning"
+                          @click="restartAnalysis(analysis.id)"
+                          :disabled="restartingAnalysis === analysis.id"
+                          title="Перезапустить анализ с ошибкой"
+                        >
+                          <RotateCcw class="me-1" size="16" />
+                          {{ restartingAnalysis === analysis.id ? 'Перезапуск...' : 'Перезапустить' }}
+                        </button>
+                        
+                        <button
+                          v-if="analysis.status === 'completed'"
+                          type="button"
+                          class="action-btn info"
+                          @click="restartAnalysis(analysis.id)"
+                          :disabled="restartingAnalysis === analysis.id"
+                          title="Перезапустить завершенный анализ"
+                        >
+                          <RotateCcw class="me-1" size="16" />
+                          {{ restartingAnalysis === analysis.id ? 'Перезапуск...' : 'Перезапустить' }}
+                        </button>
+                        
+                        <button
+                          v-if="analysis.status === 'pending'"
+                          type="button"
+                          class="action-btn secondary"
+                          @click="restartAnalysis(analysis.id)"
+                          :disabled="restartingAnalysis === analysis.id"
+                          title="Перезапустить ожидающий анализ"
+                        >
+                          <RotateCcw class="me-1" size="16" />
+                          {{ restartingAnalysis === analysis.id ? 'Перезапуск...' : 'Перезапустить' }}
+                        </button>
+                        
+                        <div v-if="analysis.status === 'completed'" class="dropdown d-inline-block">
+                          <button
+                            type="button"
+                            class="action-btn success dropdown-toggle"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            :disabled="downloadingAnalysis === analysis.id"
+                          >
+                            <Download class="me-1" size="16" />
+                            {{ downloadingAnalysis === analysis.id ? 'Скачивание...' : 'Скачать' }}
+                          </button>
+                          <ul class="dropdown-menu">
+                            <li>
+                              <a class="dropdown-item" href="#" @click.prevent="downloadResults(analysis.id)">
+                                <Download class="me-2" size="16" />
+                                Архив результатов
+                              </a>
+                            </li>
+                            <li>
+                              <a class="dropdown-item" href="#" @click.prevent="downloadReport(analysis.id, 'pdf')">
+                                <FileText class="me-2" size="16" />
+                                PDF отчет
+                              </a>
+                            </li>
+                            <li>
+                              <a class="dropdown-item" href="#" @click.prevent="downloadReport(analysis.id, 'docx')">
+                                <FileText class="me-2" size="16" />
+                                Word отчет
+                              </a>
+                            </li>
+                          </ul>
+                        </div>
+                        
                         <button
                           type="button"
-                          class="action-btn success dropdown-toggle"
-                          data-bs-toggle="dropdown"
-                          aria-expanded="false"
-                          :disabled="downloadingAnalysis === analysis.id"
+                          class="action-btn danger"
+                          @click="deleteAnalysis(analysis.id)"
+                          :disabled="deletingAnalysis === analysis.id"
                         >
-                          <Download class="me-1" size="16" />
-                          {{ downloadingAnalysis === analysis.id ? 'Скачивание...' : 'Скачать' }}
+                          <Trash2 class="me-1" size="16" />
+                          {{ deletingAnalysis === analysis.id ? 'Удаление...' : 'Удалить' }}
                         </button>
-                        <ul class="dropdown-menu">
-                          <li>
-                            <a class="dropdown-item" href="#" @click.prevent="downloadResults(analysis.id)">
-                              <Download class="me-2" size="16" />
-                              Архив результатов
-                            </a>
-                          </li>
-                          <li>
-                            <a class="dropdown-item" href="#" @click.prevent="downloadReport(analysis.id, 'pdf')">
-                              <FileText class="me-2" size="16" />
-                              PDF отчет
-                            </a>
-                          </li>
-                          <li>
-                            <a class="dropdown-item" href="#" @click.prevent="downloadReport(analysis.id, 'docx')">
-                              <FileText class="me-2" size="16" />
-                              Word отчет
-                            </a>
-                          </li>
-                        </ul>
                       </div>
-                      
-                      <button
-                        type="button"
-                        class="action-btn danger"
-                        @click="deleteAnalysis(analysis.id)"
-                        :disabled="deletingAnalysis === analysis.id"
-                      >
-                        <Trash2 class="me-1" size="16" />
-                        {{ deletingAnalysis === analysis.id ? 'Удаление...' : 'Удалить' }}
-                      </button>
                     </div>
                   </div>
                 </div>
+              </div>
+              
+              <!-- Пагинация -->
+              <div v-if="pagination.total_pages > 1" class="d-flex justify-content-center mt-4">
+                <nav aria-label="Навигация по страницам">
+                  <ul class="pagination">
+                    <!-- Кнопка "Предыдущая" -->
+                    <li class="page-item" :class="{ disabled: pagination.current_page === 1 }">
+                      <button 
+                        class="page-link" 
+                        @click="changePage(pagination.current_page - 1)"
+                        :disabled="pagination.current_page === 1"
+                      >
+                        <ChevronLeft class="me-1" size="16" />
+                        Предыдущая
+                      </button>
+                    </li>
+                    
+                    <!-- Номера страниц -->
+                    <li 
+                      v-for="page in visiblePages" 
+                      :key="page"
+                      class="page-item"
+                      :class="{ active: page === pagination.current_page }"
+                    >
+                      <button 
+                        class="page-link" 
+                        @click="changePage(page)"
+                      >
+                        {{ page }}
+                      </button>
+                    </li>
+                    
+                    <!-- Кнопка "Следующая" -->
+                    <li class="page-item" :class="{ disabled: pagination.current_page === pagination.total_pages }">
+                      <button 
+                        class="page-link" 
+                        @click="changePage(pagination.current_page + 1)"
+                        :disabled="pagination.current_page === pagination.total_pages"
+                      >
+                        Следующая
+                        <ChevronRight class="ms-1" size="16" />
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+              
+              <!-- Информация о страницах -->
+              <div v-if="pagination.total_pages > 1" class="text-center mt-3">
+                <small class="text-muted">
+                  Страница {{ pagination.current_page }} из {{ pagination.total_pages }} 
+                  ({{ pagination.count }} анализов всего)
+                </small>
               </div>
             </div>
           </div>
@@ -269,15 +325,21 @@ import { porosityAnalysisAPI } from './js/porosity-analysis.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { 
   List, Clock, Loader2, CheckCircle, AlertTriangle, Inbox, Plus, 
-  Calendar, Ruler, BarChart3, CircleDot, Eye, RotateCcw, Download, Trash2, FileText
+  Calendar, Ruler, BarChart3, CircleDot, Eye, RotateCcw, Download, Trash2, FileText,
+  ChevronLeft, ChevronRight
 } from 'lucide-vue-next'
+
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 export default {
   name: 'PorosityAnalysesList',
   components: {
     ConfirmDialog,
     List, Clock, Loader2, CheckCircle, AlertTriangle, Inbox, Plus,
-    Calendar, Ruler, BarChart3, CircleDot, Eye, RotateCcw, Download, Trash2, FileText
+    Calendar, Ruler, BarChart3, CircleDot, Eye, RotateCcw, Download, Trash2, FileText,
+    ChevronLeft, ChevronRight
   },
   data() {
     return {
@@ -289,7 +351,14 @@ export default {
       deletingAnalysis: null,
       showDeleteConfirm: false,
       analysisToDelete: null,
-      restartingMultiple: false
+      restartingMultiple: false,
+      // Данные для пагинации
+      pagination: {
+        current_page: 1,
+        total_pages: 1,
+        count: 0,
+        page_size: 20
+      }
     }
   },
   computed: {
@@ -302,21 +371,73 @@ export default {
     
     failedAnalyses() {
       return this.analyses.filter(analysis => analysis.status === 'failed')
+    },
+    
+    // Вычисляем видимые страницы для пагинации
+    visiblePages() {
+      const current = this.pagination.current_page
+      const total = this.pagination.total_pages
+      const delta = 2 // Количество страниц с каждой стороны от текущей
+      
+      let start = Math.max(1, current - delta)
+      let end = Math.min(total, current + delta)
+      
+      // Если страниц мало, показываем все
+      if (end - start < 4) {
+        start = Math.max(1, end - 4)
+        end = Math.min(total, start + 4)
+      }
+      
+      const pages = []
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+      
+      return pages
     }
   },
   async mounted() {
     await this.loadAnalyses()
   },
   methods: {
-    async loadAnalyses() {
+    async loadAnalyses(page = 1) {
       this.loading = true
       try {
-        const response = await porosityAnalysisAPI.getAnalyses()
+        const params = {
+          page: page,
+          page_size: this.pagination.page_size
+        }
+        
+        const response = await porosityAnalysisAPI.getAnalyses(params)
         if (response && response.success && response.data) {
-          this.analyses = response.data.results || response.data || []
+          // Обрабатываем ответ с пагинацией
+          if (response.data.results) {
+            this.analyses = response.data.results
+            this.pagination = {
+              current_page: response.data.current_page || page,
+              total_pages: response.data.total_pages || 1,
+              count: response.data.count || 0,
+              page_size: response.data.page_size || 20
+            }
+          } else {
+            // Fallback для старого формата ответа
+            this.analyses = response.data || []
+            this.pagination = {
+              current_page: 1,
+              total_pages: 1,
+              count: this.analyses.length,
+              page_size: 20
+            }
+          }
         } else {
-          this.$toast.error(response?.message || 'Ошибка при загрузке анализов')
+          toast.error(response?.message || 'Ошибка при загрузке анализов')
           this.analyses = []
+          this.pagination = {
+            current_page: 1,
+            total_pages: 1,
+            count: 0,
+            page_size: 20
+          }
         }
       } catch (error) {
         let errorMessage = 'Ошибка при загрузке анализов'
@@ -327,16 +448,33 @@ export default {
             errorMessage = error.message
           }
         }
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
         // Устанавливаем пустой массив при ошибке
         this.analyses = []
+        this.pagination = {
+          current_page: 1,
+          total_pages: 1,
+          count: 0,
+          page_size: 20
+        }
       } finally {
         this.loading = false
       }
     },
     
+    // Метод для смены страницы
+    async changePage(page) {
+      if (page >= 1 && page <= this.pagination.total_pages && page !== this.pagination.current_page) {
+        await this.loadAnalyses(page)
+      }
+    },
+    
     setFilter(filter) {
       this.currentFilter = filter
+      // При смене фильтра возвращаемся на первую страницу
+      if (this.pagination.current_page !== 1) {
+        this.loadAnalyses(1)
+      }
     },
     
     getStatusBadgeClass(status) {
@@ -385,7 +523,7 @@ export default {
       try {
         const response = await porosityAnalysisAPI.restartAnalysis(analysisId)
         if (response && response.success) {
-          this.$toast.success('Анализ перезапущен')
+          toast.success('Анализ перезапущен')
           
           // Немедленно обновляем статус анализа в списке
           const analysisIndex = this.analyses.findIndex(a => a.id === analysisId)
@@ -396,13 +534,13 @@ export default {
           
           // Обновляем список в фоне с обработкой ошибок
           try {
-            await this.loadAnalyses()
+            await this.loadAnalyses(this.pagination.current_page)
           } catch (error) {
             console.warn('Ошибка при обновлении списка анализов:', error)
             // Не показываем ошибку пользователю, так как основной функционал работает
           }
         } else {
-          this.$toast.error((response && response.message) ? response.message : 'Ошибка при перезапуске анализа')
+          toast.error((response && response.message) ? response.message : 'Ошибка при перезапуске анализа')
         }
       } catch (error) {
         let errorMessage = 'Ошибка при перезапуске анализа'
@@ -413,7 +551,7 @@ export default {
             errorMessage = error.message
           }
         }
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
       } finally {
         this.restartingAnalysis = null
       }
@@ -421,7 +559,7 @@ export default {
     
     async restartFailedAnalyses() {
       if (this.failedAnalyses.length === 0) {
-        this.$toast.warning('Нет анализов с ошибками для перезапуска')
+        toast.warning('Нет анализов с ошибками для перезапуска')
         return
       }
       
@@ -432,7 +570,7 @@ export default {
         })
         
         if (response && response.success) {
-          this.$toast.success(`Перезапущено ${response.restarted_count} анализов`)
+          toast.success(`Перезапущено ${response.restarted_count} анализов`)
           
           // Немедленно обновляем статусы анализов в списке
           this.failedAnalyses.forEach(analysis => {
@@ -445,12 +583,12 @@ export default {
           
           // Обновляем список в фоне
           try {
-            await this.loadAnalyses()
+            await this.loadAnalyses(this.pagination.current_page)
           } catch (error) {
             console.warn('Ошибка при обновлении списка анализов:', error)
           }
         } else {
-          this.$toast.error((response && response.message) ? response.message : 'Ошибка при массовом перезапуске')
+          toast.error((response && response.message) ? response.message : 'Ошибка при массовом перезапуске')
         }
       } catch (error) {
         let errorMessage = 'Ошибка при массовом перезапуске'
@@ -461,7 +599,7 @@ export default {
             errorMessage = error.message
           }
         }
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
       } finally {
         this.restartingMultiple = false
       }
@@ -482,13 +620,9 @@ export default {
           document.body.removeChild(link)
           window.URL.revokeObjectURL(url)
           
-          if (this.$toast && this.$toast.success) {
-            this.$toast.success('Архив с результатами скачивается')
-          }
+          toast.success('Архив с результатами скачивается')
         } else {
-          if (this.$toast && this.$toast.error) {
-            this.$toast.error((response && response.message) ? response.message : 'Ошибка при скачивании результатов')
-          }
+          toast.error((response && response.message) ? response.message : 'Ошибка при скачивании результатов')
         }
       } catch (error) {
         let errorMessage = 'Ошибка при скачивании результатов'
@@ -499,8 +633,8 @@ export default {
             errorMessage = error.message
           }
         }
-        if (this.$toast && this.$toast.error) {
-          this.$toast.error(errorMessage)
+        if (toast && toast.error) {
+          toast.error(errorMessage)
         }
       } finally {
         this.downloadingAnalysis = null
@@ -528,18 +662,18 @@ export default {
         )
         
         if (isSuccess) {
-          this.$toast.success('Анализ удален')
+          toast.success('Анализ удален')
           
           // Немедленно удаляем анализ из списка
           this.analyses = this.analyses.filter(analysis => analysis.id !== this.analysisToDelete)
           
           // Пытаемся обновить список в фоне, но не блокируем UI
-          this.loadAnalyses().catch(() => {
+          this.loadAnalyses(this.pagination.current_page).catch(() => {
             // Игнорируем ошибки при обновлении списка
           })
         } else {
           const errorMsg = (response && response.message) ? response.message : 'Ошибка при удалении анализа'
-          this.$toast.error(errorMsg)
+          toast.error(errorMsg)
         }
       } catch (error) {
         let errorMessage = 'Ошибка при удалении анализа'
@@ -550,7 +684,7 @@ export default {
             errorMessage = error.message
           }
         }
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
       } finally {
         this.deletingAnalysis = null
         this.showDeleteConfirm = false
@@ -591,13 +725,13 @@ export default {
           // Освобождаем URL
           window.URL.revokeObjectURL(url)
           
-          this.$toast.success(`Отчет ${reportType.toUpperCase()} скачивается`)
+          toast.success(`Отчет ${reportType.toUpperCase()} скачивается`)
         } else {
           throw new Error((response && response.message) ? response.message : 'Ошибка при скачивании отчета')
         }
       } catch (error) {
         console.error('Download error:', error)
-        this.$toast.error(error.message || 'Ошибка при скачивании отчета')
+        toast.error(error.message || 'Ошибка при скачивании отчета')
       } finally {
         this.downloadingAnalysis = null
       }
@@ -1198,5 +1332,80 @@ export default {
 /* Стиль для кнопки с dropdown */
 .action-btn.dropdown-toggle::after {
   margin-left: 0.5rem;
+}
+
+/* Стили для пагинации */
+.pagination {
+  margin-bottom: 0;
+}
+
+.page-link {
+  color: #007bff;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  transition: all 0.2s ease;
+}
+
+.page-link:hover {
+  color: #0056b3;
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+  transform: translateY(-1px);
+}
+
+.page-link:focus {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: none;
+}
+
+.page-item.active .page-link {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: #fff;
+}
+
+.page-item.disabled .page-link {
+  color: #6c757d;
+  background-color: #fff;
+  border-color: #dee2e6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.page-item.disabled .page-link:hover {
+  transform: none;
+}
+
+/* Стили для иконок в пагинации */
+.page-link svg {
+  flex-shrink: 0;
+  margin: 0 0.25rem;
+}
+
+/* Адаптивность для пагинации */
+@media (max-width: 768px) {
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .page-link {
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .page-link svg {
+    width: 14px;
+    height: 14px;
+  }
 }
 </style> 

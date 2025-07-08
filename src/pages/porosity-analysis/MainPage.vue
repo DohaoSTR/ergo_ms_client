@@ -194,6 +194,9 @@
 <script>
 import { porosityAnalysisAPI } from './js/porosity-analysis.js'
 import AnalysisStats from './components/AnalysisStats.vue'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 export default {
   components: {
@@ -252,26 +255,26 @@ export default {
             // Загружаем изображение для созданного анализа
             const uploadResponse = await porosityAnalysisAPI.uploadImage(analysisId, this.selectedAnalysisImage)
             if (uploadResponse && uploadResponse.success) {
-              this.$toast.success('Анализ создан и изображение загружено успешно!')
+              toast.success('Анализ создан и изображение загружено успешно!')
               this.resetForm()
               this.$router.push(`/porosity-analysis/analysis/${analysisId}`)
             } else {
-              this.$toast.error(uploadResponse?.message || 'Ошибка при загрузке изображения')
+              toast.error(uploadResponse?.message || 'Ошибка при загрузке изображения')
             }
           } else {
-            this.$toast.success('Анализ создан успешно!')
+            toast.success('Анализ создан успешно!')
             this.resetForm()
             this.$router.push('/porosity-analysis/analyses')
           }
         } else {
-          this.$toast.error(response?.message || 'Ошибка при создании анализа')
+          toast.error(response?.message || 'Ошибка при создании анализа')
         }
       } catch (error) {
         let errorMessage = 'Ошибка при создании анализа'
         if (error && typeof error === 'object') {
           errorMessage = error.response?.data?.message || error.message || errorMessage
         }
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
       } finally {
         this.isCreating = false
       }
@@ -320,27 +323,27 @@ export default {
           console.log(`Valid results: ${validResults.length}, Success: ${successCount}, Failed: ${failedCount}`)
           
           if (successCount > 0) {
-            this.$toast.success(`Создано ${successCount} из ${this.quickUploadFiles.length} анализов`)
+            toast.success(`Создано ${successCount} из ${this.quickUploadFiles.length} анализов`)
           }
           
           if (failedCount > 0) {
-            this.$toast.warning(`${failedCount} анализов не удалось создать`)
+            toast.warning(`${failedCount} анализов не удалось создать`)
           }
         } else if (results && typeof results === 'object') {
           // Если API вернул одиночный результат
           if (results.success === true) {
-            this.$toast.success('Анализ создан успешно')
+            toast.success('Анализ создан успешно')
           } else if (results.data) {
             console.log('Results with data:', results)
-            this.$toast.success('Анализ создан успешно')
+            toast.success('Анализ создан успешно')
           } else {
             console.warn('Unexpected single result format:', results)
-            this.$toast.success('Анализ отправлен на обработку')
+            toast.success('Анализ отправлен на обработку')
           }
         } else {
           // Если результаты не в ожидаемом формате
           console.warn('Unexpected results format:', results)
-          this.$toast.success('Анализы отправлены на обработку')
+          toast.success('Анализы отправлены на обработку')
         }
         
         this.quickUploadFiles = []
@@ -363,7 +366,7 @@ export default {
           errorMessage = error
         }
         console.error('Error creating multiple analyses:', error)
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
       } finally {
         this.isCreatingMultiple = false
       }

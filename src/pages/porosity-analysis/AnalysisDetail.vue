@@ -338,6 +338,7 @@ import AnalysisResults from './components/AnalysisResults.vue'
 import AnalysisVisualizations from './components/AnalysisVisualizations.vue'
 import ImageUpload from './components/ImageUpload.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useToast } from 'vue-toastification'
 import { 
   Microscope, 
   ArrowLeft, 
@@ -353,6 +354,8 @@ import {
   Upload,
   FileText
 } from 'lucide-vue-next'
+
+const toast = useToast()
 
 export default {
   components: {
@@ -424,7 +427,7 @@ export default {
             this.checkReportsExistence()
           }
         } else {
-          this.$toast.error(response?.message || 'Ошибка при загрузке анализа')
+          toast.error(response?.message || 'Ошибка при загрузке анализа')
         }
       } catch (error) {
         let errorMessage = 'Ошибка при загрузке анализа'
@@ -435,7 +438,7 @@ export default {
             errorMessage = error.message
           }
         }
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
       } finally {
         this.loading = false
       }
@@ -460,12 +463,12 @@ export default {
         const response = await porosityAnalysisAPI.uploadImage(this.analysis.id, file)
         
         if (response && response.success) {
-          this.$toast.success('Изображение загружено успешно')
+          toast.success('Изображение загружено успешно')
           this.hasImage = true
           this.imageUrl = URL.createObjectURL(file)
           await this.loadAnalysis()
         } else {
-          this.$toast.error(response?.message || 'Ошибка при загрузке изображения')
+          toast.error(response?.message || 'Ошибка при загрузке изображения')
         }
       } catch (error) {
         let errorMessage = 'Ошибка при загрузке изображения'
@@ -476,7 +479,7 @@ export default {
             errorMessage = error.message
           }
         }
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
       } finally {
         this.uploading = false
       }
@@ -487,10 +490,10 @@ export default {
       try {
         const response = await porosityAnalysisAPI.restartAnalysis(this.analysis.id)
         if (response && response.success) {
-          this.$toast.success('Анализ перезапущен')
+          toast.success('Анализ перезапущен')
           await this.loadAnalysis()
         } else {
-          this.$toast.error(response?.message || 'Ошибка при перезапуске анализа')
+          toast.error(response?.message || 'Ошибка при перезапуске анализа')
         }
       } catch (error) {
         let errorMessage = 'Ошибка при перезапуске анализа'
@@ -501,7 +504,7 @@ export default {
             errorMessage = error.message
           }
         }
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
       } finally {
         this.restarting = false
       }
@@ -516,9 +519,9 @@ export default {
           link.download = file.name
           link.click()
         })
-        this.$toast.success('Файлы скачиваются')
+        toast.success('Файлы скачиваются')
       } catch (error) {
-        this.$toast.error('Ошибка при скачивании файлов')
+        toast.error('Ошибка при скачивании файлов')
       } finally {
         this.downloading = false
       }
@@ -549,11 +552,11 @@ export default {
         )
         
         if (isSuccess) {
-          this.$toast.success('Анализ удален')
+          toast.success('Анализ удален')
           this.$router.push('/porosity-analysis/analyses')
         } else {
           const errorMsg = response && response.message ? response.message : 'Ошибка при удалении анализа'
-          this.$toast.error(errorMsg)
+          toast.error(errorMsg)
         }
       } catch (error) {
         let errorMessage = 'Ошибка при удалении анализа'
@@ -564,7 +567,7 @@ export default {
             errorMessage = error.message
           }
         }
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
       } finally {
         this.deleting = false
         this.showDeleteConfirm = false
@@ -580,10 +583,10 @@ export default {
       try {
         const response = await porosityAnalysisAPI.generateReports(this.analysis.id)
         if (response && response.success) {
-          this.$toast.success('Отчеты успешно сгенерированы')
+          toast.success('Отчеты успешно сгенерированы')
           this.hasReports = true
         } else {
-          this.$toast.error(response?.message || 'Ошибка при генерации отчетов')
+          toast.error(response?.message || 'Ошибка при генерации отчетов')
         }
       } catch (error) {
         let errorMessage = 'Ошибка при генерации отчетов'
@@ -594,7 +597,7 @@ export default {
             errorMessage = error.message
           }
         }
-        this.$toast.error(errorMessage)
+        toast.error(errorMessage)
       } finally {
         this.generatingReports = false
       }
@@ -633,13 +636,13 @@ export default {
           // Освобождаем URL
           window.URL.revokeObjectURL(url)
           
-          this.$toast.success(`Отчет ${reportType.toUpperCase()} скачивается`)
+          toast.success(`Отчет ${reportType.toUpperCase()} скачивается`)
         } else {
           throw new Error(response?.message || 'Ошибка при скачивании отчета')
         }
       } catch (error) {
         console.error('Download error:', error)
-        this.$toast.error(error.message || 'Ошибка при скачивании отчета')
+        toast.error(error.message || 'Ошибка при скачивании отчета')
       } finally {
         this.downloadingReport = false
       }

@@ -310,6 +310,10 @@
 import Chart from 'chart.js/auto'
 import axios from 'axios'
 
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
+
 export default {
   name: 'ProjectReports',
   
@@ -376,7 +380,7 @@ export default {
         
       } catch (error) {
         console.error('Ошибка загрузки данных:', error)
-        this.$toast.error('Ошибка загрузки данных')
+        toast.error('Ошибка загрузки данных')
       }
     },
     
@@ -582,11 +586,11 @@ export default {
         }
         
         this.recentReports.unshift(mockReport)
-        this.$toast.success('Отчет успешно сформирован')
+        toast.success('Отчет успешно сформирован')
         
       } catch (error) {
         console.error('Ошибка генерации отчета:', error)
-        this.$toast.error('Ошибка при формировании отчета')
+        toast.error('Ошибка при формировании отчета')
       } finally {
         this.generating = false
       }
@@ -621,13 +625,13 @@ export default {
     },
     
     downloadReport(report) {
-      this.$toast.info('Скачивание отчета...')
+      toast.info('Скачивание отчета...')
       // В реальном приложении здесь был бы переход по ссылке
     },
     
     viewReport(report) {
       if (report.format === 'pdf') {
-        this.$toast.info('Открытие отчета для просмотра...')
+        toast.info('Открытие отчета для просмотра...')
       } else {
         this.downloadReport(report)
       }
