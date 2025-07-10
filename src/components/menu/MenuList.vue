@@ -29,6 +29,7 @@ import {
   LMSMenuSection,
   FilesMenuSection,
   CategoriesMenuSection,
+  BioModuleMenuSection,
 } from '@/js/menu-sections.js'
 
 import MenuGroup from '@/components/menu/MenuGroup.vue'
@@ -148,6 +149,7 @@ const menuSections = ref([
   SettingsMenuSection,
   BIMenuSection,
   EducationAnalyticMenuSection,
+  BioModuleMenuSection,
   EmailMenuSection,
   ChatMenuSection,
   MapsMenuSection,

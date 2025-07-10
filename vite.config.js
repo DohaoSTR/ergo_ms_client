@@ -51,5 +51,6 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_API_HOST': JSON.stringify(process.env.API_HOST),
     'import.meta.env.VITE_API_PORT': JSON.stringify(process.env.API_PORT),
+    'import.meta.env.VITE_YANDEX_MAPS_API_KEY': JSON.stringify(process.env.YANDEX_MAPS_API_KEY),
   },
 })

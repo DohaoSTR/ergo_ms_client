@@ -1047,6 +1047,45 @@ const LMSRouters = [{
     ]
 }, ]
 
+const bioModuleRoutes = [
+  {
+    path: '/bio',
+    name: 'BioModule',
+    component: () => import('@/pages/bio/ParentLayout.vue'),
+    redirect: { name: 'Sites' },
+    meta: { title: 'Биологический модуль', requiresAuth: true },
+    children: [
+      {
+        path: 'sites',
+        name: 'Sites',
+        component: () => import('@/pages/bio/views/SiteListView.vue'),
+        meta: { title: 'Площадки', requiresAuth: true },
+      },
+      {
+        path: 'map',
+        name: 'SitesMap',
+        component: () => import('@/pages/bio/views/SitesMap.vue'),
+        meta: { title: 'Карта площадок', requiresAuth: true },
+      },
+      {
+        path: 'consolidated-analysis',
+        name: 'SiteConsolidatedAnalysis',
+        component: () => import('@/pages/bio/views/SiteConsolidatedAnalysis.vue'),
+        meta: { title: 'Сводный анализ площадок', requiresAuth: true },
+      },
+      {
+        path: 'site/:siteNumber/:zoneType',
+        name: 'SiteView',
+        component: () => import('@/pages/bio/views/SiteView.vue'),
+        meta: { 
+          title: 'Просмотр площадки',
+          requiresAuth: true 
+        }
+      },
+    ],
+  },
+]
+
 const routes = [
   ...startRoutes,
   ...mainRoutes,
@@ -1076,6 +1115,7 @@ const routes = [
   ...controlRoutes,
   ...categoriesRoutes,
   ...LMSRouters,
+  ...bioModuleRoutes,
 ]
 
 routes.forEach((route) => {

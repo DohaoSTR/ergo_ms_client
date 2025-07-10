@@ -327,4 +327,29 @@ export const endpoints = {
             update: (pk) => `learning_analytics/data_formalization_submodule/import_stats/${pk}/`,
         },
     },
+    bio: {
+        species: 'bio/species/',
+        speciesDetail: (speciesId) => `bio/species/${speciesId}/`,
+        
+        sites: 'bio/sites/',
+        siteById: (id) => `bio/sites/${id}/`,
+        siteDetail: (siteNumber, zoneType) => `bio/sites/${siteNumber}/${zoneType}/`,
+        bulkDeleteSites: 'bio/sites/bulk-delete/',
+        
+        descriptions: (siteNumber, zoneType) => `bio/sites/${siteNumber}/${zoneType}/descriptions/`,
+        descriptionDetail: (descriptionId) => `bio/descriptions/${descriptionId}/`,
+        bulkDeleteDescriptions: 'bio/descriptions/bulk-delete/',
+    
+        siteMeans: (siteNumber, zoneType) => `bio/sites/${siteNumber}/${zoneType}/means/`,
+        customSiteMeans: 'bio/sites/custom-means/',
+    
+        siteDistribution: (siteNumber, zoneType) => `bio/sites/${siteNumber}/${zoneType}/distribution/`,
+        customSiteDistribution: 'bio/sites/custom-distribution/',
+    
+        siteClassification: (siteNumber, zoneType) => `bio/sites/${siteNumber}/${zoneType}/classification/`,
+        customSiteClassification: 'bio/sites/custom-classification/',
+    
+        siteComparison: 'bio/sites/comparison/',
+        customAnalysis: 'bio/sites/custom-analysis/',
+    },
 };

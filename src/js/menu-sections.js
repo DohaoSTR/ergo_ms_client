@@ -24,7 +24,8 @@ import {
   GraduationCapIcon,
   Files,
   BarChart3,
-  Layers
+  Layers,
+  Trees,
 } from 'lucide-vue-next'
 
 // Аккаунт
@@ -320,4 +321,16 @@ export const LMSMenuSection = {
         { path: 'ForStudent', name: 'Статистика' },
         { path: 'ForTheacher', name: 'Для преподователей' },
     ],
+}
+
+export const BioModuleMenuSection = {
+  id: 26,
+  icon: Trees,
+  routeName: 'BioModule',
+  title: 'Геоботаника',
+  list: [
+    { path: 'Sites', name: 'Площадки' },
+    { path: 'SiteConsolidatedAnalysis', name: 'Сводный анализ' },
+    { path: 'SitesMap', name: 'Карта' },
+  ],
 }
