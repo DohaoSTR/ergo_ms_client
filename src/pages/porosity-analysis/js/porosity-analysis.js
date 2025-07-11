@@ -5,7 +5,7 @@ import { apiClient } from '../../../js/api/manager.js'
  */
 class PorosityAnalysisAPI {
   constructor() {
-    this.baseEndpoint = 'analysis_porosity/analyses/'
+    this.baseEndpoint = 'porosity_analysis/analyses/'
   }
 
   /**
