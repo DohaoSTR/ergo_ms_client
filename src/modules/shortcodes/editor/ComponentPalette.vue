@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
-import { shortcodesService } from '@/js/api/services/shortcodes'
+import { shortcodesService } from '@/modules/cms/js/shortcodes'
 import Popover from 'bootstrap/js/dist/popover'
 import * as Icons from 'lucide-vue-next'
 

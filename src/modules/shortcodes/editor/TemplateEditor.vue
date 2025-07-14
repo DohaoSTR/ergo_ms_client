@@ -82,8 +82,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { shortcodesService } from '@/js/api/services/shortcodes'
-import { categoryService } from '@/js/api/services/shortcodeCategoryService'
+import { shortcodesService } from '@/modules/cms/js/shortcodes'
+import { categoryService } from '@/modules/cms/js/shortcodeCategoryService'
 import * as Icons from 'lucide-vue-next'
 import IconPicker from '../components/IconPicker.vue'
 

@@ -1,7 +1,7 @@
 <script setup>
 import { toRefs, ref, computed, onMounted, watch } from 'vue'
 import CategoryTree from '../CategoryTree.vue'
-import { shortcodesService } from '@/js/api/services/shortcodes'
+import { shortcodesService } from '@/modules/cms/js/shortcodes'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
 

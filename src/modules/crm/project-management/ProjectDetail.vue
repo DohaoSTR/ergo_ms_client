@@ -596,7 +596,7 @@ import { Modal } from 'bootstrap'
 import { Edit, Trash2, Plus, Home, Info, PieChart, ListTodo, Calendar, Clock, Users, CheckCircle, AlertTriangle, UserPlus, UserMinus } from 'lucide-vue-next'
 import projectManagementApi from '@/modules/crm/project-management/js/projectManagementApi.js'
 import { useNotifications } from '@/modules/lms/composables/useNotifications'
-import { getAvatarUrl } from '@/js/utils/avatarUtils.js'
+import { getAvatarUrl } from '@/modules/cms/js/avatarUtils.js'
 
 export default {
   name: 'ProjectDetail',

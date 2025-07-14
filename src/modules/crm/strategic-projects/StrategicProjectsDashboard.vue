@@ -340,7 +340,7 @@
 
 <script>
 import { ref, onMounted, computed } from 'vue'
-import { useUserStore } from '@/stores/userStore'
+import { useUserStore } from '@/modules/cms/js/userStore'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { apiClient } from '@/js/api/manager'

@@ -125,7 +125,7 @@ import { Draggable, OpenIcon } from '@he-tree/vue'
 import { ListTree } from 'lucide-vue-next'
 import introJs from 'intro.js'
 import 'intro.js/introjs.css'
-import { shortcodesService } from '@/js/api/services/shortcodes'
+import { shortcodesService } from '@/modules/cms/js/shortcodes'
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },

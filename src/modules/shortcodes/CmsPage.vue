@@ -1,7 +1,7 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
 import { ref, watch, computed } from 'vue'
-import { shortcodesService } from '@/js/api/services/shortcodes'
+import { shortcodesService } from '@/modules/cms/js/shortcodes'
 import PublicCanvas from './PublicCanvas.vue'
 
 const route = useRoute()

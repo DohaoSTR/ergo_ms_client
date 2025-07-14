@@ -1,5 +1,5 @@
-import { apiClient } from '../manager';
-import { endpoints } from '../endpoints';
+import { apiClient } from '../../../js/api/manager';
+import { endpoints } from '../../../js/api/endpoints';
 
 export const CheckAccess = {
     async CheckAccesToPage(path) {

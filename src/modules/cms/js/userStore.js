@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useToast } from 'vue-toastification'
 import { apiClient } from '@/js/api/manager.js'
 import { endpoints } from '@/js/api/endpoints.js'
-import { profileService } from '@/js/api/services/profileService.js'
+import { profileService } from '@/modules/cms/js/profileService.js'
 import Cookies from 'js-cookie'
 
 export const useUserStore = defineStore('userStore', () => {

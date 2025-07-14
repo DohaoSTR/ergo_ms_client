@@ -38,7 +38,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { CheckAccess} from '@/js/api/services/cms';
+import { CheckAccess} from '@/modules/cms/js/cms';
 const user = ref('');
 
 const props = defineProps({

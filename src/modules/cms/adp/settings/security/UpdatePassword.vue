@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { Eye, EyeOff, Shield, CheckCircle } from 'lucide-vue-next'
 import { useToast } from 'vue-toastification'
-import { useProfile } from '@/js/api/services/profileService.js'
+import { useProfile } from '@/modules/cms/js/profileService.js'
 
 const toast = useToast()
 const { changePassword } = useProfile()

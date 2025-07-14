@@ -118,7 +118,7 @@ import { slugify as translitSlugify } from 'transliteration'
 import CategoryTree from './CategoryTree.vue'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
-import { shortcodesService } from '@/js/api/services/shortcodes'
+import { shortcodesService } from '@/modules/cms/js/shortcodes'
 
 const meta = ref({ title: '', slug: '', index: false })
 const slugEdited = ref(false)

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, onUnmounted, nextTick } from 'vue'
 import { CircleUserRound, Power } from 'lucide-vue-next'
-import { useUserStore } from '@/stores/userStore.js'
+import { useUserStore } from '@/modules/cms/js/userStore.js'
 import DefaultAvatar from '@/components/DefaultAvatar.vue'
 import { Dropdown } from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 

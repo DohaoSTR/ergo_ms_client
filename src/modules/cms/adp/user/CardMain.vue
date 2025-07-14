@@ -3,8 +3,8 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { Briefcase, Calendar, MapPin } from 'lucide-vue-next'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
-import { useUserStore } from '@/stores/userStore'
-import { useProfile } from '@/js/api/services/profileService.js'
+import { useUserStore } from '@/modules/cms/js/userStore'
+import { useProfile } from '@/modules/cms/js/profileService.js'
 import DefaultAvatar from '@/components/DefaultAvatar.vue'
 
 const userStore = useUserStore()

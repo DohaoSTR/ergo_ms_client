@@ -2,7 +2,7 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import RecursiveRenderer from '../editor/RecursiveRenderer.vue'
 import PageCardBlock from '../components/PageCardBlock.vue'
-import { shortcodesService } from '@/js/api/services/shortcodes'
+import { shortcodesService } from '@/modules/cms/js/shortcodes'
 
 const props = defineProps({ component: Object })
 const node = computed(() => props.component ?? { extra_data: {}, children: [] })

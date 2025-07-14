@@ -1,4 +1,4 @@
-import { CheckAccess } from '../../../../../js/api/services/cms';
+import { CheckAccess } from '../../../js/cms';
 import router from '../../../../../js/routers';
 import Cookies from 'js-cookie';
 export const checkAccessToPage = async (path) => {

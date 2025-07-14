@@ -372,7 +372,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/userStore'
+import { useUserStore } from '@/modules/cms/js/userStore'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { apiClient } from '@/js/api/manager'

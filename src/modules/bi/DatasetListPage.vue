@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { endpoints } from '@/js/api/endpoints.js'
 import { apiClient } from '@/js/api/manager.js'
 import { DatasetDTO } from '@/modules/bi/components/dto/dataset.js'
-import { isDatasetSidebarOpen } from '@/js/bi/useSidebarStore'
+import { isDatasetSidebarOpen } from '@/modules/bi/js/useSidebarStore'
 import SimpleTableDataSet from '@/modules/bi/components/SimpleTableDataSet.vue'
 
 const datasets = ref([])

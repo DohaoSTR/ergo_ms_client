@@ -21,8 +21,8 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { isDatasetSidebarOpen, currentSidebarPage } from '@/js/bi/useSidebarStore'
-import { useUserStore } from '@/stores/userStore.js'
+import { isDatasetSidebarOpen, currentSidebarPage } from '@/modules/bi/js/useSidebarStore'
+import { useUserStore } from '@/modules/cms/js/userStore.js'
 import MenuList from '@/components/menu/MenuList.vue'
 import TheHeader from '@/components/header/TheHeader.vue'
 

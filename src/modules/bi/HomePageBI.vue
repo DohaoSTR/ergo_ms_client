@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Plug, Database, BarChart3 } from 'lucide-vue-next'
-import { isDatasetSidebarOpen, currentSidebarPage } from '@/js/bi/useSidebarStore'
+import { isDatasetSidebarOpen, currentSidebarPage } from '@/modules/bi/js/useSidebarStore'
 import CardSidebarBody from '@/modules/bi/components/CardSidebarBody.vue'
 import StorageSidebar from '@/modules/bi/components/StorageSidebar.vue'
 

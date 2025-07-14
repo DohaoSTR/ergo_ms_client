@@ -89,7 +89,7 @@
 import { useRouter } from 'vue-router'
 import { ref, computed, onMounted, watch } from 'vue'
 import CategoryTree from './editor/CategoryTree.vue'
-import { shortcodesService } from '@/js/api/services/shortcodes'
+import { shortcodesService } from '@/modules/cms/js/shortcodes'
 
 const pages = ref([])
 const categories = ref([])

@@ -6,11 +6,11 @@ import {
 } from 'lucide-vue-next'
 
 // Импорт компонентов карточек
-import ExpertSystemMetricsCard from '@/components/DashboardCards/ExpertSystemMetricsCard.vue'
-import ExpertStudentsStatsCard from '@/components/DashboardCards/ExpertStudentsStatsCard.vue'
-import ExpertTestingDataCard from '@/components/DashboardCards/ExpertTestingDataCard.vue'
-import ExpertTopSkillsCard from '@/components/DashboardCards/ExpertTopSkillsCard.vue'
-import ExpertSkillsAnalyticsCard from '@/components/DashboardCards/ExpertSkillsAnalyticsCard.vue'
+import ExpertTopSkillsCard from '@/modules/expert-system/DashboardCards/ExpertSystemMetricsCard.vue'
+import ExpertStudentsStatsCard from '@/modules/expert-system/DashboardCards/ExpertStudentsStatsCard.vue'
+import ExpertTestingDataCard from '@/modules/expert-system/DashboardCards/ExpertTestingDataCard.vue'
+import ExpertTopSkillsCard from '@/modules/expert-system/DashboardCards/ExpertTopSkillsCard.vue'
+import ExpertSkillsAnalyticsCard from '@/modules/expert-system/DashboardCards/ExpertSkillsAnalyticsCard.vue'
 
 const isRefreshing = ref(false)
 const lastUpdated = ref('')

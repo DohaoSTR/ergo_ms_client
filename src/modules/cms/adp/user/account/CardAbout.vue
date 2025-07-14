@@ -5,8 +5,8 @@ import {
   Check, Crown, Flag, Languages, Link, Mail, Phone, UserRound, 
   Edit3, Save, X, MapPin, Globe, Calendar, Shield, User, Upload, RotateCcw
 } from 'lucide-vue-next'
-import { useProfile } from '@/js/api/services/profileService.js'
-import { useUserStore } from '@/stores/userStore.js'
+import { useProfile } from '@/modules/cms/js/profileService.js'
+import { useUserStore } from '@/modules/cms/js/userStore.js'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
 import { displayPhone } from '@/js/utils/phoneUtils.js'

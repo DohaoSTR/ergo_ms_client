@@ -92,7 +92,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { shortcodesService } from '@/js/api/services/shortcodes'
+import { shortcodesService } from '@/modules/cms/js/shortcodes'
 
 const templates = ref([])
 const pages = ref([])

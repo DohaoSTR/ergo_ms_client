@@ -2,7 +2,7 @@
 import { ref, watch, computed, onMounted } from 'vue'
 import { endpoints } from '@/js/api/endpoints.js'
 import { apiClient } from '@/js/api/manager.js'
-import { isDatasetSidebarOpen } from '@/js/bi/useSidebarStore'
+import { isDatasetSidebarOpen } from '@/modules/bi/js/useSidebarStore'
 import { useRouter } from 'vue-router'
 import SimpleTableDataSet from '@/modules/bi/components/SimpleTableDataSet.vue'
 

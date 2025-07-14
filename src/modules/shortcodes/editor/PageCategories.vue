@@ -72,7 +72,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import * as Icons from 'lucide-vue-next'
-import { categoryService } from '@/js/api/services/shortcodeCategoryService'
+import { categoryService } from '@/modules/cms/js/shortcodeCategoryService'
 
 const categories = ref([])
 const form = ref({ id: null, name: '' })

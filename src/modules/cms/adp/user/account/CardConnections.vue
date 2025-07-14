@@ -5,7 +5,7 @@ import {
   Monitor, Laptop, Smartphone, Tablet, Wifi, WifiOff, 
   Trash2, Shield, MapPin, Clock, MoreVertical, Power
 } from 'lucide-vue-next'
-import { useProfile } from '@/js/api/services/profileService.js'
+import { useProfile } from '@/modules/cms/js/profileService.js'
 
 const toast = useToast()
 const { getDevices, deleteDevice, formatDeviceData } = useProfile()

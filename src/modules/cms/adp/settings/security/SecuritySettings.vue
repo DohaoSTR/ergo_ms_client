@@ -4,7 +4,7 @@ import { useToast } from 'vue-toastification'
 import { 
   Shield, Eye, CheckCircle
 } from 'lucide-vue-next'
-import { useProfile } from '@/js/api/services/profileService.js'
+import { useProfile } from '@/modules/cms/js/profileService.js'
 
 const toast = useToast()
 const { getSecuritySettings, updateSecuritySettings } = useProfile()

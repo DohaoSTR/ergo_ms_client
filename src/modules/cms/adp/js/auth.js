@@ -18,7 +18,7 @@ export const authService = {
 
             // Запускаем проверку токена после успешной авторизации
             if (typeof window !== 'undefined') {
-                import('@/js/utils/authGuard.js').then(({ authGuard }) => {
+                import('@/modules/cms/js/authGuard.js').then(({ authGuard }) => {
                     authGuard.startTokenValidation();
                 });
             }
@@ -80,7 +80,7 @@ export const authService = {
         
         // Останавливаем проверку токена
         if (typeof window !== 'undefined') {
-            import('@/js/utils/authGuard.js').then(({ authGuard }) => {
+            import('@/modules/cms/js/authGuard.js').then(({ authGuard }) => {
                 authGuard.stopTokenValidation();
             });
         }
