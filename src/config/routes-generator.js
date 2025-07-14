@@ -240,7 +240,7 @@ export function generateRoutesFromConfig() {
 
 /**
  * Преобразует строковый путь компонента в динамический импорт
- * @param {string} componentPath - путь к компоненту (например: "@/modules/NotFound.vue")
+ * @param {string} componentPath - путь к компоненту (например: "@/components/NotFound.vue")
  * @returns {Function} - функция динамического импорта
  */
 function transformComponentPath(componentPath) {

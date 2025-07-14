@@ -10,7 +10,7 @@
     {
       "path": "/:pathMatch(.*)*",
       "name": "NotFound",
-      "component": "@/modules/NotFound.vue",
+      "component": "@/components/NotFound.vue",
       "meta": {
         "title": "Страница не найдена",
         "requiresAuth": true
@@ -674,7 +674,7 @@
 
     "NotFound": {
       "path": "/:pathMatch(.*)*",
-      "component": "@/modules/NotFound.vue",
+      "component": "@/components/NotFound.vue",
       "meta": {
         "public": true,
         "title": "Страница не найдена",
