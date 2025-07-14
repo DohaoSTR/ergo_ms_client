@@ -3,7 +3,7 @@ import { ref, computed, watch, defineProps, defineEmits, toRef } from 'vue'
 import { Loader2 }             from 'lucide-vue-next'
 import ChartPlaceholder        from './ChartPlaceholder.vue'
 import ChartRenderer           from './ChartRenderer.vue'
-import useProcessedDataset     from '@/js/api/services/bi/useProcessedDataset.js'
+import useProcessedDataset     from '@/modules/bi/js/useProcessedDataset.js'
 
 const props = defineProps({
   dataset :  { type: Array,            default: () => [] },

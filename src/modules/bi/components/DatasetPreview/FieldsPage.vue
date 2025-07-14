@@ -62,7 +62,7 @@
 import { ref, computed, watch } from 'vue'
 
 import AggSelect from '@/modules/bi/components/DatasetPreview/AggregationSelect.vue'
-import datasetService from '@/js/api/services/bi/datasetService'
+import datasetService from '@/modules/bi/js/datasetService'
 import { SquareFunction } from 'lucide-vue-next';
 
 import {

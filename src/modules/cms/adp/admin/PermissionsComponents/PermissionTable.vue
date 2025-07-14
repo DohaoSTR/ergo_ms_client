@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import ModalCenter from '@/components/ModalCenter.vue'
 import ChangePermissionForm from '@/modules/cms/adp/admin/PermissionsComponents/SubmitPermissionChange.vue'
-import { DeletePermission, ChangePermission } from '@/js/GroupsPolitics'
+import { DeletePermission, ChangePermission } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 import { watch } from 'vue'
 
 const props = defineProps({

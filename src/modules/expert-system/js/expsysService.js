@@ -1,6 +1,6 @@
 // expsysService.js
-import { apiClient } from '../manager';
-import { endpoints } from '../endpoints';
+import { apiClient } from '../../../js/api/manager';
+import { endpoints } from '../../../js/api/endpoints';
 import Cookies from 'js-cookie';
 
 // expsysService.js

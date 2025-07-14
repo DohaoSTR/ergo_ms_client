@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { AddGroup, GetGroupCategories } from '@/js/GroupsPolitics'
+import { AddGroup, GetGroupCategories } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 import ChangingPermissionsList from './ChangingPermissionsListAdd.vue'
 const emit = defineEmits(['addGroup'])
 const name = ref('')

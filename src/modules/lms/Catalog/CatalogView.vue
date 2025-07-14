@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { BookOpen, Search, Users, Calendar, FileText, User } from 'lucide-vue-next'
 import { apiClient } from '@/js/api/manager'
 import { endpoints } from '@/js/api/endpoints'
-import { lmsApi } from '@/js/api/lmsApi'
+import { lmsApi } from '@/modules/lms/js/lmsApi'
 import { globalUserRole } from '../composables/useUserRole'
 import { 
   showSuccess, 

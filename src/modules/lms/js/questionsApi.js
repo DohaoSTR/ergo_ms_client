@@ -1,4 +1,4 @@
-import { apiClient } from './api/manager'
+import { apiClient } from '../../../js/api/manager'
 
 /**
  * API для работы с вопросами

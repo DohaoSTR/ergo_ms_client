@@ -113,7 +113,7 @@ import { ref, onMounted, onBeforeUnmount, watch, } from 'vue'
 import { RefreshCw, Plus, Eye, Loader } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
-import datasetService from '@/js/api/services/bi/datasetService'
+import datasetService from '@/modules/bi/js/datasetService'
 import { getAggregationOptions } from '@/modules/bi/components/DatasetPreview/js/DatasetPreviewFieldOptions.js'
 import { useAutoJoin } from '@/modules/bi/components/DatasetPreview/js/useAutoJoin.js'
 

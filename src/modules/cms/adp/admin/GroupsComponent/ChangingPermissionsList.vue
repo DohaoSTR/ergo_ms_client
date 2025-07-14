@@ -44,7 +44,7 @@
 
 <script setup>
 import { ref, watch, } from 'vue'
-import { GetPermissionsByCategory, AddGroupsPermissions, RemoveGroupsPermissions } from '@/js/GroupsPolitics'
+import { GetPermissionsByCategory, AddGroupsPermissions, RemoveGroupsPermissions } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 
 const list2 = ref([])
 const list1 = ref([])

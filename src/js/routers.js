@@ -20,7 +20,7 @@
  */
 
 import { createRouter, createWebHistory } from 'vue-router'
-import { checkToken } from '@/js/api/services/auth-index'
+import { checkToken } from '@/modules/cms/adp/js/auth-index'
 import { generateAllRoutes, validateRoutesConfig } from '@/config/routes-generator.js'
 
 // Валидация конфигурации при запуске
@@ -50,7 +50,7 @@ const router = createRouter({
   },
 })
 
-import { checkAccessToPage, CheckAccessToComponents } from './GroupsPolitics'
+import { checkAccessToPage, CheckAccessToComponents } from '../modules/cms/adp/admin/js/GroupsPolitics'
 async function runCheckToken() {
   const isChecked = await checkToken()
   return isChecked

@@ -1,7 +1,7 @@
 <script setup>
 import PermissionTableHeader from '@/modules/cms/adp/admin/PermissionsComponents/PermissionTableHeader.vue'
 import PermissionTable from '@/modules/cms/adp/admin/PermissionsComponents/PermissionTable.vue'
-import { GetPermissions } from '@/js/GroupsPolitics'
+import { GetPermissions } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 import { ref, onMounted } from 'vue' 
 
 const rows = ref([]) // Initialize with empty array

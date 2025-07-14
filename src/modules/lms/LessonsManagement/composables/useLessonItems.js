@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { lmsService } from '@/js/api/services/lmsService'
+import { lmsService } from '@/modules/lms/js/lmsService'
 
 // Простые функции для уведомлений (временно)
 const showSuccess = (message) => {

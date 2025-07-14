@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { ChangeGroupCategory } from '@/js/GroupsPolitics'
+import { ChangeGroupCategory } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 const emit = defineEmits(['changeCategory'])
 
 const oldname = ref('')

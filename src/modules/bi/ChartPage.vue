@@ -133,8 +133,8 @@ import ChartArea from '@/modules/bi/components/ChartComponents/ChartArea.vue'
 import ChartNameDialog from '@/modules/bi/components/ChartNameDialog.vue'
 
 import { useRouter, useRoute } from 'vue-router'
-import { chartSettingsConfig } from '@/js/api/services/bi/chartSettingsConfig.js'
-import chartService from '@/js/api/services/bi/chartService.js'
+import { chartSettingsConfig } from '@/modules/bi/js/chartSettingsConfig.js'
+import chartService from '@/modules/bi/js/chartService.js'
 
 const isFullScreen = ref(false)
 

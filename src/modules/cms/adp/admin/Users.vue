@@ -1,7 +1,7 @@
 <script setup>
 import UserTableHeader from '@/modules/cms/adp/admin/UsersComponent/UserTableHeader.vue'
 import UserTable from '@/modules/cms/adp/admin/UsersComponent/UserTable.vue'
-import { GetUserGroupsAndPermissions } from '@/js/GroupsPolitics'
+import { GetUserGroupsAndPermissions } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 import { ref, onMounted, watch } from 'vue' 
 
 const rows = ref([]) // Initialize with empty array

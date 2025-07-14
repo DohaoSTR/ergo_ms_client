@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { sendConfirmationCode } from '@/js/api/services/auth-index'
+import { sendConfirmationCode } from '@/modules/cms/adp/js/auth-index'
 import { validateFieldValue, validateFieldWithRegex, emailRegex } from '@/js/validation'
 
 const router = useRouter()

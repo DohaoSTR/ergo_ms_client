@@ -135,7 +135,7 @@
   
   <script setup>
   import { ref, computed, reactive, onMounted } from 'vue';
-  import { AddPageComponent, GetPageComponents, GetPages, PutPages, RemovePageComponent, UpdatePageComponent } from '@/js/GroupsPolitics';
+  import { AddPageComponent, GetPageComponents, GetPages, PutPages, RemovePageComponent, UpdatePageComponent } from '@/modules/cms/adp/admin/js/GroupsPolitics';
 
   const editingIndex = ref(null);
   const editingData = ref(''); 

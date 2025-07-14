@@ -90,7 +90,3 @@ export const getSeparator = (index) => {
 export const shouldShowSeparator = (index) => {
   return separatorManager.shouldShowSeparator(index)
 }
-
-
-
-

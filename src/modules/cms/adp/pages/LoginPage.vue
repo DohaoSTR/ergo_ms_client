@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { authorization } from '@/js/api/services/auth-index'
+import { authorization } from '@/modules/cms/adp/js/auth-index'
 import { validateLoginForm } from '@/js/validation'
 
 const router = useRouter()

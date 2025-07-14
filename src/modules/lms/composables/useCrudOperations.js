@@ -1,4 +1,4 @@
-import { lmsService } from '@/js/api/services/lmsService'
+import { lmsService } from '@/modules/lms/js/lmsService'
 import { showSuccess, showError } from '@/js/utils/notifications'
 
 export function useCrudOperations() {

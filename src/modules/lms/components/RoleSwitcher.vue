@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { Settings, User, EyeOff, Eye } from 'lucide-vue-next'
 import { globalUserRole } from '../composables/useUserRole'
-import { authService } from '@/js/api/services/authService'
+import { authService } from '@/modules/cms/adp/js/authService'
 
 const userRole = globalUserRole
 const isOpen = ref(false)

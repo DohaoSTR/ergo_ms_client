@@ -1,7 +1,7 @@
 <script setup>
 import GroupTableHeader from '@/modules/cms/adp/admin/GroupsComponent/GroupsTableHeader.vue'
 import GroupTable from '@/modules/cms/adp/admin/GroupsComponent/GroupsTable.vue'
-import { GetGroups } from '@/js/GroupsPolitics'
+import { GetGroups } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 import { ref, onMounted } from 'vue'
 
 const rows = ref([]) // Initialize with empty array

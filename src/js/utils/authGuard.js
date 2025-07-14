@@ -1,4 +1,4 @@
-import { authService } from '@/js/api/services/auth'
+import { authService } from '@/modules/cms/adp/js/auth'
 import Cookies from 'js-cookie'
 
 /**

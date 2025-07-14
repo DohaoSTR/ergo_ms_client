@@ -131,7 +131,7 @@ import { HelpCircle, Plus, Edit2, Trash2 } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import QuestionModal from './QuestionModal.vue'
 import { showSuccess, showError } from '@/js/utils/notifications'
-import { questionsApi } from '@/js/questionsApi'
+import { questionsApi } from '@/modules/lms/js/questionsApi'
 import { useConfirmDialog } from '@/modules/lms/composables/useConfirmDialog'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 

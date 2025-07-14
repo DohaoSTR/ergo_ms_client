@@ -39,7 +39,7 @@
   
   <script setup>
   import { ref, onMounted, watch } from 'vue';
-  import { GetUserGroups, AddUserGroups, RemoveUserGroups } from '@/js/GroupsPolitics';
+  import { GetUserGroups, AddUserGroups, RemoveUserGroups } from '@/modules/cms/adp/admin/js/GroupsPolitics';
   const list2 = ref([])
   const list1 = ref([])
   const startlist1 = ref([])

@@ -1,7 +1,7 @@
 <script setup>
 import CategoryTableHeader from '@/modules/cms/adp/admin/CategoriesComponents/CategoryTableHeader.vue'
 import CategoryTable from '@/modules/cms/adp/admin/CategoriesComponents/CategoryTable.vue'
-import { GetGroupCategories } from '@/js/GroupsPolitics'
+import { GetGroupCategories } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 import { ref, onMounted } from 'vue' 
 
 const rows = ref([]) // Initialize with empty array

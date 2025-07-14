@@ -74,7 +74,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { AddPermission, GetGroupCategories } from '@/js/GroupsPolitics'
+import { AddPermission, GetGroupCategories } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 
 const emit = defineEmits(['addPermission'])
 

@@ -15,7 +15,7 @@ import MenuGroup from '@/components/menu/MenuGroup.vue'
 import { useRoute } from 'vue-router'
 import { useRouter } from 'vue-router'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
-import { CheckAccessToAdminPanel, GetClosedPagesForUser } from '@/js/GroupsPolitics'
+import { CheckAccessToAdminPanel, GetClosedPagesForUser } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 const props = defineProps({
   isVisible: Boolean,
   currentPage: String

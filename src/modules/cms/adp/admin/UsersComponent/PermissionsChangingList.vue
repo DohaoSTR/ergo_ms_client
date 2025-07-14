@@ -39,7 +39,7 @@
   
   <script setup>
   import { ref, onMounted, watch, } from 'vue';
-  import { GetUserPermissions, AddUserPermission, RemoveUserPermissions } from '@/js/GroupsPolitics';
+  import { GetUserPermissions, AddUserPermission, RemoveUserPermissions } from '@/modules/cms/adp/admin/js/GroupsPolitics';
   const list2 = ref([])
   const list1 = ref([])
   const startlist1 = ref([])

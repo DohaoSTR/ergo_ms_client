@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import ModalCenter from '@/components/ModalCenter.vue'
 import ChangeCategoryForm from '@/modules/cms/adp/admin/CategoriesComponents/SubmitCategoryChange.vue'
-import { DeleteGroupCategory, ChangeGroupCategory } from '@/js/GroupsPolitics'
+import { DeleteGroupCategory, ChangeGroupCategory } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 import { watch } from 'vue'
 
 const props = defineProps({

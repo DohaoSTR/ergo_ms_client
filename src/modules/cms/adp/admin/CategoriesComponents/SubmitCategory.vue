@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { AddGroupCategory } from '@/js/GroupsPolitics'
+import { AddGroupCategory } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 const emit = defineEmits(['addCategory'])
 const name = ref('')
 const showError = ref(false)

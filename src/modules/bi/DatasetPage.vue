@@ -137,8 +137,8 @@ import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { RefreshCw, Plus, Eye, Loader, Database } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 
-import datasetService from '@/js/api/services/bi/datasetService'
-import connectionService from '@/js/api/services/bi/connectionService'
+import datasetService from '@/modules/bi/js/datasetService'
+import connectionService from '@/modules/bi/js/connectionService'
 import { getAggregationOptions } from '@/modules/bi/components/DatasetPreview/js/DatasetPreviewFieldOptions.js'
 
 import DatasetNameDialog from '@/modules/bi/components/DatasetNameDialog.vue'

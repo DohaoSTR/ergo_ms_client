@@ -75,7 +75,7 @@
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
-import {GetGroupCategories, ChangePermission } from '@/js/GroupsPolitics'
+import {GetGroupCategories, ChangePermission } from '@/modules/cms/adp/admin/js/GroupsPolitics'
 const emit = defineEmits(['changePermission'])
 const showErrorName = ref(false)
 const showErrorCategory = ref(false)
