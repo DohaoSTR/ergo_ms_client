@@ -159,32 +159,32 @@ export const endpoints = {
     },
     lms: {
         // Пользователи и профили
-        profiles: 'lms/api/profiles/',
+        profiles: 'lms/profiles/',
         myProfile: 'lms/profile/me/',
         userRoles: 'lms/user/roles/',
         switchRole: 'lms/user/roles/switch/',
         
         // Курсы
-        categories: 'lms/api/categories/',
-        deleteCategory: id => `lms/api/categories/${id}/`,
-        courseFormats: 'lms/api/course-formats/',
-        deleteCourseFormat: id => `lms/api/course-formats/${id}/`,
-        subjects: 'lms/api/subjects/',
-        enrollments: 'lms/api/enrollments/',
+        categories: 'lms/categories/',
+        deleteCategory: id => `lms/categories/${id}/`,
+        courseFormats: 'lms/course-formats/',
+        deleteCourseFormat: id => `lms/course-formats/${id}/`,
+        subjects: 'lms/subjects/',
+        enrollments: 'lms/enrollments/',
         
         // Темы курсов
-        themes: 'lms/api/themes/',
+        themes: 'lms/themes/',
         reorderLessons: id => `lms/themes/${id}/reorder-lessons/`,
         reorderThemes: 'lms/themes/reorder-themes/',
         
         // Уроки
-        lessons: 'lms/api/lessons/',
+        lessons: 'lms/lessons/',
         duplicateLesson: id => `lms/lessons/${id}/duplicate/`,
         toggleLessonVisibility: id => `lms/lessons/${id}/toggle-visibility/`,
         lessonsByCourse: 'lms/lessons/by-course/',
         
         // Ресурсы
-        resources: 'lms/api/resources/',
+        resources: 'lms/resources/',
         downloadResource: id => `lms/resources/${id}/download/`,
         toggleResourceVisibility: id => `lms/resources/${id}/toggle-visibility/`,
         resourcesByContext: 'lms/resources/by-context/',
@@ -198,38 +198,38 @@ export const endpoints = {
         subjectStructure: id => `lms/subjects/${id}/structure/`,
         
         // Тестирование
-        testBanks: 'lms/api/test-banks/',
-        tests: 'lms/api/tests/',
-        testAttempts: 'lms/api/test-attempts/',
+        testBanks: 'lms/test-banks/',
+        tests: 'lms/tests/',
+        testAttempts: 'lms/test-attempts/',
         startTest: id => `lms/tests/${id}/start/`,
         
         // Задания
-        assignments: 'lms/api/assignments/',
-        submittedAssignments: 'lms/api/submitted-assignments/',
+        assignments: 'lms/assignments/',
+        submittedAssignments: 'lms/submitted-assignments/',
         
         // Форумы
-        forums: 'lms/api/forums/',
-        discussions: 'lms/api/discussions/',
-        posts: 'lms/api/posts/',
+        forums: 'lms/forums/',
+        discussions: 'lms/discussions/',
+        posts: 'lms/posts/',
         
         // Календарь
-        calendar: 'lms/api/calendar/',
+        calendar: 'lms/calendar/',
         upcomingEvents: 'lms/calendar/upcoming/',
         
         // Значки и достижения
-        badges: 'lms/api/badges/',
-        userBadges: 'lms/api/user-badges/',
+        badges: 'lms/badges/',
+        userBadges: 'lms/user-badges/',
         
         // Уведомления
-        notifications: 'lms/api/notifications/',
+        notifications: 'lms/notifications/',
         markAsRead: id => `lms/notifications/${id}/read/`,
         markAllAsRead: 'lms/notifications/read-all/',
         
         // Личные сообщения
-        messages: 'lms/api/messages/',
+        messages: 'lms/messages/',
         
         // Оценки
-        grades: 'lms/api/grades/',
+        grades: 'lms/grades/',
         
         // Аналитика
         studentStats: 'lms/analytics/student/',

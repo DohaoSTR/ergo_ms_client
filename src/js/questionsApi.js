@@ -9,7 +9,7 @@ export const questionsApi = {
    */
   async getQuestionsByTest(testId) {
     try {
-      const response = await apiClient.get(`lms/api/questions/?test=${testId}`)
+      const response = await apiClient.get(`lms/questions/?test=${testId}`)
       return response.data.results || response.data
     } catch (error) {
       console.error('Ошибка получения вопросов:', error)
@@ -22,7 +22,7 @@ export const questionsApi = {
    */
   async createQuestion(questionData) {
     try {
-      const response = await apiClient.post('lms/api/questions/', questionData)
+      const response = await apiClient.post('lms/questions/', questionData)
       return response.data
     } catch (error) {
       console.error('Ошибка создания вопроса:', error)
@@ -35,7 +35,7 @@ export const questionsApi = {
    */
   async updateQuestion(questionId, questionData) {
     try {
-      const response = await apiClient.put(`lms/api/questions/${questionId}/`, questionData)
+      const response = await apiClient.put(`lms/questions/${questionId}/`, questionData)
       return response.data
     } catch (error) {
       console.error('Ошибка обновления вопроса:', error)
@@ -48,7 +48,7 @@ export const questionsApi = {
    */
   async deleteQuestion(questionId) {
     try {
-      await apiClient.delete(`lms/api/questions/${questionId}/`)
+      await apiClient.delete(`lms/questions/${questionId}/`)
     } catch (error) {
       console.error('Ошибка удаления вопроса:', error)
       throw error
@@ -60,7 +60,7 @@ export const questionsApi = {
    */
   async getQuestion(questionId) {
     try {
-      const response = await apiClient.get(`lms/api/questions/${questionId}/`)
+      const response = await apiClient.get(`lms/questions/${questionId}/`)
       return response.data
     } catch (error) {
       console.error('Ошибка получения вопроса:', error)
@@ -78,7 +78,7 @@ export const answersApi = {
    */
   async getAnswersByQuestion(questionId) {
     try {
-      const response = await apiClient.get(`lms/api/answers/?question=${questionId}`)
+      const response = await apiClient.get(`lms/answers/?question=${questionId}`)
       return response.data.results || response.data
     } catch (error) {
       console.error('Ошибка получения ответов:', error)
@@ -91,7 +91,7 @@ export const answersApi = {
    */
   async createAnswer(answerData) {
     try {
-      const response = await apiClient.post('lms/api/answers/', answerData)
+      const response = await apiClient.post('lms/answers/', answerData)
       return response.data
     } catch (error) {
       console.error('Ошибка создания ответа:', error)
@@ -104,7 +104,7 @@ export const answersApi = {
    */
   async updateAnswer(answerId, answerData) {
     try {
-      const response = await apiClient.put(`lms/api/answers/${answerId}/`, answerData)
+      const response = await apiClient.put(`lms/answers/${answerId}/`, answerData)
       return response.data
     } catch (error) {
       console.error('Ошибка обновления ответа:', error)
@@ -117,7 +117,7 @@ export const answersApi = {
    */
   async deleteAnswer(answerId) {
     try {
-      await apiClient.delete(`lms/api/answers/${answerId}/`)
+      await apiClient.delete(`lms/answers/${answerId}/`)
     } catch (error) {
       console.error('Ошибка удаления ответа:', error)
       throw error

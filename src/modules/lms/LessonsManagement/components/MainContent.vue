@@ -755,7 +755,7 @@ async function onTestEnd(evt, lessonId) {
 
   try {
     // Отправляем запрос на сервер для изменения порядка тестов
-    const response = await apiClient.post('lms/api/tests/reorder_tests/', {
+    const response = await apiClient.post('lms/tests/reorder_tests/', {
       test_ids: testIds,
       context: { lesson_id: lessonId }
     })
@@ -806,7 +806,7 @@ async function onAssignmentEnd(evt, lessonId) {
 
   try {
     // Отправляем запрос на сервер для изменения порядка заданий
-    const response = await apiClient.post('lms/api/assignments/reorder_assignments/', {
+    const response = await apiClient.post('lms/assignments/reorder_assignments/', {
       assignment_ids: assignmentIds,
       context: { lesson_id: lessonId }
     })
