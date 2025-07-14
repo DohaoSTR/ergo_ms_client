@@ -10,7 +10,7 @@
     {
       "path": "/:pathMatch(.*)*",
       "name": "NotFound",
-      "component": "@/pages/NotFound.vue",
+      "component": "@/modules/NotFound.vue",
       "meta": {
         "title": "Страница не найдена",
         "requiresAuth": true
@@ -30,7 +30,7 @@
     {
       "path": "/start-page",
       "name": "StartPage",
-      "component": "@/pages/cms/adp/pages/StartPage.vue",
+      "component": "@/modules/cms/adp/pages/StartPage.vue",
       "meta": {
         "startRoute": true,
         "requiresAuth": false
@@ -39,7 +39,7 @@
     {
       "path": "/login",
       "name": "Login",
-      "component": "@/pages/cms/adp/pages/LoginPage.vue",
+      "component": "@/modules/cms/adp/pages/LoginPage.vue",
       "meta": {
         "startRoute": true,
         "requiresAuth": false
@@ -48,7 +48,7 @@
     {
       "path": "/register",
       "name": "Register",
-      "component": "@/pages/cms/adp/pages/RegisterPage.vue",
+      "component": "@/modules/cms/adp/pages/RegisterPage.vue",
       "meta": {
         "startRoute": true,
         "requiresAuth": false
@@ -57,7 +57,7 @@
     {
       "path": "/forgot-password",
       "name": "ForgotPassword",
-      "component": "@/pages/cms/adp/pages/ForgotPasswordPage.vue",
+      "component": "@/modules/cms/adp/pages/ForgotPasswordPage.vue",
       "meta": {
         "startRoute": true,
         "requiresAuth": false
@@ -66,7 +66,7 @@
     {
       "path": "/reset-password",
       "name": "ResetPassword",
-      "component": "@/pages/cms/adp/pages/ResetPasswordPage.vue",
+      "component": "@/modules/cms/adp/pages/ResetPasswordPage.vue",
       "meta": {
         "startRoute": true,
         "requiresAuth": false
@@ -75,7 +75,7 @@
     {
       "path": "/two-steps",
       "name": "TwoSteps",
-      "component": "@/pages/auth/TwoStepsPage.vue",
+      "component": "@/modules/auth/TwoStepsPage.vue",
       "meta": {
         "startRoute": true,
         "requiresAuth": false
@@ -86,7 +86,7 @@
   "routes": {
     "User": {
       "path": "/user",
-      "component": "@/pages/cms/adp/user/ParentLayout.vue",
+      "component": "@/modules/cms/adp/user/ParentLayout.vue",
       "redirect": "Account",
       "meta": {
         "requiresAuth": true
@@ -94,14 +94,14 @@
     },
     "Account": {
       "path": "/user/account",
-      "component": "@/pages/cms/adp/user/account/ParentLayout.vue",
+      "component": "@/modules/cms/adp/user/account/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "SecuritySettings": {
       "path": "/user/security",
-      "component": "@/pages/cms/adp/settings/security/ParentLayout.vue",
+      "component": "@/modules/cms/adp/settings/security/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
@@ -109,7 +109,7 @@
 
     "Settings": {
       "path": "/settings",
-      "component": "@/pages/cms/adp/settings/ParentLayout.vue",
+      "component": "@/modules/cms/adp/settings/ParentLayout.vue",
       "redirect": "SiteSettings",
       "meta": {
         "requiresAuth": true
@@ -117,7 +117,7 @@
     },
     "AdminPanel": {
       "path": "/admin-panel",
-      "component": "@/pages/cms/adp/admin/ParentLayout.vue",
+      "component": "@/modules/cms/adp/admin/ParentLayout.vue",
       "redirect": "UsersPanel",
       "meta": {
         "title": "Админ-панель",
@@ -126,7 +126,7 @@
     },
     "UsersPanel": {
       "path": "/admin-panel/users",
-      "component": "@/pages/cms/adp/admin/Users.vue",
+      "component": "@/modules/cms/adp/admin/Users.vue",
       "meta": {
         "title": "Панель пользователей",
         "requiresAuth": true
@@ -134,7 +134,7 @@
     },
     "CategoriesPanel": {
       "path": "/admin-panel/categories",
-      "component": "@/pages/cms/adp/admin/Categories.vue",
+      "component": "@/modules/cms/adp/admin/Categories.vue",
       "meta": {
         "title": "Панель категорий",
         "requiresAuth": true
@@ -142,7 +142,7 @@
     },
     "GroupsPanel": {
       "path": "/admin-panel/groups",
-      "component": "@/pages/cms/adp/admin/Groups.vue",
+      "component": "@/modules/cms/adp/admin/Groups.vue",
       "meta": {
         "title": "Панель групп",
         "requiresAuth": true
@@ -150,7 +150,7 @@
     },
     "PermissionsPanel": {
       "path": "/admin-panel/permissions",
-      "component": "@/pages/cms/adp/admin/Permissions.vue",
+      "component": "@/modules/cms/adp/admin/Permissions.vue",
       "meta": {
         "title": "Панель прав",
         "requiresAuth": true
@@ -158,7 +158,7 @@
     },
     "LiminationPanel": {
       "path": "/admin-panel/limitations",
-      "component": "@/pages/cms/adp/admin/limitationSettings.vue",
+      "component": "@/modules/cms/adp/admin/limitationSettings.vue",
       "meta": {
         "title": "Панель Ограничений",
         "requiresAuth": true
@@ -167,7 +167,7 @@
     
     "Shortcodes": {
       "path": "/shortcodes",
-      "component": "@/pages/shortcodes/ParentLayout.vue",
+      "component": "@/modules/shortcodes/ParentLayout.vue",
       "redirect": "MainShortcodePage",
       "meta": {
         "title": "Конструктор сайта",
@@ -176,7 +176,7 @@
     },
     "MainShortcodePage": {
       "path": "/shortcodes/editor",
-      "component": "@/pages/shortcodes/editor/MainPage.vue",
+      "component": "@/modules/shortcodes/editor/MainPage.vue",
       "meta": {
         "title": "Главная",
         "requiresAuth": true
@@ -184,7 +184,7 @@
     },
     "ShortcodeEditor": {
       "path": "/shortcodes/editor",
-      "component": "@/pages/shortcodes/editor/ShortcodeEditor.vue",
+      "component": "@/modules/shortcodes/editor/ShortcodeEditor.vue",
       "meta": {
         "title": "Редактор страниц",
         "requiresAuth": true
@@ -192,7 +192,7 @@
     },
     "Templates": {
       "path": "/shortcodes/templates",
-      "component": "@/pages/shortcodes/editor/TemplateManager.vue",
+      "component": "@/modules/shortcodes/editor/TemplateManager.vue",
       "meta": {
         "title": "Компоненты",
         "requiresAuth": true
@@ -200,7 +200,7 @@
     },
     "Layouts": {
       "path": "/shortcodes/site-layouts",
-      "component": "@/pages/shortcodes/SiteLayout.vue",
+      "component": "@/modules/shortcodes/SiteLayout.vue",
       "meta": {
         "title": "Разметка сайта",
         "requiresAuth": true
@@ -208,7 +208,7 @@
     },
     "PageShortcodeCategories": {
       "path": "/shortcodes/categories-page",
-      "component": "@/pages/shortcodes/editor/PageCategories.vue",
+      "component": "@/modules/shortcodes/editor/PageCategories.vue",
       "meta": {
         "title": "Категории страниц",
         "requiresAuth": true
@@ -216,7 +216,7 @@
     },
     "CreatePage": {
       "path": "/shortcodes/create-page",
-      "component": "@/pages/shortcodes/editor/CreatePage.vue",
+      "component": "@/modules/shortcodes/editor/CreatePage.vue",
       "meta": {
         "title": "Создание страниц",
         "requiresAuth": true
@@ -224,7 +224,7 @@
     },
     "Pages": {
       "path": "/shortcodes/pages",
-      "component": "@/pages/shortcodes/AllPages.vue",
+      "component": "@/modules/shortcodes/AllPages.vue",
       "meta": {
         "title": "Страницы",
         "requiresAuth": true
@@ -232,7 +232,7 @@
     },
     "TemplateEditor": {
       "path": "/shortcodes/templates/:id?",
-      "component": "@/pages/shortcodes/editor/TemplateEditor.vue",
+      "component": "@/modules/shortcodes/editor/TemplateEditor.vue",
       "meta": {
         "title": "Редактор компонентов",
         "requiresAuth": true
@@ -241,7 +241,7 @@
 
     "CmsAnyDepthPage": {
       "path": "/shortcodes/:parts(.*)+",
-      "component": "@/pages/shortcodes/CmsPage.vue",
+      "component": "@/modules/shortcodes/CmsPage.vue",
       "meta": {
         "public": true
       }
@@ -249,7 +249,7 @@
 
     "Categories": {
       "path": "/categories",
-      "component": "@/pages/categories/ParentLayout.vue",
+      "component": "@/modules/categories/ParentLayout.vue",
       "redirect": "PageCategories",
       "meta": {
         "requiresAuth": true
@@ -257,7 +257,7 @@
     },
     "PageCategories": {
       "path": "/categories/page-categories",
-      "component": "@/pages/categories/PageCategories.vue",
+      "component": "@/modules/categories/PageCategories.vue",
       "meta": {
         "title": "Категории",
         "requiresAuth": true
@@ -265,7 +265,7 @@
     },
     "PageCategoriesManager": {
       "path": "/categories/categories-list",
-      "component": "@/pages/categories/CategoriesManagerPage.vue",
+      "component": "@/modules/categories/CategoriesManagerPage.vue",
       "meta": {
         "title": "Создание категорий",
         "requiresAuth": true
@@ -273,7 +273,7 @@
     },
     "TagsManager": {
       "path": "/categories/tags-list",
-      "component": "@/pages/categories/TagsManagerPage.vue",
+      "component": "@/modules/categories/TagsManagerPage.vue",
       "meta": {
         "title": "Создание тегов",
         "requiresAuth": true
@@ -282,7 +282,7 @@
 
     "SiteSettings": {
       "path": "/settings/site-settings",
-      "component": "@/pages/cms/adp/settings/siteSettings/ParentLayout.vue",
+      "component": "@/modules/cms/adp/settings/siteSettings/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
@@ -290,7 +290,7 @@
 
     "FileManager": {
       "path": "/filemanager",
-      "component": "@/pages/cms/filemanager/FileManager.vue",
+      "component": "@/modules/cms/filemanager/FileManager.vue",
       "meta": {
         "title": "Файлы",
         "requiresAuth": true
@@ -299,7 +299,7 @@
 
     "Email": {
       "path": "/email",
-      "component": "@/pages/email/ParentLayout.vue",
+      "component": "@/modules/email/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
@@ -307,7 +307,7 @@
 
     "Messenger": {
       "path": "/messenger",
-      "component": "@/pages/messenger/ParentLayout.vue",
+      "component": "@/modules/messenger/ParentLayout.vue",
       "meta": {
         "requiresAuth": true
       }
@@ -315,7 +315,7 @@
 
     "EducationAnalyticModule": {
       "path": "/education_analytics",
-      "component": "@/pages/education_analytics_module/ParentLayout.vue",
+      "component": "@/modules/education_analytics_module/ParentLayout.vue",
       "redirect": "MainPage",
       "meta": {
         "requiresAuth": true
@@ -323,7 +323,7 @@
     },
     "MainPage": {
       "path": "/education_analytics/main",
-      "component": "@/pages/education_analytics_module/MainPage.vue",
+      "component": "@/modules/education_analytics_module/MainPage.vue",
       "meta": {
         "title": "MainPage",
         "requiresAuth": true
@@ -331,7 +331,7 @@
     },
     "StatsPage": {
       "path": "/education_analytics/stats",
-      "component": "@/pages/education_analytics_module/StatsPage.vue",
+      "component": "@/modules/education_analytics_module/StatsPage.vue",
       "meta": {
         "title": "StatsPage",
         "requiresAuth": true
@@ -339,7 +339,7 @@
     },
     "LearningTrackPage": {
       "path": "/education_analytics/learning_track",
-      "component": "@/pages/education_analytics_module/LearningTrack.vue",
+      "component": "@/modules/education_analytics_module/LearningTrack.vue",
       "meta": {
         "title": "LearningTrackPage",
         "requiresAuth": true
@@ -347,7 +347,7 @@
     },
     "ReportsPage": {
       "path": "/education_analytics/reports",
-      "component": "@/pages/education_analytics_module/ReportsPage.vue",
+      "component": "@/modules/education_analytics_module/ReportsPage.vue",
       "meta": {
         "title": "ReportsPage",
         "requiresAuth": true
@@ -355,7 +355,7 @@
     },
     "ProfilePage": {
       "path": "/education_analytics/profile",
-      "component": "@/pages/education_analytics_module/ProfilePage.vue",
+      "component": "@/modules/education_analytics_module/ProfilePage.vue",
       "meta": {
         "title": "ProfilePage",
         "requiresAuth": true
@@ -363,7 +363,7 @@
     },
     "AdminPanelPage": {
       "path": "/education_analytics/admin",
-      "component": "@/pages/education_analytics_module/AdminPanelPage.vue",
+      "component": "@/modules/education_analytics_module/AdminPanelPage.vue",
       "meta": {
         "title": "AdminPanelPage",
         "requiresAuth": true
@@ -371,7 +371,7 @@
     },
     "SuperUserPage": {
       "path": "/education_analytics/root",
-      "component": "@/pages/education_analytics_module/SuperUserPanelPage.vue",
+      "component": "@/modules/education_analytics_module/SuperUserPanelPage.vue",
       "meta": {
         "title": "SuperUserPage",
         "requiresAuth": true
@@ -380,7 +380,7 @@
 
     "AssetsAnalyse": {
       "path": "/assets-analyse",
-      "component": "@/pages/assets_analysis/DatabaseAnalyze.vue",
+      "component": "@/modules/assets_analysis/DatabaseAnalyze.vue",
       "meta": {
         "requiresAuth": true
       }
@@ -388,7 +388,7 @@
 
     "CRM": {
       "path": "/crm",
-      "component": "@/pages/crm/ParentLayout.vue",
+      "component": "@/modules/crm/ParentLayout.vue",
       "redirect": "/crm/strategic-projects/dashboard",
       "meta": {
         "requiresAuth": true
@@ -396,7 +396,7 @@
     },
     "StrategicProjects": {
       "path": "/crm/strategic-projects",
-      "component": "@/pages/crm/strategic-projects/ParentLayout.vue",
+      "component": "@/modules/crm/strategic-projects/ParentLayout.vue",
       "redirect": "/crm/strategic-projects/dashboard",
       "meta": {
         "title": "Стратегические проекты",
@@ -405,7 +405,7 @@
     },
     "StrategicProjectsDashboard": {
       "path": "/crm/strategic-projects/dashboard",
-      "component": "@/pages/crm/strategic-projects/StrategicProjectsDashboard.vue",
+      "component": "@/modules/crm/strategic-projects/StrategicProjectsDashboard.vue",
       "meta": {
         "title": "Стратегические проекты",
         "requiresAuth": true
@@ -413,7 +413,7 @@
     },
     "ProgramTopics": {
       "path": "/crm/strategic-projects/program-topics",
-      "component": "@/pages/crm/strategic-projects/ProgramTopics.vue",
+      "component": "@/modules/crm/strategic-projects/ProgramTopics.vue",
       "meta": {
         "title": "Темы программы развития",
         "requiresAuth": true
@@ -421,7 +421,7 @@
     },
     "ProjectEdit": {
       "path": "/crm/strategic-projects/project/:id/edit",
-      "component": "@/pages/crm/strategic-projects/ProjectEdit.vue",
+      "component": "@/modules/crm/strategic-projects/ProjectEdit.vue",
       "meta": {
         "title": "Редактирование проекта",
         "requiresAuth": true
@@ -429,7 +429,7 @@
     },
     "ProjectCreate": {
       "path": "/crm/strategic-projects/project/create",
-      "component": "@/pages/crm/strategic-projects/ProjectEdit.vue",
+      "component": "@/modules/crm/strategic-projects/ProjectEdit.vue",
       "meta": {
         "title": "Создание проекта",
         "requiresAuth": true
@@ -437,7 +437,7 @@
     },
     "ProjectView": {
       "path": "/crm/strategic-projects/project/:id",
-      "component": "@/pages/crm/strategic-projects/ProjectView.vue",
+      "component": "@/modules/crm/strategic-projects/ProjectView.vue",
       "meta": {
         "title": "Просмотр проекта",
         "requiresAuth": true
@@ -445,7 +445,7 @@
     },
     "ImportProgram": {
       "path": "/crm/strategic-projects/import-program",
-      "component": "@/pages/crm/strategic-projects/ImportProgram.vue",
+      "component": "@/modules/crm/strategic-projects/ImportProgram.vue",
       "meta": {
         "title": "Импорт программы развития",
         "requiresAuth": true
@@ -453,7 +453,7 @@
     },
     "MyProjects": {
       "path": "/crm/strategic-projects/my-projects",
-      "component": "@/pages/crm/strategic-projects/MyProjects.vue",
+      "component": "@/modules/crm/strategic-projects/MyProjects.vue",
       "meta": {
         "title": "Мои проекты",
         "requiresAuth": true
@@ -461,7 +461,7 @@
     },
     "ProjectReports": {
       "path": "/crm/strategic-projects/reports",
-      "component": "@/pages/crm/strategic-projects/ProjectReports.vue",
+      "component": "@/modules/crm/strategic-projects/ProjectReports.vue",
       "meta": {
         "title": "Отчеты и аналитика",
         "requiresAuth": true
@@ -469,7 +469,7 @@
     },
     "ProjectsArchive": {
       "path": "/crm/strategic-projects/archive",
-      "component": "@/pages/crm/strategic-projects/ProjectsArchive.vue",
+      "component": "@/modules/crm/strategic-projects/ProjectsArchive.vue",
       "meta": {
         "title": "Архив проектов",
         "requiresAuth": true
@@ -477,7 +477,7 @@
     },
     "EmployeeWorkload": {
       "path": "/crm/strategic-projects/workload",
-      "component": "@/pages/crm/strategic-projects/EmployeeWorkload.vue",
+      "component": "@/modules/crm/strategic-projects/EmployeeWorkload.vue",
       "meta": {
         "title": "Занятость сотрудников",
         "requiresAuth": true
@@ -485,7 +485,7 @@
     },
     "ExpertApproval": {
       "path": "/crm/strategic-projects/expert-approval",
-      "component": "@/pages/crm/strategic-projects/ExpertApproval.vue",
+      "component": "@/modules/crm/strategic-projects/ExpertApproval.vue",
       "meta": {
         "title": "Экспертная оценка проектов",
         "requiresAuth": true
@@ -494,7 +494,7 @@
 
     "ProjectManagement": {
       "path": "/crm/project-management",
-      "component": "@/pages/crm/project-management/ParentLayout.vue",
+      "component": "@/modules/crm/project-management/ParentLayout.vue",
       "redirect": "/crm/project-management/my-projects",
       "meta": {
         "title": "Управление проектами",
@@ -503,7 +503,7 @@
     },
     "ProjectCalendar": {
       "path": "/crm/project-management/calendar",
-      "component": "@/pages/crm/project-management/TaskCalendar.vue",
+      "component": "@/modules/crm/project-management/TaskCalendar.vue",
       "meta": {
         "title": "Календарь задач",
         "requiresAuth": true
@@ -511,7 +511,7 @@
     },
     "KanbanBoard": {
       "path": "/crm/project-management/kanban",
-      "component": "@/pages/crm/project-management/KanbanBoard.vue",
+      "component": "@/modules/crm/project-management/KanbanBoard.vue",
       "meta": {
         "title": "Канбан доска",
         "requiresAuth": true
@@ -519,7 +519,7 @@
     },
     "MyProjectsList": {
       "path": "/crm/project-management/my-projects",
-      "component": "@/pages/crm/project-management/ProjectsList.vue",
+      "component": "@/modules/crm/project-management/ProjectsList.vue",
       "meta": {
         "title": "Мои проекты",
         "requiresAuth": true
@@ -527,7 +527,7 @@
     },
     "ProjectsAndTasksManagement": {
       "path": "/crm/project-management/management",
-      "component": "@/pages/crm/project-management/ProjectsAndTasksManagement.vue",
+      "component": "@/modules/crm/project-management/ProjectsAndTasksManagement.vue",
       "meta": {
         "title": "Проекты и задачи",
         "requiresAuth": true
@@ -535,7 +535,7 @@
     },
     "MyTasksList": {
       "path": "/crm/project-management/tasks",
-      "component": "@/pages/crm/project-management/TasksList.vue",
+      "component": "@/modules/crm/project-management/TasksList.vue",
       "meta": {
         "title": "Мои задачи",
         "requiresAuth": true
@@ -543,7 +543,7 @@
     },
     "ProjectDetail": {
       "path": "/crm/project-management/project/:id",
-      "component": "@/pages/crm/project-management/ProjectDetail.vue",
+      "component": "@/modules/crm/project-management/ProjectDetail.vue",
       "meta": {
         "title": "Детали проекта",
         "requiresAuth": true
@@ -551,7 +551,7 @@
     },
     "TaskDetail": {
       "path": "/crm/project-management/task/:id",
-      "component": "@/pages/crm/project-management/TaskDetail.vue",
+      "component": "@/modules/crm/project-management/TaskDetail.vue",
       "meta": {
         "title": "Детали задачи",
         "requiresAuth": true
@@ -560,7 +560,7 @@
 
     "LMS": {
       "path": "/lms",
-      "component": "@/pages/lms/ParentLayout.vue",
+      "component": "@/modules/lms/ParentLayout.vue",
       "redirect": "LMSDashboard",
       "meta": {
         "requiresAuth": true
@@ -568,7 +568,7 @@
     },
     "LMSDashboard": {
       "path": "/lms/dashboard",
-      "component": "@/pages/lms/Dashboard/DashboardView.vue",
+      "component": "@/modules/lms/Dashboard/DashboardView.vue",
       "meta": {
         "title": "Дашборд LMS",
         "requiresAuth": true
@@ -576,7 +576,7 @@
     },
     "LMSCatalog": {
       "path": "/lms/catalog",
-      "component": "@/pages/lms/Catalog/CatalogView.vue",
+      "component": "@/modules/lms/Catalog/CatalogView.vue",
       "meta": {
         "title": "Каталог курсов",
         "requiresAuth": true
@@ -584,7 +584,7 @@
     },
     "LMSCourses": {
       "path": "/lms/courses",
-      "component": "@/pages/lms/Courses/CoursesView.vue",
+      "component": "@/modules/lms/Courses/CoursesView.vue",
       "meta": {
         "title": "Мои курсы",
         "requiresAuth": true
@@ -592,7 +592,7 @@
     },
     "LMSGrades": {
       "path": "/lms/grades",
-      "component": "@/pages/lms/Grades/GradesView.vue",
+      "component": "@/modules/lms/Grades/GradesView.vue",
       "meta": {
         "title": "Оценки",
         "requiresAuth": true
@@ -600,7 +600,7 @@
     },
     "LMSCalendar": {
       "path": "/lms/calendar",
-      "component": "@/pages/lms/Calendar/CalendarView.vue",
+      "component": "@/modules/lms/Calendar/CalendarView.vue",
       "meta": {
         "title": "Календарь LMS",
         "requiresAuth": true
@@ -608,7 +608,7 @@
     },
     "LMSBadges": {
       "path": "/lms/badges",
-      "component": "@/pages/lms/Badges/BadgesView.vue",
+      "component": "@/modules/lms/Badges/BadgesView.vue",
       "meta": {
         "title": "Достижения",
         "requiresAuth": true
@@ -616,7 +616,7 @@
     },
     "LMSLessonsManagement": {
       "path": "/lms/lessons-management",
-      "component": "@/pages/lms/LessonsManagement/LessonsManagementView.vue",
+      "component": "@/modules/lms/LessonsManagement/LessonsManagementView.vue",
       "meta": {
         "title": "Управление курсами",
         "requiresAuth": true
@@ -624,7 +624,7 @@
     },
     "LMSCategoriesAndFormats": {
       "path": "/lms/categories-and-formats",
-      "component": "@/pages/lms/CategoriesAndFormats/CategoriesAndFormatsView.vue",
+      "component": "@/modules/lms/CategoriesAndFormats/CategoriesAndFormatsView.vue",
       "meta": {
         "title": "Структура курсов",
         "requiresAuth": true
@@ -632,7 +632,7 @@
     },
     "LMSCourseView": {
       "path": "/lms/course/:id",
-      "component": "@/pages/lms/Courses/CourseView.vue",
+      "component": "@/modules/lms/Courses/CourseView.vue",
       "meta": {
         "title": "Просмотр курса",
         "requiresAuth": true
@@ -641,7 +641,7 @@
 
     "ErgoCityStruct": {
       "path": "/ergo-city-struct",
-      "component": "@/pages/cityAnalyze/ParentLayout.vue",
+      "component": "@/modules/cityAnalyze/ParentLayout.vue",
       "redirect": "MapUpload",
       "meta": {
         "requiresAuth": true
@@ -649,7 +649,7 @@
     },
     "MapUpload": {
       "path": "/ergo-city-struct/map-upload",
-      "component": "@/pages/cityAnalyze/mapUpload/ParentLayout.vue",
+      "component": "@/modules/cityAnalyze/mapUpload/ParentLayout.vue",
       "meta": {
         "title": "Индикаторы",
         "requiresAuth": true
@@ -657,7 +657,7 @@
     },
     "MyUploads": {
       "path": "/ergo-city-struct/uploads",
-      "component": "@/pages/cityAnalyze/myUploads/ParentLayout.vue",
+      "component": "@/modules/cityAnalyze/myUploads/ParentLayout.vue",
       "meta": {
         "title": "Мои загрузки",
         "requiresAuth": true
@@ -665,7 +665,7 @@
     },
     "MyTasks": {
       "path": "/ergo-city-struct/tasks",
-      "component": "@/pages/cityAnalyze/task/TaskPage.vue",
+      "component": "@/modules/cityAnalyze/task/TaskPage.vue",
       "meta": {
         "title": "Мои задачи",
         "requiresAuth": true
@@ -674,7 +674,7 @@
 
     "NotFound": {
       "path": "/:pathMatch(.*)*",
-      "component": "@/pages/NotFound.vue",
+      "component": "@/modules/NotFound.vue",
       "meta": {
         "public": true,
         "title": "Страница не найдена",
@@ -691,7 +691,7 @@
 
     "Dashboard": {
       "path": "/dashboard",
-      "component": "@/pages/dashboard/AnaliticsView.vue",
+      "component": "@/modules/dashboard/AnaliticsView.vue",
       "redirect": "Analytics",
       "meta": {
         "requiresAuth": true
@@ -699,7 +699,7 @@
     },
     "Analytics": {
       "path": "/analytics",
-      "component": "@/pages/dashboard/AnaliticsView.vue",
+      "component": "@/modules/dashboard/AnaliticsView.vue",
       "meta": {
         "requiresAuth": true
       }
@@ -707,93 +707,92 @@
 
     "Analyze": {
       "path": "/user/analyze",
-      "component": "@/pages/user/analyze/Analyze.vue",
+      "component": "@/modules/user/analyze/Analyze.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "DatabaseAnalyze": {
       "path": "/user/analyze/databaseanalyze",
-      "component": "@/pages/user/analyze/DatabaseAnalyze.vue",
+      "component": "@/modules/user/analyze/DatabaseAnalyze.vue",
       "meta": {
         "requiresAuth": true
       }
     },
 
-
     "BI": {
       "path": "/bi",
-      "component": "@/pages/bi/HomePageBI.vue",
+      "component": "@/modules/bi/HomePageBI.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "StorageList": {
       "path": "/bi/storagelist",
-      "component": "@/pages/bi/StorageListPage.vue",
+      "component": "@/modules/bi/StorageListPage.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "DatasetList": {
       "path": "/bi/datasetlist",
-      "component": "@/pages/bi/DatasetListPage.vue",
+      "component": "@/modules/bi/DatasetListPage.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "NewFile": {
       "path": "/bi/connections/new/file",
-      "component": "@/pages/bi/NewFile.vue",
+      "component": "@/modules/bi/NewFile.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "ClickHouse": {
       "path": "/bi/connections/new/clickhouse",
-      "component": "@/pages/bi/components/db-settings/ClickHouse.vue",
+      "component": "@/modules/bi/components/db-settings/ClickHouse.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "MSSQL": {
       "path": "/bi/connections/new/mssql",
-      "component": "@/pages/bi/components/db-settings/MSSQL.vue",
+      "component": "@/modules/bi/components/db-settings/MSSQL.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "PostgreSQL": {
       "path": "/bi/connections/new/postgresql",
-      "component": "@/pages/bi/components/db-settings/PostgreSQL.vue",
+      "component": "@/modules/bi/components/db-settings/PostgreSQL.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "ConnectionDetail": {
       "path": "/bi/connections/:pk",
-      "component": "@/pages/bi/components/db-settings/ConnectionDetail.vue",
+      "component": "@/modules/bi/components/db-settings/ConnectionDetail.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "ConnectionFiles": {
       "path": "/bi/connections/:pk/files",
-      "component": "@/pages/bi/ConnectionFiles.vue",
+      "component": "@/modules/bi/ConnectionFiles.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "NewConnection": {
       "path": "/bi/connections/new",
-      "component": "@/pages/bi/NewConnection.vue",
+      "component": "@/modules/bi/NewConnection.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "DatasetPage": {
       "path": "/bi/dataset/:id(\\d+)?",
-      "component": "@/pages/bi/DatasetPage.vue",
+      "component": "@/modules/bi/DatasetPage.vue",
       "alias": "/bi/dataset/new",
       "meta": {
         "requiresAuth": true
@@ -801,14 +800,14 @@
     },
     "NewChart": {
       "path": "/bi/chart/new",
-      "component": "@/pages/bi/ChartPage.vue",
+      "component": "@/modules/bi/ChartPage.vue",
       "meta": {
         "requiresAuth": true
       }
     },
     "ChartPage": {
       "path": "/bi/chart/:id",
-      "component": "@/pages/bi/ChartPage.vue",
+      "component": "@/modules/bi/ChartPage.vue",
       "meta": {
         "requiresAuth": true
       }
@@ -816,7 +815,7 @@
 
     "ExpertSystem": {
       "path": "/expert-system",
-      "component": "@/pages/expert-system/ParentLayout.vue",
+      "component": "@/modules/expert-system/ParentLayout.vue",
       "redirect": "ChoiceRole",
       "meta": {
         "requiresAuth": true
@@ -824,7 +823,7 @@
     },
     "ChoiceRole": {
       "path": "/expert-system/choice-role",
-      "component": "@/pages/expert-system/ChoiceRole.vue",
+      "component": "@/modules/expert-system/ChoiceRole.vue",
       "meta": {
         "title": "Выбор роли",
         "requiresAuth": true
@@ -832,7 +831,7 @@
     },
     "Skills": {
       "path": "/expert-system/skills",
-      "component": "@/pages/expert-system/SkillManager.vue",
+      "component": "@/modules/expert-system/SkillManager.vue",
       "meta": {
         "title": "Навыки",
         "requiresAuth": true
@@ -840,7 +839,7 @@
     },
     "Profile": {
       "path": "/expert-system/account",
-      "component": "@/pages/expert-system/ProfileDashboard.vue",
+      "component": "@/modules/expert-system/ProfileDashboard.vue",
       "meta": {
         "title": "Профиль",
         "requiresAuth": true
@@ -848,7 +847,7 @@
     },
     "Groups": {
       "path": "/expert-system/group-manager",
-      "component": "@/pages/expert-system/GroupManager.vue",
+      "component": "@/modules/expert-system/GroupManager.vue",
       "meta": {
         "title": "Группы обучения",
         "requiresAuth": true
@@ -856,7 +855,7 @@
     },
     "Vacancies": {
       "path": "/expert-system/vacancies",
-      "component": "@/pages/expert-system/StudentVacancies.vue",
+      "component": "@/modules/expert-system/StudentVacancies.vue",
       "meta": {
         "title": "Вакансии",
         "requiresAuth": true
@@ -864,7 +863,7 @@
     },
     "Proforientation": {
       "path": "/expert-system/proforientation",
-      "component": "@/pages/expert-system/ProforientationTest.vue",
+      "component": "@/modules/expert-system/ProforientationTest.vue",
       "meta": {
         "title": "Профориентация",
         "requiresAuth": true
@@ -872,7 +871,7 @@
     },
     "Profession": {
       "path": "/expert-system/profession-manager",
-      "component": "@/pages/expert-system/ProfessionManager.vue",
+      "component": "@/modules/expert-system/ProfessionManager.vue",
       "meta": {
         "title": "Менеджер профессий",
         "requiresAuth": true
@@ -880,7 +879,7 @@
     },
     "OrientationTest": {
       "path": "/expert-system/orientation-test",
-      "component": "@/pages/expert-system/OrientationTestManager.vue",
+      "component": "@/modules/expert-system/OrientationTestManager.vue",
       "meta": {
         "title": "Менеджер ориентационных тестов",
         "requiresAuth": true
@@ -888,7 +887,7 @@
     },
     "AllTests": {
       "path": "/expert-system/all-tests",
-      "component": "@/pages/expert-system/Tests/AllTestsPage.vue",
+      "component": "@/modules/expert-system/Tests/AllTestsPage.vue",
       "meta": {
         "title": "Тесты",
         "requiresAuth": true
@@ -896,7 +895,7 @@
     },
     "StudentCourses": {
       "path": "/expert-system/student-courses",
-      "component": "@/pages/expert-system/StudentCourses.vue",
+      "component": "@/modules/expert-system/StudentCourses.vue",
       "meta": {
         "title": "Рекомендованные курсы",
         "requiresAuth": true
@@ -904,7 +903,7 @@
     },
     "StudentsList": {
       "path": "/expert-system/students",
-      "component": "@/pages/expert-system/StudentList.vue",
+      "component": "@/modules/expert-system/StudentList.vue",
       "meta": {
         "title": "Поиск студентов",
         "requiresAuth": true
@@ -913,7 +912,7 @@
 
     "OrientationQuestionManager": {
       "path": "/expert-system/orientation-question/:testId",
-      "component": "@/pages/expert-system/OrientationQuestionManager.vue",
+      "component": "@/modules/expert-system/OrientationQuestionManager.vue",
       "meta": {
         "title": "Менеджер вопросов",
         "requiresAuth": true
@@ -921,7 +920,7 @@
     },
     "OrientationAnswerManager": {
       "path": "/expert-system/orientation-answer/:questionId",
-      "component": "@/pages/expert-system/OrientationAnswerManager.vue",
+      "component": "@/modules/expert-system/OrientationAnswerManager.vue",
       "meta": {
         "title": "Менеджер ответов",
         "requiresAuth": true
@@ -929,7 +928,7 @@
     },
     "ProforientationTest": {
       "path": "/expert-system/proforientation-test/:testId",
-      "component": "@/pages/expert-system/ProforientationTest.vue",
+      "component": "@/modules/expert-system/ProforientationTest.vue",
       "meta": {
         "title": "Прохождение теста",
         "requiresAuth": true
@@ -938,7 +937,7 @@
 
     "StudentRegister": {
       "path": "/expert-system/student-register",
-      "component": "@/pages/expert-system/StudentRegister.vue",
+      "component": "@/modules/expert-system/StudentRegister.vue",
       "meta": {
         "title": "Регистрация студента",
         "requiresAuth": true
@@ -946,7 +945,7 @@
     },
     "CompanyRegister": {
       "path": "/expert-system/company-register",
-      "component": "@/pages/expert-system/CompanyRegister.vue",
+      "component": "@/modules/expert-system/CompanyRegister.vue",
       "meta": {
         "title": "Вход / Регистрация работодателя",
         "requiresAuth": true
@@ -954,7 +953,7 @@
     },
     "Addstudentskills": {
       "path": "/expert-system/addstudent-skills",
-      "component": "@/pages/expert-system/AddSkillForStudentsWithExpirience.vue",
+      "component": "@/modules/expert-system/AddSkillForStudentsWithExpirience.vue",
       "meta": {
         "title": "Добавление навыков студенту",
         "requiresAuth": true
@@ -962,7 +961,7 @@
     },
     "OrientationQuestion": {
       "path": "/expert-system/orientation-question",
-      "component": "@/pages/expert-system/OrientationQuestionManager.vue",
+      "component": "@/modules/expert-system/OrientationQuestionManager.vue",
       "meta": {
         "title": "Менеджер управление ориентационными вопросами",
         "requiresAuth": true
@@ -970,7 +969,7 @@
     },
     "OrientationAnswer": {
       "path": "/expert-system/orientation-answer",
-      "component": "@/pages/expert-system/OrientationAnswerManager.vue",
+      "component": "@/modules/expert-system/OrientationAnswerManager.vue",
       "meta": {
         "title": "Менеджер управление вариантов ответов на вопросы",
         "requiresAuth": true
@@ -978,7 +977,7 @@
     },
     "TestCreation": {
       "path": "/expert-system/test-creation",
-      "component": "@/pages/expert-system/Tests/TestCreation.vue",
+      "component": "@/modules/expert-system/Tests/TestCreation.vue",
       "meta": {
         "title": "Создание тестов",
         "requiresAuth": true
@@ -986,7 +985,7 @@
     },
     "TestPreview": {
       "path": "/expert-system/test-preview/:id",
-      "component": "@/pages/expert-system/Tests/TestViewPage.vue",
+      "component": "@/modules/expert-system/Tests/TestViewPage.vue",
       "meta": {
         "title": "Предпросмотр теста",
         "requiresAuth": true
@@ -994,7 +993,7 @@
     },
     "TestPage": {
       "path": "/expert-system/test/:id",
-      "component": "@/pages/expert-system/Tests/TestPage.vue",
+      "component": "@/modules/expert-system/Tests/TestPage.vue",
       "meta": {
         "title": "Предпросмотр теста",
         "requiresAuth": true
@@ -1002,7 +1001,7 @@
     },
     "TestResult": {
       "path": "/expert-system/test-result/:id",
-      "component": "@/pages/expert-system/Tests/TestResult.vue",
+      "component": "@/modules/expert-system/Tests/TestResult.vue",
       "meta": {
         "title": "Результат теста",
         "requiresAuth": true
@@ -1010,7 +1009,7 @@
     },
     "VacancyDetail": {
       "path": "/expert-system/vacancy/:id",
-      "component": "@/pages/expert-system/VacancyDetail.vue",
+      "component": "@/modules/expert-system/VacancyDetail.vue",
       "meta": {
         "title": "Детали вакансии",
         "requiresAuth": true
@@ -1018,7 +1017,7 @@
     },
     "CompanyDetail": {
       "path": "/expert-system/company/:id",
-      "component": "@/pages/expert-system/CompanyDetail.vue",
+      "component": "@/modules/expert-system/CompanyDetail.vue",
       "meta": {
         "title": "Детали компании",
         "requiresAuth": true
@@ -1026,7 +1025,7 @@
     },
     "StudentDetail": {
       "path": "/expert-system/student/:id",
-      "component": "@/pages/expert-system/StudentDetail.vue",
+      "component": "@/modules/expert-system/StudentDetail.vue",
       "meta"  : {
         "title": "Детали студента",
         "requiresAuth": true
@@ -1034,7 +1033,7 @@
     },
     "CourseDetail": {
       "path": "/expert-system/course/:id",
-      "component": "@/pages/expert-system/CourseDetail.vue",
+      "component": "@/modules/expert-system/CourseDetail.vue",
       "meta": {
         "title": "Детали курса",
         "requiresAuth": true
@@ -1042,7 +1041,7 @@
     },
     "ExpertDashboard": {
       "path": "/expert-system/expdashboard",
-      "component": "@/pages/expert-system/ExpertSystemDashboard.vue",
+      "component": "@/modules/expert-system/ExpertSystemDashboard.vue",
       "meta": {
         "requiresAuth": true,
         "title": "Дашборд экспертной системы"
@@ -1051,7 +1050,7 @@
 
     "PorosityAnalysis": {
       "path": "/porosity-analysis",
-      "component": "@/pages/porosity-analysis/ParentLayout.vue",
+      "component": "@/modules/porosity-analysis/ParentLayout.vue",
       "redirect": "PorosityAnalysisMain",
       "meta": {
         "title": "Анализ поверхности",
@@ -1060,7 +1059,7 @@
     },
     "PorosityAnalysisMain": {
       "path": "/porosity-analysis",
-      "component": "@/pages/porosity-analysis/MainPage.vue",
+      "component": "@/modules/porosity-analysis/MainPage.vue",
       "meta": {
         "title": "Создать анализ",
         "requiresAuth": true
@@ -1068,7 +1067,7 @@
     },
     "PorosityAnalysisList": {
       "path": "/porosity-analysis/analyses",
-      "component": "@/pages/porosity-analysis/AnalysesList.vue",
+      "component": "@/modules/porosity-analysis/AnalysesList.vue",
       "meta": {
         "title": "Мои анализы",
         "requiresAuth": true
@@ -1076,7 +1075,7 @@
     },
     "PorosityAnalysisDetail": {
       "path": "/porosity-analysis/analysis/:id",
-      "component": "@/pages/porosity-analysis/AnalysisDetail.vue",
+      "component": "@/modules/porosity-analysis/AnalysisDetail.vue",
       "meta": {
         "title": "Детали анализа",
         "requiresAuth": true

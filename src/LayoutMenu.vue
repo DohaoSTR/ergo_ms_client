@@ -26,7 +26,7 @@ import { useUserStore } from '@/stores/userStore.js'
 import MenuList from '@/components/menu/MenuList.vue'
 import TheHeader from '@/components/header/TheHeader.vue'
 
-import StorageSidebar from '@/pages/bi/components/StorageSidebar.vue'
+import StorageSidebar from '@/modules/bi/components/StorageSidebar.vue'
 
 const userStore = useUserStore()
 const leftPadding = ref('280px')

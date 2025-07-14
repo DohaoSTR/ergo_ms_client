@@ -35,7 +35,7 @@ function getRouteConfig(routeName) {
 
 /**
  * Преобразует строковый путь к компоненту в функцию lazy import
- * @param {string} componentPath - путь к компоненту (например, "@/pages/cms/adp/user/ParentLayout.vue")
+ * @param {string} componentPath - путь к компоненту (например, "@/modules/cms/adp/user/ParentLayout.vue")
  * @returns {Function} - функция для ленивой загрузки компонента
  */
 function createLazyImport(componentPath) {
@@ -240,7 +240,7 @@ export function generateRoutesFromConfig() {
 
 /**
  * Преобразует строковый путь компонента в динамический импорт
- * @param {string} componentPath - путь к компоненту (например: "@/pages/NotFound.vue")
+ * @param {string} componentPath - путь к компоненту (например: "@/modules/NotFound.vue")
  * @returns {Function} - функция динамического импорта
  */
 function transformComponentPath(componentPath) {
