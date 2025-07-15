@@ -1,16 +1,16 @@
 <template>
     <div class="menu-toolbar">
-        <div class="tools">
-            <div class="toolbar__user">
+        <div class="tools" :class="{ 'collapsed': isCollapsed && !isHovering }">
+            <div class="toolbar__user" :class="{ 'collapsed': isCollapsed && !isHovering }">
                 <div class="tools__user__avatar">
                     <UserMenu />
                 </div>
-                <div class="tools__user__name">
+                <div class="tools__user__name" v-if="shouldShowFullInfo">
                     <div class="user__fullname">{{ userFullName }}</div>
                     <div class="user__description">В сети</div>
                 </div>
             </div>
-            <div class="tools-buttons">
+            <div class="tools-buttons" v-if="shouldShowFullInfo">
                 <div class="tools__search" style="width: 40.5px; height: 40px; display: flex; justify-content: center; align-items: center;">
                     <Search :size="24" />
                 </div>
@@ -33,7 +33,23 @@ import UserNotifications from '@/components/header/UserNotifications.vue'
 import { computed } from 'vue'
 import { useUserStore } from '@/modules/cms/js/userStore.js'
 
+const props = defineProps({
+  isCollapsed: {
+    type: Boolean,
+    default: false
+  },
+  isHovering: {
+    type: Boolean,
+    default: false
+  }
+})
+
 const userStore = useUserStore()
+
+// Определяем, нужно ли показывать полную информацию
+const shouldShowFullInfo = computed(() => {
+  return !props.isCollapsed || props.isHovering
+})
 
 const userFullName = computed(() => {
   if (!userStore.user) return 'Гость'
@@ -83,6 +99,16 @@ const userFullName = computed(() => {
     height: auto;
     padding: 10px;
     border-radius: 10px;
+    
+    .tools {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        
+        &.collapsed {
+            justify-content: center;
+        }
+    }
 }
 
 .toolbar__user{
@@ -90,6 +116,11 @@ const userFullName = computed(() => {
     align-items: center;
     gap: 10px;
     width: 100%;
+    
+    &.collapsed {
+        justify-content: center;
+        gap: 0;
+    }
 }
 
 .tools__user__name{

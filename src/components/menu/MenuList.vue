@@ -404,7 +404,7 @@ onMounted(async () => {
         />
       </li>
     </PerfectScrollbar>
-    <MenuToolbar />
+    <MenuToolbar :is-collapsed="isCollapsed" :is-hovering="isHovering" />
   </aside>
   
 </template>
