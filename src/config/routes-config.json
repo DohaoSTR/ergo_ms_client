@@ -727,6 +727,13 @@
         "requiresAuth": true
       }
     },
+    "DashboardPage": {
+      "path": "/bi/dashboard/new",
+      "component": "@/modules/bi/DashboardPage.vue",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
     "DashboardList": {
       "path": "/bi/dashboardlist",
       "component": "@/modules/bi/DashboardListPage.vue",
