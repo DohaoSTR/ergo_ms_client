@@ -727,9 +727,9 @@
         "requiresAuth": true
       }
     },
-    "StorageList": {
-      "path": "/bi/storagelist",
-      "component": "@/modules/bi/StorageListPage.vue",
+    "DashboardList": {
+      "path": "/bi/dashboardlist",
+      "component": "@/modules/bi/DashboardListPage.vue",
       "meta": {
         "requiresAuth": true
       }

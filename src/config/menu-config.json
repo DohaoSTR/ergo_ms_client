@@ -201,6 +201,12 @@
           "page": "charts",
           "isOffcanvas": true
         }
+        ,
+        {
+          "name": "Дашборды",
+          "page": "dashboards",
+          "isOffcanvas": true
+        }
       ]
     },
     {
