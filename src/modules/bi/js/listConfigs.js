@@ -9,7 +9,7 @@ export const listConfigs = {
     endpoint: endpoints.bi.ConnectionsList,
     createRoute: '/bi/connections/new',
     createButtonText: 'Создать подключение',
-    createButtonWidth: '12.5rem',
+    createButtonWidth: '15.0rem',
     searchPlaceholder: 'Поиск...',
     mapData: (item) => new ConnectionDTO({
       id: item.id,
@@ -50,7 +50,7 @@ export const listConfigs = {
     endpoint: endpoints.bi.ChartsList,
     createRoute: '/bi/chart/new',
     createButtonText: 'Создать чарт',
-    createButtonWidth: '12.5rem',
+    createButtonWidth: '10rem',
     searchPlaceholder: 'Поиск...',
     mapData: (item) => new ChartDTO({
       id: item.id,
@@ -67,7 +67,7 @@ export const listConfigs = {
   // Конфигурация для дашбордов
   dashboards: {
     type: 'dashboards',
-    endpoint: endpoints.bi.DashboardList || 'bi_analysis/bi_dashboards/',
+    endpoint: endpoints.bi.DashboardList,
     createRoute: '/bi/dashboard/new',
     createButtonText: 'Создать дашборд',
     createButtonWidth: '11rem',

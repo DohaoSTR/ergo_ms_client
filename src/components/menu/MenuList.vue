@@ -307,7 +307,7 @@ function handleAction(action) {
 const router = useRouter()
 
 function handleNavigate(item) {
-  if (['datasets', 'connections', 'charts'].includes(item.page)) {
+  if (['datasets', 'connections', 'charts', 'dashboards'].includes(item.page)) {
     emit('open-sidebar', item.page)
   } else if (item.path) {
     router.push({ name: item.path })
