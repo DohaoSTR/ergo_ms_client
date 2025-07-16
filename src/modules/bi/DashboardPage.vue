@@ -3,30 +3,59 @@
         <div class="body-header border-elements elements-color">
             <div class="header-label-icon">
                 <LayoutDashboard />
-                <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
-                    <h4 class="header-label" style="margin-bottom: 3px;">{{ dashboardName }}</h4>
+                <div ref="headerLabelTextRef" 
+                     class="header-label-text" 
+                     :class="{ 'clickable': pages.length > 1, 'dropdown-open': showPageDropdown }"
+                     @click="togglePageDropdown"
+                     @mouseenter="handleHeaderHover"
+                     @mouseleave="handleHeaderLeave">
+                    <h4 class="header-label" :style="{ marginBottom: pages.length > 1 ? '-2px' : '3px' }">{{ dashboardName }}</h4>
+                    <div v-if="pages.length > 1" 
+                         class="header-label-pages" 
+                         :class="{ 'flipping': isFlipping }"
+                         style="color: var(--color-secondary-text); font-size: 14px;">
+                        <span class="text-content">{{ displayText }}</span>
+                    </div>
+                    
+                    <!-- Выпадающее меню страниц -->
+                    <div v-if="showPageDropdown && pages.length > 1" 
+                         class="page-dropdown"
+                         :style="{ width: dropdownWidth + 'px' }">
+                        <div v-for="(page, index) in pages" 
+                             :key="index" 
+                             class="page-dropdown-item"
+                             :class="{ 'active': index === currentPageIndex }"
+                             @click="selectPage(index, $event)">
+                            {{ page.name }}
+                        </div>
+                    </div>
                 </div>
-                <button class="btn btn-sm fw-bold btn-dashboard-action" style="padding: 0; margin: 0; display: flex;"
-                    hidden>
+                <button class="btn btn-sm fw-bold btn-dashboard-action" style="padding: 0; margin: 0; display: flex;" hidden>
                     <Ellipsis size="20" />
                 </button>
             </div>
+            
             <div class="header-label-buttons">
+                <button class="btn btn-sm btn-secondary" @click="isPageWindowVisible = true">Страницы</button>
                 <button class="btn btn-sm btn-primary" :disabled="!dashboardRequiredFieldsFilled || !isDashboardDirty"
-                    @click="isSaveModalVisible = true">{{ isEditMode ? 'Сохранить изменения' : 'Создать дашборд' }}</button>
+                    @click="isSaveModalVisible = true">{{ isEditMode ? 'Сохранить изменения' : 'Создать дашборд' }}
+                </button>
             </div>
         </div>
-        <div class="body-content" 
-             :class="{ 'drag-over': isDragOver }"
-             @dragover="handleDragOver" 
-             @drop="handleDrop"
-             @dragenter="handleDragEnter"
-             @dragleave="handleDragLeave">
+        
+        <!-- Модальное окно управления страницами -->
+        <PageWindow 
+            v-if="isPageWindowVisible"
+            v-model="pages"
+            @close="isPageWindowVisible = false"
+        />
+        
+        <div class="body-content" :class="{ 'drag-over': isDragOver }" @dragover="handleDragOver" @drop="handleDrop" @dragenter="handleDragEnter" @dragleave="handleDragLeave">
             <div v-if="dashboardItems.length === 0" class="empty-dashboard">
                 <div class="empty-icon">
                     <LayoutDashboard :size="64" />
                 </div>
-                <h3 class="empty-title">Дашборд пока пустой</h3>
+                <h3 class="empty-title">{{ emptyTitleText }}</h3>
                 <p class="empty-description">
                     Перетаскивайте блоки с панели снизу, чтобы добавить на дашборд чарт, селектор или поясняющий текст
                 </p>
@@ -47,9 +76,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { LayoutDashboard, Ellipsis } from 'lucide-vue-next'
 import DashboardToolbar from './components/DashboardComponents/DashboardToolbar.vue'
+import PageWindow from './components/DashboardComponents/PageWindow.vue'
 
 // Импорт состояния сайдбаров
 import { isDatasetSidebarOpen } from '@/modules/bi/js/useSidebarStore.js'
@@ -61,6 +92,16 @@ const isSaveModalVisible = ref(false)
 const isEditMode = ref(false)
 const dashboardItems = ref([])
 const isDragOver = ref(false)
+const isPageWindowVisible = ref(false)
+const pages = ref([{ name: 'Страница 1' }])
+const currentPageIndex = ref(0)
+const showPageDropdown = ref(false)
+const headerHoverText = ref('')
+const isFlipping = ref(false)
+const headerLabelTextRef = ref(null)
+const dropdownWidth = ref(200)
+const route = useRoute()
+const router = useRouter()
 
 // Вычисляемые свойства
 const dashboardRequiredFieldsFilled = computed(() => {
@@ -70,6 +111,24 @@ const dashboardRequiredFieldsFilled = computed(() => {
 const isDashboardDirty = computed(() => {
     // TODO: Добавить логику проверки изменений
     return true
+})
+
+const currentPageName = computed(() => {
+    return pages.value[currentPageIndex.value]?.name || 'Страница 1'
+})
+
+const displayText = computed(() => {
+    if (showPageDropdown.value) {
+        return 'Сменить страницу'
+    }
+    return headerHoverText.value || currentPageName.value
+})
+
+const emptyTitleText = computed(() => {
+    if (pages.value.length > 1) {
+        return 'На этой странице дашборда пока пусто'
+    }
+    return 'Дашборд пока пустой'
 })
 
 // Вычисляем отступ для футера в зависимости от состояния сайдбаров
@@ -124,17 +183,133 @@ const handleDrop = (event) => {
     }
 }
 
+// Методы для работы со страницами
+const togglePageDropdown = () => {
+    if (pages.value.length > 1) {
+        showPageDropdown.value = !showPageDropdown.value
+        if (showPageDropdown.value && headerLabelTextRef.value) {
+            // Вычисляем ширину header-label-text
+            dropdownWidth.value = headerLabelTextRef.value.offsetWidth
+        }
+        console.log('Dropdown toggled:', showPageDropdown.value, 'Pages:', pages.value.length)
+    }
+}
+
+const handleHeaderHover = () => {
+    if (pages.value.length > 1) {
+        isFlipping.value = true
+        setTimeout(() => {
+            headerHoverText.value = 'Сменить страницу'
+            isFlipping.value = false
+        }, 150)
+    }
+}
+
+const handleHeaderLeave = () => {
+    if (pages.value.length > 1) {
+        isFlipping.value = true
+        setTimeout(() => {
+            headerHoverText.value = ''
+            isFlipping.value = false
+        }, 150)
+    }
+}
+
+const selectPage = (index, event) => {
+    event.stopPropagation() // Останавливаем всплытие события
+    currentPageIndex.value = index
+    showPageDropdown.value = false
+}
+
+const updateUrlForPage = (pageIndex) => {
+    if (pages.value.length > 1) {
+        const newQuery = { ...route.query, tab: pageIndex.toString() }
+        router.replace({ query: newQuery })
+    } else {
+        // Если страница только одна или нет страниц, убираем параметр tab из URL
+        const newQuery = { ...route.query }
+        delete newQuery.tab
+        router.replace({ query: newQuery })
+    }
+}
+
+const initializePageFromUrl = () => {
+    const tabParam = route.query.tab
+    if (tabParam && pages.value.length > 1) {
+        const pageIndex = parseInt(tabParam)
+        if (pageIndex >= 0 && pageIndex < pages.value.length) {
+            currentPageIndex.value = pageIndex
+        } else {
+            // Если индекс страницы некорректный, переключаемся на первую страницу
+            currentPageIndex.value = 0
+            updateUrlForPage(0)
+        }
+    } else if (pages.value.length === 0) {
+        // Если нет страниц, убираем параметр tab из URL
+        const newQuery = { ...route.query }
+        delete newQuery.tab
+        router.replace({ query: newQuery })
+    }
+}
+
+const handleClickOutside = (event) => {
+    const headerLabelText = event.target.closest('.header-label-text')
+    const pageDropdown = event.target.closest('.page-dropdown')
+    
+    if (!headerLabelText && !pageDropdown) {
+        showPageDropdown.value = false
+    }
+}
+
 // Инициализация отслеживания состояния сайдбара
 let cleanupSidebarTracking = null
 
 onMounted(() => {
     cleanupSidebarTracking = initializeSidebarTracking()
+    
+    // Добавляем обработчик клика вне выпадающего списка
+    document.addEventListener('click', handleClickOutside)
+    
+    // Инициализируем текущую страницу из URL
+    initializePageFromUrl()
+})
+
+// Следим за изменениями количества страниц и обновляем URL
+watch(() => pages.value.length, (newLength) => {
+    if (newLength === 0) {
+        // Если нет страниц, убираем параметр tab из URL
+        const newQuery = { ...route.query }
+        delete newQuery.tab
+        router.replace({ query: newQuery })
+    } else if (newLength === 1) {
+        // Если осталась только одна страница, убираем параметр tab из URL
+        const newQuery = { ...route.query }
+        delete newQuery.tab
+        router.replace({ query: newQuery })
+    } else if (newLength > 1) {
+        // Если стало больше одной страницы, добавляем параметр tab
+        if (currentPageIndex.value >= newLength) {
+            // Если текущая страница больше не существует, переключаемся на последнюю
+            currentPageIndex.value = newLength - 1
+        }
+        updateUrlForPage(currentPageIndex.value)
+    }
+})
+
+// Следим за изменениями текущей страницы и обновляем URL
+watch(currentPageIndex, (newIndex) => {
+    if (pages.value.length > 1) {
+        updateUrlForPage(newIndex)
+    }
 })
 
 onUnmounted(() => {
     if (cleanupSidebarTracking) {
         cleanupSidebarTracking()
     }
+    
+    // Удаляем обработчик клика вне выпадающего списка
+    document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -151,15 +326,89 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 15px 20px;
+    padding: 15px 15px;
     flex-shrink: 0;
+    position: relative;
 }
 
 .header-label-icon {
     display: flex;
-    justify-content: center;
-    gap: 15px;
+    justify-content: flex-start;
+    gap: 10px;
     align-items: center;
+    position: relative;
+    flex: 1;
+}
+
+.header-label-text{
+    position: relative;
+    overflow: visible; /* Изменено с hidden на visible для отображения dropdown */
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 5px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    
+    &.clickable:hover{
+        cursor: pointer;
+        background-color: var(--color-hover-background);
+    }
+    
+    &.dropdown-open{
+        background-color: var(--color-hover-background);
+    }
+}
+
+.page-dropdown {
+    position: absolute;
+    top: calc(100% + 2px); /* Минимальный отступ */
+    left: 0; /* Выравнивание по левому краю header-label-text */
+    background: var(--color-primary-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000; /* Повышенный z-index для отображения поверх всех элементов */
+    min-width: 150px; /* Минимальная ширина */
+    animation: dropdownFadeIn 0.2s ease;
+}
+
+.page-dropdown-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+        background-color: var(--color-hover-background);
+    }
+    
+    &.active {
+        background-color: var(--color-primary);
+        color: white;
+    }
+    
+    &:first-child {
+        border-radius: 8px 8px 0 0;
+    }
+    
+    &:last-child {
+        border-radius: 0 0 8px 8px;
+    }
+}
+
+.header-label-pages {
+    position: relative;
+    overflow: hidden;
+    height: 20px;
+    
+    .text-content {
+        transition: transform 0.3s ease;
+    }
+    
+    &.flipping .text-content {
+        transform: rotateX(90deg);
+    }
 }
 
 .header-label-buttons {
@@ -183,7 +432,7 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
+    min-height: calc(100vh - 200px); /* Учитываем высоту хедера и футера */
     text-align: center;
     color: var(--color-text-secondary);
 }
@@ -250,5 +499,16 @@ onUnmounted(() => {
 
 .elements-color {
     background-color: var(--color-primary-background);
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 </style>
