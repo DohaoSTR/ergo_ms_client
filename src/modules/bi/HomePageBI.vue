@@ -1,9 +1,10 @@
 <script setup>
 import { ref } from 'vue'
-import { Plug, Database, BarChart3 } from 'lucide-vue-next'
+import { Plug, Database, BarChart3, LayoutDashboard } from 'lucide-vue-next'
 import { isDatasetSidebarOpen, currentSidebarPage } from '@/modules/bi/js/useSidebarStore'
 import CardSidebarBody from '@/modules/bi/components/CardSidebarBody.vue'
 import StorageSidebar from '@/modules/bi/components/StorageSidebar.vue'
+import BILogo from '@/modules/bi/components/BILogo.vue'
 
 const openSidebar = (page) => {
   currentSidebarPage.value   = page
@@ -12,10 +13,10 @@ const openSidebar = (page) => {
 </script>
 
 <template>
-  <div class="homepage-bi space-y-12" style="margin-left: 5rem; margin-right: 5rem;">
-    <h1 class="text-uppercase m-0" style="font-family: 'Segoe UI', 'Inter', sans-serif; font-size: 43px; font-weight: 700; color: var(--color-primary-text);">
-      ERGO MS BI
-    </h1>
+  <div class="homepage-bi space-y-12">
+    <div class="logo" style="display: flex;">
+      <BILogo class="bi-logo" style="height: 64px;" />
+    </div>
 
     <!-- Баннер -->
     <div class="banner-wrapper mt-5">
@@ -36,7 +37,18 @@ const openSidebar = (page) => {
     <div style="margin-top: 30px; display: flex; gap: 20px; justify-content: center;">
       <div class="card-section">
         <CardSidebarBody
+          :icon="Plug"
+          icolor="rgb(var(--bs-info-rgb))"
+          title="Подключения"
+          targetPage="connections"
+          description="Добавляйте внешние источники данных, выполняйте синхронизацию и объединяйте данные из разных систем."
+          @open="() => openSidebar('connections')"
+        />
+      </div>
+      <div class="card-section">
+        <CardSidebarBody
           :icon="Database"
+          icolor="rgb(var(--bs-primary-rgb))"
           title="Датасеты"
           targetPage="datasets"
           description="Создавайте и управляйте моделями данных с вычисляемыми полями, фильтрами и структурой для анализа."
@@ -45,20 +57,22 @@ const openSidebar = (page) => {
       </div>
       <div class="card-section">
         <CardSidebarBody
-          :icon="Plug"
-          title="Подключения"
-          targetPage="connections"
-          description="Добавляйте внешние источники данных, настраивайте синхронизацию и объединяйте данные из разных систем."
-          @open="() => openSidebar('connections')"
-        />
-      </div>
-      <div class="card-section">
-        <CardSidebarBody
           :icon="BarChart3"
+          icolor="rgb(var(--bs-warning-rgb))"
           title="Чарты"
           targetPage="charts"
           description="Создавайте графики, таблицы и визуальные представления данных для эффективного анализа и принятия решений."
           @open="() => openSidebar('charts')"
+        />
+      </div>
+      <div class="card-section">
+        <CardSidebarBody
+          :icon="LayoutDashboard"
+          icolor="rgb(var(--bs-success-rgb))"
+          title="Дашборды"
+          targetPage="dashboards"
+          description="Создавайте интерактивные дашборды и объединяйте графики на одной странице для мониторинга и анализа данных."
+          @open="() => openSidebar('dashboards')"
         />
       </div>
     </div>
@@ -85,13 +99,16 @@ const openSidebar = (page) => {
 }
 
 .card-section {
-  padding: 20px;
+  box-shadow: none;
+  border-radius: 15px;
+  background-color: var(--color-primary-background);
   display: flex;
   flex-direction: column;
-  background-color: var(--color-primary-background);
-  border-radius: 15px;
-  width: 260px;
-  height: 300px;
-  flex: 1;
+  flex: 1 1 0;
+}
+@media (max-width: 900px) {
+  .card-section { width: 100%; min-width: 0; }
+  .homepage-bi > div[style*="display: flex"] { flex-direction: column; gap: 22px !important; }
 }
 </style>
+

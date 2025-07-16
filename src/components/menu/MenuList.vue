@@ -12,6 +12,7 @@ import {
 } from '@/js/menu-sections.js'
 
 import MenuGroup from '@/components/menu/MenuGroup.vue'
+import MenuToolbar from '@/components/menu/MenuToolbar.vue'
 import { useRoute } from 'vue-router'
 import { useRouter } from 'vue-router'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
@@ -306,7 +307,7 @@ function handleAction(action) {
 const router = useRouter()
 
 function handleNavigate(item) {
-  if (['datasets', 'connections', 'charts'].includes(item.page)) {
+  if (['datasets', 'connections', 'charts', 'dashboards'].includes(item.page)) {
     emit('open-sidebar', item.page)
   } else if (item.path) {
     router.push({ name: item.path })
@@ -403,7 +404,9 @@ onMounted(async () => {
         />
       </li>
     </PerfectScrollbar>
+    <MenuToolbar :is-collapsed="isCollapsed" :is-hovering="isHovering" />
   </aside>
+  
 </template>
 
 <style lang="scss" scoped>

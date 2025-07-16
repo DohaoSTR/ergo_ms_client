@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import DatasetListPage from '@/modules/bi/DatasetListPage.vue'
 import ConnectionListPage from '@/modules/bi/ConnectionListPage.vue'
 import ChartListPage from '@/modules/bi/ChartListPage.vue'
+import DashboardListPage from '@/modules/bi/DashboardListPage.vue'
 
 defineProps({
   isDatasetSidebarOpen: Boolean,
@@ -14,10 +15,11 @@ const emit = defineEmits(['close'])
 const titleMap = {
   datasets: 'Датасеты',
   connections: 'Подключения',
-  charts: 'Чарты'
+  charts: 'Чарты',
+  dashboards: 'Дашборды'
 }
 
-const title = computed(() => titleMap[props.currentPage] || 'Раздел')
+const title = computed(() => titleMap[props.currentPage] || '')
 </script>
 
 <template>
@@ -32,7 +34,8 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
         {{ currentPage === 'datasets' ? 'Датасеты'
             : currentPage === 'connections' ? 'Подключения'
             : currentPage === 'charts' ? 'Чарты'
-            : 'Раздел' }}
+            : currentPage === 'dashboards' ? 'Дашборды'
+            : '' }}
       </h5>
       <button type="button" class="btn-close" @click="$emit('close')" aria-label="Закрыть" />
     </div>
@@ -42,7 +45,8 @@ const title = computed(() => titleMap[props.currentPage] || 'Раздел')
         :is="{
           datasets:    DatasetListPage,
           connections: ConnectionListPage,
-          charts:      ChartListPage
+          charts:      ChartListPage,
+          dashboards:  DashboardListPage
         }[ currentPage ]"
       />
     </div>
