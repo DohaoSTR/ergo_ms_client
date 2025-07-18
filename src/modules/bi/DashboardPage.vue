@@ -17,7 +17,6 @@
                         <span class="text-content">{{ displayText }}</span>
                     </div>
                     
-                    <!-- Выпадающее меню страниц -->
                     <div v-if="showPageDropdown && pages.length > 1" 
                          class="page-dropdown"
                          :style="{ width: dropdownWidth + 'px' }">
@@ -30,9 +29,6 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn btn-sm fw-bold btn-dashboard-action" style="padding: 0; margin: 0; display: flex;" hidden>
-                    <Ellipsis size="20" />
-                </button>
             </div>
             
             <div class="header-label-buttons">
@@ -43,30 +39,23 @@
             </div>
         </div>
         
-        <!-- Модальное окно управления страницами -->
         <PageWindow 
             v-if="isPageWindowVisible"
             v-model="pages"
             @close="isPageWindowVisible = false"
         />
         
-        <div class="body-content" :class="{ 'drag-over': isDragOver }" @dragover="handleDragOver" @drop="handleDrop" @dragenter="handleDragEnter" @dragleave="handleDragLeave">
-            <div v-if="currentPageItems.length === 0" class="empty-dashboard">
-                <div class="empty-icon">
-                    <LayoutDashboard :size="64" />
-                </div>
-                <h3 class="empty-title">{{ emptyTitleText }}</h3>
-                <p class="empty-description">
-                    Перетаскивайте блоки с панели снизу, чтобы добавить на дашборд чарт, селектор или поясняющий текст
-                </p>
-            </div>
-            <div v-else class="dashboard-items">
-                <!-- Здесь будут отображаться добавленные элементы -->
-                <div v-for="(item, index) in currentPageItems" :key="index" class="dashboard-item">
-                    {{ item.type }} - {{ item.id }}
-                </div>
-            </div>
+        <div class="body-content">
+            <DashboardGrid
+                :items="currentPageItems"
+                :dragged-type="draggedType"
+                @update:items="updateCurrentPageItems"
+                @item-select="handleItemSelect"
+                @item-edit="handleItemEdit"
+                @item-delete="handleItemDelete"
+            />
         </div>
+        
         <div class="body-footer" :style="{ left: footerLeftOffset, width: footerWidth }">
             <div class="footer-buttons">
                 <DashboardToolbar />
@@ -78,20 +67,18 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { LayoutDashboard, Ellipsis } from 'lucide-vue-next'
+import { LayoutDashboard } from 'lucide-vue-next'
 import DashboardToolbar from './components/DashboardComponents/DashboardToolbar.vue'
 import PageWindow from './components/DashboardComponents/PageWindow.vue'
+import DashboardGrid from './components/DashboardComponents/DashboardGrid.vue'
 
-// Импорт состояния сайдбаров
 import { isDatasetSidebarOpen } from '@/modules/bi/js/useSidebarStore.js'
 import { isSidebarCollapsed, initializeSidebarTracking } from '@/modules/bi/js/useMainSidebarStore.js'
 
-// Реактивные переменные
 const dashboardName = ref('Новый дашборд')
 const isSaveModalVisible = ref(false)
 const isEditMode = ref(false)
-const dashboardItems = ref({}) // Изменено на объект для хранения элементов по страницам
-const isDragOver = ref(false)
+const dashboardItems = ref({})
 const isPageWindowVisible = ref(false)
 const pages = ref([{ name: 'Страница 1' }])
 const currentPageIndex = ref(0)
@@ -102,14 +89,49 @@ const headerLabelTextRef = ref(null)
 const dropdownWidth = ref(200)
 const route = useRoute()
 const router = useRouter()
+const draggedType = ref('')
 
-// Вычисляемые свойства
+const handleGlobalDragStart = (event) => {
+    if (event.target.closest('.dashboard-toolbar .button')) {
+        const button = event.target.closest('.button')
+        const itemType = button.querySelector('.button-text')?.textContent?.trim()
+        if (itemType && ['Чарт', 'Селектор', 'Текст', 'Заголовок'].includes(itemType)) {
+            draggedType.value = itemType
+            console.log('Drag started with type:', itemType)
+            
+            event.dataTransfer.setData('text/plain', itemType)
+            event.dataTransfer.effectAllowed = 'copy'
+        }
+    }
+}
+
+const handleGlobalDragEnd = () => {
+    console.log('Drag ended, clearing type:', draggedType.value)
+    draggedType.value = ''
+}
+
+const handleGlobalMouseMove = (event) => {
+    if (draggedType.value) {
+        const dashboardGrid = document.querySelector('.dashboard-grid')
+        if (dashboardGrid) {
+            const gridRect = dashboardGrid.getBoundingClientRect()
+            const isOverGrid = event.clientX >= gridRect.left && 
+                              event.clientX <= gridRect.right && 
+                              event.clientY >= gridRect.top && 
+                              event.clientY <= gridRect.bottom
+            
+            if (isOverGrid) {
+                console.log('Mouse over grid with dragged type:', draggedType.value)
+            }
+        }
+    }
+}
+
 const dashboardRequiredFieldsFilled = computed(() => {
     return dashboardName.value.trim().length > 0
 })
 
 const isDashboardDirty = computed(() => {
-    // TODO: Добавить логику проверки изменений
     return true
 })
 
@@ -128,14 +150,6 @@ const currentPageItems = computed(() => {
     return dashboardItems.value[currentPageIndex.value] || []
 })
 
-const emptyTitleText = computed(() => {
-    if (pages.value.length > 1) {
-        return 'На этой странице дашборда пока пусто'
-    }
-    return 'Дашборд пока пустой'
-})
-
-// Вычисляем отступ для футера в зависимости от состояния сайдбаров
 const footerLeftOffset = computed(() => {
     const mainSidebarWidth = isSidebarCollapsed.value ? 120 : 260
     const biSidebarWidth = isDatasetSidebarOpen.value ? 768 : 0
@@ -148,61 +162,25 @@ const footerWidth = computed(() => {
     return `calc(100% - ${mainSidebarWidth + biSidebarWidth}px)`
 })
 
-// Обработчики перетаскивания
-const handleDragStart = (event, itemType) => {
-    event.dataTransfer.setData('text/plain', itemType)
-    event.dataTransfer.effectAllowed = 'copy'
+const updateCurrentPageItems = (newItems) => {
+    dashboardItems.value[currentPageIndex.value] = newItems
 }
 
-const handleDragOver = (event) => {
-    event.preventDefault()
-    event.dataTransfer.dropEffect = 'copy'
-    isDragOver.value = true
+const handleItemSelect = (item) => {
 }
 
-const handleDragEnter = (event) => {
-    event.preventDefault()
-    isDragOver.value = true
+const handleItemEdit = (item) => {
 }
 
-const handleDragLeave = (event) => {
-    // Проверяем, что курсор действительно покинул область
-    if (!event.currentTarget.contains(event.relatedTarget)) {
-        isDragOver.value = false
-    }
+const handleItemDelete = (item) => {
 }
 
-const handleDrop = (event) => {
-    event.preventDefault()
-    isDragOver.value = false
-    
-    const itemType = event.dataTransfer.getData('text/plain')
-    if (itemType) {
-        const newItem = {
-            id: Date.now(),
-            type: itemType,
-            position: { x: event.offsetX, y: event.offsetY }
-        }
-        
-        // Инициализируем массив для текущей страницы, если его нет
-        if (!dashboardItems.value[currentPageIndex.value]) {
-            dashboardItems.value[currentPageIndex.value] = []
-        }
-        
-        // Добавляем элемент на текущую страницу
-        dashboardItems.value[currentPageIndex.value].push(newItem)
-    }
-}
-
-// Методы для работы со страницами
 const togglePageDropdown = () => {
     if (pages.value.length > 1) {
         showPageDropdown.value = !showPageDropdown.value
         if (showPageDropdown.value && headerLabelTextRef.value) {
-            // Вычисляем ширину header-label-text
             dropdownWidth.value = headerLabelTextRef.value.offsetWidth
         }
-        console.log('Dropdown toggled:', showPageDropdown.value, 'Pages:', pages.value.length)
     }
 }
 
@@ -227,7 +205,7 @@ const handleHeaderLeave = () => {
 }
 
 const selectPage = (index, event) => {
-    event.stopPropagation() // Останавливаем всплытие события
+    event.stopPropagation()
     currentPageIndex.value = index
     showPageDropdown.value = false
 }
@@ -237,7 +215,6 @@ const updateUrlForPage = (pageIndex) => {
         const newQuery = { ...route.query, tab: pageIndex.toString() }
         router.replace({ query: newQuery })
     } else {
-        // Если страница только одна или нет страниц, убираем параметр tab из URL
         const newQuery = { ...route.query }
         delete newQuery.tab
         router.replace({ query: newQuery })
@@ -251,12 +228,10 @@ const initializePageFromUrl = () => {
         if (pageIndex >= 0 && pageIndex < pages.value.length) {
             currentPageIndex.value = pageIndex
         } else {
-            // Если индекс страницы некорректный, переключаемся на первую страницу
             currentPageIndex.value = 0
             updateUrlForPage(0)
         }
     } else if (pages.value.length === 0) {
-        // Если нет страниц, убираем параметр tab из URL
         const newQuery = { ...route.query }
         delete newQuery.tab
         router.replace({ query: newQuery })
@@ -272,67 +247,54 @@ const handleClickOutside = (event) => {
     }
 }
 
-// Инициализация отслеживания состояния сайдбара
 let cleanupSidebarTracking = null
 
 onMounted(() => {
     cleanupSidebarTracking = initializeSidebarTracking()
-    
-    // Добавляем обработчик клика вне выпадающего списка
     document.addEventListener('click', handleClickOutside)
-    
-    // Инициализируем текущую страницу из URL
+    document.addEventListener('dragstart', handleGlobalDragStart)
+    document.addEventListener('dragend', handleGlobalDragEnd)
+    document.addEventListener('mousemove', handleGlobalMouseMove)
     initializePageFromUrl()
     
-    // Инициализируем элементы для первой страницы, если их нет
     if (!dashboardItems.value[0]) {
         dashboardItems.value[0] = []
     }
 })
 
-// Следим за изменениями количества страниц и обновляем URL
 watch(() => pages.value.length, (newLength, oldLength) => {
     if (newLength === 0) {
-        // Если нет страниц, убираем параметр tab из URL
         const newQuery = { ...route.query }
         delete newQuery.tab
         router.replace({ query: newQuery })
     } else if (newLength === 1) {
-        // Если осталась только одна страница, убираем параметр tab из URL
         const newQuery = { ...route.query }
         delete newQuery.tab
         router.replace({ query: newQuery })
     } else if (newLength > 1) {
-        // Если стало больше одной страницы, добавляем параметр tab
         if (currentPageIndex.value >= newLength) {
-            // Если текущая страница больше не существует, переключаемся на последнюю
             currentPageIndex.value = newLength - 1
         }
         updateUrlForPage(currentPageIndex.value)
     }
     
-    // Обрабатываем изменения в элементах дашборда при изменении количества страниц
     if (newLength > oldLength) {
-        // Добавлена новая страница - создаем пустой массив для неё
         const newPageIndex = newLength - 1
         if (!dashboardItems.value[newPageIndex]) {
             dashboardItems.value[newPageIndex] = []
         }
     } else if (newLength < oldLength) {
-        // Удалена страница - удаляем элементы этой страницы
         const deletedPageIndex = oldLength - 1
         if (dashboardItems.value[deletedPageIndex]) {
             delete dashboardItems.value[deletedPageIndex]
         }
         
-        // Если удаленная страница была текущей, переключаемся на последнюю
         if (currentPageIndex.value >= newLength) {
             currentPageIndex.value = newLength - 1
         }
     }
 })
 
-// Следим за изменениями текущей страницы и обновляем URL
 watch(currentPageIndex, (newIndex) => {
     if (pages.value.length > 1) {
         updateUrlForPage(newIndex)
@@ -343,9 +305,10 @@ onUnmounted(() => {
     if (cleanupSidebarTracking) {
         cleanupSidebarTracking()
     }
-    
-    // Удаляем обработчик клика вне выпадающего списка
     document.removeEventListener('click', handleClickOutside)
+    document.removeEventListener('dragstart', handleGlobalDragStart)
+    document.removeEventListener('dragend', handleGlobalDragEnd)
+    document.removeEventListener('mousemove', handleGlobalMouseMove)
 })
 </script>
 
@@ -355,7 +318,7 @@ onUnmounted(() => {
     flex-direction: column;
     justify-content: space-between;
     min-height: 100vh;
-    padding-bottom: 80px; /* Отступ для закрепленного футера */
+    padding-bottom: 80px;
 }
 
 .body-header {
@@ -378,7 +341,7 @@ onUnmounted(() => {
 
 .header-label-text{
     position: relative;
-    overflow: visible; /* Изменено с hidden на visible для отображения dropdown */
+    overflow: visible;
     white-space: nowrap;
     text-overflow: ellipsis;
     padding: 5px;
@@ -397,14 +360,14 @@ onUnmounted(() => {
 
 .page-dropdown {
     position: absolute;
-    top: calc(100% + 2px); /* Минимальный отступ */
-    left: 0; /* Выравнивание по левому краю header-label-text */
+    top: calc(100% + 2px);
+    left: 0;
     background: var(--color-primary-background);
     border: 1px solid var(--color-border);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 10000; /* Повышенный z-index для отображения поверх всех элементов */
-    min-width: 150px; /* Минимальная ширина */
+    z-index: 10000;
+    min-width: 150px;
     animation: dropdownFadeIn 0.2s ease;
 }
 
@@ -454,62 +417,8 @@ onUnmounted(() => {
 
 .body-content {
     flex: 1;
-    padding: 20px;
     position: relative;
-    transition: background-color 0.2s ease;
-    
-    &.drag-over {
-        background-color: rgba(var(--color-primary-rgb), 0.05);
-    }
-}
-
-.empty-dashboard {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: calc(100vh - 200px); /* Учитываем высоту хедера и футера */
-    text-align: center;
-    color: var(--color-text-secondary);
-}
-
-.empty-icon {
-    margin-bottom: 20px;
-    opacity: 0.6;
-}
-
-.empty-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: var(--color-text-primary);
-}
-
-.empty-description {
-    font-size: 1rem;
-    line-height: 1.5;
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.dashboard-items {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 20px 0;
-}
-
-.dashboard-item {
-    background: var(--color-primary-background);
-    border: 2px solid var(--color-border);
-    border-radius: 8px;
-    padding: 20px;
-    min-height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-    color: var(--color-text-primary);
+    overflow: hidden;
 }
 
 .body-footer{

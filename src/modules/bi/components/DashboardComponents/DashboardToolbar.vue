@@ -2,25 +2,29 @@
     <div class="dashboard-toolbar">
         <div class="button" 
              draggable="true"
-             @dragstart="handleDragStart($event, 'Чарт')">
+             @dragstart="handleDragStart($event, 'Чарт')"
+             @dragend="handleDragEnd">
             <div class="button-icon"><ChartColumn :size="16" /></div>
             <div class="button-text">Чарт</div>
         </div>  
         <div class="button" 
              draggable="true"
-             @dragstart="handleDragStart($event, 'Селектор')">
+             @dragstart="handleDragStart($event, 'Селектор')"
+             @dragend="handleDragEnd">
             <div class="button-icon"><Settings2 :size="16" /></div>
             <div class="button-text">Селектор</div>
         </div>  
         <div class="button" 
              draggable="true"
-             @dragstart="handleDragStart($event, 'Текст')">
+             @dragstart="handleDragStart($event, 'Текст')"
+             @dragend="handleDragEnd">
             <div class="button-icon"><Text :size="16" /></div>
             <div class="button-text">Текст</div>
         </div>
         <div class="button" 
              draggable="true"
-             @dragstart="handleDragStart($event, 'Заголовок')">
+             @dragstart="handleDragStart($event, 'Заголовок')"
+             @dragend="handleDragEnd">
             <div class="button-icon"><Heading :size="16" /></div>
             <div class="button-text">Заголовок</div>
         </div>
@@ -30,18 +34,19 @@
 <script setup>
 import { ChartColumn, Settings2, Text, Heading } from 'lucide-vue-next'
 
-// Обработчик начала перетаскивания
 const handleDragStart = (event, itemType) => {
     event.dataTransfer.setData('text/plain', itemType)
     event.dataTransfer.effectAllowed = 'copy'
     
-    // Добавляем визуальный эффект при перетаскивании
-    event.target.style.opacity = '0.5'
+    const dragImage = new Image()
+    dragImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs='
+    event.dataTransfer.setDragImage(dragImage, 0, 0)
     
-    // Восстанавливаем прозрачность после завершения перетаскивания
-    setTimeout(() => {
-        event.target.style.opacity = '1'
-    }, 0)
+    event.target.classList.add('dragging')
+}
+
+const handleDragEnd = (event) => {
+    event.target.classList.remove('dragging')
 }
 </script>
 
@@ -55,6 +60,7 @@ const handleDragStart = (event, itemType) => {
     padding: 10px;
     border-radius: 6px;
 }
+
 .button{
     display: flex;
     flex-direction: column;
@@ -63,13 +69,21 @@ const handleDragStart = (event, itemType) => {
     width: 100px;
     height: 100%;
     transition: all 0.2s ease;
-}
-.button:hover{
-    background-color: var(--color-hover-background);
-    cursor: grab;
     border-radius: 5px;
-}
-.button:active {
-    cursor: grabbing;
+    
+    &:hover{
+        background-color: var(--color-hover-background);
+        cursor: grab;
+    }
+    
+    &:active {
+        cursor: grabbing;
+    }
+    
+    &.dragging {
+        opacity: 0.5;
+        transform: scale(0.95);
+        background-color: var(--color-hover-background);
+    }
 }
 </style>
