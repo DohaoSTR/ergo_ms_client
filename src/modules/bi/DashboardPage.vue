@@ -51,7 +51,7 @@
         />
         
         <div class="body-content" :class="{ 'drag-over': isDragOver }" @dragover="handleDragOver" @drop="handleDrop" @dragenter="handleDragEnter" @dragleave="handleDragLeave">
-            <div v-if="dashboardItems.length === 0" class="empty-dashboard">
+            <div v-if="currentPageItems.length === 0" class="empty-dashboard">
                 <div class="empty-icon">
                     <LayoutDashboard :size="64" />
                 </div>
@@ -62,7 +62,7 @@
             </div>
             <div v-else class="dashboard-items">
                 <!-- Здесь будут отображаться добавленные элементы -->
-                <div v-for="(item, index) in dashboardItems" :key="index" class="dashboard-item">
+                <div v-for="(item, index) in currentPageItems" :key="index" class="dashboard-item">
                     {{ item.type }} - {{ item.id }}
                 </div>
             </div>
@@ -90,7 +90,7 @@ import { isSidebarCollapsed, initializeSidebarTracking } from '@/modules/bi/js/u
 const dashboardName = ref('Новый дашборд')
 const isSaveModalVisible = ref(false)
 const isEditMode = ref(false)
-const dashboardItems = ref([])
+const dashboardItems = ref({}) // Изменено на объект для хранения элементов по страницам
 const isDragOver = ref(false)
 const isPageWindowVisible = ref(false)
 const pages = ref([{ name: 'Страница 1' }])
@@ -122,6 +122,10 @@ const displayText = computed(() => {
         return 'Сменить страницу'
     }
     return headerHoverText.value || currentPageName.value
+})
+
+const currentPageItems = computed(() => {
+    return dashboardItems.value[currentPageIndex.value] || []
 })
 
 const emptyTitleText = computed(() => {
@@ -179,7 +183,14 @@ const handleDrop = (event) => {
             type: itemType,
             position: { x: event.offsetX, y: event.offsetY }
         }
-        dashboardItems.value.push(newItem)
+        
+        // Инициализируем массив для текущей страницы, если его нет
+        if (!dashboardItems.value[currentPageIndex.value]) {
+            dashboardItems.value[currentPageIndex.value] = []
+        }
+        
+        // Добавляем элемент на текущую страницу
+        dashboardItems.value[currentPageIndex.value].push(newItem)
     }
 }
 
@@ -272,10 +283,15 @@ onMounted(() => {
     
     // Инициализируем текущую страницу из URL
     initializePageFromUrl()
+    
+    // Инициализируем элементы для первой страницы, если их нет
+    if (!dashboardItems.value[0]) {
+        dashboardItems.value[0] = []
+    }
 })
 
 // Следим за изменениями количества страниц и обновляем URL
-watch(() => pages.value.length, (newLength) => {
+watch(() => pages.value.length, (newLength, oldLength) => {
     if (newLength === 0) {
         // Если нет страниц, убираем параметр tab из URL
         const newQuery = { ...route.query }
@@ -293,6 +309,26 @@ watch(() => pages.value.length, (newLength) => {
             currentPageIndex.value = newLength - 1
         }
         updateUrlForPage(currentPageIndex.value)
+    }
+    
+    // Обрабатываем изменения в элементах дашборда при изменении количества страниц
+    if (newLength > oldLength) {
+        // Добавлена новая страница - создаем пустой массив для неё
+        const newPageIndex = newLength - 1
+        if (!dashboardItems.value[newPageIndex]) {
+            dashboardItems.value[newPageIndex] = []
+        }
+    } else if (newLength < oldLength) {
+        // Удалена страница - удаляем элементы этой страницы
+        const deletedPageIndex = oldLength - 1
+        if (dashboardItems.value[deletedPageIndex]) {
+            delete dashboardItems.value[deletedPageIndex]
+        }
+        
+        // Если удаленная страница была текущей, переключаемся на последнюю
+        if (currentPageIndex.value >= newLength) {
+            currentPageIndex.value = newLength - 1
+        }
     }
 })
 
