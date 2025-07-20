@@ -34,6 +34,8 @@
 <script setup>
 import { ChartColumn, Settings2, Text, Heading } from 'lucide-vue-next'
 
+const emit = defineEmits(['drag-start', 'drag-end'])
+
 const handleDragStart = (event, itemType) => {
     event.dataTransfer.setData('text/plain', itemType)
     event.dataTransfer.effectAllowed = 'copy'
@@ -43,10 +45,14 @@ const handleDragStart = (event, itemType) => {
     event.dataTransfer.setDragImage(dragImage, 0, 0)
     
     event.target.classList.add('dragging')
+    
+    emit('drag-start', itemType)
 }
 
 const handleDragEnd = (event) => {
     event.target.classList.remove('dragging')
+    
+    emit('drag-end')
 }
 </script>
 

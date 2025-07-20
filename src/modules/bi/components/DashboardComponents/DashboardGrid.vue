@@ -6,114 +6,91 @@
     @dragenter="handleDragEnter" 
     @dragleave="handleDragLeave"
     @mousemove="handleMouseMove"
+    ref="gridContainer"
   >
-    <div 
-      v-if="items.length === 0"
-      class="empty-grid"
-      :class="{ 'drag-over': isDragOver }"
-    >
+    <div v-if="items.length === 0" class="empty-grid" :class="{ 'drag-over': isDragOver }">
       <div class="empty-content">
         <LayoutDashboard :size="48" />
         <p>Перетащите элемент сюда чтобы начать</p>
       </div>
     </div>
 
-    <draggable
-      v-else
-      v-model="localItems"
-      :group="{ name: 'dashboard-items', pull: true, put: true }"
-      :animation="200"
-      :ghost-class="'ghost-item'"
-      :chosen-class="'chosen-item'"
-      :drag-class="'drag-item'"
-      :force-fallback="false"
-      item-key="id"
-      class="grid-container"
-      @start="onDragStart"
-      @end="onDragEnd"
-      @change="onChange"
-    >
-      <template #item="{ element }">
-        <div
-          :key="element.id"
-          class="grid-item"
-          :class="getItemClass(element)"
-          :style="getItemStyle(element)"
-          @click="selectItem(element)"
-          @dblclick="editItem(element)"
-        >
-          <div class="item-header">
-            <span class="item-type">{{ element.type }}</span>
-            <div class="item-actions">
-              <button class="btn-edit" @click.stop="editItem(element)">
-                <Settings2 :size="16" />
-              </button>
-              <button class="btn-delete" @click.stop="deleteItem(element)">
-                <X :size="16" />
-              </button>
-            </div>
-          </div>
-          <div class="item-content">
-            <div class="item-preview">
-              {{ getItemPreview(element) }}
-            </div>
+    <div v-else class="grid-container">
+      <div
+        v-for="item in items"
+        :key="item.id"
+        class="grid-item"
+        :class="getItemClass(item)"
+        :style="getItemStyle(item)"
+        @click="selectItem(item)"
+        @dblclick="editItem(item)"
+        @mousedown="startDrag(item, $event)"
+      >
+        <div class="item-header">
+          <span class="item-type">{{ item.type }}</span>
+          <div class="item-actions">
+            <button class="btn-edit" @click.stop="editItem(item)">
+              <Settings2 :size="16" />
+            </button>
+            <button class="btn-delete" @click.stop="deleteItem(item)">
+              <X :size="16" />
+            </button>
           </div>
         </div>
-      </template>
-    </draggable>
+        <div class="item-content">
+          <div class="item-preview">
+            {{ getItemPreview(item) }}
+          </div>
+        </div>
+        
+        <div 
+          v-if="item.selected"
+          class="resize-handles"
+        >
+          <div class="resize-handle resize-se" @mousedown.stop="startResize(item, 'se', $event)"></div>
+          <div class="resize-handle resize-sw" @mousedown.stop="startResize(item, 'sw', $event)"></div>
+          <div class="resize-handle resize-ne" @mousedown.stop="startResize(item, 'ne', $event)"></div>
+          <div class="resize-handle resize-nw" @mousedown.stop="startResize(item, 'nw', $event)"></div>
+        </div>
+      </div>
+    </div>
 
-    <div 
-      v-if="showDropZone && localItems.length === 0 && activeDraggedType" 
-      class="drop-zone-placeholder empty-drop-zone"
-      :style="{
-        gridColumn: '1 / span 2',
-        gridRow: '1 / span 2'
-      }"
-    >
-      <div class="drop-zone-content">
-        <span>Разместить здесь</span>
-      </div>
-    </div>
-    
-    <div 
-      v-if="showDropZone && localItems.length > 0 && dropZoneStyle" 
-      class="drop-zone-placeholder"
-      :style="dropZoneStyle"
-    >
-      <div class="drop-zone-content">
-        <span>Разместить здесь</span>
-      </div>
-    </div>
-    
     <Teleport to="body">
       <div 
-        v-if="showDragPreview && activeDraggedType" 
-        class="drag-preview"
-        :style="dragPreviewStyle"
+        v-if="showGrayPlaceholder && grayPlaceholderStyle" 
+        class="gray-placeholder"
+        :style="grayPlaceholderStyle"
       >
-        <div class="preview-content">
-          <span>{{ activeDraggedType }}</span>
-        </div>
       </div>
     </Teleport>
+    
+    <div 
+      v-if="showYellowPlaceholder && yellowPlaceholderStyle" 
+      class="yellow-placeholder"
+      :style="yellowPlaceholderStyle"
+    >
+      <div class="placeholder-content">
+        <span>Разместить здесь</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { Teleport } from 'vue'
-import draggable from 'vuedraggable'
 import { Settings2, X, LayoutDashboard } from 'lucide-vue-next'
 
 const ELEMENT_SIZES = {
-  'Чарт': { cols: 2, rows: 2 },
-  'Селектор': { cols: 2, rows: 1 },
-  'Текст': { cols: 2, rows: 1 },
-  'Заголовок': { cols: 4, rows: 1 }
+  'Чарт': { width: 560, height: 300 },
+  'Селектор': { width: 370, height: 50 },
+  'Текст': { width: 560, height: 150 },
+  'Заголовок': { width: Math.min(1320, MAX_PAGE_WIDTH - GRID_PADDING * 2), height: 50 }
 }
 
-const GRID_COLS = 4
 const GRID_GAP = 10
+const GRID_PADDING = 10
+const MAX_PAGE_WIDTH = 1320
 
 const props = defineProps({
   items: {
@@ -133,72 +110,159 @@ const emit = defineEmits([
   'item-delete'
 ])
 
+const gridContainer = ref(null)
 const localItems = ref([])
 const isDragOver = ref(false)
-const showDragPreview = ref(false)
-const showDropZone = ref(false)
-const localDraggedType = ref('')
-const dragPreviewPosition = ref({ x: 0, y: 0 })
-const dropZonePosition = ref({ gridColumn: 1, gridRow: 1, cols: 1, rows: 1 })
+const showGrayPlaceholder = ref(false)
+const showYellowPlaceholder = ref(false)
+const grayPlaceholderPosition = ref({ x: 0, y: 0 })
+const yellowPlaceholderPosition = ref({ x: 0, y: 0, width: 0, height: 0 })
+const currentDraggedType = ref('')
+const draggedItem = ref(null)
+const dragOffset = ref({ x: 0, y: 0 })
+const isDraggingExisting = ref(false)
+const resizingItem = ref(null)
+const resizeStartPos = ref({ x: 0, y: 0 })
+const resizeStartSize = ref({ width: 0, height: 0 })
+const resizeDirection = ref('')
 
-const activeDraggedType = computed(() => {
-  return props.draggedType || localDraggedType.value
-})
-
-const dragPreviewStyle = computed(() => {
-  if (!showDragPreview.value || !activeDraggedType.value) return { display: 'none' }
+const grayPlaceholderStyle = computed(() => {
+  if (!showGrayPlaceholder.value || !currentDraggedType.value) return null
+  
+  const size = ELEMENT_SIZES[currentDraggedType.value]
+  if (!size) return null
   
   return {
     position: 'fixed',
-    left: `${dragPreviewPosition.value.x}px`,
-    top: `${dragPreviewPosition.value.y}px`,
-    transform: 'translate(-50%, -50%)',
+    left: `${grayPlaceholderPosition.value.x - size.width / 2}px`,
+    top: `${grayPlaceholderPosition.value.y - size.height / 2}px`,
+    width: `${size.width}px`,
+    height: `${size.height}px`,
     pointerEvents: 'none',
-    zIndex: 9999,
-    userSelect: 'none',
-    display: 'block'
+    zIndex: 9999
   }
 })
 
-const dropZoneStyle = computed(() => {
-  if (!showDropZone.value) return null
+const yellowPlaceholderStyle = computed(() => {
+  if (!showYellowPlaceholder.value) return null
   
-  const pos = dropZonePosition.value
   return {
-    gridColumn: `${pos.gridColumn} / span ${pos.cols}`,
-    gridRow: `${pos.gridRow} / span ${pos.rows}`
+    position: 'absolute',
+    left: `${yellowPlaceholderPosition.value.x}px`,
+    top: `${yellowPlaceholderPosition.value.y}px`,
+    width: `${yellowPlaceholderPosition.value.width}px`,
+    height: `${yellowPlaceholderPosition.value.height}px`,
+    pointerEvents: 'none'
   }
+})
+
+// Вычисляем стили для временного сдвига существующих элементов
+const shiftedItemsStyle = computed(() => {
+  if (!showYellowPlaceholder.value) {
+    return {}
+  }
+  
+  const placeholderX = yellowPlaceholderPosition.value.x
+  const placeholderY = yellowPlaceholderPosition.value.y
+  const placeholderWidth = yellowPlaceholderPosition.value.width
+  const placeholderHeight = yellowPlaceholderPosition.value.height
+  
+  const styles = {}
+  
+  localItems.value.forEach(item => {
+    const itemX = item.x || 0
+    const itemY = item.y || 0
+    const itemWidth = item.width || ELEMENT_SIZES[item.type]?.width || 200
+    const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
+    
+    // Проверяем, пересекается ли элемент с плейсхолдером по вертикали
+    const itemBottom = itemY + itemHeight
+    const placeholderBottom = placeholderY + placeholderHeight
+    
+    // Если элемент находится на той же строке или ниже плейсхолдера, сдвигаем его вниз
+    if (itemY >= placeholderY) {
+      const shiftAmount = placeholderHeight + GRID_GAP
+      styles[item.id] = {
+        transform: `translateY(${shiftAmount}px)`,
+        transition: 'transform 0.2s ease'
+      }
+    }
+    // Если элемент пересекается с плейсхолдером по вертикали, сдвигаем его вниз
+    else if (itemY < placeholderY && itemBottom > placeholderY) {
+      const shiftAmount = placeholderY + placeholderHeight - itemY + GRID_GAP
+      styles[item.id] = {
+        transform: `translateY(${shiftAmount}px)`,
+        transition: 'transform 0.2s ease'
+      }
+    }
+  })
+  
+  return styles
 })
 
 const getItemClass = (item) => {
   return {
     [`item-${item.type.toLowerCase()}`]: true,
-    'item-selected': item.selected
+    'item-selected': item.selected,
+    'item-dragging': draggedItem.value && draggedItem.value.id === item.id
   }
 }
 
 const getItemStyle = (item) => {
-  const size = ELEMENT_SIZES[item.type] || ELEMENT_SIZES['Чарт']
-  return {
-    gridColumn: `span ${size.cols}`,
-    gridRow: `span ${size.rows}`
+  const baseStyle = {
+    position: 'absolute',
+    left: `${item.x || 0}px`,
+    top: `${item.y || 0}px`,
+    width: `${item.width || ELEMENT_SIZES[item.type]?.width || 200}px`,
+    height: `${item.height || ELEMENT_SIZES[item.type]?.height || 150}px`
   }
+  
+  if (draggedItem.value && draggedItem.value.id === item.id) {
+    baseStyle.zIndex = 1000
+    baseStyle.opacity = 0.8
+  }
+  
+  // Применяем временные стили сдвига
+  const shiftStyle = shiftedItemsStyle.value[item.id]
+  if (shiftStyle) {
+    Object.assign(baseStyle, shiftStyle)
+  }
+  
+  return baseStyle
 }
 
 const getItemPreview = (item) => {
+  const itemWidth = item.width || ELEMENT_SIZES[item.type]?.width || 200
+  const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
+  
+  let preview = ''
   switch (item.type) {
-    case 'Чарт': return '📊 График данных'
-    case 'Селектор': return '🔽 Фильтр'
-    case 'Текст': return '📝 Поясняющий текст'
-    case 'Заголовок': return '📋 Заголовок раздела'
-    default: return item.type
+    case 'Чарт': 
+      preview = itemWidth < 300 ? '📊 График' : '📊 График данных'
+      break
+    case 'Селектор': 
+      preview = itemWidth < 200 ? '🔽' : '🔽 Фильтр'
+      break
+    case 'Текст': 
+      preview = itemWidth < 300 ? '📝 Текст' : '📝 Поясняющий текст'
+      break
+    case 'Заголовок': 
+      preview = itemWidth < 400 ? '📋 Заголовок' : '📋 Заголовок раздела'
+      break
+    default: 
+      preview = item.type
   }
+  
+  return preview
 }
 
 const selectItem = (item) => {
+  if (draggedItem.value) return
+  
   localItems.value.forEach(i => i.selected = false)
   item.selected = true
   emit('item-select', item)
+  emit('update:items', localItems.value)
 }
 
 const editItem = (item) => {
@@ -214,190 +278,608 @@ const deleteItem = (item) => {
   }
 }
 
-const calculateDropPosition = (event, elementType) => {
-  const container = event.currentTarget
-  const rect = container.getBoundingClientRect()
-  const mouseX = event.clientX - rect.left - GRID_GAP
-  const mouseY = event.clientY - rect.top - GRID_GAP
+const calculateDropPosition = (mouseX, mouseY, elementType) => {
+  if (!gridContainer.value) return { x: 0, y: 0 }
   
-  const containerWidth = rect.width - (GRID_GAP * 2)
-  const colWidth = containerWidth / GRID_COLS
-  const rowHeight = 150 + GRID_GAP
+  const rect = gridContainer.value.getBoundingClientRect()
+  const relativeX = mouseX - rect.left
+  const relativeY = mouseY - rect.top
   
-  let gridColumn = Math.floor(mouseX / colWidth) + 1
-  let gridRow = Math.floor(mouseY / rowHeight) + 1
-  
-  const elementSize = ELEMENT_SIZES[elementType] || ELEMENT_SIZES['Чарт']
-  
-  gridColumn = Math.max(1, Math.min(GRID_COLS - elementSize.cols + 1, gridColumn))
-  gridRow = Math.max(1, gridRow)
+  const elementSize = ELEMENT_SIZES[elementType]
+  if (!elementSize) return { x: 0, y: 0 }
   
   if (localItems.value.length === 0) {
+    // Проверяем, поместится ли элемент в начальную позицию
+    const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
+    const initialX = Math.max(0, relativeX - elementSize.width / 2)
+    
+    if (initialX + elementSize.width > gridWidth) {
+      // Если не помещается, центрируем элемент в пределах доступной ширины
+      return {
+        x: Math.max(0, (gridWidth - elementSize.width) / 2),
+        y: 0
+      }
+    }
+    
     return {
-      gridColumn: Math.max(1, Math.min(GRID_COLS - elementSize.cols + 1, gridColumn)),
-      gridRow: 1,
-      cols: elementSize.cols,
-      rows: elementSize.rows
+      x: initialX,
+      y: 0
     }
   }
   
-  const canPlaceAtPosition = checkCanPlaceAtPosition(gridColumn, gridRow, elementSize.cols, elementSize.rows)
+  // Используем реальную ширину контейнера, но ограничиваем максимальной шириной страницы
+  const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
+  const snapX = Math.max(0, Math.min(gridWidth - elementSize.width, relativeX - elementSize.width / 2))
   
-  if (canPlaceAtPosition) {
-    return {
-      gridColumn,
-      gridRow,
-      cols: elementSize.cols,
-      rows: elementSize.rows
-    }
-  }
+  const nearestRow = findNearestRow(relativeY, elementSize.height)
+  const snappedPosition = findNearestValidPositionInRow(snapX, nearestRow, elementSize.width, elementSize.height)
   
-  const nearestPosition = findNearestFreePosition(gridColumn, gridRow, elementType)
-  return {
-    gridColumn: nearestPosition.gridColumn,
-    gridRow: nearestPosition.gridRow,
-    cols: elementSize.cols,
-    rows: elementSize.rows
-  }
+  return snappedPosition
 }
 
-const findNearestFreePosition = (preferredCol, preferredRow, elementType) => {
+const findNearestRow = (mouseY, elementHeight) => {
+  if (localItems.value.length === 0) return 0
+  
+  const occupiedAreas = localItems.value.map(item => ({
+    top: item.y || 0,
+    bottom: (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150)
+  }))
+  
+  const rows = []
+  
+  for (const area of occupiedAreas) {
+    const rowTop = area.top
+    const rowBottom = area.bottom + GRID_GAP
+    
+    if (!rows.some(row => Math.abs(row.top - rowTop) < 10)) {
+      rows.push({ top: rowTop, bottom: rowBottom })
+    }
+  }
+  
+  rows.sort((a, b) => a.top - b.top)
+  
+  let nearestRow = 0
+  let minDistance = Infinity
+  
+  for (const row of rows) {
+    const distance = Math.abs(mouseY - (row.top + row.bottom) / 2)
+    if (distance < minDistance) {
+      minDistance = distance
+      nearestRow = row.top
+    }
+  }
+  
+  return nearestRow
+}
+
+const findNearestValidPositionInRow = (x, rowY, width, height, excludeItemId) => {
+  const gridWidth = gridContainer.value ? 
+    Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH) : 
+    MAX_PAGE_WIDTH
+  
+  x = Math.max(0, Math.min(gridWidth - width, x))
+  
+  const rowItems = localItems.value
+    .filter(item => {
+      if (excludeItemId && item.id === excludeItemId) return false
+      const itemY = item.y || 0
+      const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
+      return Math.abs(itemY - rowY) < 10
+    })
+    .map(item => ({
+      left: item.x || 0,
+      right: (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200)
+    }))
+    .sort((a, b) => a.left - b.left)
+  
+  if (rowItems.length === 0) {
+    // Проверяем, поместится ли элемент в строку
+    if (x + width > gridWidth) {
+      // Если не помещается, возвращаем позицию для новой строки
+      return { x: 0, y: rowY + height + GRID_GAP }
+    }
+    return { x, y: rowY }
+  }
+  
+  const newArea = { left: x, right: x + width }
+  
+  for (const item of rowItems) {
+    if (newArea.left < item.right + GRID_GAP && newArea.right > item.left - GRID_GAP) {
+      const nextX = item.right + GRID_GAP
+      // Проверяем, поместится ли элемент после текущего элемента
+      if (nextX + width > gridWidth) {
+        // Если не помещается, возвращаем позицию для новой строки
+        return { x: 0, y: rowY + height + GRID_GAP }
+      }
+      return { x: nextX, y: rowY }
+    }
+  }
+  
+  // Проверяем, поместится ли элемент в текущую позицию
+  if (x + width > gridWidth) {
+    // Если не помещается, возвращаем позицию для новой строки
+    return { x: 0, y: rowY + height + GRID_GAP }
+  }
+  
+  return { x, y: rowY }
+}
+
+const calculatePotentialPlacement = (mouseX, mouseY, elementType) => {
+  if (!gridContainer.value) return { x: 0, y: 0 }
+  
+  const rect = gridContainer.value.getBoundingClientRect()
+  const relativeX = mouseX - rect.left
+  const relativeY = mouseY - rect.top
+  
   const elementSize = ELEMENT_SIZES[elementType]
+  if (!elementSize) return { x: 0, y: 0 }
+  
+  const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
   
   if (localItems.value.length === 0) {
-    return { gridColumn: 1, gridRow: 1 }
+    // Если нет элементов, плейсхолдер центрируется относительно курсора
+    const snapX = Math.max(0, Math.min(gridWidth - elementSize.width, relativeX - elementSize.width / 2))
+    return { x: snapX, y: 0 }
   }
   
-  const firstItem = localItems.value[0]
-  const firstItemSize = ELEMENT_SIZES[firstItem.type]
+  // Находим ближайший элемент к позиции мыши
+  let nearestItem = null
+  let minDistance = Infinity
   
-  const canPlaceNextToFirst = checkCanPlaceAtPosition(
-    firstItemSize.cols + 1, 
-    1, 
-    elementSize.cols, 
-    elementSize.rows
-  )
-  
-  const canPlaceUnderFirst = checkCanPlaceAtPosition(
-    1, 
-    firstItemSize.rows + 1, 
-    elementSize.cols, 
-    elementSize.rows
-  )
-  
-  if (canPlaceNextToFirst && preferredCol > firstItemSize.cols) {
-    return { gridColumn: firstItemSize.cols + 1, gridRow: 1 }
+  for (const item of localItems.value) {
+    const itemCenterX = (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200) / 2
+    const itemCenterY = (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150) / 2
+    
+    const distance = Math.sqrt(
+      Math.pow(relativeX - itemCenterX, 2) + Math.pow(relativeY - itemCenterY, 2)
+    )
+    
+    if (distance < minDistance) {
+      minDistance = distance
+      nearestItem = item
+    }
   }
   
-  if (canPlaceUnderFirst) {
-    return { gridColumn: 1, gridRow: firstItemSize.rows + 1 }
+  if (!nearestItem) {
+    return { x: 0, y: 0 }
   }
   
-  const maxRow = Math.max(1, ...localItems.value.map(item => getItemGridRow(item) + ELEMENT_SIZES[item.type].rows - 1))
+  const nearestItemWidth = nearestItem.width || ELEMENT_SIZES[nearestItem.type]?.width || 200
+  const nearestItemHeight = nearestItem.height || ELEMENT_SIZES[nearestItem.type]?.height || 150
+  const nearestItemX = nearestItem.x || 0
+  const nearestItemY = nearestItem.y || 0
   
-  for (let distance = 0; distance <= maxRow + 2; distance++) {
-    for (let row = Math.max(1, preferredRow - distance); row <= preferredRow + distance; row++) {
-      for (let col = Math.max(1, preferredCol - distance); col <= Math.min(GRID_COLS - elementSize.cols + 1, preferredCol + distance); col++) {
-        if (checkCanPlaceAtPosition(col, row, elementSize.cols, elementSize.rows)) {
-          return { gridColumn: col, gridRow: row }
-        }
+  // Проверяем возможность размещения рядом с ближайшим элементом
+  const rightOfNearest = nearestItemX + nearestItemWidth + GRID_GAP
+  const canFitRight = rightOfNearest + elementSize.width <= gridWidth
+  
+  // Определяем приоритет размещения на основе позиции мыши
+  const mouseIsAbove = relativeY < nearestItemY + nearestItemHeight / 2
+  const mouseIsLeft = relativeX < nearestItemX + nearestItemWidth / 2
+  
+  // Если мышь выше элемента, размещаем над ним
+  if (mouseIsAbove) {
+    // Проверяем, поместится ли элемент в позиции слева
+    if (nearestItemX + elementSize.width <= gridWidth) {
+      return { x: nearestItemX, y: Math.max(0, nearestItemY - elementSize.height - GRID_GAP) }
+    }
+    
+    // Если не помещается, центрируем элемент
+    const centerX = Math.max(0, (gridWidth - elementSize.width) / 2)
+    return { x: centerX, y: Math.max(0, nearestItemY - elementSize.height - GRID_GAP) }
+  }
+  
+  // Если мышь слева от элемента и есть место, размещаем слева
+  if (mouseIsLeft && nearestItemX >= elementSize.width + GRID_GAP) {
+    const leftPosition = Math.max(0, nearestItemX - elementSize.width - GRID_GAP)
+    // Проверяем, поместится ли элемент в этой позиции
+    if (leftPosition + elementSize.width <= gridWidth) {
+      return { x: leftPosition, y: nearestItemY }
+    }
+  }
+  
+  // Если есть место справа, размещаем справа
+  if (canFitRight) {
+    return { x: rightOfNearest, y: nearestItemY }
+  }
+  
+  // Иначе размещаем под элементом
+  const belowNearest = nearestItemY + nearestItemHeight + GRID_GAP
+  
+  // Находим самый левый элемент в строке для правильной привязки
+  let leftMostX = nearestItemX
+  
+  for (const item of localItems.value) {
+    const itemY = item.y || 0
+    const itemX = item.x || 0
+    
+    // Если элемент находится в той же строке или пересекается с ней
+    if (Math.abs(itemY - nearestItemY) < 10) {
+      if (itemX < leftMostX) {
+        leftMostX = itemX
       }
     }
   }
   
-  return { gridColumn: 1, gridRow: maxRow + 1 }
+  // Проверяем, поместится ли элемент в позиции слева
+  if (leftMostX + elementSize.width <= gridWidth) {
+    return { x: leftMostX, y: belowNearest }
+  }
+  
+  // Если не помещается слева, центрируем элемент в доступном пространстве
+  const centerX = Math.max(0, (gridWidth - elementSize.width) / 2)
+  return { x: centerX, y: belowNearest }
 }
 
-const checkCanPlaceAtPosition = (startCol, startRow, spanCols, spanRows) => {
-  const endCol = startCol + spanCols - 1
-  const endRow = startRow + spanRows - 1
+// Функция для расчета финальной позиции с учетом сдвинутых элементов
+const calculateFinalPlacement = (elementType) => {
+  if (!yellowPlaceholderPosition.value || !elementType) {
+    return { x: 0, y: 0 }
+  }
   
-  if (endCol > GRID_COLS) return false
+  const placeholderX = yellowPlaceholderPosition.value.x
+  const placeholderY = yellowPlaceholderPosition.value.y
+  const elementSize = ELEMENT_SIZES[elementType]
   
-  for (const item of localItems.value) {
-    const itemSize = ELEMENT_SIZES[item.type]
-    const itemStartRow = getItemGridRow(item)
-    const itemEndRow = itemStartRow + itemSize.rows - 1
-    const itemStartCol = getItemGridColumn(item)
-    const itemEndCol = itemStartCol + itemSize.cols - 1
+  if (!elementSize) return { x: 0, y: 0 }
+  
+  // Проверяем, есть ли элементы, которые нужно сдвинуть навсегда
+  const elementsToShift = []
+  
+  localItems.value.forEach(item => {
+    const itemY = item.y || 0
+    const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
     
-    const colOverlap = !(endCol < itemStartCol || startCol > itemEndCol)
-    const rowOverlap = !(endRow < itemStartRow || startRow > itemEndRow)
+    // Если элемент находится на той же строке или ниже плейсхолдера
+    if (itemY >= placeholderY) {
+      elementsToShift.push(item)
+    }
+    // Если элемент пересекается с плейсхолдером по вертикали
+    else if (itemY < placeholderY && itemY + itemHeight > placeholderY) {
+      elementsToShift.push(item)
+    }
+  })
+  
+  // Сдвигаем элементы навсегда
+  elementsToShift.forEach(item => {
+    const itemY = item.y || 0
+    const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
     
-    if (colOverlap && rowOverlap) {
-      return false
+    if (itemY >= placeholderY) {
+      item.y = itemY + elementSize.height + GRID_GAP
+    } else {
+      item.y = placeholderY + elementSize.height + GRID_GAP
+    }
+  })
+  
+  return { x: placeholderX, y: placeholderY }
+}
+
+const checkCollision = (x, y, width, height, excludeItemId) => {
+  const occupiedAreas = localItems.value
+    .filter(item => !excludeItemId || item.id !== excludeItemId)
+    .map(item => ({
+      left: item.x || 0,
+      top: item.y || 0,
+      right: (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200),
+      bottom: (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150)
+    }))
+  
+  const newArea = {
+    left: x,
+    top: y,
+    right: x + width,
+    bottom: y + height
+  }
+  
+  return occupiedAreas.some(area => 
+    newArea.left < area.right + GRID_GAP &&
+    newArea.right > area.left - GRID_GAP &&
+    newArea.top < area.bottom + GRID_GAP &&
+    newArea.bottom > area.top - GRID_GAP
+  )
+}
+
+const startDrag = (item, event) => {
+  if (event.button !== 0) return
+  
+  event.preventDefault()
+  draggedItem.value = item
+  isDraggingExisting.value = true
+  
+  const rect = gridContainer.value.getBoundingClientRect()
+  dragOffset.value = {
+    x: event.clientX - rect.left - (item.x || 0),
+    y: event.clientY - rect.top - (item.y || 0)
+  }
+  
+  document.addEventListener('mousemove', handleExistingItemDrag)
+  document.addEventListener('mouseup', stopDrag)
+}
+
+const handleExistingItemDrag = (event) => {
+  if (!draggedItem.value || !gridContainer.value) return
+  
+  const rect = gridContainer.value.getBoundingClientRect()
+  const newX = event.clientX - rect.left - dragOffset.value.x
+  const newY = event.clientY - rect.top - dragOffset.value.y
+  
+  const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
+  const itemWidth = draggedItem.value.width || ELEMENT_SIZES[draggedItem.value.type]?.width || 200
+  const itemHeight = draggedItem.value.height || ELEMENT_SIZES[draggedItem.value.type]?.height || 150
+  
+  const clampedX = Math.max(0, Math.min(gridWidth - itemWidth, newX))
+  const clampedY = Math.max(0, newY)
+  
+  if (localItems.value.length === 1) {
+    // Если элемент один, разрешаем перемещение только по оси X
+    if (!checkCollision(clampedX, draggedItem.value.y, itemWidth, itemHeight, draggedItem.value.id)) {
+      draggedItem.value.x = clampedX
+    }
+  } else {
+    // Если элементов несколько, разрешаем свободное перемещение
+    if (!checkCollision(clampedX, clampedY, itemWidth, itemHeight, draggedItem.value.id)) {
+      draggedItem.value.x = clampedX
+      draggedItem.value.y = clampedY
     }
   }
   
-  return true
-}
-
-const getItemGridColumn = (item) => {
-  const itemIndex = localItems.value.findIndex(i => i.id === item.id)
-  if (itemIndex === -1) return 1
+  showYellowPlaceholder.value = true
   
-  if (itemIndex === 0) return 1
+  // Обновляем позицию желтого плейсхолдера, чтобы он следовал за курсором
+  const mouseX = event.clientX - rect.left
+  const mouseY = event.clientY - rect.top
   
-  let currentRow = 1
-  let currentCol = 1
+  // Плейсхолдер всегда следует за курсором по горизонтали
+  const snapX = Math.max(0, Math.min(gridWidth - itemWidth, mouseX))
   
-  for (let i = 0; i < itemIndex; i++) {
-    const currentItem = localItems.value[i]
-    const itemSize = ELEMENT_SIZES[currentItem.type]
+  // Определяем Y позицию на основе ближайшего элемента
+  let snapY = draggedItem.value.y || 0
+  
+  if (localItems.value.length > 1) {
+    let nearestItem = null
+    let minDistance = Infinity
     
-    if (currentCol + itemSize.cols - 1 > GRID_COLS) {
-      currentRow++
-      currentCol = 1
+    for (const item of localItems.value) {
+      // Исключаем перетаскиваемый элемент из поиска
+      if (item.id === draggedItem.value.id) continue
+      
+      const itemCenterX = (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200) / 2
+      const itemCenterY = (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150) / 2
+      
+      const distance = Math.sqrt(
+        Math.pow(mouseX - itemCenterX, 2) + Math.pow(mouseY - itemCenterY, 2)
+      )
+      
+      if (distance < minDistance) {
+        minDistance = distance
+        nearestItem = item
+      }
     }
     
-    if (i === itemIndex - 1) break
-    
-    currentCol += itemSize.cols
-    if (currentCol > GRID_COLS) {
-      currentRow++
-      currentCol = 1
-    }
-  }
-  
-  return currentCol
-}
-
-const getItemGridRow = (item) => {
-  const itemIndex = localItems.value.findIndex(i => i.id === item.id)
-  if (itemIndex === -1) return 1
-  
-  if (itemIndex === 0) return 1
-  
-  let currentRow = 1
-  let currentCol = 1
-  
-  for (let i = 0; i < itemIndex; i++) {
-    const currentItem = localItems.value[i]
-    const itemSize = ELEMENT_SIZES[currentItem.type]
-    
-    if (currentCol + itemSize.cols - 1 > GRID_COLS) {
-      currentRow++
-      currentCol = 1
-    }
-    
-    currentCol += itemSize.cols
-    if (currentCol > GRID_COLS) {
-      currentRow++
-      currentCol = 1
+    if (nearestItem) {
+      const nearestItemHeight = nearestItem.height || ELEMENT_SIZES[nearestItem.type]?.height || 150
+      const nearestItemY = nearestItem.y || 0
+      
+      const mouseIsAbove = mouseY < nearestItemY + nearestItemHeight / 2
+      
+      if (mouseIsAbove) {
+        // Проверяем, есть ли место выше элемента
+        const topPosition = nearestItemY - itemHeight - GRID_GAP
+        if (topPosition >= 0) {
+          snapY = topPosition
+        } else {
+          // Если нет места выше, оставляем на той же строке
+          snapY = nearestItemY
+        }
+      } else {
+        snapY = nearestItemY + nearestItemHeight + GRID_GAP
+      }
     }
   }
   
-  return currentRow
+  yellowPlaceholderPosition.value = {
+    x: snapX,
+    y: snapY,
+    width: itemWidth,
+    height: itemHeight
+  }
+}
+
+const stopDrag = () => {
+  if (draggedItem.value && isDraggingExisting.value) {
+    const originalY = draggedItem.value.y || 0
+    const itemHeight = draggedItem.value.height || ELEMENT_SIZES[draggedItem.value.type]?.height || 150
+    
+    // Используем позицию желтого плейсхолдера для финального размещения
+    if (showYellowPlaceholder.value && yellowPlaceholderPosition.value) {
+      const newY = yellowPlaceholderPosition.value.y
+      
+      // Если элемент перемещается вниз (сверху вниз)
+      if (newY > originalY) {
+        // Сдвигаем элементы, которые находятся между исходной и новой позицией, вверх
+        localItems.value.forEach(item => {
+          if (item.id === draggedItem.value.id) return
+          
+          const itemY = item.y || 0
+          
+          // Элементы, которые находятся между исходной и новой позицией, сдвигаем вверх
+          if (itemY >= originalY && itemY < newY) {
+            item.y = Math.max(0, itemY - itemHeight - GRID_GAP)
+          }
+        })
+        
+        // Затем сдвигаем элементы в новой позиции вниз
+        localItems.value.forEach(item => {
+          if (item.id === draggedItem.value.id) return
+          
+          const itemY = item.y || 0
+          const itemItemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
+          
+          // Элементы, которые находятся на новой позиции или пересекаются с ней
+          if (itemY >= newY || (itemY < newY && itemY + itemItemHeight > newY)) {
+            item.y = itemY + itemHeight + GRID_GAP
+          }
+        })
+        
+        // Устанавливаем элемент в позицию, которая учитывает сдвинутые элементы
+        draggedItem.value.x = yellowPlaceholderPosition.value.x
+        // Находим самую нижнюю позицию среди сдвинутых элементов
+        let maxY = 0
+        localItems.value.forEach(item => {
+          if (item.id !== draggedItem.value.id) {
+            const itemY = item.y || 0
+            const itemItemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
+            maxY = Math.max(maxY, itemY + itemItemHeight)
+          }
+        })
+        draggedItem.value.y = maxY + GRID_GAP
+      }
+      
+      // Если элемент перемещается вверх (снизу вверх), сдвигаем элементы в старой позиции вверх
+      if (newY < originalY) {
+        localItems.value.forEach(item => {
+          if (item.id === draggedItem.value.id) return
+          
+          const itemY = item.y || 0
+          
+          // Элементы, которые находятся ниже исходной позиции, сдвигаем вверх
+          if (itemY > originalY) {
+            item.y = Math.max(0, itemY - itemHeight - GRID_GAP)
+          }
+        })
+        
+        // Также сдвигаем элементы в новой позиции вниз
+        localItems.value.forEach(item => {
+          if (item.id === draggedItem.value.id) return
+          
+          const itemY = item.y || 0
+          const itemItemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
+          
+          // Элементы, которые находятся на новой позиции или пересекаются с ней
+          if (itemY >= newY || (itemY < newY && itemY + itemItemHeight > newY)) {
+            item.y = itemY + itemHeight + GRID_GAP
+          }
+        })
+        
+        draggedItem.value.x = yellowPlaceholderPosition.value.x
+        draggedItem.value.y = yellowPlaceholderPosition.value.y
+      }
+    } else {
+      // Fallback: если плейсхолдер не активен, используем старую логику
+      const itemWidth = draggedItem.value.width || ELEMENT_SIZES[draggedItem.value.type]?.width || 200
+      
+      if (localItems.value.length === 1) {
+        // Если элемент один, фиксируем только X позицию
+        const finalPosition = findNearestValidPositionInRow(draggedItem.value.x, draggedItem.value.y, itemWidth, itemHeight, draggedItem.value.id)
+        draggedItem.value.x = finalPosition.x
+      } else {
+        // Если элементов несколько, находим ближайшую строку для финальной позиции
+        const nearestRow = findNearestRow(draggedItem.value.y, itemHeight)
+        const finalPosition = findNearestValidPositionInRow(draggedItem.value.x, nearestRow, itemWidth, itemHeight, draggedItem.value.id)
+        draggedItem.value.x = finalPosition.x
+        draggedItem.value.y = finalPosition.y
+      }
+    }
+    
+    emit('update:items', localItems.value)
+  }
+  
+  draggedItem.value = null
+  isDraggingExisting.value = false
+  showYellowPlaceholder.value = false
+  
+  document.removeEventListener('mousemove', handleExistingItemDrag)
+  document.removeEventListener('mouseup', stopDrag)
+}
+
+const startResize = (item, direction, event) => {
+  event.preventDefault()
+  event.stopPropagation()
+  
+  resizingItem.value = item
+  resizeDirection.value = direction
+  resizeStartPos.value = { x: event.clientX, y: event.clientY }
+  resizeStartSize.value = { 
+    width: item.width || ELEMENT_SIZES[item.type]?.width || 200,
+    height: item.height || ELEMENT_SIZES[item.type]?.height || 150
+  }
+  
+  document.addEventListener('mousemove', handleResize)
+  document.addEventListener('mouseup', stopResize)
+}
+
+const handleResize = (event) => {
+  if (!resizingItem.value) return
+  
+  const deltaX = event.clientX - resizeStartPos.value.x
+  const deltaY = event.clientY - resizeStartPos.value.y
+  
+  let newWidth = resizeStartSize.value.width
+  let newHeight = resizeStartSize.value.height
+  let newX = resizingItem.value.x || 0
+  let newY = resizingItem.value.y || 0
+  
+  if (resizeDirection.value.includes('e')) {
+    newWidth = Math.max(100, resizeStartSize.value.width + deltaX)
+  }
+  if (resizeDirection.value.includes('w')) {
+    newWidth = Math.max(100, resizeStartSize.value.width - deltaX)
+    newX = (resizingItem.value.x || 0) + deltaX
+  }
+  if (resizeDirection.value.includes('s')) {
+    newHeight = Math.max(50, resizeStartSize.value.height + deltaY)
+  }
+  if (resizeDirection.value.includes('n')) {
+    newHeight = Math.max(50, resizeStartSize.value.height - deltaY)
+    newY = (resizingItem.value.y || 0) + deltaY
+  }
+  
+  if (!checkCollision(newX, newY, newWidth, newHeight, resizingItem.value.id)) {
+    resizingItem.value.width = newWidth
+    resizingItem.value.height = newHeight
+    resizingItem.value.x = newX
+    resizingItem.value.y = newY
+  }
+}
+
+const stopResize = () => {
+  if (resizingItem.value) {
+    emit('update:items', localItems.value)
+  }
+  
+  resizingItem.value = null
+  resizeDirection.value = ''
+  
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
 }
 
 const handleDragEnter = (event) => {
   event.preventDefault()
   isDragOver.value = true
   
-  if (activeDraggedType.value) {
-    showDragPreview.value = true
-    showDropZone.value = true
-    console.log('Drag enter: showing preview and drop zone')
+  if (props.draggedType && !isDraggingExisting.value) {
+    currentDraggedType.value = props.draggedType
+    showGrayPlaceholder.value = true
+    showYellowPlaceholder.value = true
+    
+    // Сразу устанавливаем позицию серого плейсхолдера по курсору
+    grayPlaceholderPosition.value = {
+      x: event.clientX,
+      y: event.clientY
+    }
+    
+    // И рассчитываем начальную позицию для желтого плейсхолдера
+    const position = calculatePotentialPlacement(event.clientX, event.clientY, currentDraggedType.value)
+    const size = ELEMENT_SIZES[currentDraggedType.value]
+    
+    yellowPlaceholderPosition.value = {
+      x: position.x,
+      y: position.y,
+      width: size.width,
+      height: size.height
+    }
   }
 }
 
@@ -405,16 +887,22 @@ const handleDragOver = (event) => {
   event.preventDefault()
   event.dataTransfer.dropEffect = 'copy'
   
-  if (activeDraggedType.value) {
-    showDragPreview.value = true
-    showDropZone.value = true
-    
-    const position = calculateDropPosition(event, activeDraggedType.value)
-    dropZonePosition.value = position
-    
-    dragPreviewPosition.value = {
+  if (currentDraggedType.value && !isDraggingExisting.value) {
+    // Серый плейсхолдер всегда следует за курсором
+    grayPlaceholderPosition.value = {
       x: event.clientX,
       y: event.clientY
+    }
+    
+    // Используем новую функцию для расчета потенциального места размещения
+    const position = calculatePotentialPlacement(event.clientX, event.clientY, currentDraggedType.value)
+    const size = ELEMENT_SIZES[currentDraggedType.value]
+    
+    yellowPlaceholderPosition.value = {
+      x: position.x,
+      y: position.y,
+      width: size.width,
+      height: size.height
     }
   }
 }
@@ -422,21 +910,27 @@ const handleDragOver = (event) => {
 const handleDrop = (event) => {
   event.preventDefault()
   
-  let itemType = activeDraggedType.value
+  let itemType = currentDraggedType.value || event.dataTransfer.getData('text/plain')
   
-  if (!itemType) {
-    itemType = event.dataTransfer.getData('text/plain')
-  }
-  
-  if (itemType && ELEMENT_SIZES[itemType]) {
-    const newItem = {
-      id: Date.now() + Math.random(),
-      type: itemType,
-      selected: false
-    }
+  if (itemType && ELEMENT_SIZES[itemType] && !isDraggingExisting.value) {
+    // Используем функцию для финального размещения с учетом сдвинутых элементов
+    const position = calculateFinalPlacement(itemType)
+    const size = ELEMENT_SIZES[itemType]
     
-    localItems.value.push(newItem)
-    emit('update:items', localItems.value)
+    if (!checkCollision(position.x, position.y, size.width, size.height)) {
+      const newItem = {
+        id: Date.now() + Math.random(),
+        type: itemType,
+        selected: false,
+        x: position.x,
+        y: position.y,
+        width: size.width,
+        height: size.height
+      }
+      
+      localItems.value.push(newItem)
+      emit('update:items', localItems.value)
+    }
   }
   
   resetDragState()
@@ -444,39 +938,133 @@ const handleDrop = (event) => {
 
 const resetDragState = () => {
   isDragOver.value = false
-  showDropZone.value = false
-  showDragPreview.value = false
-  localDraggedType.value = ''
+  showGrayPlaceholder.value = false
+  showYellowPlaceholder.value = false
+  currentDraggedType.value = ''
+  
+  // Сбрасываем позиции плейсхолдеров
+  grayPlaceholderPosition.value = { x: 0, y: 0 }
+  yellowPlaceholderPosition.value = { x: 0, y: 0, width: 0, height: 0 }
 }
 
 const handleMouseMove = (event) => {
-  if (showDragPreview.value && activeDraggedType.value) {
-    dragPreviewPosition.value = {
+  // Для новых элементов с панели инструментов - серый плейсхолдер всегда следует за курсором
+  if (showGrayPlaceholder.value && currentDraggedType.value && !isDraggingExisting.value) {
+    // Обновляем позицию серого плейсхолдера точно по координатам курсора
+    grayPlaceholderPosition.value = {
       x: event.clientX,
       y: event.clientY
+    }
+    
+    // Обновляем позицию желтого плейсхолдера только если мышь над грид-контейнером
+    if (gridContainer.value) {
+      const rect = gridContainer.value.getBoundingClientRect()
+      if (event.clientX >= rect.left && event.clientX <= rect.right && 
+          event.clientY >= rect.top && event.clientY <= rect.bottom) {
+        const position = calculatePotentialPlacement(event.clientX, event.clientY, currentDraggedType.value)
+        const size = ELEMENT_SIZES[currentDraggedType.value]
+        
+        yellowPlaceholderPosition.value = {
+          x: position.x,
+          y: position.y,
+          width: size.width,
+          height: size.height
+        }
+      }
+    }
+  } else if (isDraggingExisting.value && draggedItem.value) {
+    const rect = gridContainer.value.getBoundingClientRect()
+    const newX = event.clientX - rect.left - dragOffset.value.x
+    const newY = event.clientY - rect.top - dragOffset.value.y
+    
+    const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
+    const itemWidth = draggedItem.value.width || ELEMENT_SIZES[draggedItem.value.type]?.width || 200
+    const itemHeight = draggedItem.value.height || ELEMENT_SIZES[draggedItem.value.type]?.height || 150
+    
+    const clampedX = Math.max(0, Math.min(gridWidth - itemWidth, newX))
+    const clampedY = Math.max(0, newY)
+    
+    if (localItems.value.length === 1) {
+      // Если элемент один, разрешаем перемещение только по оси X
+      if (!checkCollision(clampedX, draggedItem.value.y, itemWidth, itemHeight, draggedItem.value.id)) {
+        draggedItem.value.x = clampedX
+      }
+    } else {
+      // Если элементов несколько, разрешаем свободное перемещение
+      if (!checkCollision(clampedX, clampedY, itemWidth, itemHeight, draggedItem.value.id)) {
+        draggedItem.value.x = clampedX
+        draggedItem.value.y = clampedY
+      }
+    }
+    
+    // Плейсхолдер всегда следует за курсором по горизонтали
+    const mouseX = event.clientX - rect.left
+    const mouseY = event.clientY - rect.top
+    
+    const snapX = Math.max(0, Math.min(gridWidth - itemWidth, mouseX))
+    
+    // Определяем Y позицию на основе ближайшего элемента
+    let snapY = draggedItem.value.y || 0
+    
+    if (localItems.value.length > 1) {
+      let nearestItem = null
+      let minDistance = Infinity
+      
+      for (const item of localItems.value) {
+        // Исключаем перетаскиваемый элемент из поиска
+        if (item.id === draggedItem.value.id) continue
+        
+        const itemCenterX = (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200) / 2
+        const itemCenterY = (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150) / 2
+        
+        const distance = Math.sqrt(
+          Math.pow(mouseX - itemCenterX, 2) + Math.pow(mouseY - itemCenterY, 2)
+        )
+        
+        if (distance < minDistance) {
+          minDistance = distance
+          nearestItem = item
+        }
+      }
+      
+      if (nearestItem) {
+        const nearestItemHeight = nearestItem.height || ELEMENT_SIZES[nearestItem.type]?.height || 150
+        const nearestItemY = nearestItem.y || 0
+        
+        const mouseIsAbove = mouseY < nearestItemY + nearestItemHeight / 2
+        
+        if (mouseIsAbove) {
+          // Проверяем, есть ли место выше элемента
+          const topPosition = nearestItemY - itemHeight - GRID_GAP
+          if (topPosition >= 0) {
+            snapY = topPosition
+          } else {
+            // Если нет места выше, оставляем на той же строке
+            snapY = nearestItemY
+          }
+        } else {
+          snapY = nearestItemY + nearestItemHeight + GRID_GAP
+        }
+      }
+    }
+    
+    yellowPlaceholderPosition.value = {
+      x: snapX,
+      y: snapY,
+      width: itemWidth,
+      height: itemHeight
     }
   }
 }
 
 const handleDragLeave = (event) => {
   if (!event.currentTarget.contains(event.relatedTarget)) {
-    resetDragState()
+    // Сбрасываем только плейсхолдеры, но не весь drag state
+    showGrayPlaceholder.value = false
+    showYellowPlaceholder.value = false
+    grayPlaceholderPosition.value = { x: 0, y: 0 }
+    yellowPlaceholderPosition.value = { x: 0, y: 0, width: 0, height: 0 }
   }
-}
-
-const onDragStart = (event) => {
-  const itemElement = event.item._underlying_vm_
-  if (itemElement) {
-    itemElement.selected = false
-  }
-}
-
-const onDragEnd = (event) => {
-  emit('update:items', localItems.value)
-}
-
-const onChange = (event) => {
-  emit('update:items', localItems.value)
 }
 
 watch(() => props.items, (newItems) => {
@@ -485,35 +1073,39 @@ watch(() => props.items, (newItems) => {
   }
 }, { deep: true, immediate: true })
 
-watch(localItems, (newItems) => {
-  emit('update:items', newItems)
-}, { deep: true })
-
 watch(() => props.draggedType, (newType) => {
-  console.log('DashboardGrid: draggedType changed to:', newType)
-  if (newType && ELEMENT_SIZES[newType]) {
-    showDragPreview.value = true
-    localDraggedType.value = newType
-    console.log('DashboardGrid: showing drag preview and drop zone')
-    
-    if (localItems.value.length === 0) {
-      showDropZone.value = true
-      console.log('DashboardGrid: empty state, showing drop zone')
+  if (newType && ELEMENT_SIZES[newType] && !isDraggingExisting.value) {
+    currentDraggedType.value = newType
+    showGrayPlaceholder.value = true
+    if (isDragOver.value) {
+      showYellowPlaceholder.value = true
     }
-  } else {
-    showDragPreview.value = false
-    showDropZone.value = false
-    localDraggedType.value = ''
-    console.log('DashboardGrid: hiding all placeholders')
+  } else if (!newType) {
+    resetDragState()
   }
 }, { immediate: true })
 
-watch(() => localItems.value.length, (length) => {
-  console.log('DashboardGrid: items length changed to:', length)
-  if (length === 0 && activeDraggedType.value) {
-    showDropZone.value = true
-    console.log('DashboardGrid: empty state with dragged type, showing drop zone')
+onMounted(() => {
+  localItems.value.forEach((item, index) => {
+    if (item.x === undefined || item.y === undefined) {
+      const size = ELEMENT_SIZES[item.type] || { width: 200, height: 150 }
+      item.x = 0
+      item.y = index * (size.height + GRID_GAP)
+      item.width = size.width
+      item.height = size.height
+    }
+  })
+  
+  if (localItems.value.length > 0) {
+    emit('update:items', localItems.value)
   }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('mousemove', handleExistingItemDrag)
+  document.removeEventListener('mouseup', stopDrag)
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
 })
 </script>
 
@@ -523,6 +1115,7 @@ watch(() => localItems.value.length, (length) => {
   width: 100%;
   height: 100%;
   min-height: calc(100vh - 200px);
+  overflow: hidden;
 }
 
 .empty-grid {
@@ -553,13 +1146,10 @@ watch(() => localItems.value.length, (length) => {
 }
 
 .grid-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: 150px;
-  gap: 10px;
-  padding: 10px;
-  min-height: 100%;
+  position: relative;
   width: 100%;
+  min-height: 100%;
+  padding: 20px;
 }
 
 .grid-item {
@@ -569,9 +1159,11 @@ watch(() => localItems.value.length, (length) => {
   padding: 12px;
   cursor: move;
   transition: all 0.2s ease;
-  position: relative;
   display: flex;
   flex-direction: column;
+  user-select: none;
+  overflow: hidden;
+  box-sizing: border-box;
   
   &:hover {
     border-color: var(--color-primary);
@@ -586,6 +1178,11 @@ watch(() => localItems.value.length, (length) => {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
   }
+  
+  &.item-dragging {
+    transform: scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  }
 }
 
 .item-header {
@@ -594,6 +1191,8 @@ watch(() => localItems.value.length, (length) => {
   align-items: center;
   margin-bottom: 10px;
   flex-shrink: 0;
+  min-height: 24px;
+  overflow: hidden;
 }
 
 .item-type {
@@ -602,6 +1201,10 @@ watch(() => localItems.value.length, (length) => {
   color: var(--color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
 }
 
 .item-actions {
@@ -609,6 +1212,7 @@ watch(() => localItems.value.length, (length) => {
   gap: 5px;
   opacity: 0;
   transition: opacity 0.2s ease;
+  flex-shrink: 0;
 }
 
 .btn-edit,
@@ -636,56 +1240,135 @@ watch(() => localItems.value.length, (length) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  padding: 8px;
 }
 
 .item-preview {
   text-align: center;
   color: var(--color-text-secondary);
   font-size: 14px;
-}
-
-.drag-preview {
-  background: linear-gradient(135deg, rgba(64, 64, 64, 0.95) 0%, rgba(32, 32, 32, 0.95) 100%);
-  border: 3px solid rgba(255, 255, 255, 0.8);
-  border-radius: 12px;
-  padding: 16px 24px;
-  font-size: 16px;
-  font-weight: 700;
-  color: white;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
-  z-index: 9999;
-  min-width: 120px;
-  text-align: center;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
   
-  .preview-content {
-    white-space: nowrap;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-    letter-spacing: 0.5px;
+  @media (max-width: 400px) {
+    font-size: 12px;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 }
 
-.drop-zone-placeholder {
-  background: rgba(255, 165, 0, 0.15);
-  border: 3px dashed rgba(255, 165, 0, 0.7);
+.resize-handles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.resize-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--color-primary);
+  border: 2px solid white;
+  border-radius: 50%;
+  pointer-events: auto;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  
+  &.resize-se {
+    bottom: -6px;
+    right: -6px;
+    cursor: se-resize;
+  }
+  
+  &.resize-sw {
+    bottom: -6px;
+    left: -6px;
+    cursor: sw-resize;
+  }
+  
+  &.resize-ne {
+    top: -6px;
+    right: -6px;
+    cursor: ne-resize;
+  }
+  
+  &.resize-nw {
+    top: -6px;
+    left: -6px;
+    cursor: nw-resize;
+  }
+}
+
+.item-селектор .resize-handle,
+.item-заголовок .resize-handle {
+  width: 10px;
+  height: 10px;
+  
+  &.resize-se {
+    bottom: -5px;
+    right: -5px;
+  }
+  
+  &.resize-sw {
+    bottom: -5px;
+    left: -5px;
+  }
+  
+  &.resize-ne {
+    top: -5px;
+    right: -5px;
+  }
+  
+  &.resize-nw {
+    top: -5px;
+    left: -5px;
+  }
+}
+
+.gray-placeholder {
+  background: rgba(128, 128, 128, 0.7);
+  border: 2px solid rgba(64, 64, 64, 0.9);
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.yellow-placeholder {
+  background: rgba(255, 193, 7, 0.15);
+  border: 3px dashed rgba(255, 193, 7, 0.8);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
   animation: placeholderPulse 1.5s ease-in-out infinite alternate;
-  min-height: 150px;
-  position: relative;
   
   &::before {
     content: '';
     position: absolute;
     inset: 4px;
-    background: rgba(255, 165, 0, 0.08);
+    background: rgba(255, 193, 7, 0.08);
     border-radius: 4px;
   }
   
-  .drop-zone-content {
+  .placeholder-content {
     font-size: 14px;
     font-weight: 600;
     color: rgba(255, 140, 0, 0.9);
@@ -696,7 +1379,7 @@ watch(() => localItems.value.length, (length) => {
     background: rgba(255, 255, 255, 0.9);
     padding: 8px 16px;
     border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(255, 165, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
   }
 }
 
@@ -704,35 +1387,18 @@ watch(() => localItems.value.length, (length) => {
   0% {
     opacity: 0.4;
     transform: scale(0.95);
-    border-color: rgba(255, 165, 0, 0.5);
+    border-color: rgba(255, 193, 7, 0.5);
   }
   50% {
     opacity: 0.8;
     transform: scale(1.0);
-    border-color: rgba(255, 165, 0, 0.9);
+    border-color: rgba(255, 193, 7, 0.9);
   }
   100% {
     opacity: 0.6;
     transform: scale(0.98);
-    border-color: rgba(255, 165, 0, 0.7);
+    border-color: rgba(255, 193, 7, 0.7);
   }
-}
-
-.ghost-item {
-  opacity: 0.3;
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.chosen-item {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.3);
-}
-
-.drag-item {
-  opacity: 0.8;
-  transform: scale(1.02);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .item-чарт {
@@ -741,6 +1407,16 @@ watch(() => localItems.value.length, (length) => {
 
 .item-селектор {
   background: linear-gradient(135deg, var(--color-primary-background) 0%, rgba(54, 162, 235, 0.05) 100%);
+  
+  .item-content {
+    padding: 4px;
+  }
+  
+  .item-preview {
+    font-size: 12px;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
 }
 
 .item-текст {
@@ -749,34 +1425,15 @@ watch(() => localItems.value.length, (length) => {
 
 .item-заголовок {
   background: linear-gradient(135deg, var(--color-primary-background) 0%, rgba(255, 206, 86, 0.05) 100%);
-}
-
-.empty-drop-zone {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  z-index: 10;
-  background: rgba(255, 165, 0, 0.2);
-  border: 3px dashed rgba(255, 165, 0, 0.8);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  animation: placeholderPulse 1.5s ease-in-out infinite alternate;
   
-  .drop-zone-content {
-    font-size: 18px;
-    font-weight: 700;
-    color: rgba(255, 140, 0, 1);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 16px 24px;
-    border-radius: 25px;
-    box-shadow: 0 4px 16px rgba(255, 165, 0, 0.3);
+  .item-content {
+    padding: 6px;
+  }
+  
+  .item-preview {
+    font-size: 13px;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
   }
 }
 </style> 

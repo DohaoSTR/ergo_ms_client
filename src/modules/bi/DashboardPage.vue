@@ -58,7 +58,10 @@
         
         <div class="body-footer" :style="{ left: footerLeftOffset, width: footerWidth }">
             <div class="footer-buttons">
-                <DashboardToolbar />
+                <DashboardToolbar 
+                    @drag-start="handleToolbarDragStart"
+                    @drag-end="handleToolbarDragEnd"
+                />
             </div>
         </div>
     </div>
@@ -91,40 +94,12 @@ const route = useRoute()
 const router = useRouter()
 const draggedType = ref('')
 
-const handleGlobalDragStart = (event) => {
-    if (event.target.closest('.dashboard-toolbar .button')) {
-        const button = event.target.closest('.button')
-        const itemType = button.querySelector('.button-text')?.textContent?.trim()
-        if (itemType && ['Чарт', 'Селектор', 'Текст', 'Заголовок'].includes(itemType)) {
+const handleToolbarDragStart = (itemType) => {
             draggedType.value = itemType
-            console.log('Drag started with type:', itemType)
-            
-            event.dataTransfer.setData('text/plain', itemType)
-            event.dataTransfer.effectAllowed = 'copy'
-        }
-    }
 }
 
-const handleGlobalDragEnd = () => {
-    console.log('Drag ended, clearing type:', draggedType.value)
+const handleToolbarDragEnd = () => {
     draggedType.value = ''
-}
-
-const handleGlobalMouseMove = (event) => {
-    if (draggedType.value) {
-        const dashboardGrid = document.querySelector('.dashboard-grid')
-        if (dashboardGrid) {
-            const gridRect = dashboardGrid.getBoundingClientRect()
-            const isOverGrid = event.clientX >= gridRect.left && 
-                              event.clientX <= gridRect.right && 
-                              event.clientY >= gridRect.top && 
-                              event.clientY <= gridRect.bottom
-            
-            if (isOverGrid) {
-                console.log('Mouse over grid with dragged type:', draggedType.value)
-            }
-        }
-    }
 }
 
 const dashboardRequiredFieldsFilled = computed(() => {
@@ -252,9 +227,6 @@ let cleanupSidebarTracking = null
 onMounted(() => {
     cleanupSidebarTracking = initializeSidebarTracking()
     document.addEventListener('click', handleClickOutside)
-    document.addEventListener('dragstart', handleGlobalDragStart)
-    document.addEventListener('dragend', handleGlobalDragEnd)
-    document.addEventListener('mousemove', handleGlobalMouseMove)
     initializePageFromUrl()
     
     if (!dashboardItems.value[0]) {
@@ -306,9 +278,6 @@ onUnmounted(() => {
         cleanupSidebarTracking()
     }
     document.removeEventListener('click', handleClickOutside)
-    document.removeEventListener('dragstart', handleGlobalDragStart)
-    document.removeEventListener('dragend', handleGlobalDragEnd)
-    document.removeEventListener('mousemove', handleGlobalMouseMove)
 })
 </script>
 
@@ -419,6 +388,7 @@ onUnmounted(() => {
     flex: 1;
     position: relative;
     overflow: hidden;
+    padding-top: 20px;
 }
 
 .body-footer{
