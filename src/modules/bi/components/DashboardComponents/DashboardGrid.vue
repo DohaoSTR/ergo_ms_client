@@ -11,7 +11,8 @@
     <div v-if="items.length === 0" class="empty-grid" :class="{ 'drag-over': isDragOver }">
       <div class="empty-content">
         <LayoutDashboard :size="48" />
-        <p>Перетащите элемент сюда чтобы начать</p>
+        <h3>{{ pagesCount > 1 ? 'На этой странице пока пусто' : 'Дашборд пока пустой' }}</h3>
+        <p>Перетаскивайте блоки с панели снизу, чтобы добавить на дашборд чарт, селектор или поясняющий текст</p>
       </div>
     </div>
 
@@ -24,7 +25,7 @@
         :style="getItemStyle(item)"
         @click="selectItem(item)"
         @dblclick="editItem(item)"
-        @mousedown="startDrag(item, $event)"
+        @mousedown="handleMouseDown(item, $event)"
       >
         <div class="item-header">
           <span class="item-type">{{ item.type }}</span>
@@ -45,12 +46,11 @@
         
         <div 
           v-if="item.selected"
-          class="resize-handles"
+          class="resize-indicators"
         >
-          <div class="resize-handle resize-se" @mousedown.stop="startResize(item, 'se', $event)"></div>
-          <div class="resize-handle resize-sw" @mousedown.stop="startResize(item, 'sw', $event)"></div>
-          <div class="resize-handle resize-ne" @mousedown.stop="startResize(item, 'ne', $event)"></div>
-          <div class="resize-handle resize-nw" @mousedown.stop="startResize(item, 'nw', $event)"></div>
+          <div class="resize-indicator resize-left" @mousedown.stop="startResize(item, 'w', $event)"></div>
+          <div class="resize-indicator resize-right" @mousedown.stop="startResize(item, 'e', $event)"></div>
+          <div class="resize-indicator resize-bottom" @mousedown.stop="startResize(item, 's', $event)"></div>
         </div>
       </div>
     </div>
@@ -73,6 +73,32 @@
         <span>Разместить здесь</span>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div v-if="isDraggingExisting && draggedItem && draggedElementCursorPosition" 
+           :style="{
+             position: 'fixed',
+             left: `${draggedElementCursorPosition.x - draggedElementCursorOffset.x}px`,
+             top: `${draggedElementCursorPosition.y - draggedElementCursorOffset.y}px`,
+             width: `${draggedItem.width || ELEMENT_SIZES[draggedItem.type]?.width || 200}px`,
+             height: `${draggedItem.height || ELEMENT_SIZES[draggedItem.type]?.height || 150}px`,
+             zIndex: 2000,
+             pointerEvents: 'none',
+             opacity: 0.85,
+             boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
+             border: '2px solid var(--color-primary)',
+             borderRadius: '8px',
+             background: 'var(--color-primary-background)'
+           }"
+           class="dragged-element-preview">
+        <div class="item-header">
+          <span class="item-type">{{ draggedItem.type }}</span>
+        </div>
+        <div class="item-content">
+          <div class="item-preview">{{ getItemPreview(draggedItem) }}</div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -85,7 +111,7 @@ const ELEMENT_SIZES = {
   'Чарт': { width: 560, height: 300 },
   'Селектор': { width: 370, height: 50 },
   'Текст': { width: 560, height: 150 },
-  'Заголовок': { width: Math.min(1320, MAX_PAGE_WIDTH - GRID_PADDING * 2), height: 50 }
+  'Заголовок': { width: MAX_PAGE_WIDTH - GRID_PADDING * 2 - 4, height: 50 }
 }
 
 const GRID_GAP = 10
@@ -100,6 +126,10 @@ const props = defineProps({
   draggedType: {
     type: String,
     default: ''
+  },
+  pagesCount: {
+    type: Number,
+    default: 1
   }
 })
 
@@ -125,6 +155,9 @@ const resizingItem = ref(null)
 const resizeStartPos = ref({ x: 0, y: 0 })
 const resizeStartSize = ref({ width: 0, height: 0 })
 const resizeDirection = ref('')
+const draggedElementCursorOffset = ref({ x: 0, y: 0 })
+const draggedElementCursorPosition = ref({ x: 0, y: 0 })
+const isMouseDown = ref(false)
 
 const grayPlaceholderStyle = computed(() => {
   if (!showGrayPlaceholder.value || !currentDraggedType.value) return null
@@ -156,9 +189,8 @@ const yellowPlaceholderStyle = computed(() => {
   }
 })
 
-// Вычисляем стили для временного сдвига существующих элементов
 const shiftedItemsStyle = computed(() => {
-  if (!showYellowPlaceholder.value) {
+  if (!showYellowPlaceholder.value || isDraggingExisting.value) {
     return {}
   }
   
@@ -175,11 +207,9 @@ const shiftedItemsStyle = computed(() => {
     const itemWidth = item.width || ELEMENT_SIZES[item.type]?.width || 200
     const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
     
-    // Проверяем, пересекается ли элемент с плейсхолдером по вертикали
     const itemBottom = itemY + itemHeight
     const placeholderBottom = placeholderY + placeholderHeight
     
-    // Если элемент находится на той же строке или ниже плейсхолдера, сдвигаем его вниз
     if (itemY >= placeholderY) {
       const shiftAmount = placeholderHeight + GRID_GAP
       styles[item.id] = {
@@ -187,7 +217,6 @@ const shiftedItemsStyle = computed(() => {
         transition: 'transform 0.2s ease'
       }
     }
-    // Если элемент пересекается с плейсхолдером по вертикали, сдвигаем его вниз
     else if (itemY < placeholderY && itemBottom > placeholderY) {
       const shiftAmount = placeholderY + placeholderHeight - itemY + GRID_GAP
       styles[item.id] = {
@@ -204,7 +233,8 @@ const getItemClass = (item) => {
   return {
     [`item-${item.type.toLowerCase()}`]: true,
     'item-selected': item.selected,
-    'item-dragging': draggedItem.value && draggedItem.value.id === item.id
+    'item-dragging': draggedItem.value && draggedItem.value.id === item.id,
+    'item-hidden-drag': isDraggingExisting.value && draggedItem.value && draggedItem.value.id === item.id // добавляем класс для скрытия
   }
 }
 
@@ -222,7 +252,6 @@ const getItemStyle = (item) => {
     baseStyle.opacity = 0.8
   }
   
-  // Применяем временные стили сдвига
   const shiftStyle = shiftedItemsStyle.value[item.id]
   if (shiftStyle) {
     Object.assign(baseStyle, shiftStyle)
@@ -257,7 +286,8 @@ const getItemPreview = (item) => {
 }
 
 const selectItem = (item) => {
-  if (draggedItem.value) return
+  // Не выбираем элемент, если происходит перетаскивание или кнопка мыши зажата
+  if (draggedItem.value || isDraggingExisting.value || isMouseDown.value) return
   
   localItems.value.forEach(i => i.selected = false)
   item.selected = true
@@ -289,12 +319,10 @@ const calculateDropPosition = (mouseX, mouseY, elementType) => {
   if (!elementSize) return { x: 0, y: 0 }
   
   if (localItems.value.length === 0) {
-    // Проверяем, поместится ли элемент в начальную позицию
-    const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
+    const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH - GRID_PADDING)
     const initialX = Math.max(0, relativeX - elementSize.width / 2)
     
     if (initialX + elementSize.width > gridWidth) {
-      // Если не помещается, центрируем элемент в пределах доступной ширины
       return {
         x: Math.max(0, (gridWidth - elementSize.width) / 2),
         y: 0
@@ -307,7 +335,6 @@ const calculateDropPosition = (mouseX, mouseY, elementType) => {
     }
   }
   
-  // Используем реальную ширину контейнера, но ограничиваем максимальной шириной страницы
   const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
   const snapX = Math.max(0, Math.min(gridWidth - elementSize.width, relativeX - elementSize.width / 2))
   
@@ -373,9 +400,7 @@ const findNearestValidPositionInRow = (x, rowY, width, height, excludeItemId) =>
     .sort((a, b) => a.left - b.left)
   
   if (rowItems.length === 0) {
-    // Проверяем, поместится ли элемент в строку
     if (x + width > gridWidth) {
-      // Если не помещается, возвращаем позицию для новой строки
       return { x: 0, y: rowY + height + GRID_GAP }
     }
     return { x, y: rowY }
@@ -386,18 +411,14 @@ const findNearestValidPositionInRow = (x, rowY, width, height, excludeItemId) =>
   for (const item of rowItems) {
     if (newArea.left < item.right + GRID_GAP && newArea.right > item.left - GRID_GAP) {
       const nextX = item.right + GRID_GAP
-      // Проверяем, поместится ли элемент после текущего элемента
       if (nextX + width > gridWidth) {
-        // Если не помещается, возвращаем позицию для новой строки
         return { x: 0, y: rowY + height + GRID_GAP }
       }
       return { x: nextX, y: rowY }
     }
   }
   
-  // Проверяем, поместится ли элемент в текущую позицию
   if (x + width > gridWidth) {
-    // Если не помещается, возвращаем позицию для новой строки
     return { x: 0, y: rowY + height + GRID_GAP }
   }
   
@@ -417,12 +438,10 @@ const calculatePotentialPlacement = (mouseX, mouseY, elementType) => {
   const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
   
   if (localItems.value.length === 0) {
-    // Если нет элементов, плейсхолдер центрируется относительно курсора
     const snapX = Math.max(0, Math.min(gridWidth - elementSize.width, relativeX - elementSize.width / 2))
     return { x: snapX, y: 0 }
   }
   
-  // Находим ближайший элемент к позиции мыши
   let nearestItem = null
   let minDistance = Infinity
   
@@ -449,51 +468,40 @@ const calculatePotentialPlacement = (mouseX, mouseY, elementType) => {
   const nearestItemX = nearestItem.x || 0
   const nearestItemY = nearestItem.y || 0
   
-  // Проверяем возможность размещения рядом с ближайшим элементом
   const rightOfNearest = nearestItemX + nearestItemWidth + GRID_GAP
   const canFitRight = rightOfNearest + elementSize.width <= gridWidth
   
-  // Определяем приоритет размещения на основе позиции мыши
   const mouseIsAbove = relativeY < nearestItemY + nearestItemHeight / 2
   const mouseIsLeft = relativeX < nearestItemX + nearestItemWidth / 2
-  
-  // Если мышь выше элемента, размещаем над ним
+
   if (mouseIsAbove) {
-    // Проверяем, поместится ли элемент в позиции слева
     if (nearestItemX + elementSize.width <= gridWidth) {
       return { x: nearestItemX, y: Math.max(0, nearestItemY - elementSize.height - GRID_GAP) }
     }
     
-    // Если не помещается, центрируем элемент
     const centerX = Math.max(0, (gridWidth - elementSize.width) / 2)
     return { x: centerX, y: Math.max(0, nearestItemY - elementSize.height - GRID_GAP) }
   }
   
-  // Если мышь слева от элемента и есть место, размещаем слева
   if (mouseIsLeft && nearestItemX >= elementSize.width + GRID_GAP) {
     const leftPosition = Math.max(0, nearestItemX - elementSize.width - GRID_GAP)
-    // Проверяем, поместится ли элемент в этой позиции
     if (leftPosition + elementSize.width <= gridWidth) {
       return { x: leftPosition, y: nearestItemY }
     }
   }
   
-  // Если есть место справа, размещаем справа
   if (canFitRight) {
     return { x: rightOfNearest, y: nearestItemY }
   }
   
-  // Иначе размещаем под элементом
   const belowNearest = nearestItemY + nearestItemHeight + GRID_GAP
   
-  // Находим самый левый элемент в строке для правильной привязки
   let leftMostX = nearestItemX
   
   for (const item of localItems.value) {
     const itemY = item.y || 0
     const itemX = item.x || 0
     
-    // Если элемент находится в той же строке или пересекается с ней
     if (Math.abs(itemY - nearestItemY) < 10) {
       if (itemX < leftMostX) {
         leftMostX = itemX
@@ -501,17 +509,14 @@ const calculatePotentialPlacement = (mouseX, mouseY, elementType) => {
     }
   }
   
-  // Проверяем, поместится ли элемент в позиции слева
   if (leftMostX + elementSize.width <= gridWidth) {
     return { x: leftMostX, y: belowNearest }
   }
   
-  // Если не помещается слева, центрируем элемент в доступном пространстве
   const centerX = Math.max(0, (gridWidth - elementSize.width) / 2)
   return { x: centerX, y: belowNearest }
 }
 
-// Функция для расчета финальной позиции с учетом сдвинутых элементов
 const calculateFinalPlacement = (elementType) => {
   if (!yellowPlaceholderPosition.value || !elementType) {
     return { x: 0, y: 0 }
@@ -523,24 +528,20 @@ const calculateFinalPlacement = (elementType) => {
   
   if (!elementSize) return { x: 0, y: 0 }
   
-  // Проверяем, есть ли элементы, которые нужно сдвинуть навсегда
   const elementsToShift = []
   
   localItems.value.forEach(item => {
     const itemY = item.y || 0
     const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
     
-    // Если элемент находится на той же строке или ниже плейсхолдера
     if (itemY >= placeholderY) {
       elementsToShift.push(item)
     }
-    // Если элемент пересекается с плейсхолдером по вертикали
     else if (itemY < placeholderY && itemY + itemHeight > placeholderY) {
       elementsToShift.push(item)
     }
   })
   
-  // Сдвигаем элементы навсегда
   elementsToShift.forEach(item => {
     const itemY = item.y || 0
     const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
@@ -580,215 +581,138 @@ const checkCollision = (x, y, width, height, excludeItemId) => {
   )
 }
 
-const startDrag = (item, event) => {
+const handleMouseDown = (item, event) => {
   if (event.button !== 0) return
   
+  isMouseDown.value = true
+  
+  // Сохраняем начальную позицию мыши
+  const startX = event.clientX
+  const startY = event.clientY
+  
+  const handleMouseMove = (moveEvent) => {
+    // Проверяем, что мышь действительно двигается (не менее 5 пикселей)
+    const deltaX = Math.abs(moveEvent.clientX - startX)
+    const deltaY = Math.abs(moveEvent.clientY - startY)
+    
+    if (deltaX > 5 || deltaY > 5) {
+      // Удаляем обработчик движения мыши
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      
+      // Начинаем перетаскивание
+      startDrag(item, moveEvent)
+    }
+  }
+  
+  const handleMouseUp = () => {
+    isMouseDown.value = false
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+  }
+  
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+}
+
+const startDrag = (item, event) => {
   event.preventDefault()
   draggedItem.value = item
   isDraggingExisting.value = true
-  
+
   const rect = gridContainer.value.getBoundingClientRect()
+  const itemWidth = item.width || ELEMENT_SIZES[item.type]?.width || 200
+  const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
+  draggedElementCursorOffset.value = {
+    x: itemWidth / 2,
+    y: itemHeight / 2
+  }
+  draggedElementCursorPosition.value = {
+    x: event.clientX,
+    y: event.clientY
+  }
   dragOffset.value = {
     x: event.clientX - rect.left - (item.x || 0),
     y: event.clientY - rect.top - (item.y || 0)
   }
-  
   document.addEventListener('mousemove', handleExistingItemDrag)
   document.addEventListener('mouseup', stopDrag)
 }
 
 const handleExistingItemDrag = (event) => {
   if (!draggedItem.value || !gridContainer.value) return
-  
-  const rect = gridContainer.value.getBoundingClientRect()
-  const newX = event.clientX - rect.left - dragOffset.value.x
-  const newY = event.clientY - rect.top - dragOffset.value.y
-  
-  const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
-  const itemWidth = draggedItem.value.width || ELEMENT_SIZES[draggedItem.value.type]?.width || 200
-  const itemHeight = draggedItem.value.height || ELEMENT_SIZES[draggedItem.value.type]?.height || 150
-  
-  const clampedX = Math.max(0, Math.min(gridWidth - itemWidth, newX))
-  const clampedY = Math.max(0, newY)
-  
-  if (localItems.value.length === 1) {
-    // Если элемент один, разрешаем перемещение только по оси X
-    if (!checkCollision(clampedX, draggedItem.value.y, itemWidth, itemHeight, draggedItem.value.id)) {
-      draggedItem.value.x = clampedX
-    }
-  } else {
-    // Если элементов несколько, разрешаем свободное перемещение
-    if (!checkCollision(clampedX, clampedY, itemWidth, itemHeight, draggedItem.value.id)) {
-      draggedItem.value.x = clampedX
-      draggedItem.value.y = clampedY
-    }
+  draggedElementCursorPosition.value = {
+    x: event.clientX,
+    y: event.clientY
   }
-  
-  showYellowPlaceholder.value = true
-  
-  // Обновляем позицию желтого плейсхолдера, чтобы он следовал за курсором
+  const rect = gridContainer.value.getBoundingClientRect()
   const mouseX = event.clientX - rect.left
   const mouseY = event.clientY - rect.top
-  
-  // Плейсхолдер всегда следует за курсором по горизонтали
-  const snapX = Math.max(0, Math.min(gridWidth - itemWidth, mouseX))
-  
-  // Определяем Y позицию на основе ближайшего элемента
-  let snapY = draggedItem.value.y || 0
-  
+  const itemWidth = draggedItem.value.width || ELEMENT_SIZES[draggedItem.value.type]?.width || 200
+  const itemHeight = draggedItem.value.height || ELEMENT_SIZES[draggedItem.value.type]?.height || 150
+  const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
+  const snapX = Math.max(0, Math.min(gridWidth - itemWidth, mouseX - itemWidth / 2))
+  let snapY = 0
   if (localItems.value.length > 1) {
     let nearestItem = null
     let minDistance = Infinity
-    
     for (const item of localItems.value) {
-      // Исключаем перетаскиваемый элемент из поиска
       if (item.id === draggedItem.value.id) continue
-      
       const itemCenterX = (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200) / 2
       const itemCenterY = (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150) / 2
-      
       const distance = Math.sqrt(
         Math.pow(mouseX - itemCenterX, 2) + Math.pow(mouseY - itemCenterY, 2)
       )
-      
       if (distance < minDistance) {
         minDistance = distance
         nearestItem = item
       }
     }
-    
     if (nearestItem) {
       const nearestItemHeight = nearestItem.height || ELEMENT_SIZES[nearestItem.type]?.height || 150
       const nearestItemY = nearestItem.y || 0
-      
       const mouseIsAbove = mouseY < nearestItemY + nearestItemHeight / 2
-      
       if (mouseIsAbove) {
-        // Проверяем, есть ли место выше элемента
         const topPosition = nearestItemY - itemHeight - GRID_GAP
-        if (topPosition >= 0) {
-          snapY = topPosition
-        } else {
-          // Если нет места выше, оставляем на той же строке
-          snapY = nearestItemY
-        }
+        snapY = topPosition >= 0 ? topPosition : nearestItemY
       } else {
         snapY = nearestItemY + nearestItemHeight + GRID_GAP
       }
     }
+  } else {
+    snapY = 0
   }
-  
   yellowPlaceholderPosition.value = {
     x: snapX,
     y: snapY,
     width: itemWidth,
     height: itemHeight
   }
+  showYellowPlaceholder.value = true
 }
 
 const stopDrag = () => {
   if (draggedItem.value && isDraggingExisting.value) {
-    const originalY = draggedItem.value.y || 0
-    const itemHeight = draggedItem.value.height || ELEMENT_SIZES[draggedItem.value.type]?.height || 150
-    
-    // Используем позицию желтого плейсхолдера для финального размещения
     if (showYellowPlaceholder.value && yellowPlaceholderPosition.value) {
-      const newY = yellowPlaceholderPosition.value.y
-      
-      // Если элемент перемещается вниз (сверху вниз)
-      if (newY > originalY) {
-        // Сдвигаем элементы, которые находятся между исходной и новой позицией, вверх
-        localItems.value.forEach(item => {
-          if (item.id === draggedItem.value.id) return
-          
-          const itemY = item.y || 0
-          
-          // Элементы, которые находятся между исходной и новой позицией, сдвигаем вверх
-          if (itemY >= originalY && itemY < newY) {
-            item.y = Math.max(0, itemY - itemHeight - GRID_GAP)
-          }
-        })
-        
-        // Затем сдвигаем элементы в новой позиции вниз
-        localItems.value.forEach(item => {
-          if (item.id === draggedItem.value.id) return
-          
-          const itemY = item.y || 0
-          const itemItemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
-          
-          // Элементы, которые находятся на новой позиции или пересекаются с ней
-          if (itemY >= newY || (itemY < newY && itemY + itemItemHeight > newY)) {
-            item.y = itemY + itemHeight + GRID_GAP
-          }
-        })
-        
-        // Устанавливаем элемент в позицию, которая учитывает сдвинутые элементы
-        draggedItem.value.x = yellowPlaceholderPosition.value.x
-        // Находим самую нижнюю позицию среди сдвинутых элементов
-        let maxY = 0
-        localItems.value.forEach(item => {
-          if (item.id !== draggedItem.value.id) {
-            const itemY = item.y || 0
-            const itemItemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
-            maxY = Math.max(maxY, itemY + itemItemHeight)
-          }
-        })
-        draggedItem.value.y = maxY + GRID_GAP
+      const newX = yellowPlaceholderPosition.value.x;
+      const newY = yellowPlaceholderPosition.value.y;
+      draggedItem.value.x = newX;
+      draggedItem.value.y = newY;
+      const sorted = [...localItems.value].sort((a, b) => a.y - b.y);
+      let currentY = 0;
+      for (let i = 0; i < sorted.length; i++) {
+        sorted[i].y = currentY;
+        currentY += (sorted[i].height || ELEMENT_SIZES[sorted[i].type]?.height || 150) + GRID_GAP;
       }
-      
-      // Если элемент перемещается вверх (снизу вверх), сдвигаем элементы в старой позиции вверх
-      if (newY < originalY) {
-        localItems.value.forEach(item => {
-          if (item.id === draggedItem.value.id) return
-          
-          const itemY = item.y || 0
-          
-          // Элементы, которые находятся ниже исходной позиции, сдвигаем вверх
-          if (itemY > originalY) {
-            item.y = Math.max(0, itemY - itemHeight - GRID_GAP)
-          }
-        })
-        
-        // Также сдвигаем элементы в новой позиции вниз
-        localItems.value.forEach(item => {
-          if (item.id === draggedItem.value.id) return
-          
-          const itemY = item.y || 0
-          const itemItemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
-          
-          // Элементы, которые находятся на новой позиции или пересекаются с ней
-          if (itemY >= newY || (itemY < newY && itemY + itemItemHeight > newY)) {
-            item.y = itemY + itemHeight + GRID_GAP
-          }
-        })
-        
-        draggedItem.value.x = yellowPlaceholderPosition.value.x
-        draggedItem.value.y = yellowPlaceholderPosition.value.y
-      }
-    } else {
-      // Fallback: если плейсхолдер не активен, используем старую логику
-      const itemWidth = draggedItem.value.width || ELEMENT_SIZES[draggedItem.value.type]?.width || 200
-      
-      if (localItems.value.length === 1) {
-        // Если элемент один, фиксируем только X позицию
-        const finalPosition = findNearestValidPositionInRow(draggedItem.value.x, draggedItem.value.y, itemWidth, itemHeight, draggedItem.value.id)
-        draggedItem.value.x = finalPosition.x
-      } else {
-        // Если элементов несколько, находим ближайшую строку для финальной позиции
-        const nearestRow = findNearestRow(draggedItem.value.y, itemHeight)
-        const finalPosition = findNearestValidPositionInRow(draggedItem.value.x, nearestRow, itemWidth, itemHeight, draggedItem.value.id)
-        draggedItem.value.x = finalPosition.x
-        draggedItem.value.y = finalPosition.y
-      }
+      localItems.value = sorted;
     }
-    
     emit('update:items', localItems.value)
   }
-  
   draggedItem.value = null
   isDraggingExisting.value = false
+  isMouseDown.value = false
   showYellowPlaceholder.value = false
-  
+  draggedElementCursorPosition.value = { x: 0, y: 0 }
   document.removeEventListener('mousemove', handleExistingItemDrag)
   document.removeEventListener('mouseup', stopDrag)
 }
@@ -820,19 +744,29 @@ const handleResize = (event) => {
   let newX = resizingItem.value.x || 0
   let newY = resizingItem.value.y || 0
   
-  if (resizeDirection.value.includes('e')) {
+  // Получаем максимальную ширину страницы
+  const gridWidth = gridContainer.value ? 
+    Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH) : 
+    MAX_PAGE_WIDTH
+  
+  if (resizeDirection.value === 'e') {
     newWidth = Math.max(100, resizeStartSize.value.width + deltaX)
+    // Ограничиваем ширину до границы страницы
+    if (newX + newWidth > gridWidth - GRID_PADDING * 2) {
+      newWidth = gridWidth - GRID_PADDING * 2 - newX
+    }
   }
-  if (resizeDirection.value.includes('w')) {
+  if (resizeDirection.value === 'w') {
     newWidth = Math.max(100, resizeStartSize.value.width - deltaX)
     newX = (resizingItem.value.x || 0) + deltaX
+    // Ограничиваем позицию и ширину
+    if (newX < GRID_PADDING) {
+      newX = GRID_PADDING
+      newWidth = resizeStartSize.value.width + (resizingItem.value.x || 0) - GRID_PADDING
+    }
   }
-  if (resizeDirection.value.includes('s')) {
+  if (resizeDirection.value === 's') {
     newHeight = Math.max(50, resizeStartSize.value.height + deltaY)
-  }
-  if (resizeDirection.value.includes('n')) {
-    newHeight = Math.max(50, resizeStartSize.value.height - deltaY)
-    newY = (resizingItem.value.y || 0) + deltaY
   }
   
   if (!checkCollision(newX, newY, newWidth, newHeight, resizingItem.value.id)) {
@@ -864,13 +798,11 @@ const handleDragEnter = (event) => {
     showGrayPlaceholder.value = true
     showYellowPlaceholder.value = true
     
-    // Сразу устанавливаем позицию серого плейсхолдера по курсору
     grayPlaceholderPosition.value = {
       x: event.clientX,
       y: event.clientY
     }
     
-    // И рассчитываем начальную позицию для желтого плейсхолдера
     const position = calculatePotentialPlacement(event.clientX, event.clientY, currentDraggedType.value)
     const size = ELEMENT_SIZES[currentDraggedType.value]
     
@@ -888,13 +820,11 @@ const handleDragOver = (event) => {
   event.dataTransfer.dropEffect = 'copy'
   
   if (currentDraggedType.value && !isDraggingExisting.value) {
-    // Серый плейсхолдер всегда следует за курсором
     grayPlaceholderPosition.value = {
       x: event.clientX,
       y: event.clientY
     }
     
-    // Используем новую функцию для расчета потенциального места размещения
     const position = calculatePotentialPlacement(event.clientX, event.clientY, currentDraggedType.value)
     const size = ELEMENT_SIZES[currentDraggedType.value]
     
@@ -913,7 +843,6 @@ const handleDrop = (event) => {
   let itemType = currentDraggedType.value || event.dataTransfer.getData('text/plain')
   
   if (itemType && ELEMENT_SIZES[itemType] && !isDraggingExisting.value) {
-    // Используем функцию для финального размещения с учетом сдвинутых элементов
     const position = calculateFinalPlacement(itemType)
     const size = ELEMENT_SIZES[itemType]
     
@@ -942,21 +871,17 @@ const resetDragState = () => {
   showYellowPlaceholder.value = false
   currentDraggedType.value = ''
   
-  // Сбрасываем позиции плейсхолдеров
   grayPlaceholderPosition.value = { x: 0, y: 0 }
   yellowPlaceholderPosition.value = { x: 0, y: 0, width: 0, height: 0 }
 }
 
 const handleMouseMove = (event) => {
-  // Для новых элементов с панели инструментов - серый плейсхолдер всегда следует за курсором
   if (showGrayPlaceholder.value && currentDraggedType.value && !isDraggingExisting.value) {
-    // Обновляем позицию серого плейсхолдера точно по координатам курсора
     grayPlaceholderPosition.value = {
       x: event.clientX,
       y: event.clientY
     }
     
-    // Обновляем позицию желтого плейсхолдера только если мышь над грид-контейнером
     if (gridContainer.value) {
       const rect = gridContainer.value.getBoundingClientRect()
       if (event.clientX >= rect.left && event.clientX <= rect.right && 
@@ -985,25 +910,21 @@ const handleMouseMove = (event) => {
     const clampedY = Math.max(0, newY)
     
     if (localItems.value.length === 1) {
-      // Если элемент один, разрешаем перемещение только по оси X
       if (!checkCollision(clampedX, draggedItem.value.y, itemWidth, itemHeight, draggedItem.value.id)) {
         draggedItem.value.x = clampedX
       }
     } else {
-      // Если элементов несколько, разрешаем свободное перемещение
       if (!checkCollision(clampedX, clampedY, itemWidth, itemHeight, draggedItem.value.id)) {
         draggedItem.value.x = clampedX
         draggedItem.value.y = clampedY
       }
     }
     
-    // Плейсхолдер всегда следует за курсором по горизонтали
     const mouseX = event.clientX - rect.left
     const mouseY = event.clientY - rect.top
     
     const snapX = Math.max(0, Math.min(gridWidth - itemWidth, mouseX))
     
-    // Определяем Y позицию на основе ближайшего элемента
     let snapY = draggedItem.value.y || 0
     
     if (localItems.value.length > 1) {
@@ -1011,7 +932,6 @@ const handleMouseMove = (event) => {
       let minDistance = Infinity
       
       for (const item of localItems.value) {
-        // Исключаем перетаскиваемый элемент из поиска
         if (item.id === draggedItem.value.id) continue
         
         const itemCenterX = (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200) / 2
@@ -1034,12 +954,10 @@ const handleMouseMove = (event) => {
         const mouseIsAbove = mouseY < nearestItemY + nearestItemHeight / 2
         
         if (mouseIsAbove) {
-          // Проверяем, есть ли место выше элемента
           const topPosition = nearestItemY - itemHeight - GRID_GAP
           if (topPosition >= 0) {
             snapY = topPosition
           } else {
-            // Если нет места выше, оставляем на той же строке
             snapY = nearestItemY
           }
         } else {
@@ -1059,7 +977,6 @@ const handleMouseMove = (event) => {
 
 const handleDragLeave = (event) => {
   if (!event.currentTarget.contains(event.relatedTarget)) {
-    // Сбрасываем только плейсхолдеры, но не весь drag state
     showGrayPlaceholder.value = false
     showYellowPlaceholder.value = false
     grayPlaceholderPosition.value = { x: 0, y: 0 }
@@ -1139,9 +1056,18 @@ onUnmounted(() => {
   text-align: center;
   color: var(--color-text-secondary);
   
+  h3 {
+    margin: 15px 0 10px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  
   p {
-    margin-top: 15px;
-    font-size: 16px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 400px;
   }
 }
 
@@ -1183,6 +1109,11 @@ onUnmounted(() => {
     transform: scale(1.02);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   }
+}
+
+.grid-item.item-hidden-drag {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .item-header {
@@ -1267,76 +1198,63 @@ onUnmounted(() => {
   }
 }
 
-.resize-handles {
+.resize-indicators {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.resize-handle {
+.resize-indicator {
   position: absolute;
-  width: 12px;
-  height: 12px;
   background: var(--color-primary);
-  border: 2px solid white;
-  border-radius: 50%;
   pointer-events: auto;
-  opacity: 0.8;
+  opacity: 0.6;
   transition: opacity 0.2s ease;
   
   &:hover {
     opacity: 1;
-    transform: scale(1.2);
   }
   
-  &.resize-se {
-    bottom: -6px;
-    right: -6px;
-    cursor: se-resize;
+  &.resize-left {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 30px;
+    cursor: w-resize;
+    border-radius: 4px 0 0 4px;
   }
   
-  &.resize-sw {
-    bottom: -6px;
-    left: -6px;
-    cursor: sw-resize;
+  &.resize-right {
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 30px;
+    cursor: e-resize;
+    border-radius: 0 4px 4px 0;
   }
   
-  &.resize-ne {
-    top: -6px;
-    right: -6px;
-    cursor: ne-resize;
-  }
-  
-  &.resize-nw {
-    top: -6px;
-    left: -6px;
-    cursor: nw-resize;
+  &.resize-bottom {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 8px;
+    cursor: s-resize;
+    border-radius: 0 0 4px 4px;
   }
 }
 
-.item-селектор .resize-handle,
-.item-заголовок .resize-handle {
-  width: 10px;
-  height: 10px;
-  
-  &.resize-se {
-    bottom: -5px;
-    right: -5px;
+.item-селектор .resize-indicator,
+.item-заголовок .resize-indicator {
+  &.resize-left,
+  &.resize-right {
+    height: 24px;
   }
   
-  &.resize-sw {
-    bottom: -5px;
-    left: -5px;
-  }
-  
-  &.resize-ne {
-    top: -5px;
-    right: -5px;
-  }
-  
-  &.resize-nw {
-    top: -5px;
-    left: -5px;
+  &.resize-bottom {
+    width: 24px;
   }
 }
 
@@ -1435,5 +1353,19 @@ onUnmounted(() => {
     -webkit-line-clamp: 1;
     line-clamp: 1;
   }
+}
+
+.dragged-element-preview {
+  pointer-events: none;
+  opacity: 0.85;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  border: 2px solid var(--color-primary);
+  border-radius: 8px;
+  background: var(--color-primary-background);
+  transition: box-shadow 0.2s, opacity 0.2s;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 2000;
 }
 </style> 

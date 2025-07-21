@@ -49,6 +49,7 @@
             <DashboardGrid
                 :items="currentPageItems"
                 :dragged-type="draggedType"
+                :pages-count="pages.length"
                 @update:items="updateCurrentPageItems"
                 @item-select="handleItemSelect"
                 @item-edit="handleItemEdit"
