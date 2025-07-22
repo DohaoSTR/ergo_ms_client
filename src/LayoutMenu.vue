@@ -98,9 +98,6 @@ onBeforeUnmount(() => {
       @reset-page="() => currentSidebarPage = ''"
     />
     <div class="layout-page" :style="{ paddingLeft: leftPadding }">
-      <div class="pt-4 container-xxl">
-        <TheHeader @toggleMenu="toggleMenu" />
-      </div>
       <div class="py-4 container-xxl">
         <RouterView :key="$route.path" />
       </div>

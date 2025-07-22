@@ -1,3 +1,5 @@
+<!-- БОЛЬШЕ НЕ ИСПОЛЬЗУЕТСЯ -->
+
 <script setup>
 import { Menu, Search } from 'lucide-vue-next'
 

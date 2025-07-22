@@ -21,18 +21,6 @@
             <Bot :size="24" />
           </div>
         </div>
-        <div
-          class="tools__search"
-          style="
-            width: 40.5px;
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-          "
-        >
-          <Search :size="24" />
-        </div>
         <div class="tools__theme">
           <ToggleTheme />
         </div>
@@ -371,20 +359,19 @@ const handleHelpIntent = async () => {
 .tools__assistant {
   .assistant-btn {
     color: var(--color-primary-text);
-    transition: all 0.3s ease;
+    border-radius: 0.5rem;
 
     &:hover {
-      background-color: rgba(220, 53, 69, 0.1);
-      color: #dc3545;
-      transform: scale(1.1);
+      background-color: var(--color-hover-background);
+      color: var(--color-accent);
     }
 
     &.active {
-      background-color: #dc3545;
-      color: white;
+      background-color: var(--bs-primary-bg-subtle);
+      color: var(--bs-primary);
 
       &:hover {
-        background-color: #c82333;
+        background-color: var(--bs-primary-border-subtle);
       }
     }
   }
