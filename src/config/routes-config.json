@@ -25,7 +25,7 @@
       }
     }
   ],
-  
+
   "authRoutes": [
     {
       "path": "/start-page",
@@ -164,7 +164,7 @@
         "requiresAuth": true
       }
     },
-    
+
     "Shortcodes": {
       "path": "/shortcodes",
       "component": "@/modules/shortcodes/ParentLayout.vue",
@@ -374,14 +374,6 @@
       "component": "@/modules/education_analytics_module/SuperUserPanelPage.vue",
       "meta": {
         "title": "SuperUserPage",
-        "requiresAuth": true
-      }
-    },
-
-    "AssetsAnalyse": {
-      "path": "/assets-analyse",
-      "component": "@/modules/assets_analysis/DatabaseAnalyze.vue",
-      "meta": {
         "requiresAuth": true
       }
     },
@@ -705,21 +697,6 @@
       }
     },
 
-    "Analyze": {
-      "path": "/user/analyze",
-      "component": "@/modules/user/analyze/Analyze.vue",
-      "meta": {
-        "requiresAuth": true
-      }
-    },
-    "DatabaseAnalyze": {
-      "path": "/user/analyze/databaseanalyze",
-      "component": "@/modules/user/analyze/DatabaseAnalyze.vue",
-      "meta": {
-        "requiresAuth": true
-      }
-    },
-
     "BI": {
       "path": "/bi",
       "component": "@/modules/bi/HomePageBI.vue",
@@ -1033,7 +1010,7 @@
     "StudentDetail": {
       "path": "/expert-system/student/:id",
       "component": "@/modules/expert-system/StudentDetail.vue",
-      "meta"  : {
+      "meta": {
         "title": "Детали студента",
         "requiresAuth": true
       }
@@ -1087,6 +1064,31 @@
         "title": "Детали анализа",
         "requiresAuth": true
       }
+    },
+
+    "AssetsAnalyse": {
+      "path": "/assets-analyse",
+      "component": "@/modules/assets_analysis/Analyze.vue",
+      "meta": {
+        "title": "Анализ активов",
+        "requiresAuth": true
+      }
+    },
+    "DatabaseAnalyze": {
+      "path": "/user/analyze/databaseanalyze",
+      "component": "@/modules/assets_analysis/DatabaseAnalyze.vue",
+      "meta": {
+        "title": "Анализ базы данных",
+        "requiresAuth": true
+      }
+    },
+    "Analyze": {
+      "path": "/user/analyze",
+      "component": "@/modules/assets_analysis/Analyze.vue",
+      "meta": {
+        "title": "Анализ данных",
+        "requiresAuth": true
+      }
     }
   }
-} 
+}

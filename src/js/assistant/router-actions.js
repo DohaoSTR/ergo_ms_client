@@ -1,9 +1,101 @@
 import router from '@/js/routers.js'
+import axios from 'axios'
 
 class RouterActions {
     constructor() {
         this.router = router
-        this.routeCache = new Map()
+        this.cachedRoutes = null
+        this.cacheTimestamp = null
+        this.cacheTimeout = 5 * 60 * 1000 // 5 минут
+    }
+
+    async fetchRoutesFromAPI() {
+        try {
+            const response = await axios.get('/api/cms/get-routes-paths/')
+            const data = response.data
+
+            if (data.routes && Array.isArray(data.routes)) {
+                return data.routes.map(route => ({
+                    name: route.name,
+                    path: route.path,
+                    title: route.title,
+                    meta: { title: route.title }
+                }))
+            }
+
+            return []
+        } catch (error) {
+            console.error('Ошибка при загрузке маршрутов из API:', error)
+            return this.getFallbackRoutes()
+        }
+    }
+
+    getFallbackRoutes() {
+        return [
+            { name: 'Account', path: '/user/account', title: 'Личный кабинет' },
+            { name: 'Settings', path: '/settings', title: 'Настройки' },
+            { name: 'SecuritySettings', path: '/user/security', title: 'Безопасность' },
+            { name: 'UsersPanel', path: '/admin-panel/users', title: 'Пользователи' },
+            { name: 'AdminPanel', path: '/admin-panel', title: 'Админ панель' },
+            { name: 'GroupsPanel', path: '/admin-panel/groups', title: 'Группы' },
+            { name: 'CategoriesPanel', path: '/admin-panel/categories', title: 'Категории' },
+            { name: 'BI', path: '/bi', title: 'Бизнес аналитика' },
+            { name: 'CRM', path: '/crm', title: 'CRM' },
+            { name: 'LMS', path: '/lms', title: 'LMS' },
+            { name: 'ExpertSystem', path: '/expert-system', title: 'Экспертная система' },
+            { name: 'DatabaseAnalyze', path: '/user/analyze/databaseanalyze', title: 'Анализ базы данных' },
+            { name: 'Analyze', path: '/user/analyze', title: 'Анализ данных' }
+        ]
+    }
+
+    async getAvailableRoutes() {
+        const now = Date.now()
+
+        if (this.cachedRoutes && this.cacheTimestamp && (now - this.cacheTimestamp < this.cacheTimeout)) {
+            return this.cachedRoutes
+        }
+
+        try {
+            const apiRoutes = await this.fetchRoutesFromAPI()
+            const routerRoutes = this.router.getRoutes()
+
+            const combinedRoutes = []
+            const seenRoutes = new Set()
+
+            apiRoutes.forEach(route => {
+                if (!seenRoutes.has(route.name)) {
+                    combinedRoutes.push(route)
+                    seenRoutes.add(route.name)
+                }
+            })
+
+            routerRoutes.forEach(route => {
+                if (route.name && !seenRoutes.has(route.name)) {
+                    combinedRoutes.push({
+                        name: route.name,
+                        path: route.path,
+                        title: route.meta?.title || route.name,
+                        meta: route.meta
+                    })
+                    seenRoutes.add(route.name)
+                }
+            })
+
+            this.cachedRoutes = combinedRoutes
+            this.cacheTimestamp = now
+
+            console.log('🔄 Обновлен кеш маршрутов из API:', combinedRoutes.length, 'маршрутов')
+            return this.cachedRoutes
+
+        } catch (error) {
+            console.error('Ошибка при получении маршрутов:', error)
+
+            if (this.cachedRoutes) {
+                return this.cachedRoutes
+            }
+
+            return this.getFallbackRoutes()
+        }
     }
 
     getCurrentRoute() {
@@ -16,64 +108,41 @@ class RouterActions {
         }
     }
 
-    getAvailableRoutes() {
-        if (this.routeCache.has('all')) {
-            return this.routeCache.get('all')
-        }
-
-        const routes = this.router.getRoutes().map(route => ({
-            path: route.path,
-            name: route.name,
-            meta: route.meta || {}
-        }))
-
-        this.routeCache.set('all', routes)
-        return routes
-    }
-
-    async navigateToRoute(routeName, params = {}, query = {}) {
+    async navigateToRoute(routeIdentifier) {
         try {
-            const route = this.findRouteByName(routeName)
-            if (route) {
-                await this.router.push({ name: routeName, params, query })
+            console.log('🔍 Navigating to route:', routeIdentifier)
+            const routes = await this.getAvailableRoutes()
+            console.log('📋 Available routes:', routes.map(r => r.name || r.path))
+
+            let targetRoute = null
+
+            if (typeof routeIdentifier === 'string') {
+                targetRoute = await this.smartRouteSearch(routeIdentifier)
+            } else if (routeIdentifier && typeof routeIdentifier === 'object') {
+                targetRoute = routeIdentifier
+            }
+
+            if (!targetRoute) {
+                console.log('❌ Route not found:', routeIdentifier)
                 return {
-                    success: true,
-                    message: `Переход выполнен: ${route.path}`,
-                    route: route
+                    success: false,
+                    error: `Маршрут "${routeIdentifier}" не найден`
                 }
             }
 
-            const routeByPath = this.findRouteByPath(routeName)
-            if (routeByPath) {
-                await this.router.push({ path: routeName, query })
-                return {
-                    success: true,
-                    message: `Переход выполнен: ${routeName}`,
-                    route: routeByPath
-                }
-            }
+            console.log('✅ Found route:', targetRoute.name, targetRoute.path)
 
-            const smartMatch = this.smartRouteSearch(routeName)
-            if (smartMatch) {
-                await this.router.push({ name: smartMatch.name, params, query })
-                return {
-                    success: true,
-                    message: `Переход выполнен: ${smartMatch.path}`,
-                    route: smartMatch
-                }
-            }
-
+            await this.router.push(targetRoute.path)
             return {
-                success: false,
-                message: `Маршрут "${routeName}" не найден`,
-                suggestions: this.getSimilarRoutes(routeName)
+                success: true,
+                route: targetRoute
             }
 
         } catch (error) {
+            console.error('❌ Navigation error:', error)
             return {
                 success: false,
-                message: `Ошибка навигации: ${error.message}`,
-                error: error
+                error: error.message
             }
         }
     }
@@ -94,53 +163,38 @@ class RouterActions {
         )
     }
 
-    smartRouteSearch(searchTerm) {
-        const routes = this.getAvailableRoutes()
+    async smartRouteSearch(searchTerm) {
+        const routes = await this.getAvailableRoutes()
         const lowerSearchTerm = searchTerm.toLowerCase()
 
-        const termMapping = {
-            'профиль': ['Account', 'User'],
-            'аккаунт': ['Account', 'User'],
-            'пользователи': ['UsersPanel', 'AdminPanel'],
-            'настройки': ['Settings', 'SecuritySettings'],
-            'безопасность': ['SecuritySettings'],
-            'админ': ['AdminPanel', 'UsersPanel', 'GroupsPanel', 'CategoriesPanel'],
-            'панель': ['AdminPanel', 'UsersPanel', 'GroupsPanel', 'CategoriesPanel'],
-            'группы': ['GroupsPanel'],
-            'категории': ['CategoriesPanel'],
-            'главная': ['Account'],
-            'dashboard': ['Account'],
-            'home': ['Account']
+        console.log('🔍 Smart route search for:', searchTerm)
+        console.log('📋 Search in routes:', routes.map(r => r.name || r.path))
+
+        const exactMatch = routes.find(route => route.name === searchTerm)
+        if (exactMatch) {
+            console.log(`✅ Found exact name match: ${exactMatch.name} (${exactMatch.path})`)
+            return exactMatch
         }
 
-        for (const [ruTerm, enTerms] of Object.entries(termMapping)) {
-            if (lowerSearchTerm.includes(ruTerm)) {
-                for (const enTerm of enTerms) {
-                    const route = routes.find(r =>
-                        r.name?.toLowerCase().includes(enTerm) ||
-                        r.path.toLowerCase().includes(enTerm)
-                    )
-                    if (route) return route
-                }
-            }
+        const pathMatch = routes.find(route => route.path === searchTerm)
+        if (pathMatch) {
+            console.log(`✅ Found exact path match: ${pathMatch.name} (${pathMatch.path})`)
+            return pathMatch
         }
 
-        for (const enTerms of Object.values(termMapping)) {
-            for (const enTerm of enTerms) {
-                if (lowerSearchTerm.includes(enTerm)) {
-                    const route = routes.find(r =>
-                        r.name?.toLowerCase().includes(enTerm) ||
-                        r.path.toLowerCase().includes(enTerm)
-                    )
-                    if (route) return route
-                }
-            }
-        }
-
-        return routes.find(route =>
+        const partialMatch = routes.find(route =>
             route.name?.toLowerCase().includes(lowerSearchTerm) ||
-            route.path.toLowerCase().includes(lowerSearchTerm)
+            route.path.toLowerCase().includes(lowerSearchTerm) ||
+            route.title?.toLowerCase().includes(lowerSearchTerm)
         )
+
+        if (partialMatch) {
+            console.log(`✅ Found partial match: ${partialMatch.name} (${partialMatch.path})`)
+        } else {
+            console.log('❌ No routes found')
+        }
+
+        return partialMatch
     }
 
     getSimilarRoutes(searchTerm, maxResults = 5) {
