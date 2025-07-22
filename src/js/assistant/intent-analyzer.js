@@ -1,6 +1,7 @@
+import { lmStudioClient } from './lm-studio-client.js'
+
 class IntentAnalyzer {
-    constructor(client = null) {
-        this.client = client
+    constructor() {
         this.systemPrompt = this.buildSystemPrompt()
     }
 
@@ -13,15 +14,6 @@ class IntentAnalyzer {
 3. PAGE_ANALYZE - анализ текущей страницы (когда спрашивают "где я", "что это за страница")  
 4. HELP - общая справка (только когда явно просят "помощь", "что ты умеешь", "команды")
 5. CHAT - обычный разговор и ответы на вопросы
-
-ВАЖНЫЕ ПРАВИЛА ДЛЯ НАВИГАЦИИ:
-- Анализируй СЕМАНТИКУ запроса пользователя
-- Используй список доступных маршрутов из контекста
-- Для "профиль", "личный кабинет", "аккаунт" выбирай Account (/user/account)
-- Для "настройки" без уточнения выбирай Settings (/settings)
-- Для "настройки безопасности" выбирай SecuritySettings (/user/security)
-- Для "пользователи", "управление пользователями" выбирай UsersPanel
-- Возвращай ТОЧНОЕ имя маршрута из списка доступных
 
 ВАЖНЫЕ ПРАВИЛА:
 - Отвечай на русском языке
@@ -44,12 +36,7 @@ class IntentAnalyzer {
 
 ПРИМЕРЫ:
 Пользователь: "Перейди в мой профиль"
-Контекст содержит: Account: /user/account - Личный кабинет пользователя, профиль
-Ответ: {"intent":"NAVIGATION","action":"go_to_profile","message":"Перехожу в ваш профиль","params":{"route":"Account","routeName":"профиль"}}
-
-Пользователь: "Открой настройки"
-Контекст содержит: Settings: /settings - Системные настройки приложения
-Ответ: {"intent":"NAVIGATION","action":"go_to_settings","message":"Открываю настройки системы","params":{"route":"Settings","routeName":"настройки"}}
+Ответ: {"intent":"NAVIGATION","action":"go_to_profile","message":"Перехожу в ваш профиль","params":{"route":"profile"}}
 
 Пользователь: "Где я нахожусь?"  
 Ответ: {"intent":"PAGE_ANALYZE","action":"analyze_current_page","message":"Анализирую текущую страницу для вас","params":{}}
@@ -61,46 +48,61 @@ class IntentAnalyzer {
 Ответ: {"intent":"HELP","action":"show_help","message":"Показываю справку по возможностям ассистента","params":{}}
 
 Пользователь: "Как мне сделать dnd на моей странице bi?"
-Ответ: {"intent":"CHAT","action":null,"message":"Для реализации drag and drop на BI странице рекомендую использовать Vue Draggable или SortableJS. Это самые популярные решения для Vue приложений. Что именно нужно перетаскивать?","params":{}}`
+Ответ: {"intent":"CHAT","action":null,"message":"Для реализации drag and drop на BI странице рекомендую использовать Vue Draggable или SortableJS. Это самые популярные решения для Vue приложений. Что именно нужно перетаскивать?","params":{}}
+
+Пользователь: "drag and drop, как сделать?"
+Ответ: {"intent":"CHAT","action":null,"message":"Drag and drop можно реализовать с помощью HTML5 API или библиотек. Что именно нужно перетаскивать?","params":{}}`
     }
 
-    async analyzeIntent(userMessage, context = {}) {
+    async analyzeIntent(userMessage, currentContext = {}) {
         try {
-            const systemPrompt = this.buildSystemPrompt()
-            const contextPrompt = await this.buildContextPrompt(context)
-            const userPrompt = `${contextPrompt}\n\nПользователь: "${userMessage}"`
+            const contextPrompt = this.buildContextPrompt(currentContext)
+            const fullSystemPrompt = `${this.systemPrompt}\n\nТЕКУЩИЙ КОНТЕКСТ:\n${contextPrompt}`
 
-            console.log('🔍 Запрос в LM Studio...', {
-                model: this.client.model,
-                userMessage: userMessage.substring(0, 50) + '...'
-            })
+            const response = await lmStudioClient.sendMessage(userMessage, fullSystemPrompt)
 
-            const response = await this.client.sendMessage(systemPrompt, userPrompt)
-
-            if (response && response.trim()) {
-                console.log('✅ Получен ответ от LM Studio:', response.substring(0, 100) + '...')
-
+            if (response.success) {
                 try {
-                    const parsed = JSON.parse(response.trim())
-                    console.log('✅ LLM успешно обработал запрос:', parsed.intent)
-                    return parsed
+                    let cleanResponse = response.message.trim()
+
+                    cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '')
+
+                    let jsonMatch = cleanResponse.match(/\{[\s\S]*\}/)
+
+                    if (jsonMatch) {
+                        const intentData = JSON.parse(jsonMatch[0])
+
+                        if (intentData.intent && intentData.message) {
+                            console.log('✅ LLM успешно обработал запрос:', intentData.intent)
+                            return {
+                                success: true,
+                                intent: intentData.intent,
+                                action: intentData.action,
+                                message: intentData.message,
+                                params: intentData.params || {}
+                            }
+                        } else {
+                            throw new Error('Invalid JSON structure from LLM')
+                        }
+                    } else {
+                        console.warn('LLM не вернул JSON, используем как обычный ответ')
+                        return this.fallbackAnalysis(userMessage, response.message)
+                    }
                 } catch (parseError) {
-                    console.warn('⚠️ Ошибка парсинга JSON от LLM:', parseError)
-                    console.log('📝 Сырой ответ:', response)
-                    return this.fallbackAnalysis(userMessage, response)
+                    console.warn('Failed to parse LLM response as JSON:', parseError, 'Response:', response.message)
+                    return this.fallbackAnalysis(userMessage, response.message)
                 }
             } else {
-                console.warn('⚠️ Пустой ответ от LM Studio')
-                return this.fallbackAnalysis(userMessage, null)
+                return this.localIntentAnalysis(userMessage, currentContext)
             }
 
         } catch (error) {
-            console.error('❌ Ошибка при анализе намерений:', error)
-            return this.fallbackAnalysis(userMessage, null)
+            console.error('Intent analysis error:', error)
+            return this.localIntentAnalysis(userMessage, currentContext)
         }
     }
 
-    async buildContextPrompt(context) {
+    buildContextPrompt(context) {
         const prompt = []
 
         if (context.currentRoute) {
@@ -112,13 +114,7 @@ class IntentAnalyzer {
         }
 
         if (context.availableRoutes && context.availableRoutes.length > 0) {
-            prompt.push(`ДОСТУПНЫЕ МАРШРУТЫ (name: path):`)
-
-            const routeDescriptions = await this.getRouteDescriptions(context.availableRoutes)
-            context.availableRoutes.forEach(routeName => {
-                const routeInfo = routeDescriptions[routeName] || `Маршрут ${routeName}`
-                prompt.push(`- ${routeName}: ${routeInfo}`)
-            })
+            prompt.push(`Доступные маршруты: ${context.availableRoutes.join(', ')}`)
         }
 
         if (context.pageComponents && context.pageComponents.length > 0) {
@@ -126,61 +122,6 @@ class IntentAnalyzer {
         }
 
         return prompt.join('\n')
-    }
-
-    async getRouteDescriptions(routeNames) {
-        try {
-            const response = await fetch('/api/cms/get-routes-paths/')
-            const data = await response.json()
-
-            if (data.routes && Array.isArray(data.routes)) {
-                const descriptions = {}
-                data.routes.forEach(route => {
-                    if (routeNames.includes(route.name)) {
-                        descriptions[route.name] = `${route.path} - ${route.title}`
-                    }
-                })
-
-                routeNames.forEach(routeName => {
-                    if (!descriptions[routeName]) {
-                        descriptions[routeName] = this.getFallbackDescription(routeName)
-                    }
-                })
-
-                return descriptions
-            }
-        } catch (error) {
-            console.error('Ошибка при получении описаний маршрутов:', error)
-        }
-
-        const fallbackDescriptions = {}
-        routeNames.forEach(routeName => {
-            fallbackDescriptions[routeName] = this.getFallbackDescription(routeName)
-        })
-
-        return fallbackDescriptions
-    }
-
-    getFallbackDescription(routeName) {
-        const routeDescriptions = {
-            'Account': '/user/account - Личный кабинет пользователя, профиль',
-            'SecuritySettings': '/user/security - Настройки безопасности пользователя',
-            'Settings': '/settings - Системные настройки приложения',
-            'UsersPanel': '/admin-panel/users - Панель управления пользователями',
-            'AdminPanel': '/admin-panel - Админ панель системы',
-            'GroupsPanel': '/admin-panel/groups - Управление группами пользователей',
-            'CategoriesPanel': '/admin-panel/categories - Управление категориями',
-            'BI': '/bi - Модуль бизнес-аналитики',
-            'CRM': '/crm - CRM система',
-            'LMS': '/lms - Система управления обучением',
-            'ExpertSystem': '/expert-system - Экспертная система',
-            'Profile': '/expert-system/account - Профиль в экспертной системе',
-            'ProfilePage': '/education_analytics/profile - Профиль в аналитике образования',
-            'DatabaseAnalyze': '/user/analyze/databaseanalyze - Анализ базы данных',
-            'Analyze': '/user/analyze - Анализ данных'
-        }
-
-        return routeDescriptions[routeName] || `Маршрут ${routeName}`
     }
 
     fallbackAnalysis(userMessage, llmResponse) {
@@ -212,23 +153,20 @@ class IntentAnalyzer {
 
         if (this.matchesKeywords(lowerMessage, ['перейди', 'переход', 'открой', 'иди', 'перейти', 'покажи страницу'])) {
             let route = 'Account'
-            let routeName = 'профиль'
+            let routeName = 'аккаунт'
 
-            if (this.matchesKeywords(lowerMessage, ['профиль', 'profile', 'аккаунт', 'account', 'личный кабинет'])) {
+            if (this.matchesKeywords(lowerMessage, ['профиль', 'profile', 'аккаунт', 'account'])) {
                 route = 'Account'
                 routeName = 'профиль'
-            } else if (this.matchesKeywords(lowerMessage, ['настройки', 'settings']) && !this.matchesKeywords(lowerMessage, ['безопасности', 'security'])) {
+            } else if (this.matchesKeywords(lowerMessage, ['настройки', 'settings'])) {
                 route = 'Settings'
-                routeName = 'настройки системы'
-            } else if (this.matchesKeywords(lowerMessage, ['настройки безопасности', 'безопасность', 'security'])) {
-                route = 'SecuritySettings'
-                routeName = 'настройки безопасности'
-            } else if (this.matchesKeywords(lowerMessage, ['пользователи', 'users']) || (this.matchesKeywords(lowerMessage, ['админ', 'admin']) && this.matchesKeywords(lowerMessage, ['пользователи', 'users']))) {
+                routeName = 'настройки'
+            } else if (this.matchesKeywords(lowerMessage, ['пользователи', 'users', 'админ', 'admin'])) {
                 route = 'UsersPanel'
                 routeName = 'панель пользователей'
-            } else if (this.matchesKeywords(lowerMessage, ['админ панель', 'admin panel']) && !this.matchesKeywords(lowerMessage, ['пользователи', 'группы', 'категории'])) {
-                route = 'AdminPanel'
-                routeName = 'админ панель'
+            } else if (this.matchesKeywords(lowerMessage, ['безопасность', 'security'])) {
+                route = 'SecuritySettings'
+                routeName = 'настройки безопасности'
             } else if (this.matchesKeywords(lowerMessage, ['группы', 'groups'])) {
                 route = 'GroupsPanel'
                 routeName = 'панель групп'
