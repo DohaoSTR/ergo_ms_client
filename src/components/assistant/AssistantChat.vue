@@ -5,9 +5,6 @@
         <Bot :size="20" class="me-2" />
         <span>AI Ассистент</span>
       </div>
-      <button class="btn btn-link p-0 assistant-chat__close" @click="closeChat">
-        <X :size="20" />
-      </button>
     </div>
 
     <div ref="messagesContainer" class="assistant-chat__messages">
@@ -27,7 +24,7 @@
           :disabled="isTyping"
         />
         <button
-          class="btn btn-primary"
+          class="btn btn-danger"
           @click="sendMessage"
           :disabled="!inputMessage.trim() || isTyping"
         >
@@ -40,7 +37,7 @@
 
 <script setup>
 import { ref, nextTick, defineEmits, watch } from 'vue'
-import { Bot, X, Send } from 'lucide-vue-next'
+import { Bot, Send } from 'lucide-vue-next'
 import AssistantMessage from './AssistantMessage.vue'
 import AssistantTyping from './AssistantTyping.vue'
 
@@ -66,10 +63,6 @@ const messages = ref([
     timestamp: new Date(),
   },
 ])
-
-const closeChat = () => {
-  emit('close')
-}
 
 const sendMessage = () => {
   if (!inputMessage.value.trim() || isTyping.value) return
@@ -105,6 +98,10 @@ const addAssistantMessage = (content) => {
   scrollToBottom()
 }
 
+const setTyping = (typing) => {
+  isTyping.value = typing
+}
+
 const scrollToBottom = () => {
   nextTick(() => {
     if (messagesContainer.value) {
@@ -122,29 +119,32 @@ watch(
 
 defineExpose({
   addAssistantMessage,
-  setTyping: (typing) => {
-    isTyping.value = typing
-  },
+  setTyping,
 })
 </script>
 
 <style scoped>
 .assistant-chat {
-  position: fixed;
-  bottom: 90px;
-  right: 20px;
-  width: 380px;
-  height: 500px;
-  background: white;
-  border-radius: 16px 16px 16px 4px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e9ecef;
-  z-index: 1000;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 400px;
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  border-radius: 12px;
+  box-shadow:
+    0 12px 40px rgba(220, 53, 69, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(220, 53, 69, 0.1);
+  z-index: 9998;
   display: flex;
   flex-direction: column;
   transform: translateY(20px) scale(0.95);
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  margin-bottom: 10px;
 }
 
 .assistant-chat--visible {
@@ -155,27 +155,18 @@ defineExpose({
 .assistant-chat__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #e9ecef;
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border-radius: 16px 16px 0 0;
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  border-radius: 12px 12px 0 0;
+  color: white;
 }
 
 .assistant-chat__title {
   display: flex;
   align-items: center;
   font-weight: 600;
-  color: #495057;
-}
-
-.assistant-chat__close {
-  color: #6c757d;
-  transition: color 0.2s ease;
-}
-
-.assistant-chat__close:hover {
-  color: #495057;
+  font-size: 14px;
 }
 
 .assistant-chat__messages {
@@ -185,6 +176,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: linear-gradient(to bottom, #ffffff, #f8f9fa);
 }
 
 .assistant-chat__messages::-webkit-scrollbar {
@@ -192,51 +184,57 @@ defineExpose({
 }
 
 .assistant-chat__messages::-webkit-scrollbar-track {
-  background: #f1f3f4;
+  background: rgba(220, 53, 69, 0.1);
+  border-radius: 2px;
 }
 
 .assistant-chat__messages::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: linear-gradient(to bottom, #dc3545, #c82333);
   border-radius: 2px;
 }
 
 .assistant-chat__input {
   padding: 16px;
-  border-top: 1px solid #e9ecef;
-  background: #f8f9fa;
-  border-radius: 0 0 16px 4px;
+  border-top: 1px solid rgba(220, 53, 69, 0.1);
+  background: linear-gradient(145deg, #f8f9fa, #ffffff);
+  border-radius: 0 0 12px 12px;
 }
 
 .assistant-chat__input .form-control {
-  border: 1px solid #ced4da;
+  border: 2px solid rgba(220, 53, 69, 0.2);
   border-right: none;
   border-radius: 8px 0 0 8px;
+  padding: 10px 14px;
+  transition: all 0.3s ease;
+  font-size: 14px;
 }
 
 .assistant-chat__input .form-control:focus {
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+  border-color: #dc3545;
 }
 
 .assistant-chat__input .btn {
   border-radius: 0 8px 8px 0;
-  border: 1px solid #007bff;
+  border: 2px solid #dc3545;
+  padding: 10px 16px;
+  transition: all 0.3s ease;
 }
 
-@media (max-width: 768px) {
+.assistant-chat__input .btn:hover {
+  background: linear-gradient(135deg, #e74c3c, #dc3545);
+  transform: scale(1.02);
+}
+
+@media (max-width: 1200px) {
   .assistant-chat {
-    right: 15px;
-    left: 15px;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
     width: auto;
-    bottom: 75px;
     height: 400px;
-  }
-}
-
-@media (max-width: 480px) {
-  .assistant-chat {
-    height: 350px;
-    bottom: 70px;
+    margin-bottom: 0;
   }
 }
 </style>

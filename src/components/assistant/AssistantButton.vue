@@ -4,14 +4,14 @@
     :class="{ 'assistant-button--active': isActive, 'assistant-button--pulse': isPulsing }"
     @click="toggleChat"
   >
-    <MessageCircle :size="24" class="assistant-button__icon" />
+    <Bot :size="24" class="assistant-button__icon" />
     <div v-if="hasNewMessage" class="assistant-button__notification"></div>
   </div>
 </template>
 
 <script setup>
 import { ref, defineEmits } from 'vue'
-import { MessageCircle } from 'lucide-vue-next'
+import { Bot } from 'lucide-vue-next'
 
 const emit = defineEmits(['toggle-chat'])
 
@@ -52,75 +52,76 @@ defineExpose({
 .assistant-button {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  left: 20px;
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #007bff, #0056b3);
+  background: linear-gradient(135deg, #dc3545, #c82333);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 1001;
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-  transition: all 0.3s ease;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 3px solid #fff;
 }
 
 .assistant-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+  background: linear-gradient(135deg, #e74c3c, #dc3545);
 }
 
 .assistant-button--active {
   background: linear-gradient(135deg, #28a745, #1e7e34);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
 }
 
 .assistant-button--pulse {
-  animation: pulse 1.5s infinite;
+  animation: pulseRed 1.5s infinite;
 }
 
 .assistant-button__icon {
   color: white;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .assistant-button:hover .assistant-button__icon {
-  transform: scale(1.1);
+  transform: scale(1.15) rotate(5deg);
 }
 
 .assistant-button__notification {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 16px;
-  height: 16px;
-  background: #dc3545;
+  top: -3px;
+  right: -3px;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #ffc107, #e0a800);
   border-radius: 50%;
   border: 2px solid white;
-  animation: bounce 2s infinite;
+  animation: bounceNotification 2s infinite;
 }
 
-@keyframes pulse {
+@keyframes pulseRed {
   0% {
     box-shadow:
-      0 4px 12px rgba(0, 123, 255, 0.3),
-      0 0 0 0 rgba(0, 123, 255, 0.7);
+      0 4px 16px rgba(220, 53, 69, 0.3),
+      0 0 0 0 rgba(220, 53, 69, 0.7);
   }
   70% {
     box-shadow:
-      0 4px 12px rgba(0, 123, 255, 0.3),
-      0 0 0 10px rgba(0, 123, 255, 0);
+      0 4px 16px rgba(220, 53, 69, 0.3),
+      0 0 0 15px rgba(220, 53, 69, 0);
   }
   100% {
     box-shadow:
-      0 4px 12px rgba(0, 123, 255, 0.3),
-      0 0 0 0 rgba(0, 123, 255, 0);
+      0 4px 16px rgba(220, 53, 69, 0.3),
+      0 0 0 0 rgba(220, 53, 69, 0);
   }
 }
 
-@keyframes bounce {
+@keyframes bounceNotification {
   0%,
   20%,
   50%,
@@ -129,24 +130,24 @@ defineExpose({
     transform: translateY(0);
   }
   40% {
-    transform: translateY(-3px);
+    transform: translateY(-4px) scale(1.1);
   }
   60% {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
   }
 }
 
 @media (max-width: 768px) {
   .assistant-button {
-    width: 50px;
-    height: 50px;
+    width: 55px;
+    height: 55px;
     bottom: 15px;
-    right: 15px;
+    left: 15px;
   }
 
   .assistant-button__icon {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
   }
 }
 </style>

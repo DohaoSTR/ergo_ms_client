@@ -2,12 +2,7 @@
   <div class="assistant-widget">
     <AssistantButton ref="assistantButton" @toggle-chat="toggleChat" />
 
-    <AssistantChat
-      ref="assistantChat"
-      :is-visible="isChatVisible"
-      @close="closeChat"
-      @send-message="handleMessage"
-    />
+    <AssistantChat ref="assistantChat" :is-visible="isChatVisible" @send-message="handleMessage" />
   </div>
 </template>
 
@@ -32,16 +27,10 @@ const toggleChat = (isOpen) => {
 
   if (isOpen) {
     assistantButton.value?.hideNotification()
-
     connectionStatus.show()
+  } else {
+    connectionStatus.hide()
   }
-}
-
-const closeChat = () => {
-  isChatVisible.value = false
-  assistantButton.value?.stopPulsing()
-
-  connectionStatus.hide()
 }
 
 const handleMessage = async (message) => {
@@ -252,7 +241,7 @@ onUnmounted(() => {
 defineExpose({
   showNotification: () => assistantButton.value?.showNotification(),
   openChat: () => toggleChat(true),
-  closeChat: () => closeChat(),
+  closeChat: () => toggleChat(false),
   showConnectionStatus: () => connectionStatus.show(),
 })
 </script>
