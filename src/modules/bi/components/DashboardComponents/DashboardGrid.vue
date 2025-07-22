@@ -1188,8 +1188,8 @@ onUnmounted(() => {
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
   line-clamp: 3;
+  -webkit-box-orient: vertical;
   
   @media (max-width: 400px) {
     font-size: 12px;
@@ -1332,8 +1332,10 @@ onUnmounted(() => {
   
   .item-preview {
     font-size: 12px;
+    display: -webkit-box;
     -webkit-line-clamp: 1;
     line-clamp: 1;
+    -webkit-box-orient: vertical;
   }
 }
 
@@ -1350,8 +1352,10 @@ onUnmounted(() => {
   
   .item-preview {
     font-size: 13px;
+    display: -webkit-box;
     -webkit-line-clamp: 1;
     line-clamp: 1;
+    -webkit-box-orient: vertical;
   }
 }
 

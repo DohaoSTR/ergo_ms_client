@@ -44,6 +44,12 @@
             v-model="pages"
             @close="isPageWindowVisible = false"
         />
+
+        <div v-if="isHeaderSettingsVisible" class="page-window-overlay" @click="closeHeaderSettings">
+          <div class="page-window" @click.stop>
+            <HeaderSettings :data="headerSettingsData" @close="closeHeaderSettings" />
+          </div>
+        </div>
         
         <div class="body-content">
             <DashboardGrid
@@ -75,6 +81,7 @@ import { LayoutDashboard } from 'lucide-vue-next'
 import DashboardToolbar from './components/DashboardComponents/DashboardToolbar.vue'
 import PageWindow from './components/DashboardComponents/PageWindow.vue'
 import DashboardGrid from './components/DashboardComponents/DashboardGrid.vue'
+import HeaderSettings from './components/DashboardComponents/HeaderSettings.vue'
 
 import { isDatasetSidebarOpen } from '@/modules/bi/js/useSidebarStore.js'
 import { isSidebarCollapsed, initializeSidebarTracking } from '@/modules/bi/js/useMainSidebarStore.js'
@@ -94,6 +101,9 @@ const dropdownWidth = ref(200)
 const route = useRoute()
 const router = useRouter()
 const draggedType = ref('')
+
+const isHeaderSettingsVisible = ref(false)
+const headerSettingsData = ref(null)
 
 const handleToolbarDragStart = (itemType) => {
             draggedType.value = itemType
@@ -146,6 +156,10 @@ const handleItemSelect = (item) => {
 }
 
 const handleItemEdit = (item) => {
+  if (item.type === 'Заголовок') {
+    headerSettingsData.value = { ...item }
+    isHeaderSettingsVisible.value = true
+  }
 }
 
 const handleItemDelete = (item) => {
@@ -267,6 +281,22 @@ watch(() => pages.value.length, (newLength, oldLength) => {
         }
     }
 })
+
+watch(currentPageItems, (items, oldItems) => {
+  // Если добавлен новый элемент типа 'Заголовок', открываем модалку
+  if (items.length > oldItems.length) {
+    const newItem = items[items.length - 1]
+    if (newItem.type === 'Заголовок') {
+      headerSettingsData.value = { ...newItem }
+      isHeaderSettingsVisible.value = true
+    }
+  }
+})
+
+function closeHeaderSettings() {
+  isHeaderSettingsVisible.value = false
+  headerSettingsData.value = null
+}
 
 watch(currentPageIndex, (newIndex) => {
     if (pages.value.length > 1) {
@@ -426,5 +456,29 @@ onUnmounted(() => {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.page-window-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.page-window {
+    background: var(--color-primary-background);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    width: 600px;
+    min-height: 445px;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
 }
 </style>
