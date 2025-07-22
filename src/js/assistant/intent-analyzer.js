@@ -6,22 +6,22 @@ class IntentAnalyzer {
     }
 
     buildSystemPrompt() {
-        return `Ты - AI ассистент для эргономической системы ERGO MS. Твоя задача - понимать намерения пользователя и помогать с навигацией и объяснением системы, не выходя за рамки безопасности работы
+        return `Ты - AI ассистент для веб-приложения ERGO MS. Твоя задача - понимать намерения пользователя и помогать с навигацией и объяснением системы.
 
 ДОСТУПНЫЕ ДЕЙСТВИЯ:
-1. NAVIGATION - переход по страницам
-2. COMPONENT_EXPLAIN - объяснение работы компонентов  
-3. PAGE_ANALYZE - анализ текущей страницы
-4. HELP - общая помощь
-5. CHAT - обычный разговор
+1. NAVIGATION - переход по страницам (когда пользователь просит "перейди", "открой")
+2. COMPONENT_EXPLAIN - объяснение компонентов НА ТЕКУЩЕЙ странице (только когда явно просят "объясни компоненты", "покажи компоненты")
+3. PAGE_ANALYZE - анализ текущей страницы (когда спрашивают "где я", "что это за страница")  
+4. HELP - общая справка (только когда явно просят "помощь", "что ты умеешь", "команды")
+5. CHAT - обычный разговор и ответы на вопросы
 
 ВАЖНЫЕ ПРАВИЛА:
 - Отвечай на русском языке
+- CHAT используй для ВСЕХ технических вопросов: "как сделать", "как реализовать", "что такое", drag and drop, программирование
+- COMPONENT_EXPLAIN используй ТОЛЬКО когда просят объяснить компоненты именно на текущей странице
+- HELP используй ТОЛЬКО для запросов справки о самом ассистенте
 - Будь дружелюбным и полезным
-- Если пользователь просит перейти куда-то - используй NAVIGATION
-- Если спрашивает как что-то работает - используй COMPONENT_EXPLAIN или PAGE_ANALYZE
-- Если просит помощь или объяснения - используй HELP
-- Для обычного общения - используй CHAT
+- Давай конкретные и полезные ответы
 
 ФОРМАТ ОТВЕТА:
 Ты должен ответить СТРОГО в JSON формате:
@@ -38,11 +38,20 @@ class IntentAnalyzer {
 Пользователь: "Перейди в мой профиль"
 Ответ: {"intent":"NAVIGATION","action":"go_to_profile","message":"Перехожу в ваш профиль","params":{"route":"profile"}}
 
-Пользователь: "Как работает эта страница?"  
+Пользователь: "Где я нахожусь?"  
 Ответ: {"intent":"PAGE_ANALYZE","action":"analyze_current_page","message":"Анализирую текущую страницу для вас","params":{}}
 
-Пользователь: "Привет, как дела?"
-Ответ: {"intent":"CHAT","action":null,"message":"Привет! Отлично, готов помочь с навигацией по системе. Что вас интересует?","params":{}}`
+Пользователь: "Объясни компоненты на этой странице"
+Ответ: {"intent":"COMPONENT_EXPLAIN","action":"explain_component","message":"Анализирую компоненты текущей страницы","params":{}}
+
+Пользователь: "Помощь"
+Ответ: {"intent":"HELP","action":"show_help","message":"Показываю справку по возможностям ассистента","params":{}}
+
+Пользователь: "Как мне сделать dnd на моей странице bi?"
+Ответ: {"intent":"CHAT","action":null,"message":"Для реализации drag and drop на BI странице рекомендую использовать Vue Draggable или SortableJS. Это самые популярные решения для Vue приложений. Что именно нужно перетаскивать?","params":{}}
+
+Пользователь: "drag and drop, как сделать?"
+Ответ: {"intent":"CHAT","action":null,"message":"Drag and drop можно реализовать с помощью HTML5 API или библиотек. Что именно нужно перетаскивать?","params":{}}`
     }
 
     async analyzeIntent(userMessage, currentContext = {}) {
@@ -174,7 +183,7 @@ class IntentAnalyzer {
             }
         }
 
-        if (this.matchesKeywords(lowerMessage, ['как работает', 'что это', 'объясни страницу', 'где я', 'текущая страница'])) {
+        if (this.matchesStartOfMessage(lowerMessage, ['где я', 'где я нахожусь', 'что это за страница', 'анализ страницы'])) {
             return {
                 type: 'PAGE_ANALYZE',
                 action: 'analyze_current_page',
@@ -183,7 +192,7 @@ class IntentAnalyzer {
             }
         }
 
-        if (this.matchesKeywords(lowerMessage, ['как работает', 'что делает', 'объясни компонент', 'компонент'])) {
+        if (this.matchesStartOfMessage(lowerMessage, ['объясни компоненты', 'покажи компоненты', 'какие компоненты здесь', 'компоненты на странице'])) {
             return {
                 type: 'COMPONENT_EXPLAIN',
                 action: 'explain_component',
@@ -192,7 +201,7 @@ class IntentAnalyzer {
             }
         }
 
-        if (this.matchesKeywords(lowerMessage, ['помощь', 'help', 'что ты умеешь', 'команды'])) {
+        if (this.matchesStartOfMessage(lowerMessage, ['помощь', 'help', 'что ты умеешь', 'команды', 'справка'])) {
             return {
                 type: 'HELP',
                 action: 'show_help',
@@ -204,13 +213,29 @@ class IntentAnalyzer {
         return {
             type: 'CHAT',
             action: null,
-            defaultMessage: 'Понял ваш запрос. Могу помочь с навигацией по системе или объяснить как что-то работает.',
+            defaultMessage: this.generateChatResponse(lowerMessage),
             params: {}
         }
     }
 
+    generateChatResponse(message) {
+        if (message.includes('drag') && message.includes('drop') || message.includes('dnd')) {
+            return 'Для реализации drag and drop в Vue рекомендую использовать:\n\n1. **Vue Draggable** - npm install vuedraggable\n2. **SortableJS** - npm install sortablejs\n3. **HTML5 Drag API** - нативный подход\n\nЧто именно нужно перетаскивать?'
+        }
+
+        if (message.includes('как сделать') || message.includes('как реализовать')) {
+            return 'Постараюсь помочь с реализацией. Опишите подробнее что нужно сделать.'
+        }
+
+        return 'Постараюсь ответить на ваш вопрос. Если нужна помощь с навигацией, скажите "перейди в..." или спросите про конкретную страницу.'
+    }
+
     matchesKeywords(message, keywords) {
         return keywords.some(keyword => message.includes(keyword))
+    }
+
+    matchesStartOfMessage(message, phrases) {
+        return phrases.some(phrase => message.startsWith(phrase) || message.includes(phrase + ' ') || message === phrase)
     }
 }
 
