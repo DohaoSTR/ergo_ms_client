@@ -12,13 +12,37 @@ class IntentAnalyzer {
 1. NAVIGATION - переход по страницам (когда пользователь просит "перейди", "открой")
 2. COMPONENT_EXPLAIN - объяснение компонентов НА ТЕКУЩЕЙ странице (только когда явно просят "объясни компоненты", "покажи компоненты")
 3. PAGE_ANALYZE - анализ текущей страницы (когда спрашивают "где я", "что это за страница")  
-4. HELP - общая справка (только когда явно просят "помощь", "что ты умеешь", "команды")
-5. CHAT - обычный разговор и ответы на вопросы
+4. SYSTEM_OVERVIEW - показ всех доступных разделов системы (когда просят "покажи все страницы", "какие есть разделы", "что доступно")
+5. HELP - общая справка (только когда явно просят "помощь", "что ты умеешь", "команды")
+6. CHAT - обычный разговор и ответы на вопросы
+
+ДОСТУПНЫЕ РОУТЫ В СИСТЕМЕ:
+- Account - профиль пользователя (/user/account)
+- SecuritySettings - настройки безопасности (/user/security)
+- Settings - основные настройки (/settings)
+- AdminPanel - панель администратора (/admin-panel)
+- UsersPanel - управление пользователями (/admin-panel/users)
+- GroupsPanel - управление группами (/admin-panel/groups)
+- CategoriesPanel - управление категориями (/admin-panel/categories)
+- CRM - CRM система (/crm)
+- LMS - система обучения (/lms)
+- BI - бизнес-интеллект (/bi)
+- FileManager - файловый менеджер (/filemanager)
+- ExpertSystem - экспертная система (/expert-system)
+
+ВАЖНЫЕ ПРАВИЛА ДЛЯ НАВИГАЦИИ:
+- Используй ТОЧНЫЕ имена роутов: Account, SecuritySettings, Settings, AdminPanel, UsersPanel, etc.
+- НЕ изобретай свои названия типа "account/settings" - используй только реальные имена
+- Для профиля используй "Account"
+- Для настроек безопасности используй "SecuritySettings"
+- Для основных настроек используй "Settings"
+- Для админ панели используй "AdminPanel"
 
 ВАЖНЫЕ ПРАВИЛА:
 - Отвечай на русском языке
 - CHAT используй для ВСЕХ технических вопросов: "как сделать", "как реализовать", "что такое", drag and drop, программирование
 - COMPONENT_EXPLAIN используй ТОЛЬКО когда просят объяснить компоненты именно на текущей странице
+- SYSTEM_OVERVIEW используй когда хотят увидеть весь список доступных разделов или страниц системы
 - HELP используй ТОЛЬКО для запросов справки о самом ассистенте
 - Будь дружелюбным и полезным
 - Давай конкретные и полезные ответы
@@ -26,7 +50,7 @@ class IntentAnalyzer {
 ФОРМАТ ОТВЕТА:
 Ты должен ответить СТРОГО в JSON формате:
 {
-  "intent": "NAVIGATION|COMPONENT_EXPLAIN|PAGE_ANALYZE|HELP|CHAT",
+  "intent": "NAVIGATION|COMPONENT_EXPLAIN|PAGE_ANALYZE|SYSTEM_OVERVIEW|HELP|CHAT",
   "action": "конкретное действие если нужно",
   "message": "ответ пользователю",
   "params": {дополнительные параметры если нужно}
@@ -34,15 +58,27 @@ class IntentAnalyzer {
 
 ВНИМАНИЕ: Отвечай ТОЛЬКО JSON, без дополнительного текста до или после!
 
-ПРИМЕРЫ:
+ПРИМЕРЫ НАВИГАЦИИ:
 Пользователь: "Перейди в мой профиль"
-Ответ: {"intent":"NAVIGATION","action":"go_to_profile","message":"Перехожу в ваш профиль","params":{"route":"profile"}}
+Ответ: {"intent":"NAVIGATION","action":"navigate_to_route","message":"Перехожу в ваш профиль","params":{"route":"Account"}}
+
+Пользователь: "Открой настройки безопасности"
+Ответ: {"intent":"NAVIGATION","action":"navigate_to_route","message":"Открываю настройки безопасности","params":{"route":"SecuritySettings"}}
+
+Пользователь: "Перейди в настройки"
+Ответ: {"intent":"NAVIGATION","action":"navigate_to_route","message":"Перехожу в настройки","params":{"route":"Settings"}}
+
+Пользователь: "Открой админ панель"
+Ответ: {"intent":"NAVIGATION","action":"navigate_to_route","message":"Открываю панель администратора","params":{"route":"AdminPanel"}}
 
 Пользователь: "Где я нахожусь?"  
 Ответ: {"intent":"PAGE_ANALYZE","action":"analyze_current_page","message":"Анализирую текущую страницу для вас","params":{}}
 
 Пользователь: "Объясни компоненты на этой странице"
 Ответ: {"intent":"COMPONENT_EXPLAIN","action":"explain_component","message":"Анализирую компоненты текущей страницы","params":{}}
+
+Пользователь: "Покажи все страницы"
+Ответ: {"intent":"SYSTEM_OVERVIEW","action":"show_all_routes","message":"Показываю все доступные разделы системы","params":{}}
 
 Пользователь: "Помощь"
 Ответ: {"intent":"HELP","action":"show_help","message":"Показываю справку по возможностям ассистента","params":{}}
@@ -173,6 +209,21 @@ class IntentAnalyzer {
             } else if (this.matchesKeywords(lowerMessage, ['категории', 'categories'])) {
                 route = 'CategoriesPanel'
                 routeName = 'панель категорий'
+            } else if (this.matchesKeywords(lowerMessage, ['crm', 'проекты', 'стратегические'])) {
+                route = 'CRM'
+                routeName = 'CRM'
+            } else if (this.matchesKeywords(lowerMessage, ['lms', 'обучение', 'курсы'])) {
+                route = 'LMS'
+                routeName = 'LMS'
+            } else if (this.matchesKeywords(lowerMessage, ['bi', 'аналитика', 'дашборд'])) {
+                route = 'BI'
+                routeName = 'BI'
+            } else if (this.matchesKeywords(lowerMessage, ['файлы', 'файловый', 'менеджер'])) {
+                route = 'FileManager'
+                routeName = 'файловый менеджер'
+            } else if (this.matchesKeywords(lowerMessage, ['экспертная', 'навыки', 'тесты', 'expert'])) {
+                route = 'ExpertSystem'
+                routeName = 'экспертная система'
             }
 
             return {
@@ -197,6 +248,15 @@ class IntentAnalyzer {
                 type: 'COMPONENT_EXPLAIN',
                 action: 'explain_component',
                 defaultMessage: 'Объясняю как работают компоненты на этой странице',
+                params: {}
+            }
+        }
+
+        if (this.matchesKeywords(lowerMessage, ['покажи все страницы', 'все разделы', 'какие есть разделы', 'что доступно в системе', 'все модули', 'обзор системы', 'список страниц', 'все пути', 'карта сайта'])) {
+            return {
+                type: 'SYSTEM_OVERVIEW',
+                action: 'show_all_routes',
+                defaultMessage: 'Показываю все доступные разделы и страницы системы',
                 params: {}
             }
         }
