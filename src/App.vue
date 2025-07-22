@@ -19,8 +19,6 @@ const currentLayout = computed(() => {
   if (route.meta && route.meta.startRoute === true) {
     return LayoutStart
   }
-  // если явно meta.public === true, то LayoutPublic,
-  // иначе по умолчанию LayoutMenu
   return route.meta && route.meta.public === true ? LayoutPublic : LayoutMenu
 })
 </script>

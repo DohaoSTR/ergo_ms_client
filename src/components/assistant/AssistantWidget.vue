@@ -1,155 +1,67 @@
 <template>
-  <div class="menu-toolbar">
-    <div class="tools" :class="{ collapsed: isCollapsed && !isHovering }">
-      <div class="toolbar__user" :class="{ collapsed: isCollapsed && !isHovering }">
-        <div class="tools__user__avatar">
-          <UserMenu />
-        </div>
-        <div class="tools__user__name" v-if="shouldShowFullInfo">
-          <div class="user__fullname">{{ userFullName }}</div>
-          <div class="user__description">В сети</div>
-        </div>
-      </div>
-      <div class="tools-buttons" v-if="shouldShowFullInfo">
-        <div class="tools__assistant" @click="toggleAssistant">
-          <div
-            class="header-btn assistant-btn"
-            :class="{ active: isAssistantVisible }"
-            v-tooltip
-            title="AI Ассистент"
-          >
-            <Bot :size="24" />
-          </div>
-        </div>
-        <div
-          class="tools__search"
-          style="
-            width: 40.5px;
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-          "
-        >
-          <Search :size="24" />
-        </div>
-        <div class="tools__theme">
-          <ToggleTheme />
-        </div>
-        <div class="tools__notifications">
-          <UserNotifications />
-        </div>
-      </div>
-    </div>
+  <div class="assistant-widget">
+    <AssistantButton ref="assistantButton" @toggle-chat="toggleChat" />
 
-    <AssistantChat
-      ref="assistantChat"
-      :is-visible="isAssistantVisible"
-      @send-message="handleAssistantMessage"
-    />
+    <AssistantChat ref="assistantChat" :is-visible="isChatVisible" @send-message="handleMessage" />
   </div>
 </template>
 
 <script setup>
-import { Search, Bot } from 'lucide-vue-next'
-import UserMenu from '@/components/header/UserMenu.vue'
-import ToggleTheme from '@/components/header/ToggleTheme.vue'
-import UserNotifications from '@/components/header/UserNotifications.vue'
-import AssistantChat from '@/components/assistant/AssistantChat.vue'
-import { computed, ref } from 'vue'
-import { useUserStore } from '@/modules/cms/js/userStore.js'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
+import AssistantButton from './AssistantButton.vue'
+import AssistantChat from './AssistantChat.vue'
 import { intentAnalyzer } from '@/js/assistant/intent-analyzer.js'
 import { routerActions } from '@/js/assistant/router-actions.js'
 import { componentAnalyzer } from '@/js/assistant/component-analyzer.js'
 import { connectionStatus } from '@/js/assistant/connection-status.js'
+import '@/js/assistant/test-connection.js'
 
-const props = defineProps({
-  isCollapsed: {
-    type: Boolean,
-    default: false,
-  },
-  isHovering: {
-    type: Boolean,
-    default: false,
-  },
-})
-
-const userStore = useUserStore()
-const isAssistantVisible = ref(false)
+const route = useRoute()
+const assistantButton = ref(null)
 const assistantChat = ref(null)
+const isChatVisible = ref(false)
 
-const shouldShowFullInfo = computed(() => {
-  return !props.isCollapsed || props.isHovering
-})
+const toggleChat = (isOpen) => {
+  isChatVisible.value = isOpen
 
-const userFullName = computed(() => {
-  if (!userStore.user) return 'Гость'
-
-  if (userStore.displayName === 'Гость') return 'Гость'
-
-  const firstName = userStore.user.first_name?.trim()
-  const lastName = userStore.user.last_name?.trim()
-
-  const cleanFirstName = firstName === ' ' ? '' : firstName
-  const cleanLastName = lastName === ' ' ? '' : lastName
-
-  if (cleanFirstName && cleanLastName) {
-    return `${cleanFirstName} ${cleanLastName}`
-  }
-
-  if (cleanFirstName) {
-    return cleanFirstName
-  }
-
-  if (cleanLastName) {
-    return cleanLastName
-  }
-
-  return 'Гость'
-})
-
-const toggleAssistant = () => {
-  isAssistantVisible.value = !isAssistantVisible.value
-
-  if (isAssistantVisible.value) {
+  if (isOpen) {
+    assistantButton.value?.hideNotification()
     connectionStatus.show()
   } else {
     connectionStatus.hide()
   }
 }
 
-const handleAssistantMessage = async (message) => {
+const handleMessage = async (message) => {
+  console.log('User message:', message)
+
+  assistantButton.value?.startPulsing()
+
   try {
     const context = await getCurrentContext()
+
     const intentResult = await intentAnalyzer.analyzeIntent(message, context)
 
     if (intentResult.success) {
       const actionResult = await executeAction(intentResult)
-
-      if (assistantChat.value) {
-        assistantChat.value.addAssistantMessage(actionResult.message)
-        assistantChat.value.setTyping(false)
-      }
+      assistantChat.value?.addAssistantMessage(actionResult.message)
 
       if (actionResult.usedLLM) {
         connectionStatus.show()
       }
     } else {
-      if (assistantChat.value) {
-        assistantChat.value.addAssistantMessage(
-          'Не удалось понять ваш запрос. Попробуйте переформулировать.',
-        )
-        assistantChat.value.setTyping(false)
-      }
+      assistantChat.value?.addAssistantMessage(
+        'Не удалось понять ваш запрос. Попробуйте переформулировать.',
+      )
     }
   } catch (error) {
     console.error('Error processing message:', error)
-    if (assistantChat.value) {
-      assistantChat.value.addAssistantMessage(
-        'Извините, произошла ошибка при обработке вашего сообщения.',
-      )
-      assistantChat.value.setTyping(false)
-    }
+    assistantChat.value?.addAssistantMessage(
+      'Извините, произошла ошибка при обработке вашего сообщения.',
+    )
+  } finally {
+    assistantButton.value?.stopPulsing()
   }
 }
 
@@ -171,7 +83,7 @@ const getCurrentContext = async () => {
   } catch (error) {
     console.error('Error getting context:', error)
     return {
-      currentRoute: '/',
+      currentRoute: route.path,
       currentPage: 'текущая страница',
       availableRoutes: [],
       pageComponents: [],
@@ -185,12 +97,16 @@ const executeAction = async (intentResult) => {
   switch (intentResult.intent) {
     case 'NAVIGATION':
       return await handleNavigationIntent(intentResult)
+
     case 'PAGE_ANALYZE':
-      return await handlePageAnalyzeIntent()
+      return await handlePageAnalyzeIntent(intentResult)
+
     case 'COMPONENT_EXPLAIN':
-      return await handleComponentExplainIntent()
+      return await handleComponentExplainIntent(intentResult)
+
     case 'HELP':
-      return await handleHelpIntent()
+      return await handleHelpIntent(intentResult)
+
     case 'CHAT':
     default:
       return {
@@ -313,147 +229,19 @@ const handleHelpIntent = async () => {
 
   return { message, usedLLM: false }
 }
+
+onMounted(() => {
+  connectionStatus.init()
+})
+
+onUnmounted(() => {
+  connectionStatus.destroy()
+})
+
+defineExpose({
+  showNotification: () => assistantButton.value?.showNotification(),
+  openChat: () => toggleChat(true),
+  closeChat: () => toggleChat(false),
+  showConnectionStatus: () => connectionStatus.show(),
+})
 </script>
-
-<style scoped lang="scss">
-@media (width >= 1200px) {
-  .header__menu {
-    display: none;
-  }
-}
-
-.menu-toolbar {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  background-color: var(--color-secondary-background);
-  margin: 3%;
-  width: auto;
-  height: auto;
-  padding: 10px;
-  border-radius: 10px;
-
-  .tools {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-
-    &.collapsed {
-      justify-content: center;
-    }
-  }
-}
-
-.toolbar__user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-
-  &.collapsed {
-    justify-content: center;
-    gap: 0;
-  }
-}
-
-.tools__user__name {
-  display: flex;
-  flex-direction: column;
-}
-
-.tools-buttons {
-  display: flex;
-  gap: 2px;
-  justify-content: center;
-  align-items: center;
-}
-
-.tools__assistant {
-  .assistant-btn {
-    color: var(--color-primary-text);
-    transition: all 0.3s ease;
-
-    &:hover {
-      background-color: rgba(220, 53, 69, 0.1);
-      color: #dc3545;
-      transform: scale(1.1);
-    }
-
-    &.active {
-      background-color: #dc3545;
-      color: white;
-
-      &:hover {
-        background-color: #c82333;
-      }
-    }
-  }
-}
-
-.user__description {
-  font-size: 12px;
-  color: var(--color-secondary-text);
-}
-
-.search {
-  @include flex-row-gap($padding-internal, center);
-  width: 50%;
-
-  input {
-    border: none;
-    outline: none;
-    width: 100%;
-  }
-}
-
-.tools {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.tools__user__avatar {
-  cursor: pointer;
-  background-color: grey;
-  border-radius: 50%;
-
-  position: relative;
-
-  &:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    right: 3px;
-    width: 8px;
-    height: 8px;
-    border-radius: 100%;
-    box-shadow: 0 0 0 2px var(--color-primary-background);
-    background-color: #4caf50;
-  }
-}
-</style>
-
-<style lang="scss">
-.header-btn {
-  padding: 7px 8px;
-  border-radius: 100%;
-  cursor: pointer;
-  transition: background-color $transition;
-
-  &:hover {
-    background-color: var(--color-secondary-background);
-  }
-}
-
-.header-dropdown-item {
-  @include flex-row-gap(12px, center);
-  transition: all $transition;
-  padding: $padding-internal $padding-external;
-  cursor: pointer;
-}
-
-.header-dropdown-center .header-dropdown-menu {
-  inset: 0 auto auto 0;
-  transform: translate3d(-60px, 60.6px, 0px);
-}
-</style>
