@@ -8,9 +8,18 @@
     </div>
 
     <div ref="messagesContainer" class="assistant-chat__messages">
-      <AssistantMessage v-for="message in messages" :key="message.id" :message="message" />
+      <transition-group name="message" tag="div" class="messages-container">
+        <AssistantMessage
+          v-for="message in messages"
+          :key="message.id"
+          :message="message"
+          class="message-item"
+        />
+      </transition-group>
 
-      <AssistantTyping v-if="isTyping" />
+      <transition name="typing" mode="out-in">
+        <AssistantTyping v-if="isTyping" class="typing-indicator" />
+      </transition>
     </div>
 
     <div class="assistant-chat__input">
@@ -24,11 +33,19 @@
           :disabled="isTyping"
         />
         <button
-          class="btn btn-danger"
+          class="btn btn-danger send-button"
           @click="sendMessage"
           :disabled="!inputMessage.trim() || isTyping"
+          :class="{ sending: isTyping }"
         >
-          <Send :size="18" />
+          <transition name="button-icon" mode="out-in">
+            <div v-if="isTyping" class="spinner">
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+            </div>
+            <Send v-else :size="18" />
+          </transition>
         </button>
       </div>
     </div>
@@ -41,9 +58,9 @@ import { Bot, Send } from 'lucide-vue-next'
 import AssistantMessage from './AssistantMessage.vue'
 import AssistantTyping from './AssistantTyping.vue'
 
-const emit = defineEmits(['close', 'send-message'])
+const emit = defineEmits(['close', 'send-message', 'recheck-llm'])
 
-defineProps({
+const { isVisible } = defineProps({
   isVisible: {
     type: Boolean,
     default: false,
@@ -64,38 +81,28 @@ const messages = ref([
   },
 ])
 
-const sendMessage = () => {
-  if (!inputMessage.value.trim() || isTyping.value) return
-
-  const userMessage = {
+const addMessage = (content, type = 'user') => {
+  const newMessage = {
     id: Date.now(),
-    type: 'user',
-    content: inputMessage.value.trim(),
+    type: type,
+    content: content,
     timestamp: new Date(),
   }
-
-  messages.value.push(userMessage)
-
-  emit('send-message', inputMessage.value.trim())
-
-  inputMessage.value = ''
-
-  isTyping.value = true
-
+  messages.value.push(newMessage)
   scrollToBottom()
 }
 
 const addAssistantMessage = (content) => {
-  const assistantMessage = {
-    id: Date.now(),
-    type: 'assistant',
-    content: content,
-    timestamp: new Date(),
-  }
-
-  messages.value.push(assistantMessage)
+  addMessage(content, 'assistant')
   isTyping.value = false
-  scrollToBottom()
+}
+
+const sendMessage = () => {
+  if (!inputMessage.value.trim() || isTyping.value) return
+
+  emit('send-message', inputMessage.value.trim())
+  addMessage(inputMessage.value.trim(), 'user')
+  inputMessage.value = ''
 }
 
 const setTyping = (typing) => {
@@ -131,99 +138,107 @@ defineExpose({
   right: 0;
   width: auto;
   height: 400px;
-  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  background: #ffffff;
   border-radius: 12px;
-  box-shadow:
-    0 12px 40px rgba(220, 53, 69, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 2px solid rgba(220, 53, 69, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 9998;
   display: flex;
   flex-direction: column;
-  transform: translateY(20px) scale(0.95);
+  margin-bottom: 15px;
+  overflow: hidden;
   opacity: 0;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
-  margin-bottom: 10px;
+  transition: opacity 0.3s ease;
 }
 
 .assistant-chat--visible {
-  transform: translateY(0) scale(1);
   opacity: 1;
 }
 
 .assistant-chat__header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 16px 20px;
   background: linear-gradient(135deg, #dc3545, #c82333);
-  border-radius: 12px 12px 0 0;
   color: white;
 }
 
 .assistant-chat__title {
   display: flex;
   align-items: center;
+  gap: 8px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .assistant-chat__messages {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+.messages-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+  gap: 16px;
 }
 
 .assistant-chat__messages::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 .assistant-chat__messages::-webkit-scrollbar-track {
   background: rgba(220, 53, 69, 0.1);
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .assistant-chat__messages::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #dc3545, #c82333);
-  border-radius: 2px;
+  background: #dc3545;
+  border-radius: 3px;
 }
 
 .assistant-chat__input {
-  padding: 16px;
+  padding: 20px;
   border-top: 1px solid rgba(220, 53, 69, 0.1);
-  background: linear-gradient(145deg, #f8f9fa, #ffffff);
-  border-radius: 0 0 12px 12px;
+  background: #ffffff;
+}
+
+.assistant-chat__input .input-group {
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .assistant-chat__input .form-control {
   border: 2px solid rgba(220, 53, 69, 0.2);
   border-right: none;
   border-radius: 8px 0 0 8px;
-  padding: 10px 14px;
-  transition: all 0.3s ease;
+  padding: 12px 16px;
   font-size: 14px;
+  background: #ffffff;
 }
 
 .assistant-chat__input .form-control:focus {
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
   border-color: #dc3545;
+  box-shadow: none;
 }
 
-.assistant-chat__input .btn {
+.send-button {
   border-radius: 0 8px 8px 0;
   border: 2px solid #dc3545;
-  padding: 10px 16px;
-  transition: all 0.3s ease;
+  padding: 12px 20px;
+  background: #dc3545;
+  color: white;
 }
 
-.assistant-chat__input .btn:hover {
-  background: linear-gradient(135deg, #e74c3c, #dc3545);
-  transform: scale(1.02);
+.send-button:hover {
+  background: #c82333;
+  border-color: #c82333;
+}
+
+.send-button:disabled {
+  background: #6c757d;
+  border-color: #6c757d;
 }
 
 @media (max-width: 1200px) {

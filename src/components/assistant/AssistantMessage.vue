@@ -1,14 +1,12 @@
 <template>
   <div class="assistant-message" :class="`assistant-message--${message.type}`">
     <div class="assistant-message__avatar">
-      <User v-if="message.type === 'user'" :size="16" />
-      <Bot v-else :size="16" />
+      <User v-if="message.type === 'user'" :size="32" />
+      <img v-else src="@/components/assistant/assets/bot_logo.png" alt="Bot" class="bot-logo" />
     </div>
 
     <div class="assistant-message__content">
-      <div class="assistant-message__text">
-        {{ message.content }}
-      </div>
+      <div class="assistant-message__text" v-html="formatMessage(message.content)"></div>
       <div class="assistant-message__time">
         {{ formatTime(message.timestamp) }}
       </div>
@@ -17,7 +15,7 @@
 </template>
 
 <script setup>
-import { User, Bot } from 'lucide-vue-next'
+import { User } from 'lucide-vue-next'
 
 defineProps({
   message: {
@@ -32,13 +30,21 @@ const formatTime = (timestamp) => {
     minute: '2-digit',
   })
 }
+
+const formatMessage = (content) => {
+  // Простое форматирование markdown-подобного текста
+  return content
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br>')
+}
 </script>
 
 <style scoped>
 .assistant-message {
   display: flex;
   gap: 12px;
-  animation: slideInMessage 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .assistant-message--user {
@@ -46,25 +52,30 @@ const formatTime = (timestamp) => {
 }
 
 .assistant-message__avatar {
-  width: 36px;
-  height: 36px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   margin-top: 2px;
+  color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .assistant-message--user .assistant-message__avatar {
   background: linear-gradient(135deg, #dc3545, #c82333);
-  color: white;
 }
 
 .assistant-message--assistant .assistant-message__avatar {
-  background: linear-gradient(135deg, #28a745, #1e7e34);
-  color: white;
+  background: transparent;
+}
+
+.bot-logo {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
 }
 
 .assistant-message__content {
@@ -78,7 +89,6 @@ const formatTime = (timestamp) => {
   line-height: 1.5;
   font-size: 14px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
 }
 
 .assistant-message--user .assistant-message__text {
@@ -94,11 +104,6 @@ const formatTime = (timestamp) => {
   border: 1px solid rgba(220, 53, 69, 0.1);
 }
 
-.assistant-message__text:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-}
-
 .assistant-message__time {
   font-size: 12px;
   color: #6c757d;
@@ -109,17 +114,6 @@ const formatTime = (timestamp) => {
 
 .assistant-message--user .assistant-message__time {
   text-align: right;
-}
-
-@keyframes slideInMessage {
-  from {
-    opacity: 0;
-    transform: translateY(15px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 @media (max-width: 480px) {

@@ -1,4 +1,6 @@
 import router from '@/js/routers.js'
+import { routesReader } from './routes-reader.js'
+import { smartNavigation } from './smart-navigation.js'
 
 class RouterActions {
     constructor() {
@@ -21,52 +23,124 @@ class RouterActions {
             return this.routeCache.get('all')
         }
 
-        const routes = this.router.getRoutes().map(route => ({
+        // Получаем роуты из конфигурации через новый сервис
+        const configRoutes = routesReader.getAllRoutes() || []
+
+        // Получаем роуты из Vue Router для совместимости
+        const vueRoutes = this.router.getRoutes().map(route => ({
             path: route.path,
             name: route.name,
             meta: route.meta || {}
         }))
 
-        this.routeCache.set('all', routes)
-        return routes
+        // Объединяем, отдавая приоритет конфигурации
+        const allRoutes = Array.isArray(configRoutes) ? [...configRoutes] : []
+
+        // Добавляем роуты из Vue Router, которых нет в конфигурации
+        vueRoutes.forEach(vueRoute => {
+            const exists = allRoutes.some(configRoute =>
+                configRoute.path === vueRoute.path || configRoute.name === vueRoute.name
+            )
+            if (!exists) {
+                allRoutes.push(vueRoute)
+            }
+        })
+
+        this.routeCache.set('all', allRoutes)
+        return allRoutes
     }
 
     async navigateToRoute(routeName, params = {}, query = {}) {
         try {
-            const route = this.findRouteByName(routeName)
-            if (route) {
-                await this.router.push({ name: routeName, params, query })
-                return {
-                    success: true,
-                    message: `Переход выполнен: ${route.path}`,
-                    route: route
-                }
-            }
+            const analysisResult = await smartNavigation.analyzeNavigationRequest(routeName)
 
-            const routeByPath = this.findRouteByPath(routeName)
-            if (routeByPath) {
-                await this.router.push({ path: routeName, query })
-                return {
-                    success: true,
-                    message: `Переход выполнен: ${routeName}`,
-                    route: routeByPath
-                }
-            }
+            if (analysisResult.success && analysisResult.route) {
+                const currentPath = this.router.currentRoute.value.path
+                const route = analysisResult.route
 
-            const smartMatch = this.smartRouteSearch(routeName)
-            if (smartMatch) {
-                await this.router.push({ name: smartMatch.name, params, query })
-                return {
-                    success: true,
-                    message: `Переход выполнен: ${smartMatch.path}`,
-                    route: smartMatch
-                }
-            }
+                try {
+                    if (route.name) {
+                        await this.router.push({ name: route.name, params, query })
+                    } else if (route.path) {
+                        await this.router.push({ path: route.path, query })
+                    } else {
+                        throw new Error('Маршрут не содержит ни name, ни path')
+                    }
 
-            return {
-                success: false,
-                message: `Маршрут "${routeName}" не найден`,
-                suggestions: this.getSimilarRoutes(routeName)
+                    const newPath = this.router.currentRoute.value.path
+
+                    if (newPath === currentPath && route.path !== currentPath) {
+                        throw new Error('Навигация не произошла - путь не изменился')
+                    }
+
+                    const routeDisplayName = smartNavigation.getRouteDisplayName(route)
+                    let message = `Вы перешли на страницу: ${routeDisplayName}`
+
+                    return {
+                        success: true,
+                        message: message,
+                        route: route,
+                        confidence: analysisResult.confidence,
+                        method: analysisResult.method
+                    }
+
+                } catch (navigationError) {
+                    const vueRoutes = this.router.getRoutes()
+                    const routeExists = vueRoutes.some(vr =>
+                        vr.name === route.name || vr.path === route.path
+                    )
+
+                    let errorMessage = `Не удалось выполнить переход к: ${smartNavigation.getRouteDisplayName(route)}`
+
+                    if (!routeExists) {
+                        errorMessage += `\n⚠️ Маршрут не существует в Vue Router`
+                        errorMessage += `\n🔍 Искомый роут: name="${route.name}", path="${route.path}"`
+                    } else {
+                        errorMessage += `\n⚠️ Ошибка навигации: ${navigationError.message}`
+                    }
+
+                    if (analysisResult.alternatives?.length > 0) {
+                        errorMessage += `\n\n💡 Попробуйте альтернативы:`
+                        analysisResult.alternatives.slice(0, 3).forEach(alt => {
+                            const altName = smartNavigation.getRouteDisplayName(alt)
+                            errorMessage += `\n• ${altName}`
+                        })
+                    }
+
+                    return {
+                        success: false,
+                        message: errorMessage,
+                        error: navigationError
+                    }
+                }
+            } else {
+                let message = analysisResult.method === 'basic_fallback_failed' ?
+                    `Маршрут "${routeName}" не найден через базовый поиск (LLM недоступен)` :
+                    `Маршрут "${routeName}" не найден через LLM анализ`
+
+                if (analysisResult.alternatives?.length > 0) {
+                    const methodText = analysisResult.method?.includes('basic') ? 'Базовый поиск предлагает' : 'LLM предлагает альтернативы'
+                    message += `\n\n🔍 ${methodText}:`
+                    analysisResult.alternatives.slice(0, 5).forEach(alt => {
+                        const altName = smartNavigation.getRouteDisplayName(alt)
+                        message += `\n• ${altName}`
+                    })
+                }
+
+                const stats = smartNavigation.getAnalysisStats()
+                message += `\n\n📈 Доступно ${stats.totalRoutes} маршрутов в системе`
+                message += `\n🔬 Метод анализа: ${stats.analysisMethod}`
+
+                if (!stats.llmAvailable) {
+                    message += `\n⚠️ LLM недоступен - функционал ограничен`
+                    message += `\n💡 Попробуйте базовые команды: "профиль", "настройки", "админ"`
+                }
+
+                return {
+                    success: false,
+                    message: message,
+                    suggestions: analysisResult.alternatives || []
+                }
             }
 
         } catch (error) {
@@ -78,6 +152,7 @@ class RouterActions {
         }
     }
 
+    // Оставляем старые методы для совместимости
     findRouteByName(name) {
         const routes = this.getAvailableRoutes()
         return routes.find(route =>
@@ -95,80 +170,13 @@ class RouterActions {
     }
 
     smartRouteSearch(searchTerm) {
-        const routes = this.getAvailableRoutes()
-        const lowerSearchTerm = searchTerm.toLowerCase()
-
-        const termMapping = {
-            'профиль': ['Account', 'User'],
-            'аккаунт': ['Account', 'User'],
-            'пользователи': ['UsersPanel', 'AdminPanel'],
-            'настройки': ['Settings', 'SecuritySettings'],
-            'безопасность': ['SecuritySettings'],
-            'админ': ['AdminPanel', 'UsersPanel', 'GroupsPanel', 'CategoriesPanel'],
-            'панель': ['AdminPanel', 'UsersPanel', 'GroupsPanel', 'CategoriesPanel'],
-            'группы': ['GroupsPanel'],
-            'категории': ['CategoriesPanel'],
-            'главная': ['Account'],
-            'dashboard': ['Account'],
-            'home': ['Account']
-        }
-
-        for (const [ruTerm, enTerms] of Object.entries(termMapping)) {
-            if (lowerSearchTerm.includes(ruTerm)) {
-                for (const enTerm of enTerms) {
-                    const route = routes.find(r =>
-                        r.name?.toLowerCase().includes(enTerm) ||
-                        r.path.toLowerCase().includes(enTerm)
-                    )
-                    if (route) return route
-                }
-            }
-        }
-
-        for (const enTerms of Object.values(termMapping)) {
-            for (const enTerm of enTerms) {
-                if (lowerSearchTerm.includes(enTerm)) {
-                    const route = routes.find(r =>
-                        r.name?.toLowerCase().includes(enTerm) ||
-                        r.path.toLowerCase().includes(enTerm)
-                    )
-                    if (route) return route
-                }
-            }
-        }
-
-        return routes.find(route =>
-            route.name?.toLowerCase().includes(lowerSearchTerm) ||
-            route.path.toLowerCase().includes(lowerSearchTerm)
-        )
+        // Используем новый сервис для умного поиска
+        return routesReader.findRouteByTerm(searchTerm)
     }
 
     getSimilarRoutes(searchTerm, maxResults = 5) {
-        const routes = this.getAvailableRoutes()
-        const lowerSearchTerm = searchTerm.toLowerCase()
-
-        const scored = routes
-            .map(route => {
-                let score = 0
-                const routeName = (route.name || '').toLowerCase()
-                const routePath = route.path.toLowerCase()
-
-                if (routeName.includes(lowerSearchTerm) || routePath.includes(lowerSearchTerm)) {
-                    score += 10
-                }
-
-                const nameDistance = this.levenshteinDistance(lowerSearchTerm, routeName)
-                const pathDistance = this.levenshteinDistance(lowerSearchTerm, routePath)
-                score += Math.max(0, 10 - Math.min(nameDistance, pathDistance))
-
-                return { route, score }
-            })
-            .filter(item => item.score > 0)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, maxResults)
-            .map(item => item.route)
-
-        return scored
+        // Используем новый сервис для получения предложений
+        return routesReader.getRouteSuggestions(searchTerm, maxResults)
     }
 
     levenshteinDistance(str1, str2) {
@@ -212,20 +220,8 @@ class RouterActions {
     }
 
     getPageDisplayName(route) {
-        const nameMapping = {
-            '/': 'Главная страница',
-            '/dashboard': 'Панель управления',
-            '/profile': 'Профиль пользователя',
-            '/users': 'Управление пользователями',
-            '/settings': 'Настройки системы',
-            '/reports': 'Отчеты и аналитика',
-            '/documents': 'Документы',
-            '/tasks': 'Задачи',
-            '/calendar': 'Календарь',
-            '/messages': 'Сообщения'
-        }
-
-        return nameMapping[route.path] || route.name || route.path
+        // Используем новый сервис для получения названия страницы
+        return routesReader.getPageDisplayName(route)
     }
 
     generateBreadcrumbs(route) {
@@ -235,10 +231,23 @@ class RouterActions {
         let currentPath = ''
         for (const part of pathParts) {
             currentPath += `/${part}`
-            breadcrumbs.push({
-                name: this.getPageDisplayName({ path: currentPath }),
-                path: currentPath
-            })
+
+            try {
+                const foundRoute = routesReader.findRouteByTerm(currentPath)
+                const displayName = foundRoute ?
+                    routesReader.getPageDisplayName(foundRoute) :
+                    this.getPageDisplayName({ path: currentPath })
+
+                breadcrumbs.push({
+                    name: displayName || part,
+                    path: currentPath
+                })
+            } catch {
+                breadcrumbs.push({
+                    name: part,
+                    path: currentPath
+                })
+            }
         }
 
         return breadcrumbs
@@ -251,14 +260,60 @@ class RouterActions {
             'Открыть справку'
         ]
 
-        const pageSpecificActions = {
-            '/profile': ['Редактировать профиль', 'Изменить пароль', 'Настроить уведомления'],
-            '/users': ['Добавить пользователя', 'Управлять ролями', 'Экспорт данных'],
-            '/settings': ['Сохранить изменения', 'Сбросить настройки', 'Резервное копирование'],
-            '/documents': ['Загрузить документ', 'Создать папку', 'Поиск по документам']
+        // Динамически определяем действия на основе типа страницы
+        const pageSpecificActions = this.getPageSpecificActions(route)
+
+        return [...baseActions, ...pageSpecificActions]
+    }
+
+    getPageSpecificActions(route) {
+        const routeName = route.name?.toLowerCase() || ''
+        const routePath = route.path?.toLowerCase() || ''
+
+        // Определяем тип страницы и возвращаем соответствующие действия
+        if (routeName.includes('user') || routePath.includes('profile') || routeName === 'account') {
+            return ['Редактировать профиль', 'Изменить пароль', 'Настроить уведомления']
         }
 
-        return [...baseActions, ...(pageSpecificActions[route.path] || [])]
+        if (routeName.includes('admin') || routePath.includes('admin')) {
+            return ['Добавить пользователя', 'Управлять ролями', 'Экспорт данных']
+        }
+
+        if (routeName.includes('settings') || routePath.includes('settings')) {
+            return ['Сохранить изменения', 'Сбросить настройки', 'Резервное копирование']
+        }
+
+        if (routeName.includes('files') || routePath.includes('filemanager')) {
+            return ['Загрузить файл', 'Создать папку', 'Поиск по файлам']
+        }
+
+        if (routeName.includes('project') || routePath.includes('crm')) {
+            return ['Создать проект', 'Добавить задачу', 'Экспорт отчета']
+        }
+
+        if (routeName.includes('lms') || routePath.includes('course')) {
+            return ['Записаться на курс', 'Просмотреть прогресс', 'Скачать материалы']
+        }
+
+        return []
+    }
+
+    // Новые методы для работы с категориями
+    getRoutesByCategory(category) {
+        return routesReader.getRoutesByCategory(category)
+    }
+
+    getAllCategories() {
+        return ['admin', 'cms', 'crm', 'lms', 'bi', 'expert', 'user']
+    }
+
+    searchRoutes(query, maxResults = 10) {
+        return routesReader.getRouteSuggestions(query, maxResults)
+    }
+
+    // Новый метод для получения статистики умной навигации
+    async getNavigationStats() {
+        return smartNavigation.getAnalysisStats()
     }
 }
 

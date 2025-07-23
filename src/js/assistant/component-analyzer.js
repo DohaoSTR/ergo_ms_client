@@ -65,13 +65,33 @@ class ComponentAnalyzer {
     getComponentsOnPage() {
         const components = []
 
-        const vueElements = document.querySelectorAll('[data-v-*], .vue-component')
-        vueElements.forEach(element => {
-            const componentName = this.extractComponentName(element)
-            if (componentName && !components.includes(componentName)) {
-                components.push(componentName)
-            }
-        })
+        try {
+            // Исправленный селектор - ищем элементы с data-v атрибутами
+            const vueElements = document.querySelectorAll('[class*="data-v-"], [data-v], .vue-component')
+            vueElements.forEach(element => {
+                const componentName = this.extractComponentName(element)
+                if (componentName && !components.includes(componentName)) {
+                    components.push(componentName)
+                }
+            })
+
+            // Альтернативный поиск Vue компонентов
+            const elementsWithVueData = document.querySelectorAll('*')
+            elementsWithVueData.forEach(element => {
+                // Ищем атрибуты, начинающиеся с data-v-
+                for (let attr of element.attributes) {
+                    if (attr.name.startsWith('data-v-')) {
+                        const componentName = this.extractComponentName(element)
+                        if (componentName && !components.includes(componentName)) {
+                            components.push(componentName)
+                        }
+                        break
+                    }
+                }
+            })
+        } catch (error) {
+            console.warn('Ошибка при поиске Vue компонентов:', error)
+        }
 
         const alwaysPresentComponents = ['NotificationProvider']
         alwaysPresentComponents.forEach(comp => {

@@ -24,7 +24,6 @@ import { Bot } from 'lucide-vue-next'
 .assistant-typing {
   display: flex;
   gap: 12px;
-  animation: slideInTyping 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .assistant-typing__avatar {
@@ -39,7 +38,6 @@ import { Bot } from 'lucide-vue-next'
   flex-shrink: 0;
   margin-top: 2px;
   box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
-  animation: avatarPulse 2s infinite ease-in-out;
 }
 
 .assistant-typing__content {
@@ -92,27 +90,6 @@ import { Bot } from 'lucide-vue-next'
   30% {
     transform: scale(1.3);
     opacity: 1;
-  }
-}
-
-@keyframes avatarPulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-@keyframes slideInTyping {
-  from {
-    opacity: 0;
-    transform: translateY(15px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 
