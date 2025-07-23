@@ -9,63 +9,55 @@ class LMStudioClient {
     }
 
     async checkConnection() {
-        const urls = [
-            this.apiUrl + '/models',
-            'http://127.0.0.1:1234/v1/models',
-            'http://localhost:1234/v1/models'
-        ]
+        // Упрощаем проверку - просто пытаемся получить список моделей
+        try {
+            const response = await fetch(`${this.apiUrl}/models`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors'
+            })
 
-        const timeoutPromise = (url, timeout = 5000) => {
-            return Promise.race([
-                fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    mode: 'cors'
-                }),
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
-                )
-            ])
-        }
-
-        const results = await Promise.allSettled(
-            urls.map(url => timeoutPromise(url, 3000))
-        )
-
-        for (let i = 0; i < urls.length; i++) {
-            const url = urls[i]
-            const result = results[i]
-
-            if (result.status === 'fulfilled') {
-                const response = result.value
-
-                if (response.ok) {
-                    try {
-                        const data = await response.json()
-
-                        if (data.data && data.data.length > 0) {
-                            this.model = data.data[0].id
-                            this.connected = true
-                            this.lastConnectionCheck = Date.now()
-
-                            if (url !== this.apiUrl + '/models') {
-                                this.baseUrl = url.replace('/v1/models', '')
-                                this.apiUrl = this.baseUrl + '/v1'
-                            }
-
-                            return { connected: true, model: this.model, url: this.baseUrl }
-                        }
-                    } catch {
-                        // JSON parsing error - continue to next URL
-                    }
+            if (response.ok) {
+                const data = await response.json()
+                if (data.data && data.data.length > 0) {
+                    this.model = data.data[0].id
+                    this.connected = true
+                    this.lastConnectionCheck = Date.now()
+                    return { connected: true, model: this.model, url: this.baseUrl }
                 }
             }
+        } catch (error) {
+            console.log('Models endpoint failed, but LM Studio might still work for chat')
+        }
+
+        // Если /models не работает, пробуем тестовый запрос к chat/completions
+        try {
+            const testResponse = await fetch(`${this.apiUrl}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors',
+                body: JSON.stringify({
+                    model: this.model || 'local-model',
+                    messages: [{ role: 'user', content: 'test' }],
+                    max_tokens: 1
+                })
+            })
+
+            if (testResponse.ok) {
+                this.connected = true
+                this.lastConnectionCheck = Date.now()
+                return { connected: true, model: this.model || 'local-model', url: this.baseUrl }
+            }
+        } catch (error) {
+            console.log('Chat completions test failed:', error.message)
         }
 
         this.connected = false
-        return { connected: false, error: 'All connection attempts failed - check if LM Studio is running on port 1234' }
+        return { connected: false, error: 'LM Studio connection failed' }
     }
 
     async ensureConnection() {
@@ -80,10 +72,8 @@ class LMStudioClient {
 
     async sendMessage(userMessage, systemContext = null) {
         try {
-            const connectionStatus = await this.ensureConnection()
-            if (!connectionStatus.connected) {
-                throw new Error('LM Studio недоступен')
-            }
+            // Простая проверка доступности - пытаемся отправить запрос
+            // Если запрос пройдет, значит LM Studio работает
 
             const messages = []
 
@@ -104,7 +94,7 @@ class LMStudioClient {
                 },
                 mode: 'cors',
                 body: JSON.stringify({
-                    model: this.model,
+                    model: this.model || 'local-model',
                     messages: messages,
                     temperature: 0.7,
                     max_tokens: 1000,
@@ -132,6 +122,10 @@ class LMStudioClient {
 
             if (data.choices && data.choices.length > 0) {
                 const aiResponse = data.choices[0].message.content.trim()
+
+                // Успешный ответ - помечаем что подключение работает
+                this.connected = true
+                this.lastConnectionCheck = Date.now()
 
                 return {
                     success: true,

@@ -6,88 +6,25 @@ class IntentAnalyzer {
     }
 
     buildSystemPrompt() {
-        return `Ты - AI ассистент для веб-приложения ERGO MS. Твоя задача - понимать намерения пользователя и помогать с навигацией и объяснением системы.
+        return `Ты - AI ассистент для веб-приложения ERGO MS. Анализируй намерения пользователя.
 
 ДОСТУПНЫЕ ДЕЙСТВИЯ:
-1. NAVIGATION - переход по страницам (когда пользователь просит "перейди", "открой")
-2. COMPONENT_EXPLAIN - объяснение компонентов НА ТЕКУЩЕЙ странице (только когда явно просят "объясни компоненты", "покажи компоненты")
-3. PAGE_ANALYZE - анализ текущей страницы (когда спрашивают "где я", "что это за страница")  
-4. SYSTEM_OVERVIEW - показ всех доступных разделов системы (когда просят "покажи все страницы", "какие есть разделы", "что доступно")
-5. HELP - общая справка (только когда явно просят "помощь", "что ты умеешь", "команды")
-6. CHAT - обычный разговор и ответы на вопросы
-
-ДОСТУПНЫЕ РОУТЫ В СИСТЕМЕ:
-- Account - профиль пользователя (/user/account)
-- SecuritySettings - настройки безопасности (/user/security)
-- Settings - основные настройки (/settings)
-- AdminPanel - панель администратора (/admin-panel)
-- UsersPanel - управление пользователями (/admin-panel/users)
-- GroupsPanel - управление группами (/admin-panel/groups)
-- CategoriesPanel - управление категориями (/admin-panel/categories)
-- CRM - CRM система (/crm)
-- LMS - система обучения (/lms)
-- BI - бизнес-интеллект (/bi)
-- FileManager - файловый менеджер (/filemanager)
-- ExpertSystem - экспертная система (/expert-system)
-
-ВАЖНЫЕ ПРАВИЛА ДЛЯ НАВИГАЦИИ:
-- Используй ТОЧНЫЕ имена роутов: Account, SecuritySettings, Settings, AdminPanel, UsersPanel, etc.
-- НЕ изобретай свои названия типа "account/settings" - используй только реальные имена
-- Для профиля используй "Account"
-- Для настроек безопасности используй "SecuritySettings"
-- Для основных настроек используй "Settings"
-- Для админ панели используй "AdminPanel"
-
-ВАЖНЫЕ ПРАВИЛА:
-- Отвечай на русском языке
-- CHAT используй для ВСЕХ технических вопросов: "как сделать", "как реализовать", "что такое", drag and drop, программирование
-- COMPONENT_EXPLAIN используй ТОЛЬКО когда просят объяснить компоненты именно на текущей странице
-- SYSTEM_OVERVIEW используй когда хотят увидеть весь список доступных разделов или страниц системы
-- HELP используй ТОЛЬКО для запросов справки о самом ассистенте
-- Будь дружелюбным и полезным
-- Давай конкретные и полезные ответы
+1. NAVIGATION - переход по страницам
+2. COMPONENT_EXPLAIN - объяснение компонентов на текущей странице
+3. PAGE_ANALYZE - анализ текущей страницы
+4. SYSTEM_OVERVIEW - показ всех разделов системы
+5. HELP - справка
+6. CHAT - обычный разговор
 
 ФОРМАТ ОТВЕТА:
-Ты должен ответить СТРОГО в JSON формате:
 {
   "intent": "NAVIGATION|COMPONENT_EXPLAIN|PAGE_ANALYZE|SYSTEM_OVERVIEW|HELP|CHAT",
-  "action": "конкретное действие если нужно",
-  "message": "ответ пользователю",
-  "params": {дополнительные параметры если нужно}
+  "action": "navigate_to_route",
+  "message": "ответ",
+  "params": {"route": "имя_маршрута"}
 }
 
-ВНИМАНИЕ: Отвечай ТОЛЬКО JSON, без дополнительного текста до или после!
-
-ПРИМЕРЫ НАВИГАЦИИ:
-Пользователь: "Перейди в мой профиль"
-Ответ: {"intent":"NAVIGATION","action":"navigate_to_route","message":"Перехожу в ваш профиль","params":{"route":"Account"}}
-
-Пользователь: "Открой настройки безопасности"
-Ответ: {"intent":"NAVIGATION","action":"navigate_to_route","message":"Открываю настройки безопасности","params":{"route":"SecuritySettings"}}
-
-Пользователь: "Перейди в настройки"
-Ответ: {"intent":"NAVIGATION","action":"navigate_to_route","message":"Перехожу в настройки","params":{"route":"Settings"}}
-
-Пользователь: "Открой админ панель"
-Ответ: {"intent":"NAVIGATION","action":"navigate_to_route","message":"Открываю панель администратора","params":{"route":"AdminPanel"}}
-
-Пользователь: "Где я нахожусь?"  
-Ответ: {"intent":"PAGE_ANALYZE","action":"analyze_current_page","message":"Анализирую текущую страницу для вас","params":{}}
-
-Пользователь: "Объясни компоненты на этой странице"
-Ответ: {"intent":"COMPONENT_EXPLAIN","action":"explain_component","message":"Анализирую компоненты текущей страницы","params":{}}
-
-Пользователь: "Покажи все страницы"
-Ответ: {"intent":"SYSTEM_OVERVIEW","action":"show_all_routes","message":"Показываю все доступные разделы системы","params":{}}
-
-Пользователь: "Помощь"
-Ответ: {"intent":"HELP","action":"show_help","message":"Показываю справку по возможностям ассистента","params":{}}
-
-Пользователь: "Как мне сделать dnd на моей странице bi?"
-Ответ: {"intent":"CHAT","action":null,"message":"Для реализации drag and drop на BI странице рекомендую использовать Vue Draggable или SortableJS. Это самые популярные решения для Vue приложений. Что именно нужно перетаскивать?","params":{}}
-
-Пользователь: "drag and drop, как сделать?"
-Ответ: {"intent":"CHAT","action":null,"message":"Drag and drop можно реализовать с помощью HTML5 API или библиотек. Что именно нужно перетаскивать?","params":{}}`
+Для NAVIGATION всегда используй action: "navigate_to_route" и указывай конкретное имя маршрута в params.route`
     }
 
     async analyzeIntent(userMessage, currentContext = {}) {
@@ -145,16 +82,8 @@ class IntentAnalyzer {
             prompt.push(`Текущий маршрут: ${context.currentRoute}`)
         }
 
-        if (context.currentPage) {
-            prompt.push(`Текущая страница: ${context.currentPage}`)
-        }
-
         if (context.availableRoutes && context.availableRoutes.length > 0) {
             prompt.push(`Доступные маршруты: ${context.availableRoutes.join(', ')}`)
-        }
-
-        if (context.pageComponents && context.pageComponents.length > 0) {
-            prompt.push(`Компоненты на странице: ${context.pageComponents.join(', ')}`)
         }
 
         return prompt.join('\n')
@@ -187,50 +116,15 @@ class IntentAnalyzer {
     detectIntentLocally(message) {
         const lowerMessage = message.toLowerCase()
 
+        // Убираем жестко заданные маппинги - пусть LLM сам думает
+        // Оставляем только базовую логику для определения типа намерения
+
         if (this.matchesKeywords(lowerMessage, ['перейди', 'переход', 'открой', 'иди', 'перейти', 'покажи страницу'])) {
-            let route = 'Account'
-            let routeName = 'аккаунт'
-
-            if (this.matchesKeywords(lowerMessage, ['профиль', 'profile', 'аккаунт', 'account'])) {
-                route = 'Account'
-                routeName = 'профиль'
-            } else if (this.matchesKeywords(lowerMessage, ['настройки', 'settings'])) {
-                route = 'Settings'
-                routeName = 'настройки'
-            } else if (this.matchesKeywords(lowerMessage, ['пользователи', 'users', 'админ', 'admin'])) {
-                route = 'UsersPanel'
-                routeName = 'панель пользователей'
-            } else if (this.matchesKeywords(lowerMessage, ['безопасность', 'security'])) {
-                route = 'SecuritySettings'
-                routeName = 'настройки безопасности'
-            } else if (this.matchesKeywords(lowerMessage, ['группы', 'groups'])) {
-                route = 'GroupsPanel'
-                routeName = 'панель групп'
-            } else if (this.matchesKeywords(lowerMessage, ['категории', 'categories'])) {
-                route = 'CategoriesPanel'
-                routeName = 'панель категорий'
-            } else if (this.matchesKeywords(lowerMessage, ['crm', 'проекты', 'стратегические'])) {
-                route = 'CRM'
-                routeName = 'CRM'
-            } else if (this.matchesKeywords(lowerMessage, ['lms', 'обучение', 'курсы'])) {
-                route = 'LMS'
-                routeName = 'LMS'
-            } else if (this.matchesKeywords(lowerMessage, ['bi', 'аналитика', 'дашборд'])) {
-                route = 'BI'
-                routeName = 'BI'
-            } else if (this.matchesKeywords(lowerMessage, ['файлы', 'файловый', 'менеджер'])) {
-                route = 'FileManager'
-                routeName = 'файловый менеджер'
-            } else if (this.matchesKeywords(lowerMessage, ['экспертная', 'навыки', 'тесты', 'expert'])) {
-                route = 'ExpertSystem'
-                routeName = 'экспертная система'
-            }
-
             return {
                 type: 'NAVIGATION',
                 action: 'navigate_to_route',
-                defaultMessage: `Перехожу в ${routeName}`,
-                params: { route, routeName }
+                defaultMessage: 'Попробуйте переформулировать запрос более конкретно, например: "перейди в профиль" или "открой настройки"',
+                params: { route: null, routeName: null }
             }
         }
 
