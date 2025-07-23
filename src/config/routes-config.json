@@ -800,7 +800,13 @@
     "DatasetPage": {
       "path": "/bi/dataset/:id(\\d+)?",
       "component": "@/modules/bi/DatasetPage.vue",
-      "alias": "/bi/dataset/new",
+      "meta": {
+        "requiresAuth": true
+      }
+    },
+    "NewDataset": {
+      "path": "/bi/dataset/new",
+      "component": "@/modules/bi/DatasetPage.vue",
       "meta": {
         "requiresAuth": true
       }

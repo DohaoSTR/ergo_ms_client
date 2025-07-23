@@ -28,7 +28,7 @@ export const listConfigs = {
   datasets: {
     type: 'datasets',
     endpoint: endpoints.bi.DatasetsList,
-    createRoute: '/bi/dataset/new',
+    createRoute: { name: 'NewDataset' },
     createButtonText: 'Создать датасет',
     createButtonWidth: '10rem',
     searchPlaceholder: 'Введите для поиска...',

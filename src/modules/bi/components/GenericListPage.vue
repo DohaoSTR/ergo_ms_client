@@ -33,7 +33,13 @@ const router = useRouter()
 
 // Функция для перехода к созданию нового элемента
 function goToCreate() {
-  router.push(props.config.createRoute)
+  if (typeof props.config.createRoute === 'string') {
+    router.push(props.config.createRoute)
+  } else if (typeof props.config.createRoute === 'object' && props.config.createRoute.name) {
+    router.push(props.config.createRoute)
+  } else {
+    console.error('Неправильная конфигурация createRoute:', props.config.createRoute)
+  }
 }
 
 // Универсальная функция загрузки данных
