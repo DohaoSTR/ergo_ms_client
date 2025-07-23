@@ -47,11 +47,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { WholeWord } from 'lucide-vue-next';
 import TextHintEditor from './TextHintEditor.vue';
 
-const emit = defineEmits(['close']);
+const props = defineProps({
+  data: {
+    type: Object,
+    default: () => ({})
+  }
+});
+
+const emit = defineEmits(['close', 'save']);
 
 const title = ref('');
 const hintText = ref('');
@@ -61,10 +68,19 @@ const background = ref('#2d2d3d');
 const hint = ref(false);
 const autoHeight = ref(false);
 const showInToc = ref(true);
-const showTooltip = ref(false);
-function toggleTooltip() {
-  showTooltip.value = !showTooltip.value;
-}
+
+watch(() => props.data, (newData) => {
+  if (newData) {
+    title.value = newData.title || '';
+    hintText.value = newData.hintText || '';
+    selectedSize.value = newData.size || 'XS';
+    background.value = newData.background || '#2d2d3d';
+    hint.value = newData.hint || false;
+    autoHeight.value = newData.autoHeight || false;
+    showInToc.value = newData.showInToc === undefined ? true : newData.showInToc;
+  }
+}, { immediate: true });
+
 
 function selectSize(size) {
   selectedSize.value = size;
@@ -79,6 +95,17 @@ function onCancel() {
 }
 
 function onSubmit() {
+  const settings = {
+    ...props.data,
+    title: title.value,
+    size: selectedSize.value,
+    background: background.value,
+    hint: hint.value,
+    hintText: hintText.value,
+    autoHeight: autoHeight.value,
+    showInToc: showInToc.value
+  };
+  emit('save', settings);
   emit('close');
 }
 </script>

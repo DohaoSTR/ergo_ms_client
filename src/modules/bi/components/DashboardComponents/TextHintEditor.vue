@@ -17,12 +17,12 @@
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-formatting">
-        <button class="toolbar-btn" title="Жирный">B</button>
-        <button class="toolbar-btn" title="Курсив">I</button>
-        <button class="toolbar-btn" title="Подчеркнутый">U</button>
-        <button class="toolbar-btn" title="Зачеркнутый">S</button>
-        <button class="toolbar-btn" title="Моноширинный">M</button>
-        <button class="toolbar-btn" title="Цвет текста"><WholeWord /></button>
+        <button class="toolbar-btn" :class="{ 'active': activeFormats.bold }" title="Жирный" @click="applyFormat('bold')">B</button>
+        <button class="toolbar-btn" :class="{ 'active': activeFormats.italic }" title="Курсив" @click="applyFormat('italic')">I</button>
+        <button class="toolbar-btn" :class="{ 'active': activeFormats.underline }" title="Подчеркнутый" @click="applyFormat('underline')">U</button>
+        <button class="toolbar-btn" :class="{ 'active': activeFormats.strikeThrough }" title="Зачеркнутый" @click="applyFormat('strikeThrough')">S</button>
+        <button class="toolbar-btn" :class="{ 'active': activeFormats.monospace }" title="Моноширинный" @click="toggleMonospace">M</button>
+        <button class="toolbar-btn" :class="{ 'active': activeFormats.highlight }" title="Выделенный" @click="toggleHighlight"><WholeWord /></button>
       </div>
       <div class="toolbar-separator"></div>
       <div class="toolbar-styles">
@@ -129,11 +129,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import {
   WholeWord, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Type, List, ListOrdered,
   Link, StickyNote, Scissors, Quote, Code, SquareCode, Image, Table, Minus, Smile, FileText
 } from 'lucide-vue-next';
+
+const props = defineProps({
+  hintText: {
+    type: String,
+    default: ''
+  }
+});
 
 const headingIcons = [Heading1, Heading2, Heading3, Heading4, Heading5, Heading6];
 
@@ -147,6 +154,15 @@ const showSettingsTooltip = ref(false);
 const toolbarEnabled = ref(true);
 const editorMode = ref('wysiwyg');
 
+const activeFormats = reactive({
+  bold: false,
+  italic: false,
+  underline: false,
+  strikeThrough: false,
+  monospace: false,
+  highlight: false,
+});
+
 const moreActions = ref([
     { label: 'Ссылка', icon: Link, command: 'createLink' },
     { label: 'Примечание', icon: StickyNote, command: 'addNote' },
@@ -159,6 +175,26 @@ const moreActions = ref([
     { label: 'Разделитель', icon: Minus, command: 'insertHorizontalRule' },
     { label: 'Эмодзи', icon: Smile, command: 'insertEmoji' }
 ]);
+
+function applyFormat(command) {
+  editorDiv.value?.focus();
+  document.execCommand(command, false, null);
+  updateSelectionStyle();
+}
+
+function toggleHighlight() {
+  editorDiv.value?.focus();
+  const isHighlighted = activeFormats.highlight;
+  document.execCommand('backColor', false, isHighlighted ? 'transparent' : 'yellow');
+  updateSelectionStyle();
+}
+
+function toggleMonospace() {
+  editorDiv.value?.focus();
+  const isMonospace = activeFormats.monospace;
+  document.execCommand('fontName', false, isMonospace ? 'sans-serif' : 'monospace');
+  updateSelectionStyle();
+}
 
 function toggleTooltip() {
   const isOpen = !showTooltip.value;
@@ -248,7 +284,7 @@ function toggleSettingsTooltip() {
 function updateSelectionStyle() {
   if (document.queryCommandSupported('formatBlock')) {
     let style = document.queryCommandValue('formatBlock').toLowerCase();
-    if (!style || style === 'div') {
+    if (!style || !style.length || style === 'div') {
       style = 'p';
     }
     selectedStyle.value = style;
@@ -260,6 +296,52 @@ function updateSelectionStyle() {
   } else {
     selectedListStyle.value = '';
   }
+
+  activeFormats.bold = document.queryCommandState('bold');
+  activeFormats.italic = document.queryCommandState('italic');
+  activeFormats.underline = document.queryCommandState('underline');
+  activeFormats.strikeThrough = document.queryCommandState('strikeThrough');
+
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+
+  let parentEl = selection.getRangeAt(0).commonAncestorContainer;
+  if (parentEl.nodeType !== 1) {
+    parentEl = parentEl.parentNode;
+  }
+
+  let highlight = false;
+  let el = parentEl;
+  while (el && el !== editorDiv.value) {
+    if (el.style && (el.style.backgroundColor === 'yellow' || el.style.backgroundColor === 'rgb(255, 255, 0)')) {
+      highlight = true;
+      break;
+    }
+    if (el.tagName === 'FONT' && el.color === 'yellow') {
+      highlight = true;
+      break;
+    }
+    el = el.parentNode;
+  }
+  activeFormats.highlight = highlight;
+
+  let monospace = false;
+  el = parentEl;
+  while(el && el !== editorDiv.value) {
+    if (el.tagName === 'FONT' && el.face && el.face.toLowerCase() === 'monospace') {
+         monospace = true;
+         break;
+    }
+    if (el.style && el.style.fontFamily) {
+      const ff = el.style.fontFamily.toLowerCase();
+      if (ff.includes('monospace') || ff.includes('courier')) {
+        monospace = true;
+        break;
+      }
+    }
+    el = el.parentNode;
+  }
+  activeFormats.monospace = monospace;
 }
 
 const emit = defineEmits(['update:hintText']);
@@ -269,9 +351,11 @@ function updateHintText(event) {
 
 onMounted(() => {
   if (editorDiv.value) {
-    const defaultContent = '<p><br></p>';
-    editorDiv.value.innerHTML = defaultContent;
-    emit('update:hintText', defaultContent);
+    const initialContent = props.hintText || '<p><br></p>';
+    editorDiv.value.innerHTML = initialContent;
+    if (!props.hintText) {
+      emit('update:hintText', initialContent);
+    }
 
     const range = document.createRange();
     const sel = window.getSelection();

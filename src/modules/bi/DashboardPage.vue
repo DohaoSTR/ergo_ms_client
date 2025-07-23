@@ -47,7 +47,11 @@
 
         <div v-if="isHeaderSettingsVisible" class="page-window-overlay" @click="closeHeaderSettings">
           <div class="page-window" @click.stop>
-            <HeaderSettings :data="headerSettingsData" @close="closeHeaderSettings" />
+            <HeaderSettings 
+              :data="headerSettingsData" 
+              @close="closeHeaderSettings"
+              @save="saveHeaderSettings" 
+            />
           </div>
         </div>
         
@@ -85,6 +89,14 @@ import HeaderSettings from './components/DashboardComponents/HeaderSettings.vue'
 
 import { isDatasetSidebarOpen } from '@/modules/bi/js/useSidebarStore.js'
 import { isSidebarCollapsed, initializeSidebarTracking } from '@/modules/bi/js/useMainSidebarStore.js'
+
+const HEADER_WIDGET_HEIGHTS = {
+  'XS': 50,
+  'S': 55,
+  'M': 60,
+  'L': 65,
+  'XL': 70
+};
 
 const dashboardName = ref('Новый дашборд')
 const isSaveModalVisible = ref(false)
@@ -164,6 +176,23 @@ const handleItemEdit = (item) => {
 
 const handleItemDelete = (item) => {
 }
+
+const saveHeaderSettings = (updatedSettings) => {
+  const itemIndex = currentPageItems.value.findIndex(item => item.id === updatedSettings.id);
+  if (itemIndex !== -1) {
+    if (updatedSettings.type === 'Заголовок') {
+      if (updatedSettings.autoHeight) {
+        updatedSettings.height = 'auto';
+      } else if (updatedSettings.size) {
+        updatedSettings.height = HEADER_WIDGET_HEIGHTS[updatedSettings.size] || 50;
+      }
+    }
+    const newItems = [...currentPageItems.value];
+    newItems[itemIndex] = updatedSettings;
+    updateCurrentPageItems(newItems);
+  }
+  closeHeaderSettings();
+};
 
 const togglePageDropdown = () => {
     if (pages.value.length > 1) {
@@ -283,7 +312,6 @@ watch(() => pages.value.length, (newLength, oldLength) => {
 })
 
 watch(currentPageItems, (items, oldItems) => {
-  // Если добавлен новый элемент типа 'Заголовок', открываем модалку
   if (items.length > oldItems.length) {
     const newItem = items[items.length - 1]
     if (newItem.type === 'Заголовок') {
