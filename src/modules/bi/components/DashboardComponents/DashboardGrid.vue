@@ -100,7 +100,7 @@
            :style="hintTooltipStyle"
            @mouseenter="cancelHideHint"
            @mouseleave="hideHint">
-        <div v-html="hintContent"></div>
+        <div v-html="hintContent" class="hint-content"></div>
       </div>
     </Teleport>
   </div>
@@ -307,6 +307,7 @@ const showHint = (item, event) => {
     const rect = event.target.getBoundingClientRect();
     hintTooltipStyle.value = {
       display: 'flex',
+      textAlign: 'center',
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: '0',
@@ -1229,9 +1230,6 @@ onUnmounted(() => {
 
 .hint-tooltip {
   position: fixed;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   background: var(--color-primary-background);
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
@@ -1242,7 +1240,7 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   font-size: 13px;
   max-width: 300px;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 
   :deep(p) {
     margin-bottom: 0;
@@ -1477,5 +1475,17 @@ onUnmounted(() => {
   flex-direction: column;
   overflow: hidden;
   z-index: 2000;
+}
+
+.hint-content {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
 }
 </style> 
