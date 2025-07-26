@@ -54,6 +54,16 @@
             />
           </div>
         </div>
+
+        <div v-if="isTextSettingsVisible" class="page-window-overlay" @click="closeTextSettings">
+          <div class="page-window" @click.stop>
+            <TextSettings 
+              :data="textSettingsData" 
+              @close="closeTextSettings"
+              @save="saveTextSettings" 
+            />
+          </div>
+        </div>
         
         <div class="body-content">
             <DashboardGrid
@@ -86,6 +96,7 @@ import DashboardToolbar from './components/DashboardComponents/DashboardToolbar.
 import PageWindow from './components/DashboardComponents/PageWindow.vue'
 import DashboardGrid from './components/DashboardComponents/DashboardGrid.vue'
 import HeaderSettings from './components/DashboardComponents/HeaderSettings.vue'
+import TextSettings from './components/DashboardComponents/TextSettings.vue'
 
 import { isDatasetSidebarOpen } from '@/modules/bi/js/useSidebarStore.js'
 import { isSidebarCollapsed, initializeSidebarTracking } from '@/modules/bi/js/useMainSidebarStore.js'
@@ -116,6 +127,8 @@ const draggedType = ref('')
 
 const isHeaderSettingsVisible = ref(false)
 const headerSettingsData = ref(null)
+const isTextSettingsVisible = ref(false)
+const textSettingsData = ref(null)
 
 const handleToolbarDragStart = (itemType) => {
             draggedType.value = itemType
@@ -171,6 +184,9 @@ const handleItemEdit = (item) => {
   if (item.type === 'Заголовок') {
     headerSettingsData.value = { ...item }
     isHeaderSettingsVisible.value = true
+  } else if (item.type === 'Текст') {
+    textSettingsData.value = { ...item }
+    isTextSettingsVisible.value = true
   }
 }
 
@@ -192,6 +208,33 @@ const saveHeaderSettings = (updatedSettings) => {
     updateCurrentPageItems(newItems);
   }
   closeHeaderSettings();
+};
+
+function closeHeaderSettings() {
+  isHeaderSettingsVisible.value = false
+  headerSettingsData.value = null
+}
+
+function closeTextSettings() {
+  isTextSettingsVisible.value = false
+  textSettingsData.value = null
+}
+
+const saveTextSettings = (updatedSettings) => {
+  const itemIndex = currentPageItems.value.findIndex(item => item.id === updatedSettings.id);
+  if (itemIndex !== -1) {
+    if (updatedSettings.type === 'Текст') {
+      if (updatedSettings.autoHeight) {
+        updatedSettings.height = 'auto';
+      } else {
+        updatedSettings.height = 150; // Стандартная высота для текста
+      }
+    }
+    const newItems = [...currentPageItems.value];
+    newItems[itemIndex] = updatedSettings;
+    updateCurrentPageItems(newItems);
+  }
+  closeTextSettings();
 };
 
 const togglePageDropdown = () => {
@@ -317,14 +360,12 @@ watch(currentPageItems, (items, oldItems) => {
     if (newItem.type === 'Заголовок') {
       headerSettingsData.value = { ...newItem }
       isHeaderSettingsVisible.value = true
+    } else if (newItem.type === 'Текст') {
+      textSettingsData.value = { ...newItem }
+      isTextSettingsVisible.value = true
     }
   }
 })
-
-function closeHeaderSettings() {
-  isHeaderSettingsVisible.value = false
-  headerSettingsData.value = null
-}
 
 watch(currentPageIndex, (newIndex) => {
     if (pages.value.length > 1) {

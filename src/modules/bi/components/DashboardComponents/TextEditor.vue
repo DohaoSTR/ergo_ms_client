@@ -139,6 +139,10 @@ const props = defineProps({
   hintText: {
     type: String,
     default: ''
+  },
+  content: {
+    type: String,
+    default: ''
   }
 });
 
@@ -344,17 +348,27 @@ function updateSelectionStyle() {
   activeFormats.monospace = monospace;
 }
 
-const emit = defineEmits(['update:hintText']);
+const emit = defineEmits(['update:hintText', 'update:content']);
 function updateHintText(event) {
-  emit('update:hintText', event.target.innerHTML);
+  if (props.hintText !== undefined) {
+    emit('update:hintText', event.target.innerHTML);
+  }
+  if (props.content !== undefined) {
+    emit('update:content', event.target.innerHTML);
+  }
 }
 
 onMounted(() => {
   if (editorDiv.value) {
-    const initialContent = props.hintText || '<p><br></p>';
+    const initialContent = props.content || props.hintText || '<p><br></p>';
     editorDiv.value.innerHTML = initialContent;
-    if (!props.hintText) {
-      emit('update:hintText', initialContent);
+    if (!props.content && !props.hintText) {
+      if (props.content !== undefined) {
+        emit('update:content', initialContent);
+      }
+      if (props.hintText !== undefined) {
+        emit('update:hintText', initialContent);
+      }
     }
 
     const range = document.createRange();

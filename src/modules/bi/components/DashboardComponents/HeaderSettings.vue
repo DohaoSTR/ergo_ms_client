@@ -26,7 +26,7 @@
     <!-- Текстовый редактор для подсказки -->
     <div v-if="hint" class="form-group">
       <label>Текст подсказки</label>
-      <TextHintEditor :hintText="hintText" @update:hintText="val => hintText = val" />
+      <TextEditor :hintText="hintText" @update:hintText="val => hintText = val" />
     </div>
     
     <div class="form-group">
@@ -49,7 +49,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { WholeWord } from 'lucide-vue-next';
-import TextHintEditor from './TextHintEditor.vue';
+import TextEditor from './TextEditor.vue';
 
 const props = defineProps({
   data: {

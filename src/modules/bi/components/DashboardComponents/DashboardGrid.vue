@@ -45,6 +45,8 @@
               <CircleHelp :size="16" />
             </div>
           </div>
+          <div v-else-if="item.type === 'Текст'" class="text-widget-content" v-html="item.content || 'Текстовое содержимое'">
+          </div>
           <div v-else class="item-preview">
             {{ getItemPreview(item) }}
           </div>
@@ -242,7 +244,8 @@ const getItemClass = (item) => {
     [`item-${item.type.toLowerCase()}`]: true,
     'item-selected': item.selected,
     'item-dragging': draggedItem.value && draggedItem.value.id === item.id,
-    'item-hidden-drag': isDraggingExisting.value && draggedItem.value && draggedItem.value.id === item.id
+    'item-hidden-drag': isDraggingExisting.value && draggedItem.value && draggedItem.value.id === item.id,
+    'item-auto-height': item.autoHeight && item.height === 'auto'
   }
 }
 
@@ -1221,6 +1224,72 @@ onUnmounted(() => {
   width: 100%;
   word-break: break-word;
   white-space: normal;
+}
+
+.text-widget-content {
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 8px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  
+  :deep(h1, h2, h3, h4, h5, h6) {
+    margin: 0.5em 0;
+    font-weight: 600;
+  }
+  
+  :deep(p) {
+    margin: 0.5em 0;
+  }
+  
+  :deep(ul, ol) {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+  }
+  
+  :deep(blockquote) {
+    margin: 1em 0;
+    padding: 0.5em 1em;
+    border-left: 4px solid var(--color-border);
+    background: var(--color-background);
+  }
+  
+  :deep(pre) {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 1em;
+    overflow-x: auto;
+    font-family: monospace;
+  }
+  
+  :deep(code) {
+    background: var(--color-background);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+  }
+}
+
+.item-auto-height {
+  height: auto !important;
+  min-height: 50px;
+  
+  .text-widget-content {
+    height: auto !important;
+    overflow: visible;
+    display: block;
+  }
+  
+  .item-content {
+    height: auto !important;
+    min-height: auto;
+  }
 }
 
 .hint-icon-wrapper {
