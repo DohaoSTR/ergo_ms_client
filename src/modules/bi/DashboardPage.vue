@@ -67,6 +67,7 @@
         
         <div class="body-content">
             <DashboardGrid
+                ref="dashboardGridRef"
                 :items="currentPageItems"
                 :dragged-type="draggedType"
                 :pages-count="pages.length"
@@ -129,6 +130,7 @@ const isHeaderSettingsVisible = ref(false)
 const headerSettingsData = ref(null)
 const isTextSettingsVisible = ref(false)
 const textSettingsData = ref(null)
+const dashboardGridRef = ref(null)
 
 const handleToolbarDragStart = (itemType) => {
             draggedType.value = itemType
@@ -196,6 +198,9 @@ const handleItemDelete = (item) => {
 const saveHeaderSettings = (updatedSettings) => {
   const itemIndex = currentPageItems.value.findIndex(item => item.id === updatedSettings.id);
   if (itemIndex !== -1) {
+    const oldItem = currentPageItems.value[itemIndex];
+    const oldHeight = oldItem.height;
+    
     if (updatedSettings.type === 'Заголовок') {
       if (updatedSettings.autoHeight) {
         updatedSettings.height = 'auto';
@@ -203,9 +208,17 @@ const saveHeaderSettings = (updatedSettings) => {
         updatedSettings.height = HEADER_WIDGET_HEIGHTS[updatedSettings.size] || 50;
       }
     }
+    
     const newItems = [...currentPageItems.value];
     newItems[itemIndex] = updatedSettings;
     updateCurrentPageItems(newItems);
+    
+    const heightChanged = oldHeight !== updatedSettings.height;
+    if (heightChanged && dashboardGridRef.value) {
+      setTimeout(() => {
+        dashboardGridRef.value.triggerRecalculatePositions();
+      }, 50);
+    }
   }
   closeHeaderSettings();
 };
@@ -223,16 +236,27 @@ function closeTextSettings() {
 const saveTextSettings = (updatedSettings) => {
   const itemIndex = currentPageItems.value.findIndex(item => item.id === updatedSettings.id);
   if (itemIndex !== -1) {
+    const oldItem = currentPageItems.value[itemIndex];
+    const oldHeight = oldItem.height;
+    
     if (updatedSettings.type === 'Текст') {
       if (updatedSettings.autoHeight) {
         updatedSettings.height = 'auto';
       } else {
-        updatedSettings.height = 150; // Стандартная высота для текста
+        updatedSettings.height = 150;
       }
     }
+    
     const newItems = [...currentPageItems.value];
     newItems[itemIndex] = updatedSettings;
     updateCurrentPageItems(newItems);
+    
+    const heightChanged = oldHeight !== updatedSettings.height;
+    if (heightChanged && dashboardGridRef.value) {
+      setTimeout(() => {
+        dashboardGridRef.value.triggerRecalculatePositions();
+      }, 50);
+    }
   }
   closeTextSettings();
 };

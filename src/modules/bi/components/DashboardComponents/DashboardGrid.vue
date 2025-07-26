@@ -23,6 +23,7 @@
         class="grid-item"
         :class="getItemClass(item)"
         :style="getItemStyle(item)"
+        :data-item-id="item.id"
         @click="selectItem(item)"
         @dblclick="editItem(item)"
         @mousedown="handleMouseDown(item, $event)"
@@ -168,6 +169,9 @@ const hintVisible = ref(false)
 const hintContent = ref('')
 const hintTooltipStyle = ref({})
 let hideHintTimer = null
+const resizeObserver = ref(null)
+const autoHeightItems = ref(new Map())
+const isRecalculatingPositions = ref(false)
 
 const grayPlaceholderStyle = computed(() => {
   if (!showGrayPlaceholder.value || !currentDraggedType.value) return null
@@ -421,10 +425,13 @@ const calculateDropPosition = (mouseX, mouseY, elementType) => {
 const findNearestRow = (mouseY, elementHeight) => {
   if (localItems.value.length === 0) return 0
   
-  const occupiedAreas = localItems.value.map(item => ({
-    top: item.y || 0,
-    bottom: (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150)
-  }))
+  const occupiedAreas = localItems.value.map(item => {
+    const actualSize = getActualItemSize(item)
+    return {
+      top: item.y || 0,
+      bottom: (item.y || 0) + actualSize.height
+    }
+  })
   
   const rows = []
   
@@ -464,13 +471,16 @@ const findNearestValidPositionInRow = (x, rowY, width, height, excludeItemId) =>
     .filter(item => {
       if (excludeItemId && item.id === excludeItemId) return false
       const itemY = item.y || 0
-      const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
+      const actualSize = getActualItemSize(item)
       return Math.abs(itemY - rowY) < 10
     })
-    .map(item => ({
-      left: item.x || 0,
-      right: (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200)
-    }))
+    .map(item => {
+      const actualSize = getActualItemSize(item)
+      return {
+        left: item.x || 0,
+        right: (item.x || 0) + actualSize.width
+      }
+    })
     .sort((a, b) => a.left - b.left)
   
   if (rowItems.length === 0) {
@@ -520,8 +530,9 @@ const calculatePotentialPlacement = (mouseX, mouseY, elementType) => {
   let minDistance = Infinity
   
   for (const item of localItems.value) {
-    const itemCenterX = (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200) / 2
-    const itemCenterY = (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150) / 2
+    const actualSize = getActualItemSize(item)
+    const itemCenterX = (item.x || 0) + actualSize.width / 2
+    const itemCenterY = (item.y || 0) + actualSize.height / 2
     
     const distance = Math.sqrt(
       Math.pow(relativeX - itemCenterX, 2) + Math.pow(relativeY - itemCenterY, 2)
@@ -537,8 +548,9 @@ const calculatePotentialPlacement = (mouseX, mouseY, elementType) => {
     return { x: 0, y: 0 }
   }
   
-  const nearestItemWidth = nearestItem.width || ELEMENT_SIZES[nearestItem.type]?.width || 200
-  const nearestItemHeight = nearestItem.height || ELEMENT_SIZES[nearestItem.type]?.height || 150
+  const nearestItemActualSize = getActualItemSize(nearestItem)
+  const nearestItemWidth = nearestItemActualSize.width
+  const nearestItemHeight = nearestItemActualSize.height
   const nearestItemX = nearestItem.x || 0
   const nearestItemY = nearestItem.y || 0
   
@@ -606,7 +618,8 @@ const calculateFinalPlacement = (elementType) => {
   
   localItems.value.forEach(item => {
     const itemY = item.y || 0
-    const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
+    const actualSize = getActualItemSize(item)
+    const itemHeight = actualSize.height
     
     if (itemY >= placeholderY) {
       elementsToShift.push(item)
@@ -618,7 +631,8 @@ const calculateFinalPlacement = (elementType) => {
   
   elementsToShift.forEach(item => {
     const itemY = item.y || 0
-    const itemHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150
+    const actualSize = getActualItemSize(item)
+    const itemHeight = actualSize.height
     
     if (itemY >= placeholderY) {
       item.y = itemY + elementSize.height + GRID_GAP
@@ -633,12 +647,15 @@ const calculateFinalPlacement = (elementType) => {
 const checkCollision = (x, y, width, height, excludeItemId) => {
   const occupiedAreas = localItems.value
     .filter(item => !excludeItemId || item.id !== excludeItemId)
-    .map(item => ({
-      left: item.x || 0,
-      top: item.y || 0,
-      right: (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200),
-      bottom: (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150)
-    }))
+    .map(item => {
+      const actualSize = getActualItemSize(item)
+      return {
+        left: item.x || 0,
+        top: item.y || 0,
+        right: (item.x || 0) + actualSize.width,
+        bottom: (item.y || 0) + actualSize.height
+      }
+    })
   
   const newArea = {
     left: x,
@@ -718,8 +735,9 @@ const handleExistingItemDrag = (event) => {
   const rect = gridContainer.value.getBoundingClientRect()
   const mouseX = event.clientX - rect.left
   const mouseY = event.clientY - rect.top
-  const itemWidth = draggedItem.value.width || ELEMENT_SIZES[draggedItem.value.type]?.width || 200
-  const itemHeight = draggedItem.value.height || ELEMENT_SIZES[draggedItem.value.type]?.height || 150
+  const actualSize = getActualItemSize(draggedItem.value)
+  const itemWidth = actualSize.width
+  const itemHeight = actualSize.height
   const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
   const snapX = Math.max(0, Math.min(gridWidth - itemWidth, mouseX - itemWidth / 2))
   let snapY = 0
@@ -728,8 +746,9 @@ const handleExistingItemDrag = (event) => {
     let minDistance = Infinity
     for (const item of localItems.value) {
       if (item.id === draggedItem.value.id) continue
-      const itemCenterX = (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200) / 2
-      const itemCenterY = (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150) / 2
+      const itemActualSize = getActualItemSize(item)
+      const itemCenterX = (item.x || 0) + itemActualSize.width / 2
+      const itemCenterY = (item.y || 0) + itemActualSize.height / 2
       const distance = Math.sqrt(
         Math.pow(mouseX - itemCenterX, 2) + Math.pow(mouseY - itemCenterY, 2)
       )
@@ -739,7 +758,8 @@ const handleExistingItemDrag = (event) => {
       }
     }
     if (nearestItem) {
-      const nearestItemHeight = nearestItem.height || ELEMENT_SIZES[nearestItem.type]?.height || 150
+      const nearestItemActualSize = getActualItemSize(nearestItem)
+      const nearestItemHeight = nearestItemActualSize.height
       const nearestItemY = nearestItem.y || 0
       const mouseIsAbove = mouseY < nearestItemY + nearestItemHeight / 2
       if (mouseIsAbove) {
@@ -772,7 +792,8 @@ const stopDrag = () => {
       let currentY = 0;
       for (let i = 0; i < sorted.length; i++) {
         sorted[i].y = currentY;
-        currentY += (sorted[i].height || ELEMENT_SIZES[sorted[i].type]?.height || 150) + GRID_GAP;
+        const actualSize = getActualItemSize(sorted[i]);
+        currentY += actualSize.height + GRID_GAP;
       }
       localItems.value = sorted;
     }
@@ -942,6 +963,90 @@ const resetDragState = () => {
   yellowPlaceholderPosition.value = { x: 0, y: 0, width: 0, height: 0 }
 }
 
+const getActualItemSize = (item) => {
+  const element = document.querySelector(`[data-item-id="${item.id}"]`)
+  if (element && item.height === 'auto') {
+    const rect = element.getBoundingClientRect()
+    return {
+      width: item.width || ELEMENT_SIZES[item.type]?.width || 200,
+      height: rect.height
+    }
+  }
+  return {
+    width: item.width || ELEMENT_SIZES[item.type]?.width || 200,
+    height: item.height || ELEMENT_SIZES[item.type]?.height || 150
+  }
+}
+
+const recalculatePositions = () => {
+  if (isRecalculatingPositions.value || localItems.value.length === 0) return
+  
+  isRecalculatingPositions.value = true
+  
+  nextTick(() => {
+    const sortedItems = [...localItems.value].sort((a, b) => (a.y || 0) - (b.y || 0))
+    
+    let currentY = 0
+    
+    for (let i = 0; i < sortedItems.length; i++) {
+      const item = sortedItems[i]
+      const actualSize = getActualItemSize(item)
+      
+      item.y = currentY
+      
+      currentY += actualSize.height + GRID_GAP
+    }
+    
+    emit('update:items', localItems.value)
+    isRecalculatingPositions.value = false
+  })
+}
+
+const handleItemResize = (entries) => {
+  let hasChanges = false
+  
+  for (const entry of entries) {
+    const itemId = entry.target.getAttribute('data-item-id')
+    const item = localItems.value.find(i => i.id === itemId)
+    
+    if (item && item.height === 'auto') {
+      const newHeight = entry.contentRect.height
+      const storedHeight = autoHeightItems.value.get(itemId)
+      
+      if (storedHeight !== newHeight) {
+        autoHeightItems.value.set(itemId, newHeight)
+        hasChanges = true
+      }
+    }
+  }
+  
+  if (hasChanges) {
+    recalculatePositions()
+  }
+}
+
+const setupResizeObserver = (element, item) => {
+  if (item.height === 'auto' && resizeObserver.value) {
+    element.setAttribute('data-item-id', item.id)
+    resizeObserver.value.observe(element)
+    
+    nextTick(() => {
+      const rect = element.getBoundingClientRect()
+      autoHeightItems.value.set(item.id, rect.height)
+    })
+  }
+}
+
+const removeResizeObserver = (item) => {
+  if (resizeObserver.value) {
+    const element = document.querySelector(`[data-item-id="${item.id}"]`)
+    if (element) {
+      resizeObserver.value.unobserve(element)
+    }
+    autoHeightItems.value.delete(item.id)
+  }
+}
+
 const handleMouseMove = (event) => {
   if (showGrayPlaceholder.value && currentDraggedType.value && !isDraggingExisting.value) {
     grayPlaceholderPosition.value = {
@@ -970,8 +1075,9 @@ const handleMouseMove = (event) => {
     const newY = event.clientY - rect.top - dragOffset.value.y
     
     const gridWidth = Math.min(gridContainer.value.clientWidth, MAX_PAGE_WIDTH)
-    const itemWidth = draggedItem.value.width || ELEMENT_SIZES[draggedItem.value.type]?.width || 200
-    const itemHeight = draggedItem.value.height || ELEMENT_SIZES[draggedItem.value.type]?.height || 150
+    const actualSize = getActualItemSize(draggedItem.value)
+    const itemWidth = actualSize.width
+    const itemHeight = actualSize.height
     
     const clampedX = Math.max(0, Math.min(gridWidth - itemWidth, newX))
     const clampedY = Math.max(0, newY)
@@ -1001,8 +1107,9 @@ const handleMouseMove = (event) => {
       for (const item of localItems.value) {
         if (item.id === draggedItem.value.id) continue
         
-        const itemCenterX = (item.x || 0) + (item.width || ELEMENT_SIZES[item.type]?.width || 200) / 2
-        const itemCenterY = (item.y || 0) + (item.height || ELEMENT_SIZES[item.type]?.height || 150) / 2
+        const itemActualSize = getActualItemSize(item)
+        const itemCenterX = (item.x || 0) + itemActualSize.width / 2
+        const itemCenterY = (item.y || 0) + itemActualSize.height / 2
         
         const distance = Math.sqrt(
           Math.pow(mouseX - itemCenterX, 2) + Math.pow(mouseY - itemCenterY, 2)
@@ -1015,7 +1122,8 @@ const handleMouseMove = (event) => {
       }
       
       if (nearestItem) {
-        const nearestItemHeight = nearestItem.height || ELEMENT_SIZES[nearestItem.type]?.height || 150
+        const nearestItemActualSize = getActualItemSize(nearestItem)
+        const nearestItemHeight = nearestItemActualSize.height
         const nearestItemY = nearestItem.y || 0
         
         const mouseIsAbove = mouseY < nearestItemY + nearestItemHeight / 2
@@ -1057,6 +1165,37 @@ watch(() => props.items, (newItems) => {
   }
 }, { deep: true, immediate: true })
 
+watch(localItems, (newItems, oldItems) => {
+  if (!resizeObserver.value) return
+  
+  nextTick(() => {
+    oldItems.forEach(oldItem => {
+      const stillExists = newItems.find(newItem => newItem.id === oldItem.id)
+      if (!stillExists) {
+        removeResizeObserver(oldItem)
+      }
+    })
+    
+    newItems.forEach(newItem => {
+      if (newItem.height === 'auto') {
+        const element = document.querySelector(`[data-item-id="${newItem.id}"]`)
+        if (element && !autoHeightItems.value.has(newItem.id)) {
+          setupResizeObserver(element, newItem)
+        }
+      } else {
+        removeResizeObserver(newItem)
+      }
+    })
+    
+    const hasAutoHeightItems = newItems.some(item => item.height === 'auto')
+    if (hasAutoHeightItems) {
+      setTimeout(() => {
+        recalculatePositions()
+      }, 100)
+    }
+  })
+}, { deep: true })
+
 watch(() => props.draggedType, (newType) => {
   if (newType && ELEMENT_SIZES[newType] && !isDraggingExisting.value) {
     currentDraggedType.value = newType
@@ -1069,20 +1208,43 @@ watch(() => props.draggedType, (newType) => {
   }
 }, { immediate: true })
 
+const triggerRecalculatePositions = () => {
+  nextTick(() => {
+    recalculatePositions()
+  })
+}
+
+defineExpose({
+  triggerRecalculatePositions
+})
+
 onMounted(() => {
   localItems.value.forEach((item, index) => {
     if (item.x === undefined || item.y === undefined) {
       const size = ELEMENT_SIZES[item.type] || { width: 200, height: 150 }
       item.x = 0
       item.y = index * (size.height + GRID_GAP)
-      item.width = size.width
-      item.height = size.height
+      if (!item.width) item.width = size.width
+      if (!item.height) item.height = size.height
     }
   })
   
   if (localItems.value.length > 0) {
     emit('update:items', localItems.value)
   }
+
+  resizeObserver.value = new ResizeObserver(handleItemResize)
+  
+  nextTick(() => {
+    localItems.value.forEach(item => {
+      if (item.height === 'auto') {
+        const element = document.querySelector(`[data-item-id="${item.id}"]`)
+        if (element) {
+          setupResizeObserver(element, item)
+        }
+      }
+    })
+  })
 })
 
 onUnmounted(() => {
@@ -1090,6 +1252,12 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', stopDrag)
   document.removeEventListener('mousemove', handleResize)
   document.removeEventListener('mouseup', stopResize)
+  
+  if (resizeObserver.value) {
+    resizeObserver.value.disconnect()
+    resizeObserver.value = null
+  }
+  autoHeightItems.value.clear()
 })
 </script>
 
