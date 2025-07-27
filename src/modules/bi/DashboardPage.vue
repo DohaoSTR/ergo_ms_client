@@ -64,6 +64,16 @@
             />
           </div>
         </div>
+
+        <div v-if="isChartSettingsVisible" class="page-window-overlay" @click="closeChartSettings">
+          <div class="page-window chart-settings-window" @click.stop>
+            <ChartSettings 
+              :data="chartSettingsData" 
+              @close="closeChartSettings"
+              @save="saveChartSettings" 
+            />
+          </div>
+        </div>
         
         <div class="body-content">
             <DashboardGrid
@@ -98,6 +108,7 @@ import PageWindow from './components/DashboardComponents/PageWindow.vue'
 import DashboardGrid from './components/DashboardComponents/DashboardGrid.vue'
 import HeaderSettings from './components/DashboardComponents/HeaderSettings.vue'
 import TextSettings from './components/DashboardComponents/TextSettings.vue'
+import ChartSettings from './components/DashboardComponents/ChartSettings.vue'
 
 import { isDatasetSidebarOpen } from '@/modules/bi/js/useSidebarStore.js'
 import { isSidebarCollapsed, initializeSidebarTracking } from '@/modules/bi/js/useMainSidebarStore.js'
@@ -130,6 +141,8 @@ const isHeaderSettingsVisible = ref(false)
 const headerSettingsData = ref(null)
 const isTextSettingsVisible = ref(false)
 const textSettingsData = ref(null)
+const isChartSettingsVisible = ref(false)
+const chartSettingsData = ref(null)
 const dashboardGridRef = ref(null)
 
 const handleToolbarDragStart = (itemType) => {
@@ -189,6 +202,9 @@ const handleItemEdit = (item) => {
   } else if (item.type === 'Текст') {
     textSettingsData.value = { ...item }
     isTextSettingsVisible.value = true
+  } else if (item.type === 'Чарт') {
+    chartSettingsData.value = { ...item }
+    isChartSettingsVisible.value = true
   }
 }
 
@@ -233,6 +249,11 @@ function closeTextSettings() {
   textSettingsData.value = null
 }
 
+function closeChartSettings() {
+  isChartSettingsVisible.value = false
+  chartSettingsData.value = null
+}
+
 const saveTextSettings = (updatedSettings) => {
   const itemIndex = currentPageItems.value.findIndex(item => item.id === updatedSettings.id);
   if (itemIndex !== -1) {
@@ -259,6 +280,44 @@ const saveTextSettings = (updatedSettings) => {
     }
   }
   closeTextSettings();
+};
+
+const saveChartSettings = (updatedSettings) => {
+  const itemIndex = currentPageItems.value.findIndex(item => item.id === updatedSettings.id);
+  if (itemIndex !== -1) {
+    const oldItem = currentPageItems.value[itemIndex];
+    const oldHeight = oldItem.height;
+    
+    if (updatedSettings.type === 'Чарт') {
+      if (updatedSettings.autoHeight) {
+        updatedSettings.height = 'auto';
+      } else {
+        updatedSettings.height = 300;
+      }
+    }
+    
+    const newItems = [...currentPageItems.value];
+    newItems[itemIndex] = {
+      ...updatedSettings,
+      title: updatedSettings.title,
+      selectedChart: updatedSettings.selectedChart,
+      description: updatedSettings.description,
+      showDescription: updatedSettings.showDescription,
+      hint: updatedSettings.hint,
+      hintText: updatedSettings.hintText,
+      autoHeight: updatedSettings.autoHeight,
+      filtering: updatedSettings.filtering
+    };
+    updateCurrentPageItems(newItems);
+    
+    const heightChanged = oldHeight !== updatedSettings.height;
+    if (heightChanged && dashboardGridRef.value) {
+      setTimeout(() => {
+        dashboardGridRef.value.triggerRecalculatePositions();
+      }, 50);
+    }
+  }
+  closeChartSettings();
 };
 
 const togglePageDropdown = () => {
@@ -387,6 +446,9 @@ watch(currentPageItems, (items, oldItems) => {
     } else if (newItem.type === 'Текст') {
       textSettingsData.value = { ...newItem }
       isTextSettingsVisible.value = true
+    } else if (newItem.type === 'Чарт') {
+      chartSettingsData.value = { ...newItem }
+      isChartSettingsVisible.value = true
     }
   }
 })
@@ -573,5 +635,12 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     overflow: visible;
+}
+
+.chart-settings-window {
+    width: 965px;
+    height: 550px;
+    min-height: 550px;
+    max-height: 550px;
 }
 </style>

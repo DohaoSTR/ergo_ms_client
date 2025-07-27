@@ -143,6 +143,10 @@ export const endpoints = {
         ChartsRows:    id => `bi_analysis/bi_charts/${id}/rows/`,
         Upload: 'bi_analysis/bi_datasets/upload/',
         UploadedFiles: 'bi_analysis/bi_datasets/user-files/',
+        chart: {
+            checkAccess: (chartId) => `bi_analysis/bi_charts/${chartId}/`,
+            get: (chartId) => `bi_analysis/bi_charts/${chartId}/`,
+        },
     },
     file: 'settings/file/',
     audit: 'settings/audit-logs/',
