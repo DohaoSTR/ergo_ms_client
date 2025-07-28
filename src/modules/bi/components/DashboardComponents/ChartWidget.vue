@@ -1,5 +1,5 @@
 <template>
-  <div class="chart-widget">
+  <div class="chart-widget" ref="chartWidgetRef" :class="{ 'auto-height': effectiveAutoHeight }">
     <!-- Строка 1: Вкладки с заголовками чартов -->
     <div v-if="chartsList && chartsList.length > 1" class="chart-tabs">
       <div class="tabs-container">
@@ -17,6 +17,13 @@
           >
             <Star v-if="chart.isFavorite" :size="12" class="tab-star" />
             <span class="tab-title">{{ chart.title }}</span>
+            <div v-if="chart.hint && chart.hintText" 
+                 class="hint-icon-wrapper" 
+                 @mouseenter="showHint(chart, $event)" 
+                 @mouseleave="hideHint"
+                 @click.stop>
+              <CircleHelp :size="12" />
+            </div>
           </button>
         </div>
         
@@ -43,6 +50,13 @@
             >
               <Star v-if="chart.isFavorite" :size="12" class="item-star" />
               <span>{{ chart.title }}</span>
+              <div v-if="chart.hint && chart.hintText" 
+                   class="hint-icon-wrapper hint-icon-dropdown" 
+                   @mouseenter="showHint(chart, $event)" 
+                   @mouseleave="hideHint"
+                   @click.stop>
+                <CircleHelp :size="12" />
+              </div>
             </button>
           </div>
         </div>
@@ -138,12 +152,23 @@
     <div v-if="currentChart && currentChart.showDescription && currentChart.description" class="chart-description">
       <div v-html="currentChart.description" class="description-content"></div>
     </div>
+
+    <!-- Тултип подсказки -->
+    <Teleport to="body">
+      <div v-if="hintVisible"
+           class="hint-tooltip" 
+           :style="hintTooltipStyle"
+           @mouseenter="cancelHideHint"
+           @mouseleave="hideHint">
+        <div v-html="hintContent" class="hint-content"></div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
-import { Star, MoreHorizontal, Loader2, AlertCircle, BarChart3 } from 'lucide-vue-next';
+import { Star, MoreHorizontal, Loader2, AlertCircle, BarChart3, CircleHelp } from 'lucide-vue-next';
 import ApexChartsComponent from '../ChartComponents/ApexChartsComponent.vue';
 import ChartJsComponent from '../ChartComponents/ChartJsComponent.vue';
 import chartService from '@/modules/bi/js/chartService.js';
@@ -156,10 +181,14 @@ const props = defineProps({
   activeChartIndex: {
     type: Number,
     default: 0
+  },
+  autoHeight: {
+    type: Boolean,
+    default: false
   }
 });
 
-const emit = defineEmits(['update:activeChartIndex']);
+const emit = defineEmits(['update:activeChartIndex', 'content-resized']);
 
 const isLoading = ref(false);
 const error = ref('');
@@ -167,23 +196,32 @@ const isDropdownOpen = ref(false);
 const visibleTabsContainer = ref(null);
 const showFromIndex = ref(0);
 
-// Состояние загрузки чарта
 const chartLoading = ref(false);
 const chartError = ref('');
 const chartData = ref(null);
 const datasetRows = ref(null);
 
+const hintVisible = ref(false);
+const hintContent = ref('');
+const hintTooltipStyle = ref({});
+let hideHintTimer = null;
+
+const chartWidgetRef = ref(null);
+const calculatedHeight = ref(null);
+
 const currentChart = computed(() => {
   return props.chartsList[props.activeChartIndex] || null;
+});
+
+const effectiveAutoHeight = computed(() => {
+  return props.autoHeight || false;
 });
 
 const visibleCharts = computed(() => {
   if (!props.chartsList || props.chartsList.length <= 1) return [];
   
-  // Показываем максимум 3 видимых чарта
   const maxVisible = Math.min(3, props.chartsList.length);
   
-  // Убеждаемся что активный чарт видим
   let startIndex = showFromIndex.value;
   if (props.activeChartIndex < startIndex || props.activeChartIndex >= startIndex + maxVisible) {
     startIndex = Math.max(0, Math.min(props.activeChartIndex, props.chartsList.length - maxVisible));
@@ -218,8 +256,83 @@ function toggleDropdown() {
   isDropdownOpen.value = !isDropdownOpen.value;
 }
 
+function showHint(chart, event) {
+  if (hideHintTimer) {
+    clearTimeout(hideHintTimer);
+    hideHintTimer = null;
+  }
+  if (chart.hint && chart.hintText) {
+    hintContent.value = chart.hintText;
+    const rect = event.target.getBoundingClientRect();
+    hintTooltipStyle.value = {
+      display: 'flex',
+      textAlign: 'center',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: '0',
+      top: `${rect.bottom + 5}px`,
+      left: `${rect.left}px`,
+    };
+    hintVisible.value = true;
+  }
+}
+
+function hideHint() {
+  hideHintTimer = setTimeout(() => {
+    hintVisible.value = false;
+  }, 200);
+}
+
+function cancelHideHint() {
+  if (hideHintTimer) {
+    clearTimeout(hideHintTimer);
+    hideHintTimer = null;
+  }
+}
+
+function calculateWidgetHeight() {
+  if (!effectiveAutoHeight.value || !chartWidgetRef.value) return;
+  
+  nextTick(() => {
+    const element = chartWidgetRef.value;
+    if (element) {
+      element.style.height = 'auto';
+      
+      nextTick(() => {
+        const rect = element.getBoundingClientRect();
+        let newHeight = rect.height;
+        
+        const children = element.children;
+        let totalChildrenHeight = 0;
+        
+        for (let child of children) {
+          const childRect = child.getBoundingClientRect();
+          totalChildrenHeight += childRect.height;
+          
+          const computedStyle = window.getComputedStyle(child);
+          totalChildrenHeight += parseFloat(computedStyle.marginTop) + parseFloat(computedStyle.marginBottom);
+        }
+        
+        newHeight = Math.max(newHeight, totalChildrenHeight);
+        
+        newHeight = Math.max(newHeight, 350);
+        
+        if (calculatedHeight.value !== newHeight) {
+          calculatedHeight.value = newHeight;
+          emit('content-resized', newHeight);
+        }
+      });
+    }
+  });
+}
+
+function triggerHeightRecalculation() {
+  if (effectiveAutoHeight.value) {
+    setTimeout(calculateWidgetHeight, 200);
+  }
+}
+
 function getChartUrl(url) {
-  // Валидируем и очищаем URL
   if (!url) return '';
   
   try {
@@ -231,22 +344,21 @@ function getChartUrl(url) {
 }
 
 function getApiChartUrl(chartId) {
-  // Формируем URL для API чарта
   if (!chartId) return '';
   
-  // Временно используем статический URL для демонстрации
-  // TODO: Добавить реальный эндпоинт когда API будет готово
   return `#chart-${chartId}`;
 }
 
 function handleIframeLoad() {
   isLoading.value = false;
   error.value = '';
+  triggerHeightRecalculation();
 }
 
 function handleIframeError() {
   isLoading.value = false;
   error.value = 'Ошибка загрузки чарта';
+  triggerHeightRecalculation();
 }
 
 function handleClickOutside(event) {
@@ -271,29 +383,18 @@ async function loadChartData(chartId) {
     chartLoading.value = true;
     chartError.value = '';
     
-    console.log('Загрузка чарта с ID:', chartId);
-    
-    // Загружаем данные чарта
     const chartResponse = await chartService.getChart(chartId);
-    console.log('Ответ от getChart:', chartResponse);
     
     if (!chartResponse.success) {
       throw new Error(chartResponse.message || 'Не удалось загрузить чарт');
     }
     
     chartData.value = chartResponse.data;
-    console.log('Данные чарта:', chartData.value);
     
-    // Загружаем данные датасета
     if (chartData.value.dataset) {
-      console.log('Загрузка данных датасета с ID:', chartData.value.dataset);
-      
       try {
-        // Сначала пробуем загрузить агрегированные данные, если есть параметры
         if (chartData.value.params && Object.keys(chartData.value.params).length > 0) {
-          console.log('Попытка загрузки агрегированных данных с параметрами:', chartData.value.params);
           const aggResponse = await chartService.getDatasetRowsAgg(chartData.value.dataset, chartData.value.params);
-          console.log('Ответ от getDatasetRowsAgg:', aggResponse);
           
           if (aggResponse.success && aggResponse.data) {
             let rows = [];
@@ -307,22 +408,17 @@ async function loadChartData(chartId) {
             
             if (rows.length > 0) {
               datasetRows.value = rows;
-              console.log('Использованы агрегированные данные:', datasetRows.value);
-              return; // Успешно загрузили агрегированные данные
+              return;
             }
           }
         }
         
-        // Если агрегированные данные не получены, пробуем обычные
-        console.log('Загрузка обычных данных датасета');
         const datasetResponse = await chartService.getDatasetRows(chartData.value.dataset);
-        console.log('Ответ от getDatasetRows:', datasetResponse);
         
         if (!datasetResponse.success) {
           throw new Error(datasetResponse.message || 'Не удалось загрузить данные');
         }
         
-        // Обрабатываем разные форматы ответа от сервера
         let rows = [];
         if (datasetResponse.data) {
           if (Array.isArray(datasetResponse.data)) {
@@ -332,43 +428,38 @@ async function loadChartData(chartId) {
           } else if (datasetResponse.data.data && Array.isArray(datasetResponse.data.data)) {
             rows = datasetResponse.data.data;
           } else {
-            console.warn('Неожиданный формат данных датасета:', datasetResponse.data);
+            console.error('Неожиданный формат данных датасета:', datasetResponse.data);
             rows = [];
           }
         }
         
         datasetRows.value = rows;
-        console.log('Обработанные данные датасета:', datasetRows.value);
         
-             } catch (datasetError) {
-         console.error('Ошибка загрузки данных датасета:', datasetError);
-         
-         // Для тестирования создадим mock данные если это bar или line чарт
-         if (chartData.value.chart_type === 'bar' || chartData.value.chart_type === 'line') {
-           console.log('Создание mock данных для тестирования');
-           datasetRows.value = [
-             { category: 'A', value: 10, year: 2023 },
-             { category: 'B', value: 20, year: 2023 },
-             { category: 'C', value: 15, year: 2023 },
-             { category: 'A', value: 12, year: 2024 },
-             { category: 'B', value: 25, year: 2024 },
-             { category: 'C', value: 18, year: 2024 }
-           ];
-           
-           // Также создадим базовые параметры если их нет
-           if (!chartData.value.params || Object.keys(chartData.value.params).length === 0) {
-             chartData.value.params = {
-               x: [{ name: 'category', label: 'Категория' }],
-               y: [{ name: 'value', label: 'Значение' }]
-             };
-           }
-         } else {
-           datasetRows.value = [];
-         }
-       }
+      } catch (datasetError) {
+        console.error('Ошибка загрузки данных датасета:', datasetError);
+        
+        if (chartData.value.chart_type === 'bar' || chartData.value.chart_type === 'line') {
+          datasetRows.value = [
+            { category: 'A', value: 10, year: 2023 },
+            { category: 'B', value: 20, year: 2023 },
+            { category: 'C', value: 15, year: 2023 },
+            { category: 'A', value: 12, year: 2024 },
+            { category: 'B', value: 25, year: 2024 },
+            { category: 'C', value: 18, year: 2024 }
+          ];
+          
+          if (!chartData.value.params || Object.keys(chartData.value.params).length === 0) {
+            chartData.value.params = {
+              x: [{ name: 'category', label: 'Категория' }],
+              y: [{ name: 'value', label: 'Значение' }]
+            };
+          }
+        } else {
+          datasetRows.value = [];
+        }
+      }
     } else {
       datasetRows.value = [];
-      console.log('У чарта нет датасета');
     }
     
   } catch (err) {
@@ -386,18 +477,15 @@ watch(() => currentChart.value, (newChart) => {
     isLoading.value = true;
     error.value = '';
     
-    // Загружаем данные чарта если это API чарт
     if (newChart.chartType === 'select' && newChart.selectedChartId) {
       loadChartData(newChart.selectedChartId);
     } else {
-      // Сбрасываем данные чарта для других типов
       chartData.value = null;
       datasetRows.value = null;
       chartError.value = '';
       chartLoading.value = false;
     }
     
-    // Устанавливаем таймаут для loading состояния iframe
     setTimeout(() => {
       if (isLoading.value) {
         isLoading.value = false;
@@ -406,8 +494,44 @@ watch(() => currentChart.value, (newChart) => {
   }
 }, { immediate: true });
 
+watch(() => chartData.value, () => {
+  triggerHeightRecalculation();
+}, { deep: true });
+
+watch(() => datasetRows.value, () => {
+  triggerHeightRecalculation();
+}, { deep: true });
+
+watch(() => currentChart.value?.description, () => {
+  triggerHeightRecalculation();
+});
+
+watch(() => currentChart.value?.showDescription, () => {
+  triggerHeightRecalculation();
+});
+
+watch(() => props.activeChartIndex, () => {
+  triggerHeightRecalculation();
+});
+
+watch(() => props.chartsList, () => {
+  triggerHeightRecalculation();
+}, { deep: true });
+
+watch(() => effectiveAutoHeight.value, () => {
+  if (effectiveAutoHeight.value) {
+    triggerHeightRecalculation();
+  }
+});
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  
+  if (effectiveAutoHeight.value) {
+    nextTick(() => {
+      triggerHeightRecalculation();
+    });
+  }
 });
 
 onUnmounted(() => {
@@ -426,7 +550,6 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* Строка 1: Вкладки */
 .chart-tabs {
   border-bottom: 1px solid var(--color-border);
   background: var(--color-background);
@@ -558,22 +681,14 @@ onUnmounted(() => {
     color: var(--color-warning, #ffc107);
     fill: var(--color-warning, #ffc107);
   }
-  
-  span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
 }
 
-/* Строка 2: Контент чарта */
 .chart-content {
   flex: 1;
+  height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  min-height: 200px;
-  padding: 16px;
+  flex-direction: column;
+  min-height: 250px;
 }
 
 .chart-loading,
@@ -644,7 +759,6 @@ onUnmounted(() => {
   min-height: 250px;
 }
 
-/* Строка 3: Описание */
 .chart-description {
   border-top: 1px solid var(--color-border);
   background: var(--color-background);
@@ -680,5 +794,77 @@ onUnmounted(() => {
   :deep(li) {
     margin-bottom: 2px;
   }
+}
+
+.hint-icon-wrapper {
+  margin-left: 4px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.hint-icon-dropdown {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.hint-tooltip {
+  position: fixed;
+  background: var(--color-primary-background);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 10px;
+  white-space: normal;
+  z-index: 10000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  font-size: 13px;
+  max-width: 250px;
+  word-wrap: break-word;
+}
+
+.hint-content {
+  line-height: 1.4;
+  
+  :deep(p) {
+    margin: 0 0 6px 0;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  :deep(ul, ol) {
+    margin: 0 0 6px 0;
+    padding-left: 1.2em;
+  }
+  
+  :deep(li) {
+    margin-bottom: 2px;
+  }
+}
+
+.chart-widget.auto-height {
+  height: auto !important;
+  min-height: 350px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-widget.auto-height .chart-content {
+  flex: 1;
+  min-height: 280px;
+  margin-bottom: 0;
+}
+
+.chart-widget.auto-height .chart-description {
+  flex-shrink: 0;
+  margin-top: 0;
 }
 </style> 

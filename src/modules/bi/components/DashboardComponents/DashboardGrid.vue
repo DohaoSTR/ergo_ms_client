@@ -52,7 +52,9 @@
             <ChartWidget 
               :charts-list="item.chartsList || []"
               :active-chart-index="item.activeChartIndex || 0"
+              :auto-height="item.autoHeight || false"
               @update:active-chart-index="updateActiveChart(item, $event)"
+              @content-resized="handleChartResize(item, $event)"
             />
           </div>
           <div v-else class="item-preview">
@@ -257,7 +259,7 @@ const getItemClass = (item) => {
     'item-selected': item.selected,
     'item-dragging': draggedItem.value && draggedItem.value.id === item.id,
     'item-hidden-drag': isDraggingExisting.value && draggedItem.value && draggedItem.value.id === item.id,
-    'item-auto-height': item.autoHeight && item.height === 'auto'
+    'item-auto-height': item.autoHeight
   }
 }
 
@@ -267,7 +269,7 @@ const getItemStyle = (item) => {
     left: `${item.x || 0}px`,
     top: `${item.y || 0}px`,
     width: `${item.width || ELEMENT_SIZES[item.type]?.width || 200}px`,
-    height: item.height === 'auto' ? 'auto' : `${item.height || ELEMENT_SIZES[item.type]?.height || 150}px`
+    height: item.autoHeight ? 'auto' : `${item.height || ELEMENT_SIZES[item.type]?.height || 150}px`
   };
 
   if (item.background) {
@@ -397,6 +399,15 @@ const deleteItem = (item) => {
 const updateActiveChart = (item, newIndex) => {
   item.activeChartIndex = newIndex
   emit('update:items', localItems.value)
+}
+
+const handleChartResize = (item, newHeight) => {
+  if (item.autoHeight) {
+    autoHeightItems.value.set(item.id, newHeight);
+    nextTick(() => {
+      recalculatePositions();
+    });
+  }
 }
 
 const calculateDropPosition = (mouseX, mouseY, elementType) => {
@@ -958,7 +969,6 @@ const handleDrop = (event) => {
         height: size.height
       }
       
-      // Добавляем специфичные для чарта поля
       if (itemType === 'Чарт') {
         newItem.chartsList = [
           {
@@ -998,22 +1008,23 @@ const resetDragState = () => {
 }
 
 const getActualItemSize = (item) => {
-  const element = document.querySelector(`[data-item-id="${item.id}"]`)
-  if (element && item.height === 'auto') {
-    const rect = element.getBoundingClientRect()
-    return {
-      width: item.width || ELEMENT_SIZES[item.type]?.width || 200,
-      height: rect.height
-    }
+  let actualHeight = item.height || ELEMENT_SIZES[item.type]?.height || 150;
+  
+  if (item.autoHeight && autoHeightItems.value.has(item.id)) {
+    const savedHeight = autoHeightItems.value.get(item.id);
+    actualHeight = savedHeight;
   }
+  
   return {
     width: item.width || ELEMENT_SIZES[item.type]?.width || 200,
-    height: item.height || ELEMENT_SIZES[item.type]?.height || 150
+    height: actualHeight
   }
 }
 
 const recalculatePositions = () => {
-  if (isRecalculatingPositions.value || localItems.value.length === 0) return
+  if (isRecalculatingPositions.value || localItems.value.length === 0) {
+    return;
+  }
   
   isRecalculatingPositions.value = true
   
@@ -1043,7 +1054,7 @@ const handleItemResize = (entries) => {
     const itemId = entry.target.getAttribute('data-item-id')
     const item = localItems.value.find(i => i.id === itemId)
     
-    if (item && item.height === 'auto') {
+    if (item && item.autoHeight) {
       const newHeight = entry.contentRect.height
       const storedHeight = autoHeightItems.value.get(itemId)
       
@@ -1060,7 +1071,7 @@ const handleItemResize = (entries) => {
 }
 
 const setupResizeObserver = (element, item) => {
-  if (item.height === 'auto' && resizeObserver.value) {
+  if (item.autoHeight && resizeObserver.value) {
     element.setAttribute('data-item-id', item.id)
     resizeObserver.value.observe(element)
     
@@ -1494,6 +1505,11 @@ onUnmounted(() => {
     height: auto !important;
     overflow: visible;
     display: block;
+  }
+  
+  .chart-widget-container {
+    height: auto !important;
+    overflow: visible;
   }
   
   .item-content {

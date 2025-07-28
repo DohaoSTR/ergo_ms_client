@@ -150,12 +150,12 @@
           
           <div class="settings-row">
             <div class="settings-label">
-              <input type="checkbox" v-model="currentChart.autoHeight" />
+              <input type="checkbox" v-model="elementAutoHeight" />
               Автовысота
             </div>
             <div class="settings-control"></div>
           </div>
-                  
+          
           <div class="settings-row">
             <div class="settings-label">
               <span class="chevron" :class="{ 'expanded': showParameters }">▼</span>
@@ -239,7 +239,6 @@ const isUrlValidating = ref(false);
 const urlValidationResult = ref(null);
 let validationTimeout = null;
 
-// Сохраняем оригинальные данные для возможности отмены
 const originalData = ref(null);
 
 const currentChart = computed(() => {
@@ -275,6 +274,8 @@ const chartInputPlaceholder = computed(() => {
     return 'Укажите полную ссылку на чарт';
   }
 });
+
+const elementAutoHeight = ref(false);
 
 function createNewChart() {
   return {
@@ -394,10 +395,8 @@ function toggleFavorite(index) {
 
 watch(() => props.data, (newData) => {
   if (newData && newData.chartsList) {
-    // Сохраняем оригинальные данные для возможности отмены
     originalData.value = JSON.parse(JSON.stringify(newData));
     
-    // Создаем глубокую копию данных вместо присваивания ссылки
     chartsList.value = JSON.parse(JSON.stringify(newData.chartsList));
     activeChartIndex.value = newData.activeChartIndex || 0;
     
@@ -414,12 +413,17 @@ watch(() => props.data, (newData) => {
       if (chart.selectedChartId === undefined) {
         chart.selectedChartId = null;
       }
+      if (chart.selectedChartId && !chart.selectedChart) {
+        chart.selectedChart = null;
+        chart.selectedChartId = null;
+      }
     });
     
     const hasFavorite = chartsList.value.some(chart => chart.isFavorite);
     if (!hasFavorite && chartsList.value.length > 0) {
       chartsList.value[0].isFavorite = true;
     }
+    elementAutoHeight.value = newData.autoHeight || false;
   }
 }, { immediate: true });
 
@@ -593,7 +597,6 @@ function toggleParameters() {
 }
 
 function onCancel() {
-  // Восстанавливаем исходные данные при отмене
   if (originalData.value) {
     emit('save', originalData.value);
   }
@@ -604,8 +607,10 @@ function onSubmit() {
   const settings = {
     ...props.data,
     chartsList: chartsList.value,
-    activeChartIndex: activeChartIndex.value
+    activeChartIndex: activeChartIndex.value,
+    autoHeight: elementAutoHeight.value
   };
+  
   emit('save', settings);
   emit('close');
 }
@@ -1290,6 +1295,54 @@ input[type="text"] {
 
 .text-editor-container {
   width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  
+  :deep(*) {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-break: break-all !important;
+    box-sizing: border-box !important;
+  }
+  
+  :deep(.tiptap) {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-all !important;
+    white-space: pre-wrap !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  :deep(.ProseMirror) {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-all !important;
+    white-space: pre-wrap !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  :deep(div) {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-all !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  :deep(p) {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-all !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
 }
 
 .widget-settings-right-side-actions {
