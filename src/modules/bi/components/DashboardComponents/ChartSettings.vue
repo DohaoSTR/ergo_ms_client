@@ -239,6 +239,9 @@ const isUrlValidating = ref(false);
 const urlValidationResult = ref(null);
 let validationTimeout = null;
 
+// Сохраняем оригинальные данные для возможности отмены
+const originalData = ref(null);
+
 const currentChart = computed(() => {
   const chart = chartsList.value[activeChartIndex.value] || {};
   if (chart && chart.chartType === undefined) {
@@ -391,7 +394,11 @@ function toggleFavorite(index) {
 
 watch(() => props.data, (newData) => {
   if (newData && newData.chartsList) {
-    chartsList.value = newData.chartsList;
+    // Сохраняем оригинальные данные для возможности отмены
+    originalData.value = JSON.parse(JSON.stringify(newData));
+    
+    // Создаем глубокую копию данных вместо присваивания ссылки
+    chartsList.value = JSON.parse(JSON.stringify(newData.chartsList));
     activeChartIndex.value = newData.activeChartIndex || 0;
     
     chartsList.value.forEach((chart, index) => {
@@ -586,6 +593,10 @@ function toggleParameters() {
 }
 
 function onCancel() {
+  // Восстанавливаем исходные данные при отмене
+  if (originalData.value) {
+    emit('save', originalData.value);
+  }
   emit('close');
 }
 

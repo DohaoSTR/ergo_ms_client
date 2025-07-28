@@ -1,12 +1,11 @@
 import { apiClient }    from '@/js/api/manager'
-import { endpoints }    from '@/js/api/endpoints'
 
 export default {
   getColumns(datasetId) {
-    return apiClient.get(endpoints.bi.ChartsColumns(datasetId))
+    return apiClient.get(`/bi_analysis/bi_datasets/${datasetId}/columns/`)
   },
   getRows(datasetId) {
-    return apiClient.get(endpoints.bi.ChartsRows(datasetId))
+    return apiClient.get(`/bi_analysis/bi_datasets/${datasetId}/rows/`)
   },
   getDatasetRows(datasetId) {
     return apiClient.get(`/bi_analysis/bi_datasets/${datasetId}/rows/`)

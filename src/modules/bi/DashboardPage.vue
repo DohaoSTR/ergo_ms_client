@@ -306,7 +306,9 @@ const saveChartSettings = (updatedSettings) => {
       hint: updatedSettings.hint,
       hintText: updatedSettings.hintText,
       autoHeight: updatedSettings.autoHeight,
-      filtering: updatedSettings.filtering
+      filtering: updatedSettings.filtering,
+      chartsList: updatedSettings.chartsList,
+      activeChartIndex: updatedSettings.activeChartIndex || 0
     };
     updateCurrentPageItems(newItems);
     

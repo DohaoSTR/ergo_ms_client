@@ -48,6 +48,13 @@
           </div>
           <div v-else-if="item.type === 'Текст'" class="text-widget-content" v-html="item.content || 'Текстовое содержимое'">
           </div>
+          <div v-else-if="item.type === 'Чарт'" class="chart-widget-container">
+            <ChartWidget 
+              :charts-list="item.chartsList || []"
+              :active-chart-index="item.activeChartIndex || 0"
+              @update:active-chart-index="updateActiveChart(item, $event)"
+            />
+          </div>
           <div v-else class="item-preview">
             {{ getItemPreview(item) }}
           </div>
@@ -113,6 +120,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { Teleport } from 'vue'
 import { Settings2, X, LayoutDashboard, CircleHelp } from 'lucide-vue-next'
+import ChartWidget from './ChartWidget.vue'
 
 const ELEMENT_SIZES = {
   'Чарт': { width: 560, height: 300 },
@@ -384,6 +392,11 @@ const deleteItem = (item) => {
     emit('update:items', localItems.value)
     emit('item-delete', item)
   }
+}
+
+const updateActiveChart = (item, newIndex) => {
+  item.activeChartIndex = newIndex
+  emit('update:items', localItems.value)
 }
 
 const calculateDropPosition = (mouseX, mouseY, elementType) => {
@@ -945,6 +958,27 @@ const handleDrop = (event) => {
         height: size.height
       }
       
+      // Добавляем специфичные для чарта поля
+      if (itemType === 'Чарт') {
+        newItem.chartsList = [
+          {
+            id: 1,
+            title: 'Заголовок 1',
+            selectedChart: '',
+            selectedChartId: null,
+            chartType: 'select',
+            chartUrl: '',
+            description: '',
+            hintText: '',
+            showDescription: false,
+            hint: false,
+            autoHeight: false,
+            isFavorite: true
+          }
+        ]
+        newItem.activeChartIndex = 0
+      }
+      
       localItems.value.push(newItem)
       emit('update:items', localItems.value)
     }
@@ -1442,6 +1476,14 @@ onUnmounted(() => {
     border-radius: 3px;
     font-family: monospace;
   }
+}
+
+.chart-widget-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .item-auto-height {
