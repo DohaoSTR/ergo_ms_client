@@ -27,7 +27,7 @@
       <div class="toolbar-separator"></div>
       <div class="toolbar-styles">
         <div style="position: relative; display: inline-block;">
-          <button class="toolbar-btn toolbar-btn-list" :class="{ 'active': selectedStyle !== 'p', 'tooltip-open': showTooltip }" @click="toggleTooltip" type="button">
+          <button class="toolbar-btn toolbar-btn-list" :class="{ 'active': selectedStyle !== 'p', 'tooltip-open': showTooltip }" @click="toggleTooltip($event)" type="button">
             H
             <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6,9 12,15 18,9"/>
@@ -47,7 +47,7 @@
           </div>
         </div>
         <div style="position: relative; display: inline-block;">
-          <button class="toolbar-btn toolbar-btn-list" :class="{ 'active': selectedListStyle, 'tooltip-open': showListTooltip }" title="Список" @click="toggleListTooltip">
+          <button class="toolbar-btn toolbar-btn-list" :class="{ 'active': selectedListStyle, 'tooltip-open': showListTooltip }" title="Список" @click="toggleListTooltip($event)">
             <List />
             <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6,9 12,15 18,9"/>
@@ -68,7 +68,7 @@
       <div class="toolbar-separator"></div>
       <div class="toolbar-actions">
         <div style="position: relative; display: inline-block;">
-          <button class="toolbar-btn" :class="{ 'tooltip-open': showMoreTooltip }" title="Ещё" @click="toggleMoreTooltip">
+          <button class="toolbar-btn" :class="{ 'tooltip-open': showMoreTooltip }" title="Ещё" @click="toggleMoreTooltip($event)">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="1"/>
               <circle cx="19" cy="12" r="1"/>
@@ -85,7 +85,7 @@
           </div>
         </div>
         <div style="position: relative; display: inline-block;">
-          <button class="toolbar-btn" :class="{ 'tooltip-open': showSettingsTooltip }" title="Настройки" @click="toggleSettingsTooltip">
+          <button class="toolbar-btn" :class="{ 'tooltip-open': showSettingsTooltip }" title="Настройки" @click="toggleSettingsTooltip($event)">
             <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="3"/>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -200,13 +200,24 @@ function toggleMonospace() {
   updateSelectionStyle();
 }
 
-function toggleTooltip() {
+function toggleTooltip(event) {
   const isOpen = !showTooltip.value;
   showTooltip.value = isOpen;
   if (isOpen) {
     showListTooltip.value = false;
     showMoreTooltip.value = false;
     showSettingsTooltip.value = false;
+    
+    // Позиционируем tooltip
+    setTimeout(() => {
+      const tooltip = document.querySelector('.custom-tooltip');
+      if (tooltip && event) {
+        const rect = event.target.getBoundingClientRect();
+        tooltip.style.top = `${rect.bottom + 4}px`;
+        tooltip.style.left = `${rect.left + rect.width / 2}px`;
+        tooltip.style.transform = 'translateX(-50%)';
+      }
+    }, 0);
   }
 }
 
@@ -217,13 +228,24 @@ function setStyle(style) {
   showTooltip.value = false;
 }
 
-function toggleListTooltip() {
+function toggleListTooltip(event) {
   const isOpen = !showListTooltip.value;
   showListTooltip.value = isOpen;
   if (isOpen) {
     showTooltip.value = false;
     showMoreTooltip.value = false;
     showSettingsTooltip.value = false;
+    
+    // Позиционируем tooltip
+    setTimeout(() => {
+      const tooltip = document.querySelector('.style-list-tooltip');
+      if (tooltip && event) {
+        const rect = event.target.getBoundingClientRect();
+        tooltip.style.top = `${rect.bottom + 4}px`;
+        tooltip.style.left = `${rect.left + rect.width / 2}px`;
+        tooltip.style.transform = 'translateX(-50%)';
+      }
+    }, 0);
   }
 }
 
@@ -234,13 +256,25 @@ function setList(command) {
   updateSelectionStyle();
 }
 
-function toggleMoreTooltip() {
+function toggleMoreTooltip(event) {
   const isOpen = !showMoreTooltip.value;
   showMoreTooltip.value = isOpen;
   if (isOpen) {
     showTooltip.value = false;
     showListTooltip.value = false;
     showSettingsTooltip.value = false;
+    
+    // Позиционируем tooltip
+    setTimeout(() => {
+      const tooltips = document.querySelectorAll('.style-list-tooltip');
+      const tooltip = Array.from(tooltips).find(t => t.textContent.includes('Ссылка'));
+      if (tooltip && event) {
+        const rect = event.target.getBoundingClientRect();
+        tooltip.style.top = `${rect.bottom + 4}px`;
+        tooltip.style.left = `${rect.left + rect.width / 2}px`;
+        tooltip.style.transform = 'translateX(-50%)';
+      }
+    }, 0);
   }
 }
 
@@ -275,13 +309,24 @@ function handleMoreAction(command) {
   updateSelectionStyle();
 }
 
-function toggleSettingsTooltip() {
+function toggleSettingsTooltip(event) {
   const isOpen = !showSettingsTooltip.value;
   showSettingsTooltip.value = isOpen;
   if (isOpen) {
     showTooltip.value = false;
     showListTooltip.value = false;
     showMoreTooltip.value = false;
+    
+    // Позиционируем tooltip справа от кнопки
+    setTimeout(() => {
+      const tooltip = document.querySelector('.settings-tooltip');
+      if (tooltip && event) {
+        const rect = event.target.getBoundingClientRect();
+        tooltip.style.top = `${rect.bottom + 4}px`;
+        tooltip.style.right = `${window.innerWidth - rect.right}px`;
+        tooltip.style.left = 'auto';
+      }
+    }, 0);
   }
 }
 
@@ -480,17 +525,14 @@ onMounted(() => {
   }
 }
 .custom-tooltip {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
   background: var(--color-primary-background);
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 8px 12px;
   white-space: nowrap;
-  z-index: 9999;
+  z-index: 99999;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   font-size: 13px;
 }
@@ -498,7 +540,7 @@ onMounted(() => {
   min-width: 180px;
   padding: 0;
   background: var(--color-primary-background);
-  z-index: 9999;
+  z-index: 99999;
 }
 .style-list-item {
   display: flex;
@@ -538,9 +580,8 @@ onMounted(() => {
   min-width: 280px;
   max-width: 350px;
   padding: 8px 0;
-  left: auto;
-  right: 0;
-  transform: none;
+  position: fixed;
+  z-index: 99999;
 }
 .settings-tooltip .toolbar-separator {
     margin: 8px 16px;
