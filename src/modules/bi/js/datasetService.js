@@ -14,6 +14,16 @@ export default {
     // GET /api/bi_analysis/bi_datasets/?...
     return apiClient.get(BASE, params)
   },
+  
+  // Получение списка датасетов пользователя с поддержкой фильтрации
+  getUserDatasets(search = '') {
+    const params = {}
+    if (search) {
+      params.search = search
+    }
+    return apiClient.get(BASE, params)
+  },
+  
   createDataset(payload) {
     return apiClient.post(BASE, payload)
   },

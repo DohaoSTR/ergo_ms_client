@@ -57,6 +57,15 @@
               @content-resized="handleChartResize(item, $event)"
             />
           </div>
+          <div v-else-if="item.type === 'Селектор'" class="selector-widget-container">
+            <SelectorWidget 
+              :selectors-list="item.selectorsList || []"
+              :active-selector-index="item.activeSelectorIndex || 0"
+              :auto-height="item.autoHeight || false"
+              @selection-change="handleSelectorSelectionChange(item, $event)"
+              @content-resized="handleSelectorResize(item, $event)"
+            />
+          </div>
           <div v-else class="item-preview">
             {{ getItemPreview(item) }}
           </div>
@@ -123,6 +132,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { Teleport } from 'vue'
 import { Settings2, X, LayoutDashboard, CircleHelp } from 'lucide-vue-next'
 import ChartWidget from './ChartWidget.vue'
+import SelectorWidget from './SelectorWidget.vue'
 
 const ELEMENT_SIZES = {
   'Чарт': { width: 560, height: 300 },
@@ -402,6 +412,26 @@ const updateActiveChart = (item, newIndex) => {
 }
 
 const handleChartResize = (item, newHeight) => {
+  if (item.autoHeight) {
+    autoHeightItems.value.set(item.id, newHeight);
+    nextTick(() => {
+      recalculatePositions();
+    });
+  }
+}
+
+const updateActiveSelector = (item, newIndex) => {
+  item.activeSelectorIndex = newIndex
+  emit('update:items', localItems.value)
+}
+
+const handleSelectorSelectionChange = (item, selectionData) => {
+  // Обработка изменения выбора в селекторе
+  console.log('Selector selection changed:', selectionData);
+  // Здесь можно добавить логику для обновления других виджетов
+}
+
+const handleSelectorResize = (item, newHeight) => {
   if (item.autoHeight) {
     autoHeightItems.value.set(item.id, newHeight);
     nextTick(() => {

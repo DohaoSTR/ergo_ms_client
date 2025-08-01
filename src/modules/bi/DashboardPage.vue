@@ -75,6 +75,16 @@
           </div>
         </div>
         
+        <div v-if="isSelectorSettingsVisible" class="page-window-overlay" @click="closeSelectorSettings">
+          <div class="page-window selector-settings-window" @click.stop>
+            <SelectorSettings 
+              :data="selectorSettingsData" 
+              @close="closeSelectorSettings"
+              @save="saveSelectorSettings" 
+            />
+          </div>
+        </div>
+        
         <div class="body-content">
             <DashboardGrid
                 ref="dashboardGridRef"
@@ -109,6 +119,7 @@ import DashboardGrid from './components/DashboardComponents/DashboardGrid.vue'
 import HeaderSettings from './components/DashboardComponents/HeaderSettings.vue'
 import TextSettings from './components/DashboardComponents/TextSettings.vue'
 import ChartSettings from './components/DashboardComponents/ChartSettings.vue'
+import SelectorSettings from './components/DashboardComponents/SelectorSettings.vue'
 
 import { isDatasetSidebarOpen } from '@/modules/bi/js/useSidebarStore.js'
 import { isSidebarCollapsed, initializeSidebarTracking } from '@/modules/bi/js/useMainSidebarStore.js'
@@ -143,6 +154,8 @@ const isTextSettingsVisible = ref(false)
 const textSettingsData = ref(null)
 const isChartSettingsVisible = ref(false)
 const chartSettingsData = ref(null)
+const isSelectorSettingsVisible = ref(false)
+const selectorSettingsData = ref(null)
 const dashboardGridRef = ref(null)
 
 const handleToolbarDragStart = (itemType) => {
@@ -205,6 +218,9 @@ const handleItemEdit = (item) => {
   } else if (item.type === 'Чарт') {
     chartSettingsData.value = { ...item }
     isChartSettingsVisible.value = true
+  } else if (item.type === 'Селектор') {
+    selectorSettingsData.value = { ...item }
+    isSelectorSettingsVisible.value = true
   }
 }
 
@@ -252,6 +268,11 @@ function closeTextSettings() {
 function closeChartSettings() {
   isChartSettingsVisible.value = false
   chartSettingsData.value = null
+}
+
+function closeSelectorSettings() {
+  isSelectorSettingsVisible.value = false
+  selectorSettingsData.value = null
 }
 
 const saveTextSettings = (updatedSettings) => {
@@ -320,6 +341,54 @@ const saveChartSettings = (updatedSettings) => {
     }
   }
   closeChartSettings();
+};
+
+const saveSelectorSettings = (updatedSettings) => {
+  const itemIndex = currentPageItems.value.findIndex(item => item.id === updatedSettings.id);
+  if (itemIndex !== -1) {
+    const oldItem = currentPageItems.value[itemIndex];
+    const oldHeight = oldItem.height;
+    
+    if (updatedSettings.type === 'Селектор') {
+      if (updatedSettings.autoHeight) {
+        updatedSettings.height = 'auto';
+      } else {
+        updatedSettings.height = 50;
+      }
+    }
+    
+    const newItems = [...currentPageItems.value];
+    newItems[itemIndex] = {
+      ...updatedSettings,
+      title: updatedSettings.title,
+      titlePosition: updatedSettings.titlePosition,
+      showInternalTitle: updatedSettings.showInternalTitle,
+      internalTitle: updatedSettings.internalTitle,
+      showColorAccent: updatedSettings.showColorAccent,
+      showHint: updatedSettings.showHint,
+      hintText: updatedSettings.hintText,
+      sourceType: updatedSettings.sourceType,
+      selectedDataset: updatedSettings.selectedDataset,
+      selectedDatasetId: updatedSettings.selectedDatasetId,
+      selectedField: updatedSettings.selectedField,
+      selectorType: updatedSettings.selectorType,
+      operation: updatedSettings.operation,
+      multipleSelection: updatedSettings.multipleSelection,
+      defaultValue: updatedSettings.defaultValue,
+      required: updatedSettings.required,
+      selectorsList: updatedSettings.selectorsList,
+      activeSelectorIndex: updatedSettings.activeSelectorIndex || 0
+    };
+    updateCurrentPageItems(newItems);
+    
+    const heightChanged = oldHeight !== updatedSettings.height;
+    if (heightChanged && dashboardGridRef.value) {
+      setTimeout(() => {
+        dashboardGridRef.value.triggerRecalculatePositions();
+      }, 50);
+    }
+  }
+  closeSelectorSettings();
 };
 
 const togglePageDropdown = () => {
@@ -451,6 +520,9 @@ watch(currentPageItems, (items, oldItems) => {
     } else if (newItem.type === 'Чарт') {
       chartSettingsData.value = { ...newItem }
       isChartSettingsVisible.value = true
+    } else if (newItem.type === 'Селектор') {
+      selectorSettingsData.value = { ...newItem }
+      isSelectorSettingsVisible.value = true
     }
   }
 })
@@ -631,6 +703,20 @@ onUnmounted(() => {
 .page-window {
     background: var(--color-primary-background);
     border-radius: 12px;
+    
+    &.chart-settings-window {
+        max-width: 90vw;
+        max-height: 90vh;
+        width: 960px;
+        height: 470px;
+    }
+    
+    &.selector-settings-window {
+        max-width: 90vw;
+        max-height: 90vh;
+        width: 870px;
+        height: 640px;
+    }
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     width: 600px;
     min-height: 445px;
