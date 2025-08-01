@@ -6,52 +6,25 @@ class IntentAnalyzer {
     }
 
     buildSystemPrompt() {
-        return `Ты - AI ассистент для веб-приложения ERGO MS. Твоя задача - понимать намерения пользователя и помогать с навигацией и объяснением системы.
+        return `Ты - AI ассистент для веб-приложения ERGO MS. Анализируй намерения пользователя.
 
 ДОСТУПНЫЕ ДЕЙСТВИЯ:
-1. NAVIGATION - переход по страницам (когда пользователь просит "перейди", "открой")
-2. COMPONENT_EXPLAIN - объяснение компонентов НА ТЕКУЩЕЙ странице (только когда явно просят "объясни компоненты", "покажи компоненты")
-3. PAGE_ANALYZE - анализ текущей страницы (когда спрашивают "где я", "что это за страница")  
-4. HELP - общая справка (только когда явно просят "помощь", "что ты умеешь", "команды")
-5. CHAT - обычный разговор и ответы на вопросы
-
-ВАЖНЫЕ ПРАВИЛА:
-- Отвечай на русском языке
-- CHAT используй для ВСЕХ технических вопросов: "как сделать", "как реализовать", "что такое", drag and drop, программирование
-- COMPONENT_EXPLAIN используй ТОЛЬКО когда просят объяснить компоненты именно на текущей странице
-- HELP используй ТОЛЬКО для запросов справки о самом ассистенте
-- Будь дружелюбным и полезным
-- Давай конкретные и полезные ответы
+1. NAVIGATION - переход по страницам
+2. COMPONENT_EXPLAIN - объяснение компонентов на текущей странице
+3. PAGE_ANALYZE - анализ текущей страницы
+4. SYSTEM_OVERVIEW - показ всех разделов системы
+5. HELP - справка
+6. CHAT - обычный разговор
 
 ФОРМАТ ОТВЕТА:
-Ты должен ответить СТРОГО в JSON формате:
 {
-  "intent": "NAVIGATION|COMPONENT_EXPLAIN|PAGE_ANALYZE|HELP|CHAT",
-  "action": "конкретное действие если нужно",
-  "message": "ответ пользователю",
-  "params": {дополнительные параметры если нужно}
+  "intent": "NAVIGATION|COMPONENT_EXPLAIN|PAGE_ANALYZE|SYSTEM_OVERVIEW|HELP|CHAT",
+  "action": "navigate_to_route",
+  "message": "ответ",
+  "params": {"route": "имя_маршрута"}
 }
 
-ВНИМАНИЕ: Отвечай ТОЛЬКО JSON, без дополнительного текста до или после!
-
-ПРИМЕРЫ:
-Пользователь: "Перейди в мой профиль"
-Ответ: {"intent":"NAVIGATION","action":"go_to_profile","message":"Перехожу в ваш профиль","params":{"route":"profile"}}
-
-Пользователь: "Где я нахожусь?"  
-Ответ: {"intent":"PAGE_ANALYZE","action":"analyze_current_page","message":"Анализирую текущую страницу для вас","params":{}}
-
-Пользователь: "Объясни компоненты на этой странице"
-Ответ: {"intent":"COMPONENT_EXPLAIN","action":"explain_component","message":"Анализирую компоненты текущей страницы","params":{}}
-
-Пользователь: "Помощь"
-Ответ: {"intent":"HELP","action":"show_help","message":"Показываю справку по возможностям ассистента","params":{}}
-
-Пользователь: "Как мне сделать dnd на моей странице bi?"
-Ответ: {"intent":"CHAT","action":null,"message":"Для реализации drag and drop на BI странице рекомендую использовать Vue Draggable или SortableJS. Это самые популярные решения для Vue приложений. Что именно нужно перетаскивать?","params":{}}
-
-Пользователь: "drag and drop, как сделать?"
-Ответ: {"intent":"CHAT","action":null,"message":"Drag and drop можно реализовать с помощью HTML5 API или библиотек. Что именно нужно перетаскивать?","params":{}}`
+Для NAVIGATION всегда используй action: "navigate_to_route" и указывай конкретное имя маршрута в params.route`
     }
 
     async analyzeIntent(userMessage, currentContext = {}) {
@@ -109,16 +82,8 @@ class IntentAnalyzer {
             prompt.push(`Текущий маршрут: ${context.currentRoute}`)
         }
 
-        if (context.currentPage) {
-            prompt.push(`Текущая страница: ${context.currentPage}`)
-        }
-
         if (context.availableRoutes && context.availableRoutes.length > 0) {
             prompt.push(`Доступные маршруты: ${context.availableRoutes.join(', ')}`)
-        }
-
-        if (context.pageComponents && context.pageComponents.length > 0) {
-            prompt.push(`Компоненты на странице: ${context.pageComponents.join(', ')}`)
         }
 
         return prompt.join('\n')
@@ -151,35 +116,15 @@ class IntentAnalyzer {
     detectIntentLocally(message) {
         const lowerMessage = message.toLowerCase()
 
+        // Убираем жестко заданные маппинги - пусть LLM сам думает
+        // Оставляем только базовую логику для определения типа намерения
+
         if (this.matchesKeywords(lowerMessage, ['перейди', 'переход', 'открой', 'иди', 'перейти', 'покажи страницу'])) {
-            let route = 'Account'
-            let routeName = 'аккаунт'
-
-            if (this.matchesKeywords(lowerMessage, ['профиль', 'profile', 'аккаунт', 'account'])) {
-                route = 'Account'
-                routeName = 'профиль'
-            } else if (this.matchesKeywords(lowerMessage, ['настройки', 'settings'])) {
-                route = 'Settings'
-                routeName = 'настройки'
-            } else if (this.matchesKeywords(lowerMessage, ['пользователи', 'users', 'админ', 'admin'])) {
-                route = 'UsersPanel'
-                routeName = 'панель пользователей'
-            } else if (this.matchesKeywords(lowerMessage, ['безопасность', 'security'])) {
-                route = 'SecuritySettings'
-                routeName = 'настройки безопасности'
-            } else if (this.matchesKeywords(lowerMessage, ['группы', 'groups'])) {
-                route = 'GroupsPanel'
-                routeName = 'панель групп'
-            } else if (this.matchesKeywords(lowerMessage, ['категории', 'categories'])) {
-                route = 'CategoriesPanel'
-                routeName = 'панель категорий'
-            }
-
             return {
                 type: 'NAVIGATION',
                 action: 'navigate_to_route',
-                defaultMessage: `Перехожу в ${routeName}`,
-                params: { route, routeName }
+                defaultMessage: 'Попробуйте переформулировать запрос более конкретно, например: "перейди в профиль" или "открой настройки"',
+                params: { route: null, routeName: null }
             }
         }
 
@@ -197,6 +142,15 @@ class IntentAnalyzer {
                 type: 'COMPONENT_EXPLAIN',
                 action: 'explain_component',
                 defaultMessage: 'Объясняю как работают компоненты на этой странице',
+                params: {}
+            }
+        }
+
+        if (this.matchesKeywords(lowerMessage, ['покажи все страницы', 'все разделы', 'какие есть разделы', 'что доступно в системе', 'все модули', 'обзор системы', 'список страниц', 'все пути', 'карта сайта'])) {
+            return {
+                type: 'SYSTEM_OVERVIEW',
+                action: 'show_all_routes',
+                defaultMessage: 'Показываю все доступные разделы и страницы системы',
                 params: {}
             }
         }

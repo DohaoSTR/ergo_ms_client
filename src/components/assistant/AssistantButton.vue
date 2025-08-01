@@ -62,20 +62,16 @@ defineExpose({
   justify-content: center;
   cursor: pointer;
   z-index: 9999;
-  box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 3px solid #fff;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+  border: 3px solid white;
 }
 
 .assistant-button:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
   background: linear-gradient(135deg, #e74c3c, #dc3545);
 }
 
 .assistant-button--active {
   background: linear-gradient(135deg, #28a745, #1e7e34);
-  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
 }
 
 .assistant-button--pulse {
@@ -84,11 +80,6 @@ defineExpose({
 
 .assistant-button__icon {
   color: white;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.assistant-button:hover .assistant-button__icon {
-  transform: scale(1.15) rotate(5deg);
 }
 
 .assistant-button__notification {
@@ -100,40 +91,23 @@ defineExpose({
   background: linear-gradient(135deg, #ffc107, #e0a800);
   border-radius: 50%;
   border: 2px solid white;
-  animation: bounceNotification 2s infinite;
 }
 
 @keyframes pulseRed {
   0% {
     box-shadow:
-      0 4px 16px rgba(220, 53, 69, 0.3),
+      0 4px 15px rgba(220, 53, 69, 0.3),
       0 0 0 0 rgba(220, 53, 69, 0.7);
   }
   70% {
     box-shadow:
-      0 4px 16px rgba(220, 53, 69, 0.3),
+      0 4px 15px rgba(220, 53, 69, 0.3),
       0 0 0 15px rgba(220, 53, 69, 0);
   }
   100% {
     box-shadow:
-      0 4px 16px rgba(220, 53, 69, 0.3),
+      0 4px 15px rgba(220, 53, 69, 0.3),
       0 0 0 0 rgba(220, 53, 69, 0);
-  }
-}
-
-@keyframes bounceNotification {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-4px) scale(1.1);
-  }
-  60% {
-    transform: translateY(-2px);
   }
 }
 
