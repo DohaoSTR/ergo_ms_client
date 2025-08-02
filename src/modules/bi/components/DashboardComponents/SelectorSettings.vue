@@ -63,6 +63,8 @@
                       <input 
                         v-model="sourceInputValue"
                         type="text" 
+                        class="form-control-button"
+                        style="border-top-right-radius: 0px !important;  border-bottom-right-radius: 0px !important;"
                         :placeholder="sourceInputPlaceholder"
                         @click="handleSourceInputClick"
                         @input="handleSourceInputChange"
@@ -180,10 +182,9 @@
             <div class="settings-row">
               <div class="settings-label">
                 Операция
-                <HelpCircle size="14" class="help-icon" title="Операция фильтрации" />
               </div>
               <div class="settings-control">
-                <select v-model="currentSelector.operation" class="form-select">
+                <select v-model="currentSelector.operation" class="form-select form-select-sm">
                   <option value="">—</option>
                   <option value="equals">Равно</option>
                   <option value="contains">Содержит</option>
@@ -206,7 +207,7 @@
             <div class="settings-row">
               <div class="settings-label">Значение по умолчанию</div>
               <div class="settings-control">
-                <select v-model="currentSelector.defaultValue" class="form-select">
+                <select v-model="currentSelector.defaultValue" class="form-select form-select-sm">
                   <option value="">Не определено</option>
                   <option v-for="option in selectorOptions" :key="option.value" :value="option.value">
                     {{ option.label }}
@@ -241,6 +242,7 @@
                 <div class="title-position-buttons">
                   <button 
                     class="position-btn" 
+                    style="border-top-right-radius: 0px !important;  border-bottom-right-radius: 0px !important; border-right-width: 0px;"
                     :class="{ active: currentSelector.titlePosition === 'hidden' }"
                     @click="setTitlePosition('hidden')"
                   >
@@ -248,6 +250,7 @@
                   </button>
                   <button 
                     class="position-btn" 
+                    style="border-radius: 0px !important; border-right-width: 0.5px;"
                     :class="{ active: currentSelector.titlePosition === 'left' }"
                     @click="setTitlePosition('left')"
                   >
@@ -255,6 +258,7 @@
                   </button>
                   <button 
                     class="position-btn" 
+                    style="border-top-left-radius: 0px !important;  border-bottom-left-radius: 0px !important; border-left-width: 0px;"
                     :class="{ active: currentSelector.titlePosition === 'top' }"
                     @click="setTitlePosition('top')"
                   >
@@ -266,9 +270,18 @@
             
             <div class="settings-row">
               <div class="settings-label">
-                <input type="checkbox" v-model="currentSelector.showInternalTitle" />
-                Внутренний заголовок
-                <HelpCircle size="14" class="help-icon" title="Внутренний заголовок селектора" />
+                <input type="checkbox" v-model="currentSelector.showInternalTitle" />Внутренний заголовок
+                <div class="help-icon-wrapper">
+                  <HelpCircle 
+                    size="14" 
+                    class="help-icon" 
+                    @mouseenter="showInternalTitleTooltip = true"
+                    @mouseleave="showInternalTitleTooltip = false"
+                  />
+                  <div v-if="showInternalTitleTooltip" class="custom-tooltip">
+                    Внутренний заголовок позволяет указать текст внутри селектора. Например, его можно использовать для отображения операции внутри селектора.<br><br>Недоступен в селекторах типа «Чекбокс».
+                  </div>
+                </div>
               </div>
               <div class="settings-control" v-if="currentSelector.showInternalTitle">
                 <input 
@@ -284,7 +297,17 @@
               <div class="settings-label">
                 <input type="checkbox" v-model="currentSelector.showColorAccent" />
                 Цветовой акцент
-                <HelpCircle size="14" class="help-icon" title="Цветовой акцент селектора" />
+                <div class="help-icon-wrapper">
+                  <HelpCircle 
+                    size="14" 
+                    class="help-icon" 
+                    @mouseenter="showColorAccentTooltip = true"
+                    @mouseleave="showColorAccentTooltip = false"
+                  />
+                  <div v-if="showColorAccentTooltip" class="custom-tooltip">
+                    Используйте опцию для выделения цветом важных селекторов
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -294,12 +317,13 @@
                 Подсказка
               </div>
               <div class="settings-control" v-if="currentSelector.showHint">
-                <input 
-                  v-model="currentSelector.hintText" 
-                  type="text" 
-                  placeholder="Текст подсказки"
-                  class="form-control"
-                />
+                <div class="text-editor-wrapper">
+                  <TextEditor 
+                    v-model:hintText="currentSelector.hintText"
+                    :content="currentSelector.hintText"
+                    @update:hintText="updateHintText"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -337,6 +361,7 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { Star, GripVertical, Settings, Database, HelpCircle, ChevronDown, Link, CheckCircle, CircleAlert, List, Type, Calendar, CheckSquare } from 'lucide-vue-next';
 import DatasetsTooltip from '../ChartComponents/DatasetsTooltip.vue';
+import TextEditor from './TextEditor.vue';
 import datasetService from '../../js/datasetService.js';
 
 const props = defineProps({
@@ -413,6 +438,8 @@ const isDropdownOpen = ref(false);
 const isSelectorTypeDropdownOpen = ref(false);
 const isUrlValidating = ref(false);
 const urlValidationResult = ref(null);
+const showColorAccentTooltip = ref(false);
+const showInternalTitleTooltip = ref(false);
 
 const selectorTypes = ref([
   { value: 'list', label: 'Список', icon: 'List' },
@@ -767,6 +794,10 @@ function onCancel() {
   emit('close');
 }
 
+function updateHintText(value) {
+  currentSelector.value.hintText = value;
+}
+
 function onSubmit() {
   const settings = {
     ...props.data,
@@ -785,6 +816,7 @@ function onSubmit() {
   border-radius: 8px;
   height: 100%;
   background: var(--color-primary-background);
+  overflow: visible;
 }
 
 .widget-settings-left-side {
@@ -798,6 +830,7 @@ function onSubmit() {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  overflow: visible;
 }
 
 .widget-settings-left-side-title{
@@ -812,13 +845,14 @@ function onSubmit() {
   gap: 8px;
   flex: 1;
   min-height: 0;
+  overflow: visible;
 }
 
 .selectors-container {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow-y: hidden;
+  overflow: visible;
   min-height: 0;
 }
 
@@ -1059,6 +1093,7 @@ function onSubmit() {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow-y: visible;
 }
 
 .widget-settings-right-side-header {
@@ -1109,12 +1144,14 @@ function onSubmit() {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow: visible;
 }
 
 .settings-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow: visible;
 }
 
 .section-title {
@@ -1130,10 +1167,11 @@ function onSubmit() {
   display: flex;
   align-items: flex-start;
   min-height: 40px;
+  overflow: visible;
 }
 
 .settings-label {
-  width: 140px;
+  width: 215px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1391,11 +1429,11 @@ function onSubmit() {
 
 .title-position-buttons {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  width: 100%;
 }
 
 .position-btn {
+  flex: 1;
   padding: 6px 12px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
@@ -1404,16 +1442,20 @@ function onSubmit() {
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-align: center;
   
   &:hover {
     border-color: var(--color-primary);
     background: var(--color-hover-background);
+    border-width: 1px !important;
   }
   
   &.active {
     background: var(--color-primary-background);
-    color: white;
+    color: var(--color-primary-text);
+    font-weight: 650;
     border-color: var(--color-primary);
+    border-width: 1px !important;
   }
 }
 
@@ -1602,8 +1644,6 @@ button.cancel:hover {
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  border-top-right-radius: 0px !important;
-  border-bottom-right-radius: 0px !important;
   padding: 8px 12px;
   font-size: 14px;
   width: 100%;
@@ -1612,11 +1652,6 @@ button.cancel:hover {
   
   &::placeholder {
     color: var(--color-text-secondary);
-  }
-
-  &:hover {
-    border-color: var(--color-primary-text);
-    background-color: var(--color-hover-background);
   }
   
   &:focus {
@@ -1659,6 +1694,13 @@ button.cancel:hover {
       border-color: var(--color-success, #22c55e) !important;
       box-shadow: -2px 0 0 0 rgba(34, 197, 94, 0.3), 0 -2px 0 0 rgba(34, 197, 94, 0.3), 0 2px 0 0 rgba(34, 197, 94, 0.3) !important;
     }
+  }
+}
+
+.form-control-button{
+  &:hover {
+    border-color: var(--color-primary-text);
+    background-color: var(--color-hover-background);
   }
 }
 
@@ -1903,6 +1945,85 @@ button.cancel:hover {
   
   &.active .selector-type-icon {
     color: white;
+  }
+}
+
+/* Стили для кастомного тултипа */
+.help-icon-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.custom-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: normal;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border);
+  margin-bottom: 8px;
+  max-width: 250px;
+  min-width: 150px;
+  width: max-content;
+  word-wrap: break-word;
+  text-align: center;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--color-background);
+    filter: drop-shadow(0 1px 0 var(--color-border));
+  }
+}
+
+.settings-label {
+  position: relative;
+}
+
+/* Стили для обертки TextEditor в настройках */
+.text-editor-wrapper {
+  max-width: 100%;
+  overflow: hidden;
+  
+  :deep(.text-editor) {
+    max-width: 100%;
+    width: 100%;
+    
+    .editor-toolbar {
+      flex-wrap: wrap;
+      gap: 2px;
+      
+      .toolbar-formatting,
+      .toolbar-styles,
+      .toolbar-actions {
+        flex-wrap: wrap;
+      }
+    }
+    
+    .editor-content {
+      max-width: 100%;
+      
+      .editor-textarea {
+        max-width: 100%;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+    }
   }
 }
 </style>
